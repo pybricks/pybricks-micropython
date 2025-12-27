@@ -227,31 +227,6 @@ void pbdrv_display_nxt_convert_page(int page) {
     }
 }
 
-void pbdrv_display_nxt_sync_refresh(void) {
-    int i, j;
-
-    // Start the data transfer.
-    for (i = 0; i < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; i++) {
-        spi_set_tx_mode(SPI_MODE_COMMAND);
-        spi_write_command_byte(SET_COLUMN_ADDR0(0));
-        spi_write_command_byte(SET_COLUMN_ADDR1(0));
-        spi_write_command_byte(SET_PAGE_ADDR(i));
-        spi_set_tx_mode(SPI_MODE_DATA);
-
-        pbdrv_display_nxt_convert_page(i);
-
-        for (j = 0; j < PBDRV_CONFIG_DISPLAY_NUM_COLS; j++) {
-            // Wait for the transmit register to empty.
-            while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE)) {
-                ;
-            }
-
-            // Send the data.
-            *AT91C_SPI_TDR = pbdrv_display_send_buffer[j];
-        }
-    }
-}
-
 static pbio_os_process_t pbdrv_display_nxt_process;
 
 /*
