@@ -7,10 +7,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbio/image.h>
-
-#include <pbdrv/display.h>
-
 #include <at91sam7s256.h>
 
 #define I2C_LOG false
@@ -174,18 +170,14 @@ void nx_i2c_init(void) {
 static void i2c_log(const char *s)
 {
   if (I2C_LOG) {
-    pbio_image_t *display = pbdrv_display_get_image();
-    pbio_image_print0(display, s);
-    pbdrv_display_update();
+    /* Placeholder for future log implementation. */
   }
 }
 
 static void i2c_log_uint(uint32_t val)
 {
   if (I2C_LOG) {
-    pbio_image_t *display = pbdrv_display_get_image();
-    pbio_image_print_uint(display, val);
-    pbdrv_display_update();
+    /* Placeholder for future log implementation. */
   }
 }
 
