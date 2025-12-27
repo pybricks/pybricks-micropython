@@ -115,43 +115,52 @@ static bool pbdrv_display_user_frame_update_requested;
 static uint8_t pbdrv_display_send_buffer[PBDRV_CONFIG_DISPLAY_NUM_COLS];
 
 /*
- * Set the data transmission mode.
+ * Switch to command transmission mode and send a command byte to the LCD controller.
  */
-static void spi_set_tx_mode(spi_mode_t mode) {
-    if (spi_mode == mode) {
-        // Mode hasn't changed, no-op.
-        return;
-    } else {
+static pbio_error_t spi_write_command_byte(pbio_os_state_t *state, uint8_t command) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (spi_mode != SPI_MODE_COMMAND) {
         // If there is a mode switch, we need to let the SPI controller
         // drain all data first, to avoid spurious writes of the wrong
         // type.
         while (!(*AT91C_SPI_SR & AT91C_SPI_TXEMPTY)) {
-            ;
+            pbio_os_request_poll();
+            PBIO_OS_AWAIT_ONCE(state);
         }
-    }
-
-    spi_mode = mode;
-
-    if (mode == SPI_MODE_COMMAND) {
+        spi_mode = SPI_MODE_COMMAND;
         *AT91C_PIOA_CODR = AT91C_PA12_MISO;
-    } else {
-        *AT91C_PIOA_SODR = AT91C_PA12_MISO;
     }
-}
-
-/*
- * Send a command byte to the LCD controller.
- */
-static void spi_write_command_byte(uint8_t command) {
-    spi_set_tx_mode(SPI_MODE_COMMAND);
 
     // Wait for the transmit register to empty.
     while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE)) {
-        ;
+        pbio_os_request_poll();
+        PBIO_OS_AWAIT_ONCE(state);
     }
 
-    // Send the command byte and wait for a reply.
+    // Send the command byte.
     *AT91C_SPI_TDR = command;
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/*
+ * Switch to data transmission mode.
+ */
+static pbio_error_t spi_set_data_mode(pbio_os_state_t *state) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Let the SPI controller drain all data first, to avoid spurious
+    // writes of the wrong type.
+    while (!(*AT91C_SPI_SR & AT91C_SPI_TXEMPTY)) {
+        pbio_os_request_poll();
+        PBIO_OS_AWAIT_ONCE(state);
+    }
+
+    spi_mode = SPI_MODE_DATA;
+    *AT91C_PIOA_SODR = AT91C_PA12_MISO;
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 /*
@@ -235,6 +244,7 @@ static pbio_os_process_t pbdrv_display_nxt_process;
  */
 static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, void *context) {
     static pbio_os_timer_t timer;
+    static pbio_os_state_t sub;
     static size_t i;
     static int page;
 
@@ -294,12 +304,12 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     // Issue a reset command, and wait. Normally here we'd check the
     // UC1601 status register, but as noted at the start of the file, we
     // can't read from the LCD controller due to the board setup.
-    spi_write_command_byte(RESET());
+    PBIO_OS_AWAIT(state, &sub, spi_write_command_byte(&sub, RESET()));
     PBIO_OS_AWAIT_MS(state, &timer, 20);
 
     // Send every command of the init sequence.
     for (i = 0; i < sizeof(lcd_init_sequence); i++) {
-        spi_write_command_byte(lcd_init_sequence[i]);
+        PBIO_OS_AWAIT(state, &sub, spi_write_command_byte(&sub, lcd_init_sequence[i]));
     }
 
     // Clear display to start with.
@@ -307,7 +317,7 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     pbdrv_display_user_frame_update_requested = true;
 
     // Make sure that we are in data TX mode.
-    spi_set_tx_mode(SPI_MODE_DATA);
+    PBIO_OS_AWAIT(state, &sub, spi_set_data_mode(&sub));
 
     // Done initializing.
     pbio_busy_count_down();
@@ -348,7 +358,7 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     // capacitors gracefully.
     *AT91C_SPI_IDR = ~0;
     *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
-    spi_write_command_byte(RESET());
+    PBIO_OS_AWAIT(state, &sub, spi_write_command_byte(&sub, RESET()));
     PBIO_OS_AWAIT_MS(state, &timer, 20);
 
     pbio_busy_count_down();
