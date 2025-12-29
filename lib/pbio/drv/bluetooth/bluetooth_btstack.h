@@ -27,6 +27,16 @@ pbio_error_t pbdrv_bluetooth_btstack_platform_init(void);
  */
 void pbdrv_bluetooth_btstack_platform_poll(void);
 
+/**
+ * Optional platform packet handler, called on HCI packets before common handler.
+ *
+ * @param [in]  packet_type  The HCI packet type.
+ * @param [in]  channel      The HCI channel.
+ * @param [in]  packet       Pointer to the raw packet data.
+ * @param [in]  size         Size of the packet data.
+ */
+void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size);
+
 /** Chipset info */
 typedef struct {
     /** Version */

@@ -33,6 +33,9 @@ pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {
 void pbdrv_bluetooth_btstack_platform_poll(void) {
 }
 
+void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+}
+
 void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
 
     const pbdrv_bluetooth_btstack_platform_data_t *pdata =

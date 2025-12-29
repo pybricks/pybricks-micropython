@@ -245,6 +245,9 @@ static void parse_hci_local_version_information(pbdrv_bluetooth_btstack_local_ve
 // currently, this function just handles the Powered Up handset control.
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 
+    // Platform-specific platform handler has priority.
+    pbdrv_bluetooth_btstack_platform_packet_handler(packet_type, channel, packet, size);
+
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
