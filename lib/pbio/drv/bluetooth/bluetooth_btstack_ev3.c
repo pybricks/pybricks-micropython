@@ -48,20 +48,6 @@
 #if DEBUG
 #include <pbio/debug.h>
 #define DEBUG_PRINT pbio_debug
-static void pbdrv_hci_dump_reset(void) {
-}
-static void pbdrv_hci_dump_log_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
-    pbio_debug("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
-}
-static void pbdrv_hci_dump_log_message(int log_level, const char *format, va_list argptr) {
-    pbio_debug_va(format, argptr);
-    pbio_debug("\n");
-}
-static const hci_dump_t bluetooth_btstack_classic_hci_dump = {
-    .reset = pbdrv_hci_dump_reset,
-    .log_packet = pbdrv_hci_dump_log_packet,
-    .log_message = pbdrv_hci_dump_log_message,
-};
 #else
 #define DEBUG_PRINT(...)
 #endif
@@ -145,13 +131,6 @@ static void ev3_control_init(const void *config) {
 
     // Start the module in a defined (and disabled) state.
     ev3_control_off();
-
-    #if DEBUG
-    hci_dump_init(&bluetooth_btstack_classic_hci_dump);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, true);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, true);
-    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, true);
-    #endif
 
     DEBUG_PRINT("Bluetooth: Finished init control\n");
 }

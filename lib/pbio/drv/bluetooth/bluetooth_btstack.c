@@ -52,6 +52,23 @@
 #define DEBUG_PRINT(...)
 #endif
 
+#if DEBUG == 2
+static void btstack_hci_dump_reset(void) {
+}
+static void btstack_hci_dump_log_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
+    pbio_debug("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
+}
+static void btstack_hci_dump_log_message(int log_level, const char *format, va_list argptr) {
+    pbio_debug_va(format, argptr);
+    pbio_debug("\n");
+}
+static const hci_dump_t pbdrv_bluetooth_btstack_hci_dump = {
+    .reset = btstack_hci_dump_reset,
+    .log_packet = btstack_hci_dump_log_packet,
+    .log_message = btstack_hci_dump_log_message,
+};
+#endif
+
 typedef enum {
     CON_STATE_NONE,
     CON_STATE_WAIT_ADV_IND,
@@ -1086,6 +1103,13 @@ void pbdrv_bluetooth_init_hci(void) {
     if (err != PBIO_SUCCESS) {
         return;
     }
+
+    #if DEBUG == 2
+    hci_dump_init(&pbdrv_bluetooth_btstack_hci_dump);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, true);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, true);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, true);
+    #endif
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
