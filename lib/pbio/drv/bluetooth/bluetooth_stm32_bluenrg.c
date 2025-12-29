@@ -290,6 +290,11 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
 
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
+        return true;
+    }
+
     if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle) {
         return true;
     }

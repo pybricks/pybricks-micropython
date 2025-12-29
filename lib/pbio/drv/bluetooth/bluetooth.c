@@ -158,6 +158,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     // Can't connect if already connected or already busy.
     if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL) || peri->func) {
         return PBIO_ERROR_BUSY;
@@ -300,6 +304,10 @@ pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
 
 pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {
 
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     bool is_advertising = pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
 
     // Already in requested state. This makes it safe to call stop advertising
@@ -329,6 +337,10 @@ uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
 uint8_t pbdrv_bluetooth_broadcast_data_size;
 
 pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
+
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     if (advertising_or_scan_func) {
         return PBIO_ERROR_BUSY;
@@ -373,6 +385,10 @@ bool pbdrv_bluetooth_is_observing;
 pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
 
 pbio_error_t pbdrv_bluetooth_start_observing(pbdrv_bluetooth_start_observing_callback_t callback) {
+
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     if (advertising_or_scan_func) {
         return PBIO_ERROR_BUSY;
@@ -593,6 +609,11 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
 
 void pbdrv_bluetooth_deinit(void) {
 
+    // If Bluetooth is not even initialized, nothing to do.
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return;
+    }
+
     // Under normal operation ::pbdrv_bluetooth_close_user_tasks completes
     // normally and there should be no user activity at this point. If there
     // is, a task got stuck, so exit forcefully.
@@ -600,7 +621,7 @@ void pbdrv_bluetooth_deinit(void) {
     if (pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL) != PBIO_SUCCESS ||
         pbdrv_bluetooth_await_peripheral_command(&unused, NULL) != PBIO_SUCCESS) {
 
-        // Hard reset without waitng on completion of any process.
+        // Hard reset without waiting on completion of any process.
         pbdrv_bluetooth_controller_reset_hard();
         return;
     }

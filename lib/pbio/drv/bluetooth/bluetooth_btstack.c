@@ -124,28 +124,6 @@ static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
 static pup_handset_t handset;
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
-bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && le_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && peripheral_singleton.con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
-    return false;
-}
-
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 /**
@@ -200,6 +178,39 @@ static void propagate_event(uint8_t *packet) {
     }
 
     event_packet = NULL;
+}
+
+bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+
+    // Nothing connected if HCI is not running.
+    if (bluetooth_thread_err != PBIO_ERROR_AGAIN) {
+        return false;
+    }
+
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
+        return true;
+    }
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && le_con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
+    }
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
+    }
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
+    }
+
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && peripheral_singleton.con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
+    }
+    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+
+    return false;
 }
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
@@ -992,6 +1003,10 @@ static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *stat
 }
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+
+    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     static pbio_os_state_t sub;

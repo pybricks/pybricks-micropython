@@ -22,6 +22,8 @@
  * BLE characteristic connection identifiers.
  */
 typedef enum {
+    /* Whether Bluetooth is present and enabled on this platform. */
+    PBDRV_BLUETOOTH_CONNECTION_HCI,
     /* A low energy device connection. */
     PBDRV_BLUETOOTH_CONNECTION_LE,
     /** The Pybricks service. */
