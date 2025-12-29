@@ -108,30 +108,21 @@ bool pbdrv_usb_stdout_tx_is_idle(void) {
     return lwrb_get_full(&pbdrv_usb_stdout_ring_buf) == 0 && !pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
 }
 
-void pbdrv_usb_debug_vprintf(const char *format, va_list args) {
+void pbdrv_usb_debug_print(const char *data, size_t len) {
+
     if (!lwrb_is_ready(&pbdrv_usb_stdout_ring_buf)) {
         return;
     }
 
-    char buf[256];
-    size_t len = vsnprintf(buf, sizeof(buf), format, args);
-
     // Buffer result with \r injected before \n.
     for (size_t i = 0; i < len; i++) {
-        if (buf[i] == '\n') {
+        if (data[i] == '\n') {
             lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)"\r", 1);
         }
-        lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)&buf[i], 1);
+        lwrb_write(&pbdrv_usb_stdout_ring_buf, (const uint8_t *)&data[i], 1);
     }
 
     pbio_os_request_poll();
-}
-
-void pbdrv_usb_debug_printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    pbdrv_usb_debug_vprintf(format, args);
-    va_end(args);
 }
 
 pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {

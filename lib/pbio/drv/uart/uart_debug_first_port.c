@@ -37,21 +37,18 @@ int pbdrv_uart_debug_next_char(void) {
 /**
  * Formats and stores a string in the UART debug ring buffer.
  *
- * This function works similarly to vprintf, but instead of printing to the
- * standard output. The formatted string will be written to the UART when the
+ * The formatted string will be written to the UART when the
  * buffer is processed.
  *
  * @param format The format string, similar to printf.
  * @param va_list The variable arguments, as a va_list.
  */
-void pbdrv_uart_debug_vprintf(const char *format, va_list args) {
+void pbdrv_uart_debug_print(const char *data, size_t len) {
     if (!lwrb_is_ready(&ring_buffer)) {
         lwrb_init(&ring_buffer, ring_buf_storage, sizeof(ring_buf_storage));
     }
 
-    char buf[256];
-    size_t len = vsnprintf(buf, sizeof(buf), format, args);
-    lwrb_write(&ring_buffer, (const uint8_t *)buf, len);
+    lwrb_write(&ring_buffer, (const uint8_t *)data, len);
 
     if (!debug_uart) {
         // Not initialized yet, so just buffer for now.
@@ -60,23 +57,6 @@ void pbdrv_uart_debug_vprintf(const char *format, va_list args) {
 
     // Request print process to write out new data.
     pbio_os_request_poll();
-}
-
-/**
- * Formats and stores a string in the UART debug ring buffer.
- *
- * This function works similarly to printf, but instead of printing to the
- * standard output. The formatted string will be written to the UART when the
- * buffer is processed.
- *
- * @param format The format string, similar to printf.
- * @param ... The variable arguments, similar to printf.
- */
-void pbdrv_uart_debug_printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    pbdrv_uart_debug_vprintf(format, args);
-    va_end(args);
 }
 
 /**

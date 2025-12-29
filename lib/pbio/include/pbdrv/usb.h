@@ -115,20 +115,12 @@ bool pbdrv_usb_connection_is_active(void);
 pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size);
 
 /**
- * Formats and stores a string in the USB stdout ring buffer using a va_list.
+ * Stores a string in the USB stdout ring buffer.
  *
- * @param format    The format string, similar to printf.
- * @param args      The variable arguments, as a va_list.
+ * @param data      The string data.
+ * @param len       The length of the string data.
  */
-void pbdrv_usb_debug_vprintf(const char *format, va_list args);
-
-/**
- * Formats and stores a string in the USB stdout ring buffer.
- *
- * @param format    The format string, similar to printf.
- * @param ...       The variable arguments, similar to printf.
- */
-void pbdrv_usb_debug_printf(const char *format, ...);
+void pbdrv_usb_debug_print(const char *data, size_t len);
 
 #else // PBDRV_CONFIG_USB
 
@@ -162,10 +154,7 @@ static inline pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *st
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_usb_debug_vprintf(const char *format, va_list args) {
-}
-
-static inline void pbdrv_usb_debug_printf(const char *format, ...) {
+static inline void pbdrv_usb_debug_print(const char *data, size_t len) {
 }
 
 #endif // PBDRV_CONFIG_USB

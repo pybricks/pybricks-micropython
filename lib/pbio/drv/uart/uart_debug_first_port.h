@@ -12,8 +12,7 @@
 
 #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
-void pbdrv_uart_debug_printf(const char *format, ...);
-void pbdrv_uart_debug_vprintf(const char *format, va_list argptr);
+void pbdrv_uart_debug_print(const char *data, size_t len);
 
 bool pbdrv_uart_debug_is_done(void);
 
@@ -26,8 +25,7 @@ int pbdrv_uart_debug_next_char(void);
 
 #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
 
-#define pbdrv_uart_debug_printf(...)
-#define pbdrv_uart_debug_vprintf(format, argptr)
+#define pbdrv_uart_debug_print(data, len)
 
 #define pbdrv_uart_debug_is_done() (true)
 
