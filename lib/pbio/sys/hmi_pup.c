@@ -31,8 +31,8 @@
 #define DEBUG 0
 
 #if DEBUG
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-#define DEBUG_PRINT pbdrv_uart_debug_printf
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
 #else
 #define DEBUG_PRINT(...)
 #endif

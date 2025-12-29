@@ -8,6 +8,15 @@
 // LEGO MINDSTORMS EV3 battery temperature estimation from lms2012
 #if PBSYS_CONFIG_BATTERY_TEMP_ESTIMATION
 
+#define DEBUG 0
+
+#if DEBUG
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
+#else
+#define DEBUG_PRINT(...)
+#endif
+
 /**
  * Function for estimating new battery temperature based on measurements
  * of battery voltage and battery current.
@@ -132,9 +141,9 @@ float pbsys_battery_temp_update(float V_bat, float I_bat) {
     // Save R_bat_model for use in the next function call
     bat_temp.R_bat_model_old = R_bat_model;
 
-    //  pbdrv_uart_debug_printf("%c %f %f %f %f %f %f\r\n", bat_temp.has_passed_7v5_flag ? 'Y' : 'N',
-    //      (double)R_1A, (double)R_2A, (double)slope_A, (double)intercept_b,
-    //      (double)(R_bat_model - bat_temp.R_bat_model_old), (double)bat_temp.R_bat);
+    DEBUG_PRINT("%c %f %f %f %f %f %f\r\n", bat_temp.has_passed_7v5_flag ? 'Y' : 'N',
+        (double)R_1A, (double)R_2A, (double)slope_A, (double)intercept_b,
+        (double)(R_bat_model - bat_temp.R_bat_model_old), (double)bat_temp.R_bat);
 
     /**** Calculate the 4 types of temperature change for the batteries ****/
 
@@ -182,11 +191,11 @@ float pbsys_battery_temp_update(float V_bat, float I_bat) {
 
     /*****************************************************************************/
 
-    //  pbdrv_uart_debug_printf("%f %f %f %f %f <> %f %f %f %f %f\r\n",
-    //      (double)dT_bat_own, (double)dT_bat_loss_to_elec,
-    //      (double)dT_bat_gain_from_elec, (double)dT_bat_loss_to_room, (double)bat_temp.T_bat,
-    //      (double)dT_elec_own, (double)dT_elec_loss_to_bat, (double)dT_elec_gain_from_bat,
-    //      (double)dT_elec_loss_to_room, (double)bat_temp.T_elec);
+    DEBUG_PRINT("%f %f %f %f %f <> %f %f %f %f %f\r\n",
+        (double)dT_bat_own, (double)dT_bat_loss_to_elec,
+        (double)dT_bat_gain_from_elec, (double)dT_bat_loss_to_room, (double)bat_temp.T_bat,
+        (double)dT_elec_own, (double)dT_elec_loss_to_bat, (double)dT_elec_gain_from_bat,
+        (double)dT_elec_loss_to_room, (double)bat_temp.T_elec);
 
     // Refresh battery temperature
     bat_temp.T_bat += dT_bat_own + dT_bat_loss_to_elec + dT_bat_gain_from_elec + dT_bat_loss_to_room;

@@ -31,15 +31,6 @@
 #include "./usb.h"
 #include "./usb_stm32.h"
 
-#define DEBUG 0
-
-#if DEBUG
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-// Remember to set PBDRV_CONFIG_UART_DEBUG_FIRST_PORT in pbdrvconfig.
-#define DEBUG_PRINT pbdrv_uart_debug_printf
-#else
-#define DEBUG_PRINT(...)
-#endif
 
 #if USBD_PYBRICKS_MAX_PACKET_SIZE != PBDRV_CONFIG_USB_MAX_PACKET_SIZE
 #error Inconsistent USB packet size

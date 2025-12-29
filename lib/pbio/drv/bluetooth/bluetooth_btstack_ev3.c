@@ -46,16 +46,16 @@
 #define DEBUG 0
 
 #if DEBUG
-#include <pbdrv/../../drv/uart/uart_debug_first_port.h>
-#define DEBUG_PRINT pbdrv_uart_debug_printf
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
 static void pbdrv_hci_dump_reset(void) {
 }
 static void pbdrv_hci_dump_log_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
-    pbdrv_uart_debug_printf("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
+    pbio_debug("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
 }
 static void pbdrv_hci_dump_log_message(int log_level, const char *format, va_list argptr) {
-    pbdrv_uart_debug_vprintf(format, argptr);
-    pbdrv_uart_debug_printf("\n");
+    pbio_debug_va(format, argptr);
+    pbio_debug("\n");
 }
 static const hci_dump_t bluetooth_btstack_classic_hci_dump = {
     .reset = pbdrv_hci_dump_reset,
