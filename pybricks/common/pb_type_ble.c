@@ -539,8 +539,6 @@ static MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
  * @throws ValueError                   If either parameter contains an out of range channel number.
  */
 mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
-    // making the assumption that this is only called once before each pb_type_ble_start_cleanup()
-    assert(observed_data == NULL);
 
     // Validate channel arguments.
     if (broadcast_channel_in != mp_const_none && (mp_obj_get_int(broadcast_channel_in) < 0 || mp_obj_get_int(broadcast_channel_in) > UINT8_MAX)) {
