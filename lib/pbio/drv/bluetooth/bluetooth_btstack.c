@@ -1121,8 +1121,9 @@ void pbdrv_bluetooth_init_hci(void) {
     btstack_memory_init();
     btstack_run_loop_init(&bluetooth_btstack_run_loop);
 
+    // Chipset is not set here. This is done dynamically when we get the
+    // local version information.
     hci_init(pdata->transport_instance(), pdata->transport_config());
-    hci_set_chipset(pdata->chipset_instance());
     hci_set_control(pdata->control_instance());
 
     // REVISIT: do we need to call btstack_chipset_cc256x_set_power() or btstack_chipset_cc256x_set_power_vector()?
