@@ -721,7 +721,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 
     DEBUG_PRINT("Read %04x with status %d\n", peri->char_now->handle, status);
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    PBIO_OS_ASYNC_END(ble_error_to_pbio_error(status));
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {

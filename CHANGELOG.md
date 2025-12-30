@@ -28,6 +28,7 @@
 - Fixed Powered Up remote light getting the wrong color ([support#2497]).
 - Fix shutdown animation not visible when shutting down due to Bluetooth glitches.
 - Fixed Powered Up remote raising the wrong exception on timeout.
+- Fixed Xbox Controller connection waiting indefinitely if it isn't in pairing mode.
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
