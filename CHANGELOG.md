@@ -26,14 +26,17 @@
 - Fixed internal rounding error that could could cause a Drive Base to be 1 mm
   off after driving 3 meters, depending on configuration parameters ([support#2500]).
 - Fixed Powered Up remote light getting the wrong color ([support#2497]).
-- Fix shutdown animation not visible when shutting down due to Bluetooth glitches.
-- Fixed Powered Up remote raising the wrong exception on timeout.
-- Fixed Xbox Controller connection waiting indefinitely if it isn't in pairing mode.
+- Fix shutdown animation not visible when shutting down due to Bluetooth glitches ([support#2521]).
+- Fixed Powered Up remote raising the wrong exception on timeout ([support#2521]).
+- Fixed Xbox Controller connection waiting indefinitely if it isn't in pairing mode ([support#2521]).
+- Fixed Xbox Controller attempting to pair with host ([support#2522]).
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
 [support#2497]: https://github.com/pybricks/support/issues/2497
 [support#2500]: https://github.com/pybricks/support/issues/2500
+[support#2521]: https://github.com/pybricks/support/issues/2521
+[support#2522]: https://github.com/pybricks/support/issues/2522
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
 [pybricks-micropython#425]: https://github.com/pybricks/pybricks-micropython/pull/425

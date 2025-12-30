@@ -118,6 +118,7 @@ static uint16_t conn_mtu;
 
 // Bonding status of the peripheral.
 static uint16_t bond_auth_err = NO_AUTH;
+static uint8_t bond_auth_mode_last = GAPBOND_PAIRING_MODE_NO_PAIRING;
 
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
@@ -240,6 +241,15 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     PBIO_OS_ASYNC_BEGIN(state);
 
     DEBUG_PRINT("set_discoverable\n");
+
+    // If we were set to initiate pairing because we bonded with a peripheral
+    // previously, unset it to avoid trying to bond with a PC host on connect.
+    if (bond_auth_mode_last != GAPBOND_PAIRING_MODE_NO_PAIRING) {
+        bond_auth_mode_last = GAPBOND_PAIRING_MODE_NO_PAIRING;
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, sizeof(bond_auth_mode_last), &bond_auth_mode_last);
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+    }
 
     static int8_t tx_power;
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
@@ -365,8 +375,6 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
     pbdrv_bluetooth_peripheral_t *peri = context;
-
-    static uint8_t buf[1];
 
     static pbio_os_timer_t peripheral_scan_restart_timer;
 
@@ -516,14 +524,12 @@ try_again:
 
     // Configure to initiate pairing right after connect if bonding required.
     // NB: We must unset "initiate" before we allow a new connection to
-    // Pybricks Code or it will try to pair with the PC. However, this happens
-    // automatically since gap_init runs again on disconnect, which resets it.
-    // It won't unset automatically if Pybricks Code is already connected, but
-    // then it doesn't matter since we're already connected.
+    // Pybricks Code or it will try to pair with the PC. We do this just before
+    // starting to advertise again, which covers all our use cases.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    buf[0] = (peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
+    bond_auth_mode_last = (peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
         GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
-    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, 1, buf);
+    GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, sizeof(bond_auth_mode_last), &bond_auth_mode_last);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
@@ -1571,7 +1577,7 @@ static const struct {
     {GAPBOND_PAIRING_MODE, GAPBOND_PAIRING_MODE_NO_PAIRING},
     {GAPBOND_MITM_PROTECTION, 0}, // disabled
     {GAPBOND_IO_CAPABILITIES, GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT},
-    {GAPBOND_BONDING_ENABLED, 1}, // // enabled, as in allowed. It won't happen by default.
+    {GAPBOND_BONDING_ENABLED, 1}, // enabled, as in allowed. It won't happen by default.
     {GAPBOND_SECURE_CONNECTION, GAPBOND_SECURE_CONNECTION_NONE},
 };
 
