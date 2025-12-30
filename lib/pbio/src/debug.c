@@ -1,12 +1,19 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2021-2025 The Pybricks Authors
 
+#include <pbdrv/config.h>
+
 #include <pbdrv/usb.h>
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>
 
 #include <pbio/debug.h>
 
 void pbio_debug_va(const char *format, va_list args) {
+    #if PBDRV_CONFIG_USB_SIMULATION
+    vprintf(format, args);
+    return;
+    #endif
+
     char buf[256];
     size_t len = vsnprintf(buf, sizeof(buf), format, args);
     pbdrv_usb_debug_print(buf, len);
