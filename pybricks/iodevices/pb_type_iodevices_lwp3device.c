@@ -279,10 +279,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Scan and connect with timeout.
-    err = pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         return err;

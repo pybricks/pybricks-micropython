@@ -280,7 +280,7 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
     // of interest and will be cancelled if the active function supports it.
     pbio_os_timer_set(&peri->watchdog, 10);
 
-    return peri->func ? peri->err : PBIO_SUCCESS;
+    return peri->err;
 }
 
 void pbdrv_bluetooth_cancel_operation_request(void) {
@@ -427,7 +427,7 @@ void pbdrv_bluetooth_restart_observing_request(void) {
 }
 
 pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
-    return advertising_or_scan_func ? advertising_or_scan_err : PBIO_SUCCESS;
+    return advertising_or_scan_err;
 }
 
 /**
@@ -617,10 +617,7 @@ void pbdrv_bluetooth_deinit(void) {
     // Under normal operation ::pbdrv_bluetooth_close_user_tasks completes
     // normally and there should be no user activity at this point. If there
     // is, a task got stuck, so exit forcefully.
-    pbio_os_state_t unused;
-    if (pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL) != PBIO_SUCCESS ||
-        pbdrv_bluetooth_await_peripheral_command(&unused, NULL) != PBIO_SUCCESS) {
-
+    if (advertising_or_scan_err == PBIO_ERROR_AGAIN || peripheral_singleton.err == PBIO_ERROR_AGAIN) {
         // Hard reset without waiting on completion of any process.
         pbdrv_bluetooth_controller_reset_hard();
         return;

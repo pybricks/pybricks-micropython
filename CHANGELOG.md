@@ -27,6 +27,7 @@
   off after driving 3 meters, depending on configuration parameters ([support#2500]).
 - Fixed Powered Up remote light getting the wrong color ([support#2497]).
 - Fix shutdown animation not visible when shutting down due to Bluetooth glitches.
+- Fixed Powered Up remote raising the wrong exception on timeout.
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
