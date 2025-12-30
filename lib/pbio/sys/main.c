@@ -112,11 +112,6 @@ void pbsys_main(void) {
 
         // Stop motors, user animations, user bluetooth activity, etc.
         err = pbio_main_stop_application_resources();
-        if (err != PBIO_SUCCESS) {
-            // If we couldn't get the system back in a normal state, proceed
-            // towards shutdown.
-            break;
-        }
 
         // Get system back in idle state.
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
@@ -127,6 +122,13 @@ void pbsys_main(void) {
         // Handle pending events triggered by the status change, such as
         // stopping status light animation.
         while (pbio_os_run_processes_once()) {
+        }
+
+        if (err != PBIO_SUCCESS) {
+            // If we couldn't get the system back in a normal state after
+            // running a program, proceed towards shutdown. In practice, this
+            // only happens for rare Bluetooth glitches on some platforms.
+            break;
         }
 
         // Finalize application now that system resources are safely closed.

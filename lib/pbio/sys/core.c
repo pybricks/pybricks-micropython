@@ -87,6 +87,9 @@ void pbsys_init(void) {
 
 void pbsys_deinit(void) {
 
+    // Used by status indications during shutdown.
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
+
     pbio_os_process_make_request(&pbsys_system_poll_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 
     pbsys_storage_deinit();
