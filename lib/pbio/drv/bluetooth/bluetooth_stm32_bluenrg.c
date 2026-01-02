@@ -372,7 +372,7 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // Context specific advertisement filter.
-        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config->match_adv(subevt->evt_type, subevt->data_RSSI, NULL, subevt->bdaddr, peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config->match_adv(peri->user, subevt->evt_type, subevt->data_RSSI, NULL, subevt->bdaddr, peri->bdaddr);
 
         // If it doesn't match context-specific filter, keep scanning.
         if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
@@ -409,7 +409,7 @@ try_again:
         // If the response data is not right or if the address doesn't match advertisement, keep scanning.
         le_advertising_info *subevt = (void *)&read_buf[5];
         const char *detected_name = (char *)&subevt->data_RSSI[2];
-        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config->match_adv_rsp(subevt->evt_type, NULL, detected_name, subevt->bdaddr, peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config->match_adv_rsp(peri->user, subevt->evt_type, NULL, detected_name, subevt->bdaddr, peri->bdaddr);
         if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
             continue;
         }

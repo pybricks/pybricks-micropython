@@ -114,7 +114,7 @@ static void handle_notification(void *user, const uint8_t *value, uint32_t size)
 
 #define _16BIT_AS_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff)
 
-static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
     // The controller seems to advertise three different packets, so allow all.
 
@@ -165,7 +165,7 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(uint8_
     return flags;
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
 

@@ -432,7 +432,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 // Match advertisement data against context-specific filter.
                 pbdrv_bluetooth_ad_match_result_flags_t adv_flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
                 if (peri->config->match_adv) {
-                    adv_flags = peri->config->match_adv(event_type, data, NULL, address, peri->bdaddr);
+                    adv_flags = peri->config->match_adv(peri->user, event_type, data, NULL, address, peri->bdaddr);
                 }
 
                 if (adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) {
@@ -454,7 +454,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
                 pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
                 if (peri->config->match_adv_rsp) {
-                    rsp_flags = peri->config->match_adv_rsp(event_type, NULL, detected_name, address, peri->bdaddr);
+                    rsp_flags = peri->config->match_adv_rsp(peri->user, event_type, NULL, detected_name, address, peri->bdaddr);
                 }
                 if ((rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && (rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
 

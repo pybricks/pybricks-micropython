@@ -85,10 +85,6 @@ static pbdrv_bluetooth_peripheral_char_t pb_lwp3device_char = {
     .request_notification = true,
 };
 
-// Needed for global notification callback. This is cleared when the finalizer
-// runs.
-static mp_obj_t self_obj;
-
 typedef struct {
     mp_obj_base_t base;
     /**
@@ -172,15 +168,14 @@ static void handle_remote_notification(void *user, const uint8_t *value, uint32_
     }
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
 
-    if (self_obj == MP_OBJ_NULL) {
+    pb_lwp3device_obj_t *self = user;
+    if (!self) {
         return flags;
     }
-
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
 
     // Whether this looks like a LWP3 advertisement of the correct hub kind.
     if (event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_IND
@@ -199,15 +194,14 @@ static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_
     return flags;
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
 
     pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
 
-    if (self_obj == MP_OBJ_NULL) {
+    pb_lwp3device_obj_t *self = user;
+    if (!self) {
         return flags;
     }
-
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
 
     // This is the only value check we do on LWP3 response messages.
     if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP) {
@@ -493,7 +487,6 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_module_tools_assert_blocking();
 
     pb_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_lwp3device_obj_t, type);
-    self_obj = MP_OBJ_FROM_PTR(self);
 
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
     self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
@@ -624,7 +617,6 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     }
 
     pb_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_lwp3device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
-    self_obj = MP_OBJ_FROM_PTR(self);
 
     memset(self->notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * noti_num);
     self->noti_num = noti_num;

@@ -65,6 +65,7 @@ typedef enum {
 /**
  * Callback to match an advertisement or scan response.
  *
+ * @param [in]  user        The user of this peripheral, usually a high-level object.
  * @param [in]  event_type  The type of advertisement.
  * @param [in]  data        The advertisement data.
  * @param [in]  name        The name to match. If NULL, no name filter is applied.
@@ -73,7 +74,7 @@ typedef enum {
  * @return                  True if the advertisement matches, false otherwise.
  */
 typedef pbdrv_bluetooth_ad_match_result_flags_t (*pbdrv_bluetooth_ad_match_t)
-    (uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr);
+    (void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr);
 
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
@@ -137,7 +138,7 @@ typedef struct _pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_t;
 /**
  * Callback that is called when a peripheral sends a notification.
  *
- * @param [in]  user        The addressee, usually a high-level object.
+ * @param [in]  user        The user of this peripheral, usually a high-level object.
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
