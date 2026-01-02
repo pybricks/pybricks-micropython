@@ -152,17 +152,10 @@ typedef struct {
 } pb_lwp3device_obj_t;
 
 // Handles LEGO Wireless protocol messages from the Powered Up Remote.
-static void handle_remote_notification(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *value, uint32_t size) {
+static void handle_remote_notification(void *user, const uint8_t *value, uint32_t size) {
 
-    // No object registered for processing notifcations.
-    if (self_obj == MP_OBJ_NULL) {
-        return;
-    }
-
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
-
-    // It's not for us.
-    if (self->peripheral != peripheral) {
+    pb_lwp3device_obj_t *self = user;
+    if (!self) {
         return;
     }
 
@@ -306,7 +299,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Get available peripheral instance.
-    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral));
+    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
 
     // Scan and connect with timeout.
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
@@ -484,8 +477,10 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     #endif
 }
 
-mp_obj_t pb_lwp3device_close(mp_obj_t self_in) {
-    self_obj = MP_OBJ_NULL;
+static mp_obj_t pb_lwp3device_close(mp_obj_t self_in) {
+    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Disables notification handler from accessing allocated memory.
+    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_close_obj, pb_lwp3device_close);
@@ -496,10 +491,6 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
         PB_ARG_DEFAULT_INT(timeout, 10000));
 
     pb_module_tools_assert_blocking();
-
-    if (self_obj) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Can use only one Remote"));
-    }
 
     pb_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_lwp3device_obj_t, type);
     self_obj = MP_OBJ_FROM_PTR(self);
@@ -557,6 +548,10 @@ static mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
 
 static mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
+    // Needed to release claim on allocated data so we can make a new
+    // connection later.
+    pb_lwp3device_close(self_in);
+
     pb_assert(pbdrv_bluetooth_peripheral_disconnect());
     return wait_or_await_operation(self_in);
 }
@@ -588,21 +583,11 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 /**
  * Handles LEGO Wireless protocol messages from generic LWP3 devices.
  */
-static void handle_lwp3_generic_notification(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *value, uint32_t size) {
+static void handle_lwp3_generic_notification(void *user, const uint8_t *value, uint32_t size) {
 
-    // No object registered for processing notifcations.
-    if (self_obj == MP_OBJ_NULL) {
-        return;
-    }
+    pb_lwp3device_obj_t *self = user;
 
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
-
-    // It's not for us.
-    if (self->peripheral != peripheral) {
-        return;
-    }
-
-    if (!self->noti_num) {
+    if (!self || !self->noti_num) {
         // Allocated data not ready.
         return;
     }
@@ -622,7 +607,6 @@ static void handle_lwp3_generic_notification(pbdrv_bluetooth_peripheral_t *perip
     return;
 }
 
-
 static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
@@ -630,10 +614,6 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_INT(timeout, 10000),
         PB_ARG_DEFAULT_FALSE(pair),
         PB_ARG_DEFAULT_INT(num_notifications, 8));
-
-    if (self_obj) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Can use only one LWP3Device"));
-    }
 
     uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
     bool pair = mp_obj_is_true(pair_in);

@@ -361,7 +361,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             if (peri->config->notification_handler) {
                 uint16_t length = gatt_event_notification_get_value_length(packet);
                 const uint8_t *value = gatt_event_notification_get_value(packet);
-                peri->config->notification_handler(peri, value, length);
+                peri->config->notification_handler(peri->user, value, length);
             }
             break;
         }

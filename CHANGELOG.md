@@ -30,6 +30,9 @@
 - Fixed Powered Up remote raising the wrong exception on timeout ([support#2521]).
 - Fixed Xbox Controller connection waiting indefinitely if it isn't in pairing mode ([support#2521]).
 - Fixed Xbox Controller attempting to pair with host ([support#2522]).
+- Fixed Powered Up remote and Xbox Controller working only after the first
+  connection. All of the above Remote and Xbox Controller were introduced in
+  the previous beta release, so did not affect any stable release ([support#2521]).
 
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468

@@ -1310,7 +1310,7 @@ static void handle_event(uint8_t *packet) {
                     // uint8_t attr_handle = (data[7] << 8) | data[6];
                     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
                     if (peri->config->notification_handler) {
-                        peri->config->notification_handler(peri, &data[8], pdu_len - 2);
+                        peri->config->notification_handler(peri->user, &data[8], pdu_len - 2);
                     }
                 }
                 break;

@@ -149,13 +149,32 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 
 pbdrv_bluetooth_peripheral_t peripheral_singleton;
 
-pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral) {
+pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
     // Only a single peripheral instance supported for now.
-    if (peripheral_singleton.func || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    *peripheral = &peripheral_singleton;
+
+    if (/* Already connected. */
+        pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL) ||
+        /* A different user is still claiming this resource. */
+        (*peripheral)->user ||
+        /* Busy. Could be connecting but not connected yet. */
+        (*peripheral)->func) {
         return PBIO_ERROR_BUSY;
     }
-    *peripheral = &peripheral_singleton;
+
+    // Claim this device for new user.
+    (*peripheral)->user = user;
+
     return PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {
+    // Only release if the user matches. A new user may have already safely
+    // claimed it, and this call to release may come from an orphaned user.
+    if (peripheral->user != user) {
+        return;
+    }
+    peripheral->user = NULL;
 }
 
 const char *pbdrv_bluetooth_peripheral_get_name(void) {
@@ -176,8 +195,12 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
         return PBIO_ERROR_BUSY;
     }
 
-    // Initialize operation for handling on the main thread.
+    // Reset peripheral instance but keep user reference.
+    void *user = peri->user;
     memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
+    peri->user = user;
+
+    // Initialize operation for handling on the main thread.
     peri->config = config;
     peri->func = pbdrv_bluetooth_peripheral_scan_and_connect_func;
     peri->err = PBIO_ERROR_AGAIN;

@@ -135,13 +135,13 @@ typedef enum {
 typedef struct _pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_t;
 
 /**
- * Callback that is called when peripheral sends a notification.
+ * Callback that is called when a peripheral sends a notification.
  *
- * @param [in]  peripheral   The peripheral that sent the notification.
+ * @param [in]  user        The addressee, usually a high-level object.
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_peripheral_notification_handler_t)(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *data, uint32_t size);
+typedef void (*pbdrv_bluetooth_peripheral_notification_handler_t)(void *user, const uint8_t *data, uint32_t size);
 
 /** Peripheral scan and connection configuration */
 typedef struct {
@@ -161,6 +161,10 @@ typedef struct {
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
 struct _pbdrv_bluetooth_peripheral_t {
+    /**
+     * Optional reference to higher-level user of this peripheral.
+     */
+    void *user;
     uint16_t con_handle;
     uint8_t status;
     uint8_t bdaddr_type;
@@ -356,11 +360,20 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
  * Gets an available peripheral instance.
  *
  * @param [out] peripheral   Pointer to the peripheral instance if found.
+ * @param [in]  user         Optional user reference to associate with the peripheral.
  * @return                  ::PBIO_SUCCESS if a peripheral instance is available.
  *                          ::PBIO_ERROR_NO_DEV if no peripheral instance is available.
  *                          ::PBIO_ERROR_BUSY if all peripheral instances are in use.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral);
+pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user);
+
+/**
+ * Releases a peripheral instance for reuse by another user.
+ *
+ * @param [in]  peripheral   The peripheral instance to free.
+ * @param [in]  user         The user reference that was used to claim the peripheral.
+ */
+void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user);
 
 /**
  * Gets the name of the connected peripheral.
@@ -573,8 +586,11 @@ static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral) {
+static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {
 }
 
 static inline const char *pbdrv_bluetooth_peripheral_get_name(void) {
