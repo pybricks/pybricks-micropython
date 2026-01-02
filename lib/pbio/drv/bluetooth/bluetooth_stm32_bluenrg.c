@@ -952,7 +952,7 @@ static void handle_event(hci_event_pckt *event) {
                     evt_gatt_attr_notification *subevt = (void *)evt->data;
                     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
                     if (peri->config->notification_handler) {
-                        peri->config->notification_handler(subevt->attr_value, subevt->event_data_length - 2);
+                        peri->config->notification_handler(peri, subevt->attr_value, subevt->event_data_length - 2);
                     }
                 }
                 break;

@@ -91,13 +91,37 @@ static mp_obj_t self_obj;
 
 typedef struct {
     mp_obj_base_t base;
+    /**
+     * The peripheral instance associated with this MicroPython object.
+     */
+    pbdrv_bluetooth_peripheral_t *peripheral;
+    /**
+     * Async iterable state.
+     */
     pb_type_async_t *iter;
-    pbio_os_state_t sub;
+    /**
+     * Buttons object (property of Remote class).
+     */
     mp_obj_t buttons;
+    /**
+     * Light object (property of Remote class).
+     */
     mp_obj_t light;
+    /**
+     * Powered Up Remote Left button states, populated by notifications.
+     */
     uint8_t left[3];
+    /**
+     * Powered Up Remote Right button states, populated by notifications.
+     */
     uint8_t right[3];
+    /**
+     * Powered Up Remote Center button state, populated by notifications.
+     */
     uint8_t center;
+    /**
+     * The hub kind to filter advertisements for.
+     */
     lwp3_hub_kind_t hub_kind;
     // Null-terminated name used to filter advertisements and responses.
     // Also used as the name of the device when setting the name, since this
@@ -128,14 +152,19 @@ typedef struct {
 } pb_lwp3device_obj_t;
 
 // Handles LEGO Wireless protocol messages from the Powered Up Remote.
-static pbio_pybricks_error_t handle_remote_notification(const uint8_t *value, uint32_t size) {
+static void handle_remote_notification(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *value, uint32_t size) {
 
+    // No object registered for processing notifcations.
     if (self_obj == MP_OBJ_NULL) {
-        // Silently ignore incoming notifications when we aren't expecting any.
-        return PBIO_PYBRICKS_ERROR_OK;
+        return;
     }
 
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
+
+    // It's not for us.
+    if (self->peripheral != peripheral) {
+        return;
+    }
 
     if (value[0] == 5 && value[2] == LWP3_MSG_TYPE_HW_NET_CMDS && value[3] == LWP3_HW_NET_CMD_CONNECTION_REQ) {
         // This message is meant for something else, but contains the center button state
@@ -148,8 +177,6 @@ static pbio_pybricks_error_t handle_remote_notification(const uint8_t *value, ui
             memcpy(self->right, &value[4], 3);
         }
     }
-
-    return PBIO_PYBRICKS_ERROR_OK;
 }
 
 static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
@@ -278,6 +305,9 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Get available peripheral instance.
+    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral));
+
     // Scan and connect with timeout.
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
@@ -376,7 +406,7 @@ disconnect:
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
-static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_receive_handler_t notification_handler, bool pair) {
+static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_peripheral_notification_handler_t notification_handler, bool pair) {
 
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -555,18 +585,26 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 
 #if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
 
-static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *value, uint32_t size) {
+/**
+ * Handles LEGO Wireless protocol messages from generic LWP3 devices.
+ */
+static void handle_lwp3_generic_notification(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *value, uint32_t size) {
 
+    // No object registered for processing notifcations.
     if (self_obj == MP_OBJ_NULL) {
-        // Silently ignore incoming notifications when we aren't expecting any.
-        return PBIO_PYBRICKS_ERROR_OK;
+        return;
     }
 
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_obj);
 
+    // It's not for us.
+    if (self->peripheral != peripheral) {
+        return;
+    }
+
     if (!self->noti_num) {
-        // Allocated data not ready, but no error.
-        return PBIO_PYBRICKS_ERROR_OK;
+        // Allocated data not ready.
+        return;
     }
 
     // Buffer is full, so drop oldest sample by advancing read index.
@@ -581,7 +619,7 @@ static pbio_pybricks_error_t handle_lwp3_generic_notification(const uint8_t *val
     // to-be-read data. If it was already full when we started writing, both
     // indexes have now advanced so it is still full now.
     self->noti_data_full = self->noti_idx_read == self->noti_idx_write;
-    return PBIO_PYBRICKS_ERROR_OK;
+    return;
 }
 
 

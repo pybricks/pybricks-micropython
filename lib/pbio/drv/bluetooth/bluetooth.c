@@ -149,6 +149,15 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 
 pbdrv_bluetooth_peripheral_t peripheral_singleton;
 
+pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral) {
+    // Only a single peripheral instance supported for now.
+    if (peripheral_singleton.func || pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+        return PBIO_ERROR_BUSY;
+    }
+    *peripheral = &peripheral_singleton;
+    return PBIO_SUCCESS;
+}
+
 const char *pbdrv_bluetooth_peripheral_get_name(void) {
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
     return peri->name;

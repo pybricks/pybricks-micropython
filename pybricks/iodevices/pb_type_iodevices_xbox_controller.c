@@ -82,12 +82,11 @@ typedef struct {
 static pb_xbox_t pb_xbox_singleton;
 
 // Handles LEGO Wireless protocol messages from the XBOX Device.
-static pbio_pybricks_error_t handle_notification(const uint8_t *value, uint32_t size) {
+static void handle_notification(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *value, uint32_t size) {
     pb_xbox_t *xbox = &pb_xbox_singleton;
     if (size <= sizeof(xbox_input_map_t)) {
         memcpy(&xbox->state, &value[0], size);
     }
-    return PBIO_PYBRICKS_ERROR_OK;
 }
 
 #define _16BIT_AS_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff)

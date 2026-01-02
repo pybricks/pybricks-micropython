@@ -132,6 +132,17 @@ typedef enum {
     PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST = 1 << 1,
 } pbdrv_bluetooth_peripheral_options_t;
 
+typedef struct _pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_t;
+
+/**
+ * Callback that is called when peripheral sends a notification.
+ *
+ * @param [in]  peripheral   The peripheral that sent the notification.
+ * @param [in]  data        The data that was received.
+ * @param [in]  size        The size of @p data in bytes.
+ */
+typedef void (*pbdrv_bluetooth_peripheral_notification_handler_t)(pbdrv_bluetooth_peripheral_t *peripheral, const uint8_t *data, uint32_t size);
+
 /** Peripheral scan and connection configuration */
 typedef struct {
     /** Matcher for advertisement */
@@ -139,7 +150,7 @@ typedef struct {
     /** Matcher for scan response */
     pbdrv_bluetooth_ad_match_t match_adv_rsp;
     /** Handler for received notifications after connecting */
-    pbdrv_bluetooth_receive_handler_t notification_handler;
+    pbdrv_bluetooth_peripheral_notification_handler_t notification_handler;
     /** Option flags governing connection and pairing */
     pbdrv_bluetooth_peripheral_options_t options;
     /** Timeout before aborting scan and connect. Use 0 for no timeout. */
@@ -149,7 +160,7 @@ typedef struct {
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
-typedef struct {
+struct _pbdrv_bluetooth_peripheral_t {
     uint16_t con_handle;
     uint8_t status;
     uint8_t bdaddr_type;
@@ -169,7 +180,7 @@ typedef struct {
     pbio_os_timer_t watchdog;
     /** Cancellation requested */
     bool cancel;
-} pbdrv_bluetooth_peripheral_t;
+};
 
 /** Advertisement types. */
 typedef enum {
@@ -340,6 +351,16 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 //
 // Functions related to connections to peripherals.
 //
+
+/**
+ * Gets an available peripheral instance.
+ *
+ * @param [out] peripheral   Pointer to the peripheral instance if found.
+ * @return                  ::PBIO_SUCCESS if a peripheral instance is available.
+ *                          ::PBIO_ERROR_NO_DEV if no peripheral instance is available.
+ *                          ::PBIO_ERROR_BUSY if all peripheral instances are in use.
+ */
+pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral);
 
 /**
  * Gets the name of the connected peripheral.
@@ -549,6 +570,10 @@ static inline bool pbdrv_bluetooth_tx_is_idle(void) {
 
 static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
     pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
