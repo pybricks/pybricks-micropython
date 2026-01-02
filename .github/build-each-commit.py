@@ -78,7 +78,7 @@ for commit in pybricks.iter_commits(
         pybricks.git.submodule(
             "update", "--init", "--checkout", "lib/STM32_USB_Device_Library"
         )
-    if args.hub == "ev3":
+    if args.hub == "ev3" or args.hub == "nxt":
         pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
 
     if args.hub == "buildhat":

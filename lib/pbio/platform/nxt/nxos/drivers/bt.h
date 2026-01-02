@@ -237,8 +237,4 @@ uint32_t nx_bt_stream_data_read(void);
 void nx_bt_stream_close(void);
 
 
-/* to remove */
-void nx_bt_debug(void);
-
-
 #endif

@@ -11,6 +11,8 @@
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
+#include <umm_malloc.h>
+
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
@@ -22,10 +24,8 @@
 #include <pbsys/status.h>
 
 
-#include <nxos/_display.h>
 #include <nxos/assert.h>
 #include <nxos/drivers/_aic.h>
-#include <nxos/drivers/_lcd.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>
 #include <nxos/drivers/bt.h>
@@ -159,8 +159,6 @@ void SystemInit(void) {
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbio_busy_count_busy instead of busy waiting for 100ms.
     nx__motors_init();
-    nx__lcd_init();
-    nx__display_init();
     // nx__sensors_init();
     // nx_i2c_init();
 
@@ -177,6 +175,9 @@ void SystemInit(void) {
             local_addr[0], local_addr[1], local_addr[2],
             local_addr[3], local_addr[4], local_addr[5]);
     }
-    nx_display_string(bluetooth_address_string);
-    nx_display_string("\n");
+
+    // Separate heap for large allocations - defined in linker script.
+    extern char pb_umm_heap_start;
+    extern char pb_umm_heap_end;
+    umm_init_heap(&pb_umm_heap_start, &pb_umm_heap_end - &pb_umm_heap_start);
 }

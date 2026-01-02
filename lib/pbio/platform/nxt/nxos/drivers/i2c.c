@@ -14,7 +14,6 @@
 #include "nxos/nxt.h"
 #include "nxos/interrupts.h"
 #include "nxos/util.h"
-#include "nxos/display.h"
 #include "nxos/drivers/aic.h"
 #include "nxos/drivers/_sensors.h"
 #include "nxos/drivers/i2c.h"
@@ -170,14 +169,16 @@ void nx_i2c_init(void) {
 
 static void i2c_log(const char *s)
 {
-  if (I2C_LOG)
-    nx_display_string(s);
+  if (I2C_LOG) {
+    /* Placeholder for future log implementation. */
+  }
 }
 
 static void i2c_log_uint(uint32_t val)
 {
-  if (I2C_LOG)
-    nx_display_uint(val);
+  if (I2C_LOG) {
+    /* Placeholder for future log implementation. */
+  }
 }
 
 /** Register a remote device (by its address) on the given sensor. */

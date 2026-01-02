@@ -14,7 +14,6 @@
 #include <pbdrv/clock.h>
 
 #include "nxos/util.h"
-#include "nxos/display.h"
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/_uart.h"
 
@@ -968,16 +967,6 @@ void nx_bt_stream_close(void)
   /* return in command mode by lowering the ARM_CMD pin */
   *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
   bt_state.state = BT_STATE_WAITING;
-}
-
-
-
-/* to remove: */
-void nx_bt_debug(void)
-{
-  //nx_display_uint(bt_state.last_heartbeat);
-  //nx_display_end_line();
-  USB_SEND((char *)bt_state.cmds);
 }
 
 

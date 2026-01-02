@@ -144,6 +144,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/counter/counter_nxt.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/display/display_ev3.c \
+	drv/display/display_nxt.c \
 	drv/display/display_virtual.c \
 	drv/gpio/gpio_ev3.c \
 	drv/gpio/gpio_nxt.c \

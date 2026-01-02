@@ -14,7 +14,6 @@
 
 #include "nxos/nxt.h"
 #include "nxos/util.h"
-#include "nxos/display.h"
 #include "nxos/drivers/sensors.h"
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/i2c.h"

@@ -116,16 +116,6 @@ bool nx_radar_detect(uint32_t sensor);
  */
 void nx_radar_reset(uint32_t sensor);
 
-/** Display the radar's information.
- *
- * Displays on the NXT screen the radar's information, including the
- * product ID, sensor type, device version, measurement units and
- * the measurements interval.
- *
- * @param sensor The sensor port number.
- */
-void nx_radar_info(uint32_t sensor);
-
 /** Read from the radar's memory.
  *
  * @param sensor The sensor port number.

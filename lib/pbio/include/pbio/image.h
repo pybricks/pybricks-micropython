@@ -147,6 +147,8 @@ void pbio_image_bbox_text(const pbio_font_t *font, const char *text,
 
 void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len);
 
+void pbio_image_print0(pbio_image_t *image, const char *text);
+
 void pbio_image_print_uint(pbio_image_t *image, uint32_t number);
 
 void pbio_image_print_int(pbio_image_t *image, int32_t number);
@@ -194,6 +196,8 @@ static inline void pbio_image_draw_text(pbio_image_t *image, const pbio_font_t *
 static inline void pbio_image_bbox_text(const pbio_font_t *font, const char *text, size_t text_len, pbio_image_rect_t *rect) {
 }
 static inline void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len) {
+}
+static inline void pbio_image_print0(pbio_image_t *image, const char *text) {
 }
 static inline void pbio_image_print_uint(pbio_image_t *image, uint32_t number) {
 }

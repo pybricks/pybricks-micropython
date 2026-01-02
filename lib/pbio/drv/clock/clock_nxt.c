@@ -15,7 +15,6 @@
 #include <nxos/nxt.h>
 #include <nxos/interrupts.h>
 #include <nxos/drivers/aic.h>
-#include <nxos/drivers/_lcd.h>
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
  * its base timer frequency.
@@ -41,11 +40,6 @@ static void systick_isr(void) {
     /* Do the system timekeeping. */
     pbdrv_clock_ticks++;
     pbio_os_request_poll();
-
-    /* The LCD dirty display routine can be done here too, since it is
-     * very short.
-     */
-    nx__lcd_fast_update();
 }
 
 void pbdrv_clock_init(void) {

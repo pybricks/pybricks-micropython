@@ -1008,6 +1008,20 @@ void pbio_image_print(pbio_image_t *image, const char *text, size_t text_len) {
 }
 
 /**
+ * Print null terminated text inside image, like in a terminal, scroll when
+ * bottom is reached.
+ * @param [in] image     Image to draw into.
+ * @param [in] text      Null terminated text string.
+ *
+ * Clipping: drawing is clipped to image dimensions.
+ *
+ * Text uses ASCII encoding. Newlines are handled, text is flush left.
+ */
+void pbio_image_print0(pbio_image_t *image, const char *text) {
+    pbio_image_print(image, text, strlen(text));
+}
+
+/**
  * Print unsigned number inside image, like in a terminal, scroll when bottom is
  * reached.
  * @param [in] image   Image to draw into.
