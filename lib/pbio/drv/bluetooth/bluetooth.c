@@ -224,11 +224,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(void) {
         return PBIO_SUCCESS;
     }
 
-    // Clear notification handler to avoid receiving further data.
-    if (peri->config) {
-        peri->config->notification_handler = NULL;
-    }
-
     // Initialize operation for handling on the main thread.
     peri->func = pbdrv_bluetooth_peripheral_disconnect_func;
     peri->err = PBIO_ERROR_AGAIN;
