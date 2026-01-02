@@ -38,7 +38,7 @@
 /**
  * The main HID Characteristic.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_report = {
+static pbdrv_bluetooth_peripheral_char_t pb_type_xbox_char_hid_report = {
     .handle = 0, // Will be set during discovery.
     // Even with the property filter, there are still 3 matches for this
     // characteristic on the Elite Series 2 controller. For now limit discovery
@@ -54,7 +54,7 @@ static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_report = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_xbox_char_hid_map = {
+static pbdrv_bluetooth_peripheral_char_t pb_type_xbox_char_hid_map = {
     .uuid16 = 0x2a4b,
     .request_notification = false,
 };
@@ -75,17 +75,40 @@ typedef struct __attribute__((packed)) {
     uint8_t paddles;
 } xbox_input_map_t;
 
-typedef struct {
-    xbox_input_map_t state;
-} pb_xbox_t;
-
-static pb_xbox_t pb_xbox_singleton;
+typedef struct _pb_type_xbox_obj_t {
+    mp_obj_base_t base;
+    /**
+     * The peripheral instance associated with this MicroPython object.
+     */
+    pbdrv_bluetooth_peripheral_t *peripheral;
+    /**
+     * Buttons object on the Xbox Controller instance.
+     */
+    mp_obj_t buttons;
+    /**
+     * Threshold below which joystick reports zero to avoid drift.
+     */
+    mp_int_t joystick_deadzone;
+    /**
+     * State of awaitable used for connecting and writing.
+     */
+    pb_type_async_t *iter;
+    /**
+     * Button and joystick state (populated by notification handler).
+     */
+    xbox_input_map_t input_map;
+} pb_type_xbox_obj_t;
 
 // Handles LEGO Wireless protocol messages from the XBOX Device.
 static void handle_notification(void *user, const uint8_t *value, uint32_t size) {
-    pb_xbox_t *xbox = &pb_xbox_singleton;
+
+    pb_type_xbox_obj_t *self = user;
+    if (!self) {
+        return;
+    }
+
     if (size <= sizeof(xbox_input_map_t)) {
-        memcpy(&xbox->state, &value[0], size);
+        memcpy(&self->input_map, &value[0], size);
     }
 }
 
@@ -159,27 +182,20 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_match
     return flags;
 }
 
-static void pb_xbox_assert_connected(void) {
+static xbox_input_map_t *pb_type_xbox_get_input(mp_obj_t self_in) {
+
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
         mp_raise_OSError(MP_ENODEV);
     }
+
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    return &self->input_map;
 }
 
-typedef struct _pb_type_xbox_obj_t {
-    mp_obj_base_t base;
-    mp_obj_t buttons;
-    mp_int_t joystick_deadzone;
-    pb_type_async_t *iter;
-} pb_type_xbox_obj_t;
+static mp_obj_t pb_type_xbox_button_pressed(mp_obj_t self_in) {
 
-static xbox_input_map_t *pb_xbox_get_buttons(void) {
-    xbox_input_map_t *buttons = &pb_xbox_singleton.state;
-    pb_xbox_assert_connected();
-    return buttons;
-}
-
-static mp_obj_t pb_xbox_button_pressed(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
 
     // At most 16 simultaneous button presses, plus up to two dpad directions.
     mp_obj_t items[16 + 2];
@@ -276,6 +292,11 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    // Get available peripheral instance.
+    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
+
     // Connect with bonding enabled. On some computers, the pairing step will
     // fail if the hub is still connected to Pybricks Code. Since it is unclear
     // which computer will have this problem, recommend to disconnect the hub
@@ -296,24 +317,24 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     // catch the case where user might not have done this at least once.
     // Connecting takes about a second longer this way, but we can provide
     // better error messages.
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_xbox_char_hid_map));
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_type_xbox_char_hid_map));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_xbox_char_hid_map));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_map));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     // This is the main characteristic that notifies us of button state.
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_xbox_char_hid_report));
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_type_xbox_char_hid_report));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_xbox_char_hid_report));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_report));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
@@ -360,6 +381,24 @@ static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
 
+static mp_obj_t pb_type_xbox_close(mp_obj_t self_in) {
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Disables notification handler from accessing allocated memory.
+    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_close_obj, pb_type_xbox_close);
+
+static mp_obj_t pb_type_xbox_disconnect(mp_obj_t self_in) {
+    // Needed to release claim on allocated data so we can make a new
+    // connection later.
+    pb_type_xbox_close(self_in);
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect());
+    return pb_type_xbox_await_operation(self_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_disconnect_obj, pb_type_xbox_disconnect);
+
+
 static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -373,17 +412,17 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     pb_module_tools_assert_blocking();
 
-    pb_type_xbox_obj_t *self = mp_obj_malloc(pb_type_xbox_obj_t, type);
+    pb_type_xbox_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_xbox_obj_t, type);
     self->joystick_deadzone = pb_obj_get_pct(joystick_deadzone_in);
     self->iter = NULL;
 
-    pb_xbox_t *xbox = &pb_xbox_singleton;
-    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_xbox_button_pressed);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_xbox_button_pressed);
 
-    // needed to ensure that no buttons are "pressed" after reconnecting since
-    // we are using static memory
-    memset(&xbox->state, 0, sizeof(xbox_input_map_t));
-    xbox->state.x = xbox->state.y = xbox->state.z = xbox->state.rz = INT16_MAX;
+    // needed to ensure that no buttons are "pressed" since we are using
+    // allocated memory
+    xbox_input_map_t *input = &self->input_map;
+    memset(input, 0, sizeof(xbox_input_map_t));
+    input->x = input->y = input->z = input->rz = INT16_MAX;
 
     // Xbox Controller requires pairing.
     scan_config.options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
@@ -403,16 +442,18 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-static mp_obj_t pb_xbox_name(size_t n_args, const mp_obj_t *args) {
-    pb_xbox_assert_connected();
+static mp_obj_t pb_type_xbox_name(size_t n_args, const mp_obj_t *args) {
+    // Asserts connection.
+    pb_type_xbox_get_input(args[0]);
+
     const char *name = pbdrv_bluetooth_peripheral_get_name();
     return mp_obj_new_str(name, strlen(name));
 }
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_xbox_name_obj, 1, 2, pb_xbox_name);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_type_xbox_name_obj, 1, 2, pb_type_xbox_name);
 
-static mp_obj_t pb_xbox_state(mp_obj_t self_in) {
+static mp_obj_t pb_type_xbox_state(mp_obj_t self_in) {
 
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
 
     mp_obj_t state[] = {
         mp_obj_new_int(buttons->x - INT16_MAX),
@@ -430,21 +471,21 @@ static mp_obj_t pb_xbox_state(mp_obj_t self_in) {
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(state), state);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_state_obj, pb_xbox_state);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_state_obj, pb_type_xbox_state);
 
-static mp_obj_t pb_xbox_dpad(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+static mp_obj_t pb_type_xbox_dpad(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
     return mp_obj_new_int(buttons->dpad);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_dpad_obj, pb_xbox_dpad);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_dpad_obj, pb_type_xbox_dpad);
 
-static mp_obj_t pb_xbox_profile(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+static mp_obj_t pb_type_xbox_profile(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
     return mp_obj_new_int(buttons->profile);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_profile_obj, pb_xbox_profile);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_profile_obj, pb_type_xbox_profile);
 
-static mp_obj_t pb_xbox_joystick(mp_obj_t self_in, uint16_t x_raw, uint16_t y_raw) {
+static mp_obj_t pb_type_xbox_joystick(mp_obj_t self_in, uint16_t x_raw, uint16_t y_raw) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     mp_int_t x = (x_raw - INT16_MAX) * 100 / INT16_MAX;
@@ -464,27 +505,27 @@ static mp_obj_t pb_xbox_joystick(mp_obj_t self_in, uint16_t x_raw, uint16_t y_ra
     return mp_obj_new_tuple(MP_ARRAY_SIZE(directions), directions);
 }
 
-static mp_obj_t pb_xbox_joystick_left(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
-    return pb_xbox_joystick(self_in, buttons->x, buttons->y);
+static mp_obj_t pb_type_xbox_joystick_left(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
+    return pb_type_xbox_joystick(self_in, buttons->x, buttons->y);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_left_obj, pb_xbox_joystick_left);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_joystick_left_obj, pb_type_xbox_joystick_left);
 
-static mp_obj_t pb_xbox_joystick_right(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
-    return pb_xbox_joystick(self_in, buttons->z, buttons->rz);
+static mp_obj_t pb_type_xbox_joystick_right(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
+    return pb_type_xbox_joystick(self_in, buttons->z, buttons->rz);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_joystick_right_obj, pb_xbox_joystick_right);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_joystick_right_obj, pb_type_xbox_joystick_right);
 
-static mp_obj_t pb_xbox_triggers(mp_obj_t self_in) {
-    xbox_input_map_t *buttons = pb_xbox_get_buttons();
+static mp_obj_t pb_type_xbox_triggers(mp_obj_t self_in) {
+    xbox_input_map_t *buttons = pb_type_xbox_get_input(self_in);
     mp_obj_t tiggers[] = {
         mp_obj_new_int(buttons->left_trigger * 100 / 1023),
         mp_obj_new_int(buttons->right_trigger * 100 / 1023),
     };
     return mp_obj_new_tuple(MP_ARRAY_SIZE(tiggers), tiggers);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_xbox_triggers_obj, pb_xbox_triggers);
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_triggers_obj, pb_type_xbox_triggers);
 
 typedef struct {
     uint8_t activation_flags;
@@ -497,7 +538,7 @@ typedef struct {
     uint8_t repetitions;
 } __attribute__((packed)) xbox_rumble_command_t;
 
-static mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_xbox_obj_t, self,
         PB_ARG_DEFAULT_INT(power, 100),
@@ -564,17 +605,19 @@ static mp_obj_t pb_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_map_t
     pbdrv_bluetooth_peripheral_write_characteristic(handle, (const uint8_t *)&command, sizeof(command));
     return pb_type_xbox_await_operation(MP_OBJ_TO_PTR(self));
 }
-static MP_DEFINE_CONST_FUN_OBJ_KW(pb_xbox_rumble_obj, 1, pb_xbox_rumble);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_xbox_rumble_obj, 1, pb_type_xbox_rumble);
 
 static const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_xbox_name_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_xbox_state_obj) },
-    { MP_ROM_QSTR(MP_QSTR_dpad), MP_ROM_PTR(&pb_xbox_dpad_obj) },
-    { MP_ROM_QSTR(MP_QSTR_profile), MP_ROM_PTR(&pb_xbox_profile_obj) },
-    { MP_ROM_QSTR(MP_QSTR_joystick_left), MP_ROM_PTR(&pb_xbox_joystick_left_obj) },
-    { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_xbox_joystick_right_obj) },
-    { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_xbox_triggers_obj) },
-    { MP_ROM_QSTR(MP_QSTR_rumble), MP_ROM_PTR(&pb_xbox_rumble_obj) },
+    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_xbox_name_obj)  },
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_xbox_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_xbox_disconnect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_type_xbox_state_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dpad), MP_ROM_PTR(&pb_type_xbox_dpad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_profile), MP_ROM_PTR(&pb_type_xbox_profile_obj) },
+    { MP_ROM_QSTR(MP_QSTR_joystick_left), MP_ROM_PTR(&pb_type_xbox_joystick_left_obj) },
+    { MP_ROM_QSTR(MP_QSTR_joystick_right), MP_ROM_PTR(&pb_type_xbox_joystick_right_obj) },
+    { MP_ROM_QSTR(MP_QSTR_triggers), MP_ROM_PTR(&pb_type_xbox_triggers_obj) },
+    { MP_ROM_QSTR(MP_QSTR_rumble), MP_ROM_PTR(&pb_type_xbox_rumble_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_xbox_locals_dict, pb_type_xbox_locals_dict_table);
 
