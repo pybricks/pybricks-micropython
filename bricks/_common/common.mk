@@ -134,7 +134,9 @@ INC += -I$(PBTOP)/lib/btstack/chipset/bcm
 INC += -I$(PBTOP)/lib/btstack/chipset/intel
 INC += -I$(PBTOP)/lib/btstack/chipset/realtek
 INC += -I$(PBTOP)/lib/btstack/chipset/zephyr
+ifneq ($(CI_MODE),1)
 INC += $(shell pkg-config libusb-1.0 --cflags)
+endif
 endif
 endif
 ifeq ($(PB_LIB_LSM6DS3TR_C),1)
@@ -167,6 +169,10 @@ TEXT0_ADDR ?= 0x08000000
 ifeq ($(PB_MCU_FAMILY),native)
 UNAME_S := $(shell uname -s)
 LD = $(CC)
+ifeq ($(CI_MODE),1)
+COPT = -DPBDRV_CONFIG_RUN_ON_CI
+else
+endif
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
 ifeq ($(UNAME_S),Linux)
 LDFLAGS += -Wl,-Map=$@.map,--cref -Wl,--gc-sections
@@ -175,7 +181,9 @@ LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
 endif
 LIBS = -lm
 ifeq ($(PB_LIB_BTSTACK),lowenergy)
+ifneq ($(CI_MODE),1)
 LIBS += $(shell pkg-config libusb-1.0 --libs)
+endif
 endif
 else # end native, begin embedded
 CROSS_COMPILE ?= arm-none-eabi-
@@ -562,14 +570,18 @@ OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 
 ifeq ($(PB_LIB_BTSTACK),classic)
+ifneq ($(CI_MODE),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
 $(BUILD)/lib/btstack/%.o: CFLAGS += -Wno-error
 endif
+endif
 
 ifeq ($(PB_LIB_BTSTACK),lowenergy)
+ifneq ($(CI_MODE),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_BLE_SRC_C:.c=.o))
 $(BUILD)/lib/btstack/%.o: CFLAGS += -Wno-error
+endif
 endif
 
 ifeq ($(PB_LIB_STM32_HAL),1)

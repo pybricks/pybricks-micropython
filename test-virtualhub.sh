@@ -23,7 +23,7 @@ BUILD_DIR="$BRICK_DIR/$BUILD_DIR_NAME"
 PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 
 make mpy-cross -j
-make -s -j $(nproc --all) -C "$BRICK_DIR" BUILD="$BUILD_DIR_NAME" COPT=-DPBDRV_CONFIG_RUN_ON_CI
+make -s -j $(nproc --all) -C "$BRICK_DIR" BUILD="$BUILD_DIR_NAME" CI_MODE=1
 
 export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
 
