@@ -333,9 +333,9 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     };
 
     // set mode for left buttons
-    msg.port = REMOTE_PORT_LEFT_BUTTONS,
-    msg.mode = REMOTE_BUTTONS_MODE_KEYSD,
-    msg.enable_notifications = 1,
+    msg.port = REMOTE_PORT_LEFT_BUTTONS;
+    msg.mode = REMOTE_BUTTONS_MODE_KEYSD;
+    msg.enable_notifications = 1;
 
     err = pbdrv_bluetooth_peripheral_write_characteristic(pb_lwp3device_char.handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
