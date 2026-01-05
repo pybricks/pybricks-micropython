@@ -158,6 +158,9 @@ typedef struct {
     uint32_t timeout;
 } pbdrv_bluetooth_peripheral_connect_config_t;
 
+/** Platform-specific state needed to operate the peripheral. */
+typedef struct _pbdrv_bluetooth_peripheral_platform_state_t pbdrv_bluetooth_peripheral_platform_state_t;
+
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
@@ -185,6 +188,8 @@ struct _pbdrv_bluetooth_peripheral_t {
     pbio_os_timer_t watchdog;
     /** Cancellation requested */
     bool cancel;
+    /** Platform-specific state needed to operate the peripheral. */
+    pbdrv_bluetooth_peripheral_platform_state_t *platform_state;
 };
 
 /** Advertisement types. */
