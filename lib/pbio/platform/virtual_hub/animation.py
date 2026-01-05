@@ -62,7 +62,7 @@ def process_telemetry(payload):
     # Only supports motors for now.
     if len(payload) == 6:
         type_id, index, angle = struct.unpack("<bbi", payload[0:6])
-        if type_id == 96:
+        if type_id == 94:  # REVISIT: Align with firmware
             angles[index] = angle
 
 

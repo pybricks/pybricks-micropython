@@ -35,16 +35,20 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Only care about stdout in this simulation.
-    if (size < 2 || data[0] != PBIO_PYBRICKS_IN_EP_MSG_EVENT || data[1] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
-        return PBIO_SUCCESS;
+
+    // Stdout also goes to native stdout.
+    if (size > 2 && data[0] == PBIO_PYBRICKS_IN_EP_MSG_EVENT && data[1] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
+        int ret = write(STDOUT_FILENO, data + 2, size - 2);
+        (void)ret;
     }
 
-    int ret = write(STDOUT_FILENO, data + 2, size - 2);
-    (void)ret;
+    #ifndef PBDRV_CONFIG_RUN_ON_CI
+    extern void virtual_hub_socket_send(const uint8_t *data, uint32_t size);
+    virtual_hub_socket_send(data + 1, size - 1);
+    #endif
 
     // Simulate some I/O time.
-    PBIO_OS_AWAIT_MS(state, &timer, 2);
+    PBIO_OS_AWAIT_MS(state, &timer, 1);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
