@@ -311,13 +311,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             break;
         case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT: {
             DEBUG_PRINT("GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT\n");
-            hci_con_handle_t handle = gatt_event_characteristic_value_query_result_get_handle(packet);
-            uint16_t value_handle = gatt_event_characteristic_value_query_result_get_value_handle(packet);
-            uint16_t value_length = gatt_event_characteristic_value_query_result_get_value_length(packet);
-            if (peri->con_handle == handle && peri->char_now->handle == value_handle) {
-                peri->char_now->value_len = gatt_event_characteristic_value_query_result_get_value_length(packet);
-                memcpy(peri->char_now->value, gatt_event_characteristic_value_query_result_get_value(packet), value_length);
-            }
             break;
         }
         case GATT_EVENT_QUERY_COMPLETE:
@@ -826,17 +819,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     gatt_client_listen_for_characteristic_value_updates(
         &peri->platform_state->notification, packet_handler, peri->con_handle, current_char);
 
-    // REVISIT: Drop this legacy state when all tasks converted.
-    peri->platform_state->con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
-    peri->platform_state->con_state = CON_STATE_CONNECTED;
-    peri->platform_state->btstack_error = ERROR_CODE_SUCCESS;
-
-    PBIO_OS_ASYNC_END(peri->char_now->handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+
+    uint8_t btstack_error;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -847,27 +837,38 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
     gatt_client_characteristic_t characteristic = {
         .value_handle = peri->char_now->handle,
     };
-    peri->platform_state->btstack_error = gatt_client_read_value_of_characteristic(packet_handler, peri->con_handle, &characteristic);
-
-    if (peri->platform_state->btstack_error == ERROR_CODE_SUCCESS) {
-        peri->platform_state->con_state = CON_STATE_WAIT_READ_CHARACTERISTIC;
-    } else {
-        // configuration failed for some reason, so disconnect
-        gap_disconnect(peri->con_handle);
-        peri->platform_state->con_state = CON_STATE_WAIT_DISCONNECT;
-        peri->platform_state->disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+    btstack_error = gatt_client_read_value_of_characteristic(packet_handler, peri->con_handle, &characteristic);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
     }
 
+    // Await until read is complete, processing the result along the way.
     PBIO_OS_AWAIT_UNTIL(state, ({
-        // if there is any error while reading, con_state will be set to CON_STATE_NONE
-        if (peri->platform_state->con_state == CON_STATE_NONE) {
-            return PBIO_ERROR_FAILED;
+
+        // Got disconnected while waiting.
+        if (peri->con_handle == HCI_CON_HANDLE_INVALID) {
+            return PBIO_ERROR_NO_DEV;
         }
-        peri->platform_state->con_state == CON_STATE_READ_CHARACTERISTIC_COMPLETE;
+
+        // Cache the result.
+        if (hci_event_is_type(event_packet, GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT) &&
+            gatt_event_characteristic_value_query_result_get_handle(event_packet) == peri->con_handle &&
+            gatt_event_characteristic_value_query_result_get_value_handle(event_packet) == peri->char_now->handle
+            ) {
+            peri->char_now->value_len = gatt_event_characteristic_value_query_result_get_value_length(event_packet);
+            memcpy(peri->char_now->value, gatt_event_characteristic_value_query_result_get_value(event_packet), peri->char_now->value_len);
+        }
+
+        // The wait until condition: read complete.
+        hci_event_is_type(event_packet, GATT_EVENT_QUERY_COMPLETE) &&
+        gatt_event_query_complete_get_handle(event_packet) == peri->con_handle;
     }));
 
-    // State state back to simply connected, so we can discover other characteristics.
-    peri->platform_state->con_state = CON_STATE_CONNECTED;
+    // Result of read operation.
+    btstack_error = gatt_event_query_complete_get_att_status(event_packet);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
+    }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
