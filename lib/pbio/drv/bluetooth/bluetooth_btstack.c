@@ -666,11 +666,6 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static void start_observing(void) {
-    gap_set_scan_params(0, 0x30, 0x30, 0);
-    gap_start_scan();
-}
-
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
@@ -877,32 +872,39 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
+    uint8_t btstack_error;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
-    uint8_t err = gatt_client_write_value_of_characteristic(packet_handler,
+    btstack_error = gatt_client_write_value_of_characteristic(packet_handler,
         peri->con_handle,
         pbdrv_bluetooth_char_write_handle,
         pbdrv_bluetooth_char_write_size,
         pbdrv_bluetooth_char_write_data
         );
 
-    if (err != ERROR_CODE_SUCCESS) {
-        return att_error_to_pbio_error(err);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
     }
 
-    // NB: Value buffer must remain valid until GATT_EVENT_QUERY_COMPLETE, so
-    // this wait is not cancelable.
     PBIO_OS_AWAIT_UNTIL(state, ({
         if (peri->con_handle == HCI_CON_HANDLE_INVALID) {
             // disconnected
             return PBIO_ERROR_NO_DEV;
         }
-        event_packet &&
-        hci_event_packet_get_type(event_packet) == GATT_EVENT_QUERY_COMPLETE &&
+
+        // The wait until condition: write complete.
+        hci_event_is_type(event_packet, GATT_EVENT_QUERY_COMPLETE) &&
         gatt_event_query_complete_get_handle(event_packet) == peri->con_handle;
     }));
 
-    PBIO_OS_ASYNC_END(att_error_to_pbio_error(gatt_event_query_complete_get_att_status(event_packet)));
+    // Result of write operation.
+    btstack_error = gatt_event_query_complete_get_att_status(event_packet);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
@@ -913,9 +915,8 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 
     if (peri->con_handle != HCI_CON_HANDLE_INVALID) {
         gap_disconnect(peri->con_handle);
+        PBIO_OS_AWAIT_UNTIL(state, peri->con_handle == HCI_CON_HANDLE_INVALID);
     }
-
-    PBIO_OS_AWAIT_UNTIL(state, peri->con_handle == HCI_CON_HANDLE_INVALID);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -948,7 +949,8 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (!pbdrv_bluetooth_is_observing) {
-        start_observing();
+        gap_set_scan_params(0, 0x30, 0x30, 0);
+        gap_start_scan();
         pbdrv_bluetooth_is_observing = true;
         // REVISIT: use callback to await operation
     }
