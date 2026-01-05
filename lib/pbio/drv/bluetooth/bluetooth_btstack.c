@@ -156,6 +156,10 @@ static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) 
     pybricks_con_handle = value ? tx_con_handle : HCI_CON_HANDLE_INVALID;
 }
 
+static bool hci_event_is_type(uint8_t *packet, uint8_t event_type) {
+    return packet && hci_event_packet_get_type(packet) == event_type;
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 static pbio_os_state_t bluetooth_thread_state;
@@ -302,17 +306,11 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             gatt_event_service_query_result_get_service(packet, &service);
             break;
         }
-        case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT: {
-            gatt_client_characteristic_t found_char;
-            gatt_event_characteristic_query_result_get_characteristic(packet, &found_char);
-            // We only care about the one characteristic that has at least the requested properties.
-            if ((found_char.properties & peri->char_now->properties) == peri->char_now->properties) {
-                peri->char_now->handle = found_char.value_handle;
-                gatt_event_characteristic_query_result_get_characteristic(packet, &peri->platform_state->current_char);
-            }
+        case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT:
+            DEBUG_PRINT("GATT_EVENT_CHARACTERISTIC_QUERY_RESULT\n");
             break;
-        }
         case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT: {
+            DEBUG_PRINT("GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT\n");
             hci_con_handle_t handle = gatt_event_characteristic_value_query_result_get_handle(packet);
             uint16_t value_handle = gatt_event_characteristic_value_query_result_get_value_handle(packet);
             uint16_t value_length = gatt_event_characteristic_value_query_result_get_value_length(packet);
@@ -323,34 +321,11 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             break;
         }
         case GATT_EVENT_QUERY_COMPLETE:
+            DEBUG_PRINT("GATT_EVENT_QUERY_COMPLETE\n");
+
             if (peri->platform_state->con_state == CON_STATE_WAIT_READ_CHARACTERISTIC) {
                 // Done reading characteristic.
                 peri->platform_state->con_state = CON_STATE_READ_CHARACTERISTIC_COMPLETE;
-            } else if (peri->platform_state->con_state == CON_STATE_WAIT_DISCOVER_CHARACTERISTICS) {
-
-                // Discovered characteristics, ready enable notifications.
-                if (!peri->char_now->request_notification) {
-                    // If no notification is requested, we are done.
-                    peri->platform_state->con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
-                    break;
-                }
-
-                peri->platform_state->btstack_error = gatt_client_write_client_characteristic_configuration(
-                    packet_handler, peri->con_handle, &peri->platform_state->current_char,
-                    GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
-                if (peri->platform_state->btstack_error == ERROR_CODE_SUCCESS) {
-                    gatt_client_listen_for_characteristic_value_updates(
-                        &peri->platform_state->notification, packet_handler, peri->con_handle, &peri->platform_state->current_char);
-                    peri->platform_state->con_state = CON_STATE_WAIT_ENABLE_NOTIFICATIONS;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(peri->con_handle);
-                    peri->platform_state->con_state = CON_STATE_WAIT_DISCONNECT;
-                    peri->platform_state->disconnect_reason = DISCONNECT_REASON_CONFIGURE_CHARACTERISTIC_FAILED;
-                }
-            } else if (peri->platform_state->con_state == CON_STATE_WAIT_ENABLE_NOTIFICATIONS) {
-                // Done enabling notifications.
-                peri->platform_state->con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
             }
             break;
 
@@ -753,39 +728,108 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
 
     pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    gatt_client_characteristic_t *current_char = &peri->platform_state->current_char;
+
+    uint8_t btstack_error;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    if (peri->platform_state->con_state != CON_STATE_CONNECTED) {
-        return PBIO_ERROR_FAILED;
-    }
+    // Nothing found to begin with.
+    peri->char_now->handle = 0;
 
-    peri->platform_state->con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
     uint16_t handle_max = peri->char_now->handle_max ? peri->char_now->handle_max : 0xffff;
-    peri->platform_state->btstack_error = peri->char_now->uuid16 ?
+
+    // Start characteristic discovery.
+    btstack_error = peri->char_now->uuid16 ?
         gatt_client_discover_characteristics_for_handle_range_by_uuid16(
         packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid16) :
         gatt_client_discover_characteristics_for_handle_range_by_uuid128(
         packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid128);
-
-    if (peri->platform_state->btstack_error != ERROR_CODE_SUCCESS) {
-        // configuration failed for some reason, so disconnect
-        gap_disconnect(peri->con_handle);
-        peri->platform_state->con_state = CON_STATE_WAIT_DISCONNECT;
-        peri->platform_state->disconnect_reason = DISCONNECT_REASON_DISCOVER_CHARACTERISTIC_FAILED;
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
     }
 
+    // Await until discovery is complete, processing each discovered
+    // characteristic along the way to see if it matches what we need.
     PBIO_OS_AWAIT_UNTIL(state, ({
-        // if there is any error while enumerating
-        // attributes, con_state will be set to CON_STATE_NONE
-        if (peri->platform_state->con_state == CON_STATE_NONE) {
-            return PBIO_ERROR_FAILED;
+
+        // Got disconnected while waiting.
+        if (peri->con_handle == HCI_CON_HANDLE_INVALID) {
+            return PBIO_ERROR_NO_DEV;
         }
-        peri->platform_state->con_state == CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
+
+        // Process a discovered characteristic, saving only the first match.
+        if (!peri->char_now->handle &&
+            hci_event_is_type(event_packet, GATT_EVENT_CHARACTERISTIC_QUERY_RESULT) &&
+            gatt_event_characteristic_query_result_get_handle(event_packet) == peri->con_handle) {
+
+            // Unpack the result.
+            gatt_event_characteristic_query_result_get_characteristic(event_packet, current_char);
+
+            // We only care about the one characteristic that has at least the requested properties.
+            if ((current_char->properties & peri->char_now->properties) == peri->char_now->properties) {
+                DEBUG_PRINT("Found characteristic handle: 0x%04x with properties 0x%04x \n", current_char->value_handle, current_char->properties);
+                peri->char_now->handle = current_char->value_handle;
+                peri->char_now->handle_max = current_char->end_handle;
+            }
+        }
+
+        // The wait until condition: discovery complete.
+        hci_event_is_type(event_packet, GATT_EVENT_QUERY_COMPLETE) &&
+        gatt_event_query_complete_get_handle(event_packet) == peri->con_handle;
     }));
 
-    // State state back to simply connected, so we can discover other characteristics.
+    // Result of discovery.
+    btstack_error = gatt_event_query_complete_get_att_status(event_packet);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
+    }
+
+    if (!peri->char_now->handle) {
+        // Characteristic not found.
+        return PBIO_ERROR_FAILED;
+    }
+
+    // If no notification is requested, we are done.
+    if (!peri->char_now->request_notification) {
+        // Success if we found the characteristic.
+        return peri->char_now->handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
+    }
+
+    // Discovered characteristics, ready to enable notifications.
+    btstack_error = gatt_client_write_client_characteristic_configuration(
+        packet_handler, peri->con_handle, current_char, GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION);
+
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
+    }
+
+    // We will be waiting for another GATT_EVENT_QUERY_COMPLETE, but the
+    // current event is exactly this, so yield and wait for the next one.
+    PBIO_OS_AWAIT_ONCE(state);
+
+    PBIO_OS_AWAIT_UNTIL(state, ({
+        if (peri->con_handle == HCI_CON_HANDLE_INVALID) {
+            return PBIO_ERROR_NO_DEV;
+        }
+        hci_event_is_type(event_packet, GATT_EVENT_QUERY_COMPLETE) &&
+        gatt_event_query_complete_get_handle(event_packet) == peri->con_handle;
+    }));
+
+    // Result of enabling notifications.
+    btstack_error = gatt_event_query_complete_get_att_status(event_packet);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        return att_error_to_pbio_error(btstack_error);
+    }
+
+    // Register notification handler.
+    gatt_client_listen_for_characteristic_value_updates(
+        &peri->platform_state->notification, packet_handler, peri->con_handle, current_char);
+
+    // REVISIT: Drop this legacy state when all tasks converted.
+    peri->platform_state->con_state = CON_STATE_DISCOVERY_AND_NOTIFICATIONS_COMPLETE;
     peri->platform_state->con_state = CON_STATE_CONNECTED;
+    peri->platform_state->btstack_error = ERROR_CODE_SUCCESS;
 
     PBIO_OS_ASYNC_END(peri->char_now->handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED);
 }
@@ -842,7 +886,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
         );
 
     if (err != ERROR_CODE_SUCCESS) {
-        return PBIO_ERROR_FAILED;
+        return att_error_to_pbio_error(err);
     }
 
     // NB: Value buffer must remain valid until GATT_EVENT_QUERY_COMPLETE, so

@@ -76,7 +76,7 @@ static const uint8_t pbio_lwp3_hub_service_uuid[] = {
  */
 static pbdrv_bluetooth_peripheral_char_t pb_lwp3device_char = {
     .handle = 0, // Will be set during discovery.
-    .properties = 0,
+    .properties = 0x001c, // Notify, Write Without Response, Write
     .uuid16 = 0,
     .uuid128 = {
         0x00, 0x00, 0x16, 0x24, 0x12, 0x12, 0xEF, 0xDE,
