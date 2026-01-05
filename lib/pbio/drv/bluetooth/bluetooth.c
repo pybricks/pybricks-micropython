@@ -195,15 +195,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
         return PBIO_ERROR_BUSY;
     }
 
-    // Reset peripheral instance but keep user reference.
-    void *user = peri->user;
-    memset(peri, 0, sizeof(pbdrv_bluetooth_peripheral_t));
-    peri->user = user;
+    // Used to compare subsequent advertisements, so we should reset it.
+    memset(peri->bdaddr, 0, sizeof(peri->bdaddr));
 
     // Initialize operation for handling on the main thread.
     peri->config = config;
     peri->func = pbdrv_bluetooth_peripheral_scan_and_connect_func;
     peri->err = PBIO_ERROR_AGAIN;
+    peri->cancel = false;
     pbio_os_timer_set(&peri->timer, config->timeout);
     pbio_os_request_poll();
 
