@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 // Common Bluetooth driver code
 
@@ -195,6 +195,11 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
         return PBIO_ERROR_BUSY;
     }
 
+    // Must provide matchers.
+    if (!config || !config->match_adv || !config->match_adv_rsp) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     // Used to compare subsequent advertisements, so we should reset it.
     memset(peri->bdaddr, 0, sizeof(peri->bdaddr));
 
@@ -311,6 +316,7 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
 
 void pbdrv_bluetooth_cancel_operation_request(void) {
     // Only some peripheral actions support cancellation.
+    DEBUG_PRINT("Bluetooth operation cancel requested.\n");
     peripheral_singleton.cancel = true;
 }
 
@@ -645,6 +651,7 @@ void pbdrv_bluetooth_deinit(void) {
     // is, a task got stuck, so exit forcefully.
     if (advertising_or_scan_err == PBIO_ERROR_AGAIN || peripheral_singleton.err == PBIO_ERROR_AGAIN) {
         // Hard reset without waiting on completion of any process.
+        DEBUG_PRINT("Bluetooth deinit: forcing hard reset due to busy tasks.\n");
         pbdrv_bluetooth_controller_reset_hard();
         return;
     }

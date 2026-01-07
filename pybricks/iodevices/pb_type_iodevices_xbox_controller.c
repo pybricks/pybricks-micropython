@@ -12,6 +12,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbio/button.h>
 #include <pbio/color.h>
+#include <pbio/debug.h>
 #include <pbio/error.h>
 #include <pbsys/config.h>
 #include <pbsys/storage_settings.h>
@@ -30,7 +31,7 @@
 
 #define DEBUG 0
 #if DEBUG
-#define DEBUG_PRINT(...) mp_printf(&mp_plat_print, __VA_ARGS__)
+#define DEBUG_PRINT pbio_debug
 #else
 #define DEBUG_PRINT(...)
 #endif
@@ -81,6 +82,10 @@ typedef struct _pb_type_xbox_obj_t {
      * The peripheral instance associated with this MicroPython object.
      */
     pbdrv_bluetooth_peripheral_t *peripheral;
+    /**
+     * Timer used to delay between connection attempts.
+     */
+    pbio_os_timer_t retry_timer;
     /**
      * Buttons object on the Xbox Controller instance.
      */
@@ -290,27 +295,31 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
 
     pbio_error_t err;
 
-    PBIO_OS_ASYNC_BEGIN(state);
-
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    PBIO_OS_ASYNC_BEGIN(state);
 
     // Get available peripheral instance.
     pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
+    pbio_os_timer_set(&self->retry_timer, 0);
 
-    // Connect with bonding enabled. On some computers, the pairing step will
-    // fail if the hub is still connected to Pybricks Code. Since it is unclear
-    // which computer will have this problem, recommend to disconnect the hub
-    // if this happens.
+    // Connect with bonding enabled. On Technic Hub, the driver will take care
+    // of disconnecting from Pybricks Code if needed.
+retry:
+    DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
-    if (err == PBIO_ERROR_INVALID_OP) {
-        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
-            "Failed to pair. Disconnect the hub from the computer "
-            "and re-start the program with the green button on the hub\n."
-            ));
+
+    // On Prime Hub, connecting can fail for a variety of reasons. A second
+    // attempt usually succeeds.
+    if (err != PBIO_SUCCESS && !self->retry_timer.duration) {
+        DEBUG_PRINT("XBOX controller failed to connect with error %d.\n", err);
+        PBIO_OS_AWAIT_MS(state, &self->retry_timer, 2000);
+        goto retry;
     }
+
     pb_assert(err);
-    DEBUG_PRINT("Connected to XBOX controller.\n");
+    DEBUG_PRINT("Connected to XBOX controller. Discovering HID map.\n");
 
     // It seems we need to read the (unused) map only once after pairing
     // to make the controller active. We'll still read it every time to
@@ -322,6 +331,8 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
+
+    DEBUG_PRINT("Read HID map.\n");
     pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_map));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
@@ -329,11 +340,14 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     }
 
     // This is the main characteristic that notifies us of button state.
+    DEBUG_PRINT("Discover HID report.\n");
     pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_type_xbox_char_hid_report));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
+
+    DEBUG_PRINT("Read HID report.\n");
     pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_report));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
     if (err != PBIO_SUCCESS) {
@@ -343,9 +357,11 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     return PBIO_SUCCESS;
 
 disconnect:
-    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
-    pbdrv_bluetooth_peripheral_disconnect();
-    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    DEBUG_PRINT("Going to disconnect because of a failure with code %d at line %u.\n", err, *state);
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect());
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    DEBUG_PRINT("Disconnect with error code %d.\n", err);
+    pb_assert(err);
 
     // If the controller was most recently connected to another device like the
     // actual Xbox or a phone, the controller needs to be not just turned on,
@@ -356,7 +372,7 @@ disconnect:
 
     mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
         "Connected, but not allowed to read buttons. "
-        "Is the controller in pairing mode?"
+        "Try putting the controller in pairing mode."
         ));
 
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);

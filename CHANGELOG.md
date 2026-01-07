@@ -33,7 +33,9 @@
 - Fixed Powered Up remote and Xbox Controller working only after the first
   connection. All of the above Remote and Xbox Controller were introduced in
   the previous beta release, so did not affect any stable release ([support#2521]).
+- Fixed Xbox Controller sometimes not working the first time ([support#1509]).
 
+[support#1509]: https://github.com/pybricks/support/issues/1509
 [support#1962]: https://github.com/pybricks/support/issues/1962
 [support#2468]: https://github.com/pybricks/support/issues/2468
 [support#2497]: https://github.com/pybricks/support/issues/2497

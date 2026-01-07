@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
-
-/**
- * @addtogroup Main Library initialization and events
- * @{
- */
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -18,6 +13,15 @@
 #include <pbio/light_animation.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
+
+#define DEBUG 0
+
+#if DEBUG
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
+#else
+#define DEBUG_PRINT(...)
+#endif
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
@@ -80,10 +84,14 @@ pbio_error_t pbio_main_stop_application_resources(void) {
     pbio_os_timer_t timer;
     pbio_os_timer_set(&timer, 5000);
 
+    DEBUG_PRINT("Waiting for Bluetooth user tasks to close...\n");
+
     // Run event loop until Bluetooth is idle or times out.
     while ((err = pbdrv_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
         pbio_os_run_processes_and_wait_for_event();
     }
+
+    DEBUG_PRINT("Bluetooth user tasks closed with err %d.\n", err);
 
     #if PBIO_CONFIG_LIGHT
     pbio_light_animation_stop_all();
@@ -98,5 +106,3 @@ pbio_error_t pbio_main_stop_application_resources(void) {
 
     return err;
 }
-
-/** @} */
