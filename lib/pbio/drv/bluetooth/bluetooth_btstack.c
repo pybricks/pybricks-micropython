@@ -132,7 +132,11 @@ static pbio_error_t att_error_to_pbio_error(uint8_t status) {
             return PBIO_ERROR_NO_DEV;
         case ATT_ERROR_TIMEOUT:
             return PBIO_ERROR_TIMEDOUT;
+        case BTSTACK_MEMORY_ALLOC_FAILED:
+            DEBUG_PRINT("BTstack out of memory.\n");
+        // fallthrough
         default:
+            DEBUG_PRINT("Failed with status.%d\n", status);
             return PBIO_ERROR_FAILED;
     }
 }
@@ -718,6 +722,7 @@ start_scan:
 
     // We are done if no pairing is requested.
     if (!peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) {
+        DEBUG_PRINT("Simple connection done.\n");
         return PBIO_SUCCESS;
     }
 
