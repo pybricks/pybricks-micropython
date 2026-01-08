@@ -16,6 +16,9 @@
 - Improved color detection when using default colors. Also changed the HSV calculation
   for the SPIKE Color Sensor and Boost Color and Distance Sensor to make them
   more similar. User code should measure HSV values again in old code ([pybricks-micropython#421]).
+- Reduced user stack size to `12 KB` on SPIKE Prime Hub to make it the same as
+  SPIKE Essential Hub. This frees up some RAM for system resources, and we never
+  use this much in practice.
 
 ### Fixed
 - Fixed `race=False` ignored in `pybricks.tools.multitask()` ([support#2468]).
