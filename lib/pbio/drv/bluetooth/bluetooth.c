@@ -225,6 +225,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(void) {
 
     // Pass silently for already disconnected.
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+        peri->err = PBIO_SUCCESS;
         return PBIO_SUCCESS;
     }
 
@@ -345,6 +346,7 @@ pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {
     // Already in requested state. This makes it safe to call stop advertising
     // even if it already stopped on becoming connected;
     if (start == is_advertising) {
+        advertising_or_scan_err = PBIO_SUCCESS;
         return PBIO_SUCCESS;
     }
 
@@ -389,6 +391,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
 
         if (!is_broadcasting) {
             // Already stopped.
+            advertising_or_scan_err = PBIO_SUCCESS;
             return PBIO_SUCCESS;
         }
         advertising_or_scan_err = PBIO_ERROR_AGAIN;
@@ -400,6 +403,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
     // Avoid I/O operations if the user tries to broadcast the same data
     // over and over in a tight loop.
     if (is_broadcasting && pbdrv_bluetooth_broadcast_data_size == size && !memcmp(pbdrv_bluetooth_broadcast_data, data, size)) {
+        advertising_or_scan_err = PBIO_SUCCESS;
         return PBIO_SUCCESS;
     }
     pbdrv_bluetooth_broadcast_data_size = size;
@@ -431,6 +435,7 @@ pbio_error_t pbdrv_bluetooth_start_observing(pbdrv_bluetooth_start_observing_cal
     bool should_observe = callback ? true : false;
 
     if (should_observe == pbdrv_bluetooth_is_observing) {
+        advertising_or_scan_err = PBIO_SUCCESS;
         return PBIO_SUCCESS;
     }
 
