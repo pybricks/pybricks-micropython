@@ -189,11 +189,11 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_match
 
 static xbox_input_map_t *pb_type_xbox_get_input(mp_obj_t self_in) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
-        mp_raise_OSError(MP_ENODEV);
-    }
-
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
 
     return &self->input_map;
 }

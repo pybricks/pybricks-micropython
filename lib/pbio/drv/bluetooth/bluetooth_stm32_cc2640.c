@@ -143,6 +143,19 @@ static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_blueto
 // after a while.
 #define SCAN_RESTART_INTERVAL 3000
 
+static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+
+pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+    // This platform supports only a single peripheral instance. Some of its
+    // states are global variables listed above. This single instance is used
+    // troughout the event handler.
+    return &peripheral_singleton;
+}
+
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+    return peri == &peripheral_singleton && peri->con_handle != NO_CONNECTION;
+}
+
 /**
  * Converts a ble error code to the most appropriate pbio error code.
  * @param [in]  status      The ble error code.
@@ -345,10 +358,6 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     }
 
     if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && peripheral_singleton.con_handle != NO_CONNECTION) {
         return true;
     }
 
@@ -1308,7 +1317,6 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_HANDLE_VALUE_NOTI: {
                     // TODO: match callback to handle
                     // uint8_t attr_handle = (data[7] << 8) | data[6];
-                    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
                     if (peri->config->notification_handler) {
                         peri->config->notification_handler(peri->user, &data[8], pdu_len - 2);
                     }

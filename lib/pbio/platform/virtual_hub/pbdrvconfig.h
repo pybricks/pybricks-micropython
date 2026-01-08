@@ -11,6 +11,7 @@
 // Use Bluetooth simulation locally.
 #ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
+#define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE                   (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_POSIX                (1)

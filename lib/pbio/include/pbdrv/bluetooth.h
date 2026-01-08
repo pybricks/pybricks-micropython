@@ -30,8 +30,6 @@ typedef enum {
     PBDRV_BLUETOOTH_CONNECTION_PYBRICKS,
     /** The Nordic UART service. */
     PBDRV_BLUETOOTH_CONNECTION_UART,
-    /** A LEGO Powered Up Handset peripheral connection. */
-    PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL,
 } pbdrv_bluetooth_connection_t;
 
 /** Data structure that holds context needed for sending BLE notifications. */
@@ -374,6 +372,14 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user);
 
 /**
+ * Checks if the given peripheral is connected.
+ *
+ * @param [in]  peri    The peripheral to check.
+ * @return              True if connected, false otherwise.
+ */
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri);
+
+/**
  * Releases a peripheral instance for reuse by another user.
  *
  * @param [in]  peripheral   The peripheral instance to free.
@@ -595,6 +601,10 @@ static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
 
 static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peripheral) {
+    return false;
 }
 
 static inline void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {

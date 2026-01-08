@@ -24,6 +24,7 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE  (4 * 1024) // Must match FLASH_USER_0 + FLASH_USER_1 in linker script
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG        (1)
 
 #define PBDRV_CONFIG_BUTTON                         (1)

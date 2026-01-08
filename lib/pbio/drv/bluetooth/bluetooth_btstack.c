@@ -89,7 +89,17 @@ static struct _pbdrv_bluetooth_peripheral_platform_state_t {
      *  are set up such that only one char is discovered at a time
      */
     gatt_client_characteristic_t current_char;
-} peripheral_platform_state;
+} peripheral_platform_state[PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS];
+
+static pbdrv_bluetooth_peripheral_t _peripherals[PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS];
+
+pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+    if (index >= PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS) {
+        return NULL;
+    }
+    return &_peripherals[index];
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 // hub name goes in special section so that it can be modified when flashing firmware
@@ -183,7 +193,7 @@ static void pbdrv_bluetooth_peripheral_disconnect_now(pbdrv_bluetooth_peripheral
 /**
  * Checks if the given peripheral is connected.
  */
-static bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
     return peri->con_handle != HCI_CON_HANDLE_INVALID;
 }
 
@@ -236,9 +246,6 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && peripheral_singleton.con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
     return false;
@@ -307,10 +314,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     // Platform-specific platform handler has priority.
     pbdrv_bluetooth_btstack_platform_packet_handler(packet_type, channel, packet, size);
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
-    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
     switch (hci_event_packet_get_type(packet)) {
         case HCI_EVENT_COMMAND_COMPLETE: {
             const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
@@ -343,17 +346,19 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         case GATT_EVENT_QUERY_COMPLETE:
             DEBUG_PRINT("GATT_EVENT_QUERY_COMPLETE\n");
             break;
-        case GATT_EVENT_NOTIFICATION: {
-            if (gatt_event_notification_get_handle(packet) != peri->con_handle) {
-                break;
-            }
-            if (peri->config->notification_handler) {
-                uint16_t length = gatt_event_notification_get_value_length(packet);
-                const uint8_t *value = gatt_event_notification_get_value(packet);
-                peri->config->notification_handler(peri->user, value, length);
+        case GATT_EVENT_NOTIFICATION:
+            for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+                pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+                if (!peri || !peri->config || !peri->config->notification_handler) {
+                    continue;
+                }
+                if (gatt_event_notification_get_handle(packet) == peri->con_handle) {
+                    uint16_t length = gatt_event_notification_get_value_length(packet);
+                    const uint8_t *value = gatt_event_notification_get_value(packet);
+                    peri->config->notification_handler(peri->user, value, length);
+                }
             }
             break;
-        }
         case HCI_EVENT_LE_META:
             if (hci_event_le_meta_get_subevent_code(packet) != HCI_SUBEVENT_LE_CONNECTION_COMPLETE) {
                 break;
@@ -374,10 +379,15 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 le_con_handle = HCI_CON_HANDLE_INVALID;
                 pybricks_con_handle = HCI_CON_HANDLE_INVALID;
                 uart_con_handle = HCI_CON_HANDLE_INVALID;
-            } else if (hci_event_disconnection_complete_get_connection_handle(packet) == peri->con_handle) {
-                DEBUG_PRINT("Peripheral disconnected\n");
-                gatt_client_stop_listening_for_characteristic_value_updates(&peri->platform_state->notification);
-                peri->con_handle = HCI_CON_HANDLE_INVALID;
+            } else {
+                for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+                    pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+                    if (peri && hci_event_disconnection_complete_get_connection_handle(packet) == peri->con_handle) {
+                        DEBUG_PRINT("Peripheral %u with handle %u disconnected\n", i, peri->con_handle);
+                        gatt_client_stop_listening_for_characteristic_value_updates(&peri->platform_state->notification);
+                        peri->con_handle = HCI_CON_HANDLE_INVALID;
+                    }
+                }
             }
             break;
 
@@ -1065,6 +1075,12 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+    return false;
+}
+pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+    return NULL;
+}
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -1264,9 +1280,12 @@ void pbdrv_bluetooth_init_hci(void) {
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    // don't need to init the whole struct, so doing this here
-    peripheral_singleton.platform_state = &peripheral_platform_state;
-    peripheral_singleton.con_handle = HCI_CON_HANDLE_INVALID;
+    // Attach btstack platform state to peripherals.
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        peri->platform_state = &peripheral_platform_state[i];
+        peri->con_handle = HCI_CON_HANDLE_INVALID;
+    }
     #endif
 
     btstack_memory_init();

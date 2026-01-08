@@ -222,12 +222,6 @@ static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_match
     return flags;
 }
 
-static void pb_lwp3device_assert_connected(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
-        mp_raise_OSError(MP_ENODEV);
-    }
-}
-
 static pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
     .match_adv = lwp3_advertisement_matches,
     .match_adv_rsp = lwp3_advertisement_response_matches,
@@ -443,7 +437,9 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
 mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_lwp3device_assert_connected();
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
 
     mp_obj_t pressed[7];
     size_t num = 0;
@@ -541,7 +537,10 @@ static mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
         return wait_or_await_operation(self_in);
     }
 
-    pb_lwp3device_assert_connected();
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
     return mp_obj_new_str(self->name, strlen(self->name));
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
@@ -661,7 +660,9 @@ static MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
 static mp_obj_t lwp3device_read(mp_obj_t self_in) {
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_lwp3device_assert_connected();
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
 
     if (!self->noti_num) {
         pb_assert(PBIO_ERROR_FAILED);

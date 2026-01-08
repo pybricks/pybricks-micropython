@@ -147,31 +147,29 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 // Functions related to connections to peripherals.
 //
 
-pbdrv_bluetooth_peripheral_t peripheral_singleton;
-
 pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
-    // Only a single peripheral instance supported for now.
-    *peripheral = &peripheral_singleton;
 
-    if (/* Already connected. */
-        pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL) ||
-        /* A different user is still claiming this resource. */
-        (*peripheral)->user ||
-        /* Busy. Could be connecting but not connected yet. */
-        (*peripheral)->func) {
-        return PBIO_ERROR_BUSY;
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+
+        // Test if not already in use, not connected, and not busy.
+        if (!pbdrv_bluetooth_peripheral_is_connected(peri) && !peri->user && !peri->func) {
+            // Claim this device for new user.
+            peri->user = user;
+            *peripheral = peri;
+            return PBIO_SUCCESS;
+        }
     }
 
-    // Claim this device for new user.
-    (*peripheral)->user = user;
-
-    return PBIO_SUCCESS;
+    // All instances are in use.
+    *peripheral = NULL;
+    return PBIO_ERROR_BUSY;
 }
 
 void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {
     // Only release if the user matches. A new user may have already safely
     // claimed it, and this call to release may come from an orphaned user.
-    if (peripheral->user != user) {
+    if (!peripheral || peripheral->user != user) {
         return;
     }
     peripheral->user = NULL;
@@ -188,7 +186,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
     }
 
     // Can't connect if already connected or already busy.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL) || peri->func) {
+    if (pbdrv_bluetooth_peripheral_is_connected(peri) || peri->func) {
         return PBIO_ERROR_BUSY;
     }
 
@@ -219,7 +217,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
     }
 
     // Pass silently for already disconnected.
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         peri->err = PBIO_SUCCESS;
         return PBIO_SUCCESS;
     }
@@ -233,7 +231,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_char_t *characteristic) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         return PBIO_ERROR_NO_DEV;
     }
     if (peri->func) {
@@ -251,7 +249,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_char_t *characteristic) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         return PBIO_ERROR_NO_DEV;
     }
     if (peri->func) {
@@ -272,7 +270,7 @@ size_t pbdrv_bluetooth_char_write_size;
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_peripheral_t *peri, uint16_t handle, const uint8_t *data, size_t size) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL)) {
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         return PBIO_ERROR_NO_DEV;
     }
     if (peri->func) {
@@ -307,7 +305,10 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
 void pbdrv_bluetooth_cancel_operation_request(void) {
     // Only some peripheral actions support cancellation.
     DEBUG_PRINT("Bluetooth operation cancel requested.\n");
-    peripheral_singleton.cancel = true;
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        peri->cancel = true;
+    }
 }
 
 //
@@ -523,7 +524,10 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
 
     // Shorthand notation accessible throughout.
     bool can_send = pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS);
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+
+    // For looping over peripherals.
+    static uint8_t peri_index;
+    static pbdrv_bluetooth_peripheral_t *peri;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -565,18 +569,21 @@ init:
             advertising_or_scan_func = NULL;
         }
 
-        // Handle pending peripheral task, if any.
-        if (peri->func) {
+        // Handle pending peripheral tasks, one at a time.
+        for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
+            peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
+            if (peri->func) {
 
-            // If currently observing, stop if we need to scan for a peripheral.
-            if (pbdrv_bluetooth_is_observing && peri->func == pbdrv_bluetooth_peripheral_scan_and_connect_func) {
-                PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
-                observe_restart_requested = true;
+                // If currently observing, stop if we need to scan for a peripheral.
+                if (pbdrv_bluetooth_is_observing && peri->func == pbdrv_bluetooth_peripheral_scan_and_connect_func) {
+                    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
+                    observe_restart_requested = true;
+                }
+
+                PBIO_OS_AWAIT(state, &sub, peri->err = peri->func(&sub, peri));
+                peri->func = NULL;
+                peri->cancel = false;
             }
-
-            PBIO_OS_AWAIT(state, &sub, peri->err = peri->func(&sub, peri));
-            peri->func = NULL;
-            peri->cancel = false;
         }
 
         // Restart if we stopped it temporarily to scan for a peripheral or
@@ -606,21 +613,32 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
 
     static pbio_os_state_t sub;
 
+    // For looping over peripherals.
+    static uint8_t peri_index;
+    static pbdrv_bluetooth_peripheral_t *peri;
+
     if (pbio_os_timer_is_expired(timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Requests peripheral operations to cancel, if they support it.
     pbdrv_bluetooth_cancel_operation_request();
 
-    // Let ongoing user tasks finish first.
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, &peripheral_singleton));
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+    for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
+        peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
 
-    // Disconnect peripheral.
-    pbdrv_bluetooth_peripheral_disconnect(&peripheral_singleton);
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, &peripheral_singleton));
+        // Await ongoing peripheral user task.
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, peri));
+
+        // Disconnect peripheral.
+        pbdrv_bluetooth_peripheral_disconnect(peri);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, peri));
+    }
+
+    // Let ongoing user task finish first.
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
     // Stop scanning.
     pbdrv_bluetooth_start_observing(NULL);
@@ -643,7 +661,16 @@ void pbdrv_bluetooth_deinit(void) {
     // Under normal operation ::pbdrv_bluetooth_close_user_tasks completes
     // normally and there should be no user activity at this point. If there
     // is, a task got stuck, so exit forcefully.
-    if (advertising_or_scan_err == PBIO_ERROR_AGAIN || peripheral_singleton.err == PBIO_ERROR_AGAIN) {
+    bool failed_to_stop = advertising_or_scan_err == PBIO_ERROR_AGAIN;
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        if (peri->err == PBIO_ERROR_AGAIN) {
+            failed_to_stop = true;
+            break;
+        }
+    }
+
+    if (failed_to_stop) {
         // Hard reset without waiting on completion of any process.
         DEBUG_PRINT("Bluetooth deinit: forcing hard reset due to busy tasks.\n");
         pbdrv_bluetooth_controller_reset_hard();

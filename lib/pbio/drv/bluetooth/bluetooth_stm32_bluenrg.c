@@ -124,6 +124,19 @@ static const pbdrv_gpio_t mosi_gpio = { .bank = GPIOC, .pin = 3 };
 static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
 static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
 
+static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+
+pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+    // This platform supports only a single peripheral instance. Some of its
+    // states are global variables listed above. This single instance is used
+    // troughout the event handler.
+    return &peripheral_singleton;
+}
+
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+    return peri == &peripheral_singleton && peri->con_handle != 0;
+}
+
 /**
  * Converts a BlueNRG-MS error code to a PBIO error code.
  * @param [in]  status  The BlueNRG-MS error code.
@@ -304,10 +317,6 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     }
 
     if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL && peripheral_singleton.con_handle) {
         return true;
     }
 
@@ -950,7 +959,6 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_NOTIFICATION: {
                     evt_gatt_attr_notification *subevt = (void *)evt->data;
-                    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
                     if (peri->config->notification_handler) {
                         peri->config->notification_handler(peri->user, subevt->attr_value, subevt->event_data_length - 2);
                     }
