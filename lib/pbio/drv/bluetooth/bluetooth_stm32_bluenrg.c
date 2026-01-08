@@ -336,7 +336,7 @@ retry:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     // Scan and connect timeout, if applicable.
     bool timed_out = peri->config->timeout && pbio_os_timer_is_expired(&peri->timer);
@@ -455,7 +455,7 @@ try_again:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -573,7 +573,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 

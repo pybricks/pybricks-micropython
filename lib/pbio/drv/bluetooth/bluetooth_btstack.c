@@ -588,7 +588,7 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
     pbdrv_bluetooth_ad_match_result_flags_t flags;
     uint8_t btstack_error;
 
@@ -803,7 +803,7 @@ start_pairing:
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
     gatt_client_characteristic_t *current_char = &peri->platform_state->current_char;
 
     uint8_t btstack_error;
@@ -910,7 +910,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     uint8_t btstack_error;
 
@@ -959,7 +959,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     uint8_t btstack_error;
 
@@ -998,7 +998,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbdrv_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 

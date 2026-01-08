@@ -307,8 +307,8 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     // of disconnecting from Pybricks Code if needed.
 retry:
     DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(&scan_config));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
 
     // On Prime Hub, connecting can fail for a variety of reasons. A second
     // attempt usually succeeds.
@@ -326,30 +326,30 @@ retry:
     // catch the case where user might not have done this at least once.
     // Connecting takes about a second longer this way, but we can provide
     // better error messages.
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_type_xbox_char_hid_map));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_xbox_char_hid_map));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID map.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_map));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, &pb_type_xbox_char_hid_map));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     // This is the main characteristic that notifies us of button state.
     DEBUG_PRINT("Discover HID report.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(&pb_type_xbox_char_hid_report));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID report.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(&pb_type_xbox_char_hid_report));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -358,8 +358,8 @@ retry:
 
 disconnect:
     DEBUG_PRINT("Going to disconnect because of a failure with code %d at line %u.\n", err, *state);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect());
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, NULL));
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     DEBUG_PRINT("Disconnect with error code %d.\n", err);
     pb_assert(err);
 
@@ -392,7 +392,9 @@ static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_async_t config = {
         .iter_once = pbdrv_bluetooth_await_peripheral_command,
-        .parent_obj = self_in,
+        // Using the driver function without a wrapper, so should pass its
+        // context parameter (the peripheral) as the parent object.
+        .parent_obj = self->peripheral,
     };
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
@@ -409,7 +411,8 @@ static mp_obj_t pb_type_xbox_disconnect(mp_obj_t self_in) {
     // Needed to release claim on allocated data so we can make a new
     // connection later.
     pb_type_xbox_close(self_in);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect());
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
     return pb_type_xbox_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_disconnect_obj, pb_type_xbox_disconnect);
@@ -461,8 +464,8 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
 static mp_obj_t pb_type_xbox_name(size_t n_args, const mp_obj_t *args) {
     // Asserts connection.
     pb_type_xbox_get_input(args[0]);
-
-    const char *name = pbdrv_bluetooth_peripheral_get_name();
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    const char *name = pbdrv_bluetooth_peripheral_get_name(self->peripheral);
     return mp_obj_new_str(name, strlen(name));
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_type_xbox_name_obj, 1, 2, pb_type_xbox_name);
@@ -562,8 +565,6 @@ static mp_obj_t pb_type_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(count, 1),
         PB_ARG_DEFAULT_INT(delay, 100));
 
-    (void)self;
-
     // 1 unit is 10ms, max duration is 250=2500ms.
     mp_int_t duration = pb_obj_get_positive_int(duration_in) / 10;
     mp_int_t delay = pb_obj_get_positive_int(delay_in) / 10;
@@ -618,7 +619,7 @@ static mp_obj_t pb_type_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_
     // REVISIT: Discover this handle dynamically.
     const uint16_t handle = 34;
 
-    pbdrv_bluetooth_peripheral_write_characteristic(handle, (const uint8_t *)&command, sizeof(command));
+    pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, handle, (const uint8_t *)&command, sizeof(command));
     return pb_type_xbox_await_operation(MP_OBJ_TO_PTR(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_xbox_rumble_obj, 1, pb_type_xbox_rumble);
