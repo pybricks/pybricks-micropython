@@ -20,6 +20,10 @@
 
 #include <pybricks/robotics.h>
 
+#if PYBRICKS_PY_COMMON_BTC
+extern const mp_obj_module_t pb_module_btc;
+#endif
+
 // pybricks.experimental.hello_world
 static mp_obj_t experimental_hello_world(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
@@ -61,6 +65,9 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(experimental_hello_world_obj, 0, experimental_
 static const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
+    #if PYBRICKS_PY_COMMON_BTC && MICROPY_MODULE_BUILTIN_SUBPACKAGES
+    { MP_ROM_QSTR(MP_QSTR_btc), MP_ROM_PTR(&pb_module_btc) },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);
 
