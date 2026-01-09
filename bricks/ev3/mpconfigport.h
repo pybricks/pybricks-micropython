@@ -42,6 +42,7 @@
 #define PYBRICKS_PY_IODEVICES_PUP_DEVICE        (1)
 #define PYBRICKS_PY_IODEVICES_UART_DEVICE       (1)
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
+#define PYBRICKS_PY_MESSAGING                   (1)
 #define PYBRICKS_PY_NXTDEVICES                  (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
