@@ -282,6 +282,14 @@ static mp_obj_t pb_type_pupdevices_Remote_light_on(mp_obj_t self_in, const pbio_
     return wait_or_await_operation(self_in);
 }
 
+static mp_obj_t pb_lwp3device_close(mp_obj_t self_in) {
+    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Disables notification handler from accessing allocated memory.
+    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_close_obj, pb_lwp3device_close);
+
 static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_t parent_obj) {
 
     pbio_os_state_t unused;
@@ -299,6 +307,8 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
+        // Not successful, release peripheral.
+        pb_lwp3device_close(parent_obj);
         return err;
     }
 
@@ -387,9 +397,10 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     return PBIO_SUCCESS;
 
 disconnect:
-    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
-    pbdrv_bluetooth_peripheral_disconnect(self->peripheral);
-    PBIO_OS_AWAIT(state, &unused, pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_lwp3device_close(parent_obj);
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(err);
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
@@ -473,13 +484,6 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     #endif
 }
 
-static mp_obj_t pb_lwp3device_close(mp_obj_t self_in) {
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // Disables notification handler from accessing allocated memory.
-    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_close_obj, pb_lwp3device_close);
 
 static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,

@@ -289,6 +289,14 @@ static pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
     // Option flags are variable.
 };
 
+static mp_obj_t pb_type_xbox_close(mp_obj_t self_in) {
+    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Disables notification handler from accessing allocated memory.
+    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_close_obj, pb_type_xbox_close);
+
 static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_obj) {
 
     pbio_os_state_t unused;
@@ -316,6 +324,11 @@ retry:
         DEBUG_PRINT("XBOX controller failed to connect with error %d.\n", err);
         PBIO_OS_AWAIT_MS(state, &self->retry_timer, 2000);
         goto retry;
+    }
+
+    if (err != PBIO_SUCCESS) {
+        // Not successful, release peripheral.
+        pb_type_xbox_close(parent_obj);
     }
 
     pb_assert(err);
@@ -357,6 +370,7 @@ retry:
     return PBIO_SUCCESS;
 
 disconnect:
+    pb_type_xbox_close(parent_obj);
     DEBUG_PRINT("Going to disconnect because of a failure with code %d at line %u.\n", err, *state);
     pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
@@ -399,14 +413,6 @@ static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
 
-static mp_obj_t pb_type_xbox_close(mp_obj_t self_in) {
-    pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // Disables notification handler from accessing allocated memory.
-    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_close_obj, pb_type_xbox_close);
-
 static mp_obj_t pb_type_xbox_disconnect(mp_obj_t self_in) {
     // Needed to release claim on allocated data so we can make a new
     // connection later.
@@ -416,7 +422,6 @@ static mp_obj_t pb_type_xbox_disconnect(mp_obj_t self_in) {
     return pb_type_xbox_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_disconnect_obj, pb_type_xbox_disconnect);
-
 
 static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
