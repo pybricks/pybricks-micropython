@@ -553,6 +553,14 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
  */
 pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
 
+// A single result from an inquiry scan.
+typedef struct {
+    uint8_t bdaddr[6];
+    int8_t rssi;
+    char name[249];
+    uint32_t class_of_device;
+} pbdrv_bluetooth_inquiry_result_t;
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
