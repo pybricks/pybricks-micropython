@@ -561,6 +561,30 @@ typedef struct {
     uint32_t class_of_device;
 } pbdrv_bluetooth_inquiry_result_t;
 
+/**
+ * Starts a classic Bluetooth inquiry scan.
+ *
+ * @param [in] results                Array to store results.
+ * @param [in] results_count          Number of results found.
+ * @param [in] results_count_max      Maximum number of results to find. Will
+ *                                    stop if externally reset to 0.
+ * @param [in] duration_ms            Duration of the inquiry scan in milliseconds.
+ *                                    It will be internally rounded to the nearest
+ *                                    supported nonzero value.
+ */
+pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms);
+
+/**
+ * Awaits for the classic Bluetooth inquiry scan to complete.
+ *
+ * @param [in]  state          Protothread state.
+ * @param [in]  context        Not used.
+ * @return                     ::PBIO_SUCCESS on completion.
+ *                             ::PBIO_ERROR_AGAIN while awaiting.
+ *                             or an thread specific error code if the operation failed.
+ */
+pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {

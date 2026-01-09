@@ -86,7 +86,7 @@ static pbio_error_t pb_messaging_rfcomm_scan_thread(pbio_os_state_t *state, mp_o
             format_bluetooth_address(result->bdaddr), result->name, result->class_of_device, result->rssi);
     }
 
-    return PBIO_SUCCESS;
+    return pbdrv_bluetooth_await_classic_task(state, NULL);
 }
 
 /**
@@ -131,7 +131,7 @@ static mp_obj_t pb_messaging_rfcomm_scan(size_t n_args, const mp_obj_t *pos_args
     scanner->num_results = 0;
     scanner->num_results_max = mp_obj_get_int(num_results_in);
     scanner->num_results_printed = mp_obj_is_true(verbose_in) ? 0 : scanner->num_results_max;
-    (void)timeout_in;
+    pb_assert(pbdrv_bluetooth_start_inquiry_scan(scanner->results, &scanner->num_results, &scanner->num_results_max, mp_obj_get_int(timeout_in)));
 
     // Create an awaitable with a reference to our result to keep it from being
     // garbage collected.
