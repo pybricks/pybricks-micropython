@@ -52,7 +52,7 @@ $(error failed)
 endif
 endif
 endif
-ifneq ($(strip $(PB_LIB_BTSTACK)),)
+ifeq ($(PB_LIB_BTSTACK),1)
 ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
 $(info $(shell cd $(PBTOP) && git submodule update --checkout --init lib/btstack))
@@ -121,10 +121,10 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
-ifneq ($(strip $(PB_LIB_BTSTACK)),)
+ifeq ($(PB_LIB_BTSTACK),1)
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
-ifeq ($(PBIO_PLATFORM),virtual_hub)
+ifeq ($(PB_MCU_FAMILY),native)
 INC += -I$(PBTOP)/lib/btstack/platform/posix
 INC += -I$(PBTOP)/lib/btstack/platform/embedded
 INC += -I$(PBTOP)/lib/btstack/3rd-party/tinydir
@@ -180,7 +180,7 @@ else ifeq ($(UNAME_S),Darwin)
 LDFLAGS += -Wl,-map,$@.map -Wl,-dead_strip
 endif
 LIBS = -lm
-ifeq ($(PB_LIB_BTSTACK),lowenergy)
+ifeq ($(PB_LIB_BTSTACK),1)
 ifneq ($(CI_MODE),1)
 LIBS += $(shell pkg-config libusb-1.0 --libs)
 endif
@@ -419,7 +419,7 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 	)
 
 # libusb-specific BTStack sources for virtual_hub
-ifeq ($(PBIO_PLATFORM),virtual_hub)
+ifeq ($(PB_MCU_FAMILY),native)
 BTSTACK_SRC_C += $(addprefix lib/btstack/,\
 	platform/libusb/hci_transport_h2_libusb.c \
 	platform/posix/hci_dump_posix_stdout.c \
@@ -567,14 +567,7 @@ ifeq ($(PB_LIB_BLE5STACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 
-ifeq ($(PB_LIB_BTSTACK),classic)
-ifneq ($(CI_MODE),1)
-OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
-$(BUILD)/lib/btstack/%.o: CFLAGS += -Wno-error
-endif
-endif
-
-ifeq ($(PB_LIB_BTSTACK),lowenergy)
+ifeq ($(PB_LIB_BTSTACK),1)
 ifneq ($(CI_MODE),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_BLE_SRC_C:.c=.o))
@@ -639,9 +632,9 @@ endif
 
 all: $(TARGETS)
 
-# handle BTStack .gatt files (only for BLE / lowenergy)
+# handle BTStack .gatt files
 
-ifeq ($(PB_LIB_BTSTACK),lowenergy)
+ifeq ($(PB_LIB_BTSTACK),1)
 
 GATT_FILES := $(addprefix lib/pbio/drv/bluetooth/,\
 	pybricks_service.gatt \

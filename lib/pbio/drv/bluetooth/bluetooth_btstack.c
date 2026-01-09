@@ -25,10 +25,8 @@
 #include "bluetooth.h"
 #include "bluetooth_btstack.h"
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 #ifdef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
 #define HUB_KIND PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
@@ -47,7 +45,6 @@
 #define PERIPHERAL_TIMEOUT_MS_SCAN_RESPONSE (2000)
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
-
 
 #define DEBUG 0
 
@@ -75,7 +72,6 @@ static const hci_dump_t pbdrv_bluetooth_btstack_hci_dump = {
 };
 #endif
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 /**
  * BTstack state that we need to maintain for each peripheral.
  */
@@ -100,8 +96,6 @@ pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t in
     return &_peripherals[index];
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
 // hub name goes in special section so that it can be modified when flashing firmware
 #if !PBIO_TEST_BUILD
 __attribute__((section(".name")))
@@ -110,14 +104,9 @@ char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
-
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 /**
  * Converts BTStack error to most appropriate PBIO error.
@@ -201,8 +190,6 @@ bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri)
     return peri->con_handle != HCI_CON_HANDLE_INVALID;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
 static pbio_os_state_t bluetooth_thread_state;
 static pbio_os_state_t bluetooth_thread_err;
 
@@ -232,8 +219,6 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return false;
     }
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
     if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
         return true;
     }
@@ -250,12 +235,9 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
     return false;
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     switch (packet_type) {
         case HCI_EVENT_PACKET:
@@ -284,7 +266,6 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
     propagate_event(packet);
 }
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 /**
  * Parses the HCI Read Local Version Information command response.
@@ -333,7 +314,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             }
             break;
         }
-        #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
         case GATT_EVENT_SERVICE_QUERY_RESULT: {
             // Service discovery not used.
             gatt_client_service_t service;
@@ -413,8 +393,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
 
             break;
         }
-        #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
         default:
             break;
     }
@@ -422,7 +400,6 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     propagate_event(packet);
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 // Security manager callbacks. This is adapted from the BTstack examples.
 static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     UNUSED(channel);
@@ -542,6 +519,9 @@ static void init_advertising_data(void) {
 }
 
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -556,6 +536,9 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 }
 
 pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -582,6 +565,9 @@ static void pybricks_on_ready_to_send(void *context) {
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     static send_data_t send_data;
 
@@ -601,6 +587,9 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     pbdrv_bluetooth_peripheral_t *peri = context;
     pbdrv_bluetooth_ad_match_result_flags_t flags;
@@ -817,6 +806,9 @@ start_pairing:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     pbdrv_bluetooth_peripheral_t *peri = context;
     gatt_client_characteristic_t *current_char = &peri->platform_state->current_char;
@@ -924,6 +916,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -973,6 +968,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -1012,6 +1010,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -1025,6 +1026,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 }
 
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1048,6 +1052,9 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 }
 
 pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1062,6 +1069,9 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
 }
 
 pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *context) {
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1073,51 +1083,6 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
-
-
-#else // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-
-pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
-    return false;
-}
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
-    return NULL;
-}
-pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
@@ -1164,7 +1129,6 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
         return PBIO_ERROR_INVALID_OP;
     }
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -1179,12 +1143,6 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
     PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_OFF, HCI_STATE_OFF));
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-
-    #else
-    // Revisit: CC2560X seems to dislike the reset command, but this is not
-    // LE specific. Find a way to properly reset.
-    return PBIO_ERROR_NOT_IMPLEMENTED;
-    #endif
 }
 
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer) {
@@ -1284,14 +1242,12 @@ void pbdrv_bluetooth_init_hci(void) {
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     // Attach btstack platform state to peripherals.
     for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
         pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
         peri->platform_state = &peripheral_platform_state[i];
         peri->con_handle = HCI_CON_HANDLE_INVALID;
     }
-    #endif
 
     btstack_memory_init();
     btstack_run_loop_init(&bluetooth_btstack_run_loop);
@@ -1338,6 +1294,12 @@ void pbdrv_bluetooth_init_hci(void) {
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
+    #else
+    (void)pybricks_data_received;
+    (void)att_read_callback;
+    (void)pybricks_configured;
+    (void)nordic_spp_packet_handler;
+    (void)sm_packet_handler;
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
