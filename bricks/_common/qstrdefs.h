@@ -27,6 +27,10 @@ Q(pybricks.hubs)
 Q(pybricks.iodevices)
 #endif
 
+#if PYBRICKS_PY_MESSAGING
+Q(pybricks.messaging)
+#endif
+
 #if PYBRICKS_PY_NXTDEVICES
 Q(pybricks.nxtdevices)
 #endif
