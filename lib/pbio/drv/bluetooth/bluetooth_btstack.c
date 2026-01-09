@@ -293,6 +293,12 @@ static void parse_hci_local_version_information(pbdrv_bluetooth_btstack_local_ve
     #endif
 }
 
+static const pbdrv_bluetooth_btstack_chipset_info_t *chipset_info;
+
+static bool pbdrv_bluetooth_btstack_ble_supported(void) {
+    return chipset_info && chipset_info->supports_ble;
+}
+
 // currently, this function just handles the Powered Up handset control.
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 
@@ -306,7 +312,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 case HCI_OPCODE_HCI_READ_LOCAL_VERSION_INFORMATION: {
                     pbdrv_bluetooth_btstack_local_version_info_t info;
                     parse_hci_local_version_information(&info, rp);
-                    pbdrv_bluetooth_btstack_set_chipset(&info);
+                    chipset_info = pbdrv_bluetooth_btstack_set_chipset(&info);
                     break;
                 }
                 default:
@@ -519,9 +525,13 @@ static void init_advertising_data(void) {
 }
 
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
     return PBIO_ERROR_NOT_SUPPORTED;
     #endif
+
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -536,9 +546,9 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 }
 
 pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -565,9 +575,13 @@ static void pybricks_on_ready_to_send(void *context) {
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
     return PBIO_ERROR_NOT_SUPPORTED;
     #endif
+
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     static send_data_t send_data;
 
@@ -587,9 +601,9 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
     pbdrv_bluetooth_ad_match_result_flags_t flags;
@@ -806,9 +820,9 @@ start_pairing:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
     gatt_client_characteristic_t *current_char = &peri->platform_state->current_char;
@@ -916,9 +930,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -968,9 +982,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -1010,9 +1024,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
 
@@ -1026,9 +1040,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 }
 
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1052,9 +1066,9 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 }
 
 pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1069,9 +1083,9 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
 }
 
 pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1264,7 +1278,6 @@ void pbdrv_bluetooth_init_hci(void) {
 
     l2cap_init();
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
     // setup LE device DB
     le_device_db_init();
 
@@ -1284,6 +1297,7 @@ void pbdrv_bluetooth_init_hci(void) {
     // GATT Client setup
     gatt_client_init();
 
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
     // setup ATT server
     att_server_init(profile_data, att_read_callback, NULL);
 

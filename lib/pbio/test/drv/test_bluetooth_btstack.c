@@ -770,7 +770,11 @@ static void handle_data_source(btstack_data_source_t *ds,  btstack_data_source_c
     }
 }
 
-void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+    static const pbdrv_bluetooth_btstack_chipset_info_t test_chipset_info = {
+        .supports_ble = true,
+    };
+    return &test_chipset_info;
 }
 
 pbio_error_t pbdrv_bluetooth_btstack_platform_init(void) {

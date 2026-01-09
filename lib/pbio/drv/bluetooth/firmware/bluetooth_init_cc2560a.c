@@ -1009,6 +1009,7 @@ const pbdrv_bluetooth_btstack_chipset_info_t cc2560a_info = {
     .lmp_version = 0x1b0f,
     .init_script = cc2560a_init_script,
     .init_script_size = sizeof(cc2560a_init_script),
+    .supports_ble = false,
 };
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2560X

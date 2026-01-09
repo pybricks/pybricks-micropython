@@ -62,7 +62,7 @@ void pbdrv_bluetooth_btstack_platform_poll(void) {
 void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 }
 
-void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
     const pbdrv_bluetooth_btstack_chipset_info_t *info = device_info->lmp_pal_subversion == cc2560_info.lmp_version ?
         &cc2560_info : &cc2560a_info;
     btstack_chipset_cc256x_set_init_script((uint8_t *)info->init_script, info->init_script_size);
@@ -71,6 +71,7 @@ void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_i
     const pbdrv_bluetooth_btstack_platform_data_t *pdata =
         &pbdrv_bluetooth_btstack_platform_data;
     hci_set_chipset(pdata->chipset_instance());
+    return info;
 };
 
 static const pbdrv_gpio_t pin_bluetooth_enable = PBDRV_GPIO_EV3_PIN(9, 27, 24, 4, 9);

@@ -599,6 +599,7 @@ const pbdrv_bluetooth_btstack_chipset_info_t cc2564c_info = {
     .lmp_version = 0x9a1a,
     .init_script = cc2564c_init_script,
     .init_script_size = sizeof(cc2564c_init_script),
+    .supports_ble = true,
 };
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C

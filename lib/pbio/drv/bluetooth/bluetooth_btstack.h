@@ -45,6 +45,8 @@ typedef struct {
     const uint8_t *init_script;
     /** Initialization script size */
     const uint32_t init_script_size;
+    /** Chipset has BLE support */
+    const bool supports_ble;
 } pbdrv_bluetooth_btstack_chipset_info_t;
 
 /**
@@ -70,8 +72,9 @@ typedef struct {
  * over the wire, so this can be used to dynamically select the init script.
  *
  * @param device_info The device information read from the Bluetooth chip.
+ * @return The chipset info that was selected.
  */
-void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info);
+const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info);
 
 typedef struct {
     const hci_transport_t *(*transport_instance)(void);

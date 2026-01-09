@@ -66,7 +66,11 @@ static void assert_manufacturer_id(uint16_t manufacturer_id) {
 static uint16_t usb_product_id;
 static uint16_t usb_vendor_id;
 
-void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+static const pbdrv_bluetooth_btstack_chipset_info_t usb_chipset_info = {
+    .supports_ble = true,
+};
+
+const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
 
     assert_manufacturer_id(device_info->manufacturer);
     assert_vendor_and_product_id(usb_vendor_id, usb_product_id);
@@ -78,6 +82,8 @@ void pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_i
     btstack_chipset_realtek_set_config_file_path("/lib/firmware/rtl_bt/rtl8761bu_config.bin");
 
     hci_set_chipset(btstack_chipset_realtek_instance());
+
+    return &usb_chipset_info;
 }
 
 static void noop_voidstararg(const void *) {
