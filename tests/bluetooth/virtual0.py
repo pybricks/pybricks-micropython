@@ -1,11 +1,10 @@
-from pybricks.hubs import VirtualHub
-from pybricks.tools import wait
+from pybricks.tools import run_task
+from pybricks.messaging import rfcomm_scan
 
-hub = VirtualHub(broadcast_channel=123)
 
-for i in range(99):
-    hub.ble.broadcast(["Hello", i])
-    wait(100)
+async def main():
+    results = await rfcomm_scan(timeout=10000, num_results=10, verbose=True)
+    print(results)
 
-hub.ble.broadcast(b"STOP")
-wait(500)
+
+run_task(main())

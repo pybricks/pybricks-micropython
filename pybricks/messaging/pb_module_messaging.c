@@ -25,7 +25,7 @@
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/tools/pb_type_async.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 #if DEBUG
 #include <pbio/debug.h>
