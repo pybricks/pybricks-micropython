@@ -993,10 +993,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
     PBIO_OS_ASYNC_BEGIN(state);
 
     btstack_error = gatt_client_write_value_of_characteristic(packet_handler,
-        peri->con_handle,
-        pbdrv_bluetooth_char_write_handle,
-        pbdrv_bluetooth_char_write_size,
-        pbdrv_bluetooth_char_write_data
+        peri->con_handle, peri->char_write_handle, peri->char_write_size, peri->char_write_data
         );
 
     if (btstack_error != ERROR_CODE_SUCCESS) {

@@ -17,10 +17,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
-#define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
-#define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
-
 void pbdrv_bluetooth_init_hci(void);
 void pbdrv_bluetooth_controller_reset_hard(void);
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer);
@@ -42,10 +38,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size);
 
 extern pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
-
-extern uint16_t pbdrv_bluetooth_char_write_handle;
-extern uint8_t pbdrv_bluetooth_char_write_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
-extern size_t pbdrv_bluetooth_char_write_size;
 
 extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
 extern uint8_t pbdrv_bluetooth_broadcast_data_size;

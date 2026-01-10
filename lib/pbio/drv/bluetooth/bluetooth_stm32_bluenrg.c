@@ -556,9 +556,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
 
     aci_gatt_write_charac_value_begin(peri->con_handle,
-        pbdrv_bluetooth_char_write_handle + 1,
-        pbdrv_bluetooth_char_write_size,
-        pbdrv_bluetooth_char_write_data);
+        peri->char_write_handle + 1,
+        peri->char_write_size,
+        peri->char_write_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     tBleStatus status = aci_gatt_write_charac_value_end();
 

@@ -264,10 +264,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peri
     return PBIO_SUCCESS;
 }
 
-uint16_t pbdrv_bluetooth_char_write_handle;
-uint8_t pbdrv_bluetooth_char_write_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
-size_t pbdrv_bluetooth_char_write_size;
-
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_peripheral_t *peri, uint16_t handle, const uint8_t *data, size_t size) {
 
     if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
@@ -276,14 +272,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_per
     if (peri->func) {
         return PBIO_ERROR_BUSY;
     }
-    if (size > PBIO_ARRAY_SIZE(pbdrv_bluetooth_char_write_data)) {
+    if (size > PBIO_ARRAY_SIZE(peri->char_write_data)) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Initialize operation for handling on the main thread.
-    pbdrv_bluetooth_char_write_handle = handle;
-    memcpy(pbdrv_bluetooth_char_write_data, data, size);
-    pbdrv_bluetooth_char_write_size = size;
+    peri->char_write_handle = handle;
+    memcpy(peri->char_write_data, data, size);
+    peri->char_write_size = size;
 
     peri->func = pbdrv_bluetooth_peripheral_write_characteristic_func;
     peri->err = PBIO_ERROR_AGAIN;

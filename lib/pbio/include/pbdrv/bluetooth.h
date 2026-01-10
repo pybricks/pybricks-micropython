@@ -18,6 +18,10 @@
 #include <pbio/protocol.h>
 #include <lego/lwp3.h>
 
+#define PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
+#define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
+#define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
+
 /**
  * BLE characteristic connection identifiers.
  */
@@ -188,6 +192,18 @@ struct _pbdrv_bluetooth_peripheral_t {
     bool cancel;
     /** Platform-specific state needed to operate the peripheral. */
     pbdrv_bluetooth_peripheral_platform_state_t *platform_state;
+    /**
+     * Handle of the characteristic to read or write.
+     */
+    uint16_t char_write_handle;
+    /**
+     * Buffer for writing characteristic value.
+     */
+    uint8_t char_write_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
+    /**
+     * Size of the data to write.
+     */
+    size_t char_write_size;
 };
 
 /** Advertisement types. */
