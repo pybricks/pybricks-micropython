@@ -120,10 +120,7 @@ typedef struct {
     const uint8_t uuid128[16];
     /** Whether to request enabling notifications after successful discovery. */
     bool request_notification;
-    /** Most recently received value. */
-    uint8_t value_len;
-    uint8_t value[20];
-} pbdrv_bluetooth_peripheral_char_t;
+} pbdrv_bluetooth_peripheral_char_discovery_t;
 
 /** Peripheral connection options flags. */
 typedef enum {
@@ -177,7 +174,7 @@ struct _pbdrv_bluetooth_peripheral_t {
     uint8_t bdaddr[6];
     char name[20];
     /** Handle to the characteristic currently being discovered. */
-    pbdrv_bluetooth_peripheral_char_t *char_now;
+    pbdrv_bluetooth_peripheral_char_discovery_t *char_now;
     /** Scan and connect configuration. */
     pbdrv_bluetooth_peripheral_connect_config_t *config;
     /** Currently ongoing peripheral function. */
@@ -193,17 +190,17 @@ struct _pbdrv_bluetooth_peripheral_t {
     /** Platform-specific state needed to operate the peripheral. */
     pbdrv_bluetooth_peripheral_platform_state_t *platform_state;
     /**
-     * Handle of the characteristic to read or write.
+     * Handle of the characteristic to read or write (used by write_func and read_func).
      */
-    uint16_t char_write_handle;
+    uint16_t char_handle;
     /**
-     * Buffer for writing characteristic value.
+     * Buffer for reading/writing characteristic value (used by write_func and read_func).
      */
-    uint8_t char_write_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
+    uint8_t char_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
     /**
-     * Size of the data to write.
+     * Size of the data to write or data read (used by write_func and read_func).
      */
-    size_t char_write_size;
+    size_t char_size;
 };
 
 /** Advertisement types. */
@@ -406,6 +403,7 @@ void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral
 /**
  * Gets the name of the connected peripheral.
  *
+ * @param [in]  peripheral     The peripheral to use.
  * @return  The name of the connected peripheral. May not be set.
  */
 const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *peripheral);
@@ -413,6 +411,7 @@ const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *pe
 /**
  * Starts scanning for a BLE device and connects to it.
  *
+ * @param [in]  peripheral     The peripheral to use.
  * @param [in]  config   Scan and connect configuration.
  * @return               ::PBIO_SUCCESS if the operation was scheduled.
  *                       ::PBIO_ERROR_BUSY if already connected or another peripheral operation is ongoing.
@@ -422,7 +421,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
 /**
  * Disconnect from the peripheral.
  *
- * @param [in]  state          Protothread state.
+ * @param [in]  peripheral     The peripheral to use.
  * @return                     ::PBIO_SUCCESS if disconnection schefuled or when already disconnected.
  *                             ::PBIO_ERROR_BUSY if another peripheral operation is ongoing.
  */
@@ -433,30 +432,31 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
  *
  * If found, the value handle in the characteristic is set.
  *
- * @param [in]  state          Protothread state.
+ * @param [in]  peripheral     The peripheral to use.
  * @param [in]  characteristic The characteristic to discover.
  * @return                     ::PBIO_SUCCESS when successfully scheuled..
  *                             ::PBIO_ERROR_BUSY if another peripheral operation is ongoing.
  *                             ::PBIO_ERROR_NO_DEV if no peripheral is connected.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_t *characteristic);
+pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic);
 
 /**
  * Read a characteristic.
  *
- * @param [in]  characteristic The characteristic to read.
+ * @param [in]  peripheral     The peripheral to use.
+ * @param [in]  handle         Handle of the characteristic to read.
  * @return                     ::PBIO_SUCCESS if the read was scheduled.
  *                             ::PBIO_ERROR_NO_DEV if not connected to a peripheral.
  *                             ::PBIO_ERROR_BUSY if another operation is ongoing.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_t *characteristic);
+pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle);
 
 /**
  * Write a value to a peripheral characteristic without response.
  *
  * The write is queued for transmission and does not await completion.
  *
- * @param [in]  peri       The peripheral to write to.
+ * @param [in]  peripheral The peripheral to write to.
  * @param [in]  handle     The handle of the characteristic value to write.
  * @param [in]  data       The data to write.
  * @param [in]  size       The size of @p data in bytes.
@@ -638,11 +638,11 @@ static inline pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+static inline pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+static inline pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

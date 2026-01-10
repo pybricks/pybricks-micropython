@@ -229,7 +229,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
 
     if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         return PBIO_ERROR_NO_DEV;
@@ -247,7 +247,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_char_t *characteristic) {
+pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peri, uint16_t handle) {
 
     if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
         return PBIO_ERROR_NO_DEV;
@@ -257,7 +257,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peri
     }
 
     // Initialize operation for handling on the main thread.
-    peri->char_now = characteristic;
+    peri->char_handle = handle;
     peri->func = pbdrv_bluetooth_peripheral_read_characteristic_func;
     peri->err = PBIO_ERROR_AGAIN;
     pbio_os_request_poll();
@@ -272,14 +272,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_per
     if (peri->func) {
         return PBIO_ERROR_BUSY;
     }
-    if (size > PBIO_ARRAY_SIZE(peri->char_write_data)) {
+    if (size > PBIO_ARRAY_SIZE(peri->char_data)) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     // Initialize operation for handling on the main thread.
-    peri->char_write_handle = handle;
-    memcpy(peri->char_write_data, data, size);
-    peri->char_write_size = size;
+    peri->char_handle = handle;
+    memcpy(peri->char_data, data, size);
+    peri->char_size = size;
 
     peri->func = pbdrv_bluetooth_peripheral_write_characteristic_func;
     peri->err = PBIO_ERROR_AGAIN;

@@ -39,7 +39,7 @@
 /**
  * The main HID Characteristic.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_type_xbox_char_hid_report = {
+static pbdrv_bluetooth_peripheral_char_discovery_t pb_type_xbox_char_hid_report = {
     .handle = 0, // Will be set during discovery.
     // Even with the property filter, there are still 3 matches for this
     // characteristic on the Elite Series 2 controller. For now limit discovery
@@ -55,7 +55,7 @@ static pbdrv_bluetooth_peripheral_char_t pb_type_xbox_char_hid_report = {
 /**
  * Unused characteristic that needs to be read for controller to become active.
  */
-static pbdrv_bluetooth_peripheral_char_t pb_type_xbox_char_hid_map = {
+static pbdrv_bluetooth_peripheral_char_discovery_t pb_type_xbox_char_hid_map = {
     .uuid16 = 0x2a4b,
     .request_notification = false,
 };
@@ -346,7 +346,7 @@ retry:
     }
 
     DEBUG_PRINT("Read HID map.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, &pb_type_xbox_char_hid_map));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, pb_type_xbox_char_hid_map.handle));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
@@ -361,7 +361,7 @@ retry:
     }
 
     DEBUG_PRINT("Read HID report.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, pb_type_xbox_char_hid_report.handle));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;

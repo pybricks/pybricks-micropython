@@ -945,7 +945,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
     }
 
     gatt_client_characteristic_t characteristic = {
-        .value_handle = peri->char_now->handle,
+        .value_handle = peri->char_handle,
     };
     btstack_error = gatt_client_read_value_of_characteristic(packet_handler, peri->con_handle, &characteristic);
     if (btstack_error != ERROR_CODE_SUCCESS) {
@@ -961,10 +961,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
         // Cache the result.
         if (hci_event_is_type(event_packet, GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT) &&
             gatt_event_characteristic_value_query_result_get_handle(event_packet) == peri->con_handle &&
-            gatt_event_characteristic_value_query_result_get_value_handle(event_packet) == peri->char_now->handle
+            gatt_event_characteristic_value_query_result_get_value_handle(event_packet) == peri->char_handle
             ) {
-            peri->char_now->value_len = gatt_event_characteristic_value_query_result_get_value_length(event_packet);
-            memcpy(peri->char_now->value, gatt_event_characteristic_value_query_result_get_value(event_packet), peri->char_now->value_len);
+            peri->char_size = gatt_event_characteristic_value_query_result_get_value_length(event_packet);
+            memcpy(peri->char_data, gatt_event_characteristic_value_query_result_get_value(event_packet), peri->char_size);
         }
 
         // The wait until condition: read complete.
@@ -993,8 +993,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
     PBIO_OS_ASYNC_BEGIN(state);
 
     btstack_error = gatt_client_write_value_of_characteristic(packet_handler,
-        peri->con_handle, peri->char_write_handle, peri->char_write_size, peri->char_write_data
-        );
+        peri->con_handle, peri->char_handle, peri->char_size, peri->char_data);
 
     if (btstack_error != ERROR_CODE_SUCCESS) {
         return att_error_to_pbio_error(btstack_error);

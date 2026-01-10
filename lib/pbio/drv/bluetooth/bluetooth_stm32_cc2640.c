@@ -692,12 +692,12 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    DEBUG_PRINT("going to read %04x:\n", peri->char_now->handle);
+    DEBUG_PRINT("going to read %04x:\n", peri->char_handle);
 
     do {
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         attReadReq_t req = {
-            .handle = peri->char_now->handle,
+            .handle = peri->char_handle,
         };
         GATT_ReadCharValue(peri->con_handle, &req);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -722,19 +722,19 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
         uint16_t event;
         (payload = get_vendor_event(peri->con_handle, &event, &status, &len)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_REQ
-                && pbio_get_uint16_le(&payload[1]) == peri->char_now->handle) {
+                && pbio_get_uint16_le(&payload[1]) == peri->char_handle) {
                 return PBIO_ERROR_FAILED;
             }
             // Get the response value.
-            if (event == ATT_EVENT_READRSP && len <= sizeof(peri->char_now->value)) {
-                peri->char_now->value_len = len;
-                memcpy(peri->char_now->value, payload, len);
+            if (event == ATT_EVENT_READRSP && len <= sizeof(peri->char_data)) {
+                peri->char_size = len;
+                memcpy(peri->char_data, payload, len);
             }
             event == ATT_EVENT_READRSP;
         });
     }));
 
-    DEBUG_PRINT("Read %04x with status %d\n", peri->char_now->handle, status);
+    DEBUG_PRINT("Read %04x with status %d\n", peri->char_handle, status);
 
     PBIO_OS_ASYNC_END(ble_error_to_pbio_error(status));
 }
@@ -750,9 +750,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         GattWriteCharValue_t req = {
             .connHandle = peri->con_handle,
-            .handle = peri->char_write_handle,
-            .value = peri->char_write_data,
-            .dataSize = peri->char_write_size,
+            .handle = peri->char_handle,
+            .value = peri->char_data,
+            .dataSize = peri->char_size,
         };
         GATT_WriteCharValue(&req);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -779,7 +779,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
         uint16_t event;
         (payload = get_vendor_event(peri->con_handle, &event, &status, &len)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
-                && pbio_get_uint16_le(&payload[1]) == peri->char_write_handle) {
+                && pbio_get_uint16_le(&payload[1]) == peri->char_handle) {
                 return PBIO_ERROR_FAILED;
             }
 
