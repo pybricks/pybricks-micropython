@@ -116,8 +116,8 @@ typedef struct {
     uint16_t properties;
     /** The 16-bit UUID. Leave at 0 if 128-bit UUID should be used. */
     uint16_t uuid16;
-    /** The 128-bit UUID (big endian), used if uuid16 not set. */
-    const uint8_t uuid128[16];
+    /** The 128-bit UUID (big endian), used if uuid16 not set. Should be persistent. */
+    const uint8_t *uuid128;
     /** Whether to request enabling notifications after successful discovery. */
     bool request_notification;
 } pbdrv_bluetooth_peripheral_char_discovery_t;
@@ -173,8 +173,8 @@ struct _pbdrv_bluetooth_peripheral_t {
     uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
-    /** Handle to the characteristic currently being discovered. */
-    pbdrv_bluetooth_peripheral_char_discovery_t *char_now;
+    /** The characteristic currently being discovered. */
+    pbdrv_bluetooth_peripheral_char_discovery_t char_disc;
     /** Scan and connect configuration. */
     pbdrv_bluetooth_peripheral_connect_config_t *config;
     /** Currently ongoing peripheral function. */

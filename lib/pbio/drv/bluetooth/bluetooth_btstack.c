@@ -832,16 +832,16 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Nothing found to begin with.
-    peri->char_now->handle = 0;
+    peri->char_disc.handle = 0;
 
-    uint16_t handle_max = peri->char_now->handle_max ? peri->char_now->handle_max : 0xffff;
+    uint16_t handle_max = peri->char_disc.handle_max ? peri->char_disc.handle_max : 0xffff;
 
     // Start characteristic discovery.
-    btstack_error = peri->char_now->uuid16 ?
+    btstack_error = peri->char_disc.uuid16 ?
         gatt_client_discover_characteristics_for_handle_range_by_uuid16(
-        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid16) :
+        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_disc.uuid16) :
         gatt_client_discover_characteristics_for_handle_range_by_uuid128(
-        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_now->uuid128);
+        packet_handler, peri->con_handle, 0x0001, handle_max, peri->char_disc.uuid128);
     if (btstack_error != ERROR_CODE_SUCCESS) {
         return att_error_to_pbio_error(btstack_error);
     }
@@ -857,7 +857,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
         }
 
         // Process a discovered characteristic, saving only the first match.
-        if (!peri->char_now->handle &&
+        if (!peri->char_disc.handle &&
             hci_event_is_type(event_packet, GATT_EVENT_CHARACTERISTIC_QUERY_RESULT) &&
             gatt_event_characteristic_query_result_get_handle(event_packet) == peri->con_handle) {
 
@@ -865,10 +865,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
             gatt_event_characteristic_query_result_get_characteristic(event_packet, current_char);
 
             // We only care about the one characteristic that has at least the requested properties.
-            if ((current_char->properties & peri->char_now->properties) == peri->char_now->properties) {
+            if ((current_char->properties & peri->char_disc.properties) == peri->char_disc.properties) {
                 DEBUG_PRINT("Found characteristic handle: 0x%04x with properties 0x%04x \n", current_char->value_handle, current_char->properties);
-                peri->char_now->handle = current_char->value_handle;
-                peri->char_now->handle_max = current_char->end_handle;
+                peri->char_disc.handle = current_char->value_handle;
+                peri->char_disc.handle_max = current_char->end_handle;
             }
         }
 
@@ -883,15 +883,15 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
         return att_error_to_pbio_error(btstack_error);
     }
 
-    if (!peri->char_now->handle) {
+    if (!peri->char_disc.handle) {
         // Characteristic not found.
         return PBIO_ERROR_FAILED;
     }
 
     // If no notification is requested, we are done.
-    if (!peri->char_now->request_notification) {
+    if (!peri->char_disc.request_notification) {
         // Success if we found the characteristic.
-        return peri->char_now->handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
+        return peri->char_disc.handle ? PBIO_SUCCESS : PBIO_ERROR_FAILED;
     }
 
     // Discovered characteristics, ready to enable notifications.

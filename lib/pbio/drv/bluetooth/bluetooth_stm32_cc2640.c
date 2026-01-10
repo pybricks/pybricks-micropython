@@ -606,13 +606,13 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
         attReadByTypeReq_t req = {
             .startHandle = 0x0001,
             // User upper limit if no end handle specified.
-            .endHandle = peri->char_now->handle_max ? peri->char_now->handle_max : 0xFFFF,
+            .endHandle = peri->char_disc.handle_max ? peri->char_disc.handle_max : 0xFFFF,
         };
-        if (peri->char_now->uuid16) {
-            pbio_set_uint16_le(req.type.uuid, peri->char_now->uuid16);
+        if (peri->char_disc.uuid16) {
+            pbio_set_uint16_le(req.type.uuid, peri->char_disc.uuid16);
             req.type.len = 2;
         } else {
-            pbio_uuid128_reverse_copy(req.type.uuid, peri->char_now->uuid128);
+            pbio_uuid128_reverse_copy(req.type.uuid, peri->char_disc.uuid128);
             req.type.len = 16;
         }
         GATT_DiscCharsByUUID(peri->con_handle, &req);
@@ -649,8 +649,8 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
             // up with the last. It also assumes that it is the only
             // characteristic in the response.
             if (status == bleSUCCESS) {
-                if ((payload[3] & peri->char_now->properties) == peri->char_now->properties) {
-                    peri->char_now->handle = pbio_get_uint16_le(&payload[4]);
+                if ((payload[3] & peri->char_disc.properties) == peri->char_disc.properties) {
+                    peri->char_disc.handle = pbio_get_uint16_le(&payload[4]);
                     // Don't break out of this even though we found it. We need to
                     // wait until the range scan completes.
                 }
@@ -661,7 +661,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     }));
 
     // If notifications are not requested, we're done.
-    if (!peri->char_now->request_notification) {
+    if (!peri->char_disc.request_notification) {
         return PBIO_SUCCESS;
     }
 
@@ -674,7 +674,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
         GATT_WriteNoRsp(peri->con_handle, &(attWriteReq_t) {
             // assuming that client characteristic configuration descriptor
             // is next attribute after the characteristic value attribute
-            .handle = peri->char_now->handle + 1,
+            .handle = peri->char_disc.handle + 1,
             .len = sizeof(enable),
             .pValue = (uint8_t *)&enable,
         });

@@ -238,9 +238,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_
         return PBIO_ERROR_BUSY;
     }
 
-    // Initialize operation for handling on the main thread.
-    characteristic->handle = 0;
-    peri->char_now = characteristic;
+    // Initialize operation for handling on the main thread, copying
+    // characteristic to persistent peripheral state.
+    peri->char_disc = *characteristic;
+    peri->char_disc.handle = 0;
     peri->func = pbdrv_bluetooth_peripheral_discover_characteristic_func;
     peri->err = PBIO_ERROR_AGAIN;
     pbio_os_request_poll();

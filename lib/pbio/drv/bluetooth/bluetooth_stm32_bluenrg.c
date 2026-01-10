@@ -472,14 +472,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 
     uint8_t uuid_le[16];
     uint8_t uuid_type;
-    if (peri->char_now->uuid16) {
-        pbio_set_uint16_le(uuid_le, peri->char_now->uuid16);
+    if (peri->char_disc.uuid16) {
+        pbio_set_uint16_le(uuid_le, peri->char_disc.uuid16);
         uuid_type = UUID_TYPE_16;
     } else {
-        pbio_uuid128_reverse_copy(uuid_le, peri->char_now->uuid128);
+        pbio_uuid128_reverse_copy(uuid_le, peri->char_disc.uuid128);
         uuid_type = UUID_TYPE_128;
     }
-    uint16_t handle_max = /* peri->char_now->handle_max ? peri->char_now->handle_max : */ 0xffff; // Not implemented due to build size limitations.
+    uint16_t handle_max = /* peri->char_disc.handle_max ? peri->char_disc.handle_max : */ 0xffff; // Not implemented due to build size limitations.
     aci_gatt_disc_charac_by_uuid_begin(peri->con_handle, 0x0001, handle_max, uuid_type, uuid_le);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gatt_disc_charac_by_uuid_end();
@@ -496,7 +496,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
                 // even if there are multiple matches. There is no guarantee
                 // which one it will find, but probably the last one.
                 if (subevt->conn_handle == peri->con_handle) {
-                    peri->char_now->handle = subevt->attr_handle;
+                    peri->char_disc.handle = subevt->attr_handle;
                 }
             }
             event == EVT_BLUE_GATT_PROCEDURE_COMPLETE;
@@ -507,7 +507,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     }));
 
     // If notifications are not requested, we're done.
-    if (!peri->char_now->request_notification) {
+    if (!peri->char_disc.request_notification) {
         return ble_error_to_pbio_error(peri->status);
     }
 
@@ -515,7 +515,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 
 retry:
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_now->handle + 2, sizeof(enable), (const uint8_t *)&enable);
+    aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_disc.handle + 2, sizeof(enable), (const uint8_t *)&enable);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gatt_write_charac_value_end();
 
