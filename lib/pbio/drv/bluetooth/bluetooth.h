@@ -55,6 +55,48 @@ extern pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callba
 
 pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context);
 
+/**
+ * Context for an ongoing classic Bluetooth task.
+ *
+ * Not all fields are used by all functions. Only one function runs at a time.
+ */
+typedef struct {
+    /**
+     * The currently active function.
+     */
+    pbio_os_process_func_t func;
+    /**
+     * The most recent result of calling above function from main process.
+     */
+    pbio_error_t err;
+    /**
+     * Cancellation requested.
+     */
+    bool cancel;
+    /**
+     *  Watchdog for above operation so it can be cancelled on inactivity.
+     */
+    pbio_os_timer_t watchdog;
+    /**
+     * Inquiry scan results.
+     */
+    pbdrv_bluetooth_inquiry_result_t *inq_results;
+    /**
+     * Number of scan results found so far.
+     */
+    uint32_t *inq_count;
+    /**
+     * Maximum number of scan results to find.
+     */
+    uint32_t *inq_count_max;
+    /**
+     * Inquiry duration in units of 1.28 seconds.
+     */
+    uint8_t inq_duration;
+} pbdrv_bluetooth_classic_task_context_t;
+
+pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context);
+
 #endif // PBDRV_CONFIG_BLUETOOTH
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_H_

@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <stdio.h>
 
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
@@ -1090,6 +1091,64 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
         pbdrv_bluetooth_is_observing = false;
         // REVISIT: use callback to await operation
     }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
+
+    gap_event_inquiry_result_get_bd_addr(event_packet, result->bdaddr);
+    if (gap_event_inquiry_result_get_rssi_available(event_packet)) {
+        result->rssi = gap_event_inquiry_result_get_rssi(event_packet);
+    }
+
+    if (gap_event_inquiry_result_get_name_available(event_packet)) {
+        const uint8_t *name = gap_event_inquiry_result_get_name(event_packet);
+        const size_t name_len = gap_event_inquiry_result_get_name_len(event_packet);
+        snprintf(result->name, sizeof(result->name), "%.*s", (int)name_len, name);
+    }
+
+    result->class_of_device = gap_event_inquiry_result_get_class_of_device(event_packet);
+}
+
+pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context) {
+
+    pbdrv_bluetooth_classic_task_context_t *task = context;
+
+    if (!task->cancel) {
+        task->cancel = pbio_os_timer_is_expired(&task->watchdog);
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    DEBUG_PRINT("Start inquiry scan.\n");
+
+    gap_inquiry_start(task->inq_duration);
+
+    // Wait until scan timeout or the number of devices are found.
+    PBIO_OS_AWAIT_UNTIL(state, (*task->inq_count == *task->inq_count_max) || ({
+
+        if (task->cancel || *task->inq_count_max == 0) {
+            // Cancelled or the external data no longer available. Stop
+            // scanning and don't write any more data.
+            DEBUG_PRINT("Inquiry scan canceled.\n");
+            gap_inquiry_stop();
+            return PBIO_ERROR_CANCELED;
+        }
+
+        // Process a scan result.
+        if (hci_event_is_type(event_packet, GAP_EVENT_INQUIRY_RESULT)) {
+            DEBUG_PRINT("Received scan result.\n");
+            pbdrv_bluetooth_inquiry_result_t *result = &task->inq_results[(*task->inq_count)++];
+            pbdrv_bluetooth_inquiry_unpack_scan_event(event_packet, result);
+
+        }
+
+        // The wait until condition: inquiry complete.
+        hci_event_is_type(event_packet, GAP_EVENT_INQUIRY_COMPLETE);
+    }));
+
+    DEBUG_PRINT("Inquiry scan ended with %d results.\n", *task->inq_count);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }

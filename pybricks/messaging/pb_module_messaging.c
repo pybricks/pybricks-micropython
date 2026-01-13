@@ -72,13 +72,6 @@ static char *format_bluetooth_address(uint8_t *address) {
 }
 
 /**
- * To be replaced by driver task.
- */
-static pbio_error_t pb_messaging_bluetooth_scan_thread(pbio_os_state_t *state, mp_obj_t parent_obj) {
-    return PBIO_SUCCESS;
-}
-
-/**
  * Maps the inquiry results to a list of dictionary, to be returned to the user.
  */
 static mp_obj_t pb_messaging_bluetooth_scan_return_map(mp_obj_t parent_obj) {
@@ -117,13 +110,13 @@ static mp_obj_t pb_messaging_bluetooth_scan(size_t n_args, const mp_obj_t *pos_a
     // Initialize at zero results.
     scanner->num_results = 0;
     scanner->num_results_max = mp_obj_get_int(num_results_in);
-    (void)timeout_in;
+    pb_assert(pbdrv_bluetooth_start_inquiry_scan(scanner->results, &scanner->num_results, &scanner->num_results_max, mp_obj_get_int(timeout_in)));
 
     // Create an awaitable with a reference to our result to keep it from being
     // garbage collected.
     pb_type_async_t *iter = NULL;
     pb_type_async_t config = {
-        .iter_once = pb_messaging_bluetooth_scan_thread,
+        .iter_once = pbdrv_bluetooth_await_classic_task,
         .parent_obj = MP_OBJ_FROM_PTR(scanner),
         .return_map = pb_messaging_bluetooth_scan_return_map,
     };

@@ -13,6 +13,7 @@
 
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
+#include <pbio/int_math.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 
@@ -303,15 +304,6 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
     return peri->err;
 }
 
-void pbdrv_bluetooth_cancel_operation_request(void) {
-    // Only some peripheral actions support cancellation.
-    DEBUG_PRINT("Bluetooth operation cancel requested.\n");
-    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
-        peri->cancel = true;
-    }
-}
-
 //
 // Functions related to advertising and scanning.
 //
@@ -505,6 +497,60 @@ static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
     return false;
 }
 
+#if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+static pbdrv_bluetooth_classic_task_context_t pbdrv_bluetooth_classic_task_context;
+
+pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
+
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    pbdrv_bluetooth_classic_task_context_t *task = &pbdrv_bluetooth_classic_task_context;
+
+    if (task->func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Initialize newly given task.
+    task->inq_results = results;
+    task->inq_count = results_count;
+    task->inq_count_max = results_count_max;
+    task->inq_duration = pbio_int_math_bind((duration_ms + 640) / 1280, 1, 255);
+
+    // Request handling on the main loop.
+    task->err = PBIO_ERROR_AGAIN;
+    task->func = pbdrv_bluetooth_inquiry_scan_func;
+    task->cancel = false;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
+
+    pbdrv_bluetooth_classic_task_context_t *task = &pbdrv_bluetooth_classic_task_context;
+
+    // If the user is no longer calling this then the operation is no longer
+    // of interest and will be cancelled if the active function supports it.
+    pbio_os_timer_set(&task->watchdog, 10);
+
+    return task->err;
+}
+#endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+
+void pbdrv_bluetooth_cancel_operation_request(void) {
+    // Only some peripheral actions support cancellation.
+    DEBUG_PRINT("Bluetooth operation cancel requested.\n");
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        peri->cancel = true;
+    }
+    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+    // Revisit: Cancel all.
+    pbdrv_bluetooth_classic_task_context.cancel = true;
+    #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+}
+
 static bool shutting_down;
 
 /**
@@ -595,6 +641,17 @@ init:
             PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_start_observing_func(&sub, NULL));
             observe_restart_requested = false;
         }
+
+        #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+        // Handle pending Bluetooth classic task, if any.
+        static pbdrv_bluetooth_classic_task_context_t *task;
+        task = &pbdrv_bluetooth_classic_task_context;
+        if (task->func) {
+            PBIO_OS_AWAIT(state, &sub, task->err = task->func(&sub, task));
+            task->func = NULL;
+            task->cancel = false;
+        }
+        #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
     }
 
     DEBUG_PRINT("Shutdown requested.\n");
