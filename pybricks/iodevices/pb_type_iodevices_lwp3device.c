@@ -86,6 +86,10 @@ typedef struct {
      */
     pbdrv_bluetooth_peripheral_t *peripheral;
     /**
+     * The discovered LWP3 characteristic handle.
+     */
+    uint16_t lwp3_char_handle;
+    /**
      * Async iterable state.
      */
     pb_type_async_t *iter;
@@ -255,7 +259,7 @@ static pbio_error_t pb_type_pupdevices_Remote_write_light_msg(mp_obj_t self_in, 
 
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->peripheral->char_disc.handle, (const uint8_t *)&msg, sizeof(msg));
+    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
 }
 
 static mp_obj_t wait_or_await_operation(mp_obj_t self_in) {
@@ -317,6 +321,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     };
     pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_lwp3device_char));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->lwp3_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -346,7 +351,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     msg.mode = REMOTE_BUTTONS_MODE_KEYSD;
     msg.enable_notifications = 1;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->peripheral->char_disc.handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -358,7 +363,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     // set mode for right buttons
     msg.port = REMOTE_PORT_RIGHT_BUTTONS;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->peripheral->char_disc.handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -372,7 +377,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
     msg.mode = STATUS_LIGHT_MODE_RGB_0;
     msg.enable_notifications = 0;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->peripheral->char_disc.handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -537,7 +542,7 @@ static mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
         self->name[len] = 0;
 
         pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(
-            self->peripheral, self->peripheral->char_disc.handle,
+            self->peripheral, self->lwp3_char_handle,
             (const uint8_t *)&msg, sizeof(msg) - sizeof(msg.payload) + len));
         return wait_or_await_operation(self_in);
     }
@@ -657,7 +662,7 @@ static mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
         mp_raise_ValueError(MP_ERROR_TEXT("length in header wrong"));
     }
 
-    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->peripheral->char_disc.handle, (const uint8_t *)bufinfo.buf, bufinfo.len));
+    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)bufinfo.buf, bufinfo.len));
     return wait_or_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);

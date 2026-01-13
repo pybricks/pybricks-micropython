@@ -441,6 +441,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic);
 
 /**
+ * Gets the result of the last characteristic discovery.
+ *
+ * @param [in]  peri    The peripheral to use.
+ * @return              The handle of the discovered characteristic, or 0 if not found.
+ */
+uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_bluetooth_peripheral_t *peri);
+
+/**
  * Read a characteristic.
  *
  * @param [in]  peripheral     The peripheral to use.
@@ -640,6 +648,10 @@ static inline pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth
 
 static inline pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_bluetooth_peripheral_t *peri) {
+    return 0;
 }
 
 static inline pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle) {

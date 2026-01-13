@@ -248,6 +248,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_
     return PBIO_SUCCESS;
 }
 
+uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_bluetooth_peripheral_t *peri) {
+    return peri->char_disc.handle;
+}
+
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peri, uint16_t handle) {
 
     if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {

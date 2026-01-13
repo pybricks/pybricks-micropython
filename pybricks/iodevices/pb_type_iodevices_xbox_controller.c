@@ -78,6 +78,14 @@ typedef struct _pb_type_xbox_obj_t {
      * Button and joystick state (populated by notification handler).
      */
     xbox_input_map_t input_map;
+    /**
+     * Discovered HID Map characteristic handle.
+     */
+    uint16_t hid_map_char_handle;
+    /**
+     * Discovered HID Report characteristic handle.
+     */
+    uint16_t hid_report_char_handle;
 } pb_type_xbox_obj_t;
 
 // Handles LEGO Wireless protocol messages from the XBOX Device.
@@ -320,12 +328,13 @@ retry:
     };
     pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &char_hid_map));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->hid_map_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID map.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->peripheral->char_disc.handle));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_map_char_handle));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
@@ -345,12 +354,13 @@ retry:
     };
     pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->hid_report_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID report.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->peripheral->char_disc.handle));
+    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_report_char_handle));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
