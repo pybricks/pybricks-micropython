@@ -72,3 +72,7 @@ Pipfile.lock
 # Jupyter Notebook
 ######################
 .ipynb_checkpoints
+
+# Clangd cache
+######################
+.cache/
