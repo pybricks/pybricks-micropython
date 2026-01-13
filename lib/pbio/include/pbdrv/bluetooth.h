@@ -245,6 +245,20 @@ typedef enum {
  */
 typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_type_t type, const uint8_t *data, uint8_t length, int8_t rssi);
 
+/**
+ * A single result from an inquiry scan.
+ */
+typedef struct {
+    /** Bluetooth device address. */
+    uint8_t bdaddr[6];
+    /** Received signal strength indicator. */
+    int8_t rssi;
+    /** Device name. */
+    char name[249];
+    /** Class of device. */
+    uint32_t class_of_device;
+} pbdrv_bluetooth_inquiry_result_t;
+
 #ifdef PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE
 #if PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE < 23 || PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE > 515
 #error PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE out of range
