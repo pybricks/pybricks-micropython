@@ -39,6 +39,7 @@
   connection. All of the above Remote and Xbox Controller were introduced in
   the previous beta release, so did not affect any stable release ([support#2521]).
 - Fixed Xbox Controller sometimes not working the first time ([support#1509]).
+- Fixed motors sometimes not working after boot ([support#2550]).
 
 [support#1509]: https://github.com/pybricks/support/issues/1509
 [support#1962]: https://github.com/pybricks/support/issues/1962
@@ -47,6 +48,7 @@
 [support#2500]: https://github.com/pybricks/support/issues/2500
 [support#2521]: https://github.com/pybricks/support/issues/2521
 [support#2522]: https://github.com/pybricks/support/issues/2522
+[support#2550]: https://github.com/pybricks/support/issues/2550
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
 [pybricks-micropython#425]: https://github.com/pybricks/pybricks-micropython/pull/425

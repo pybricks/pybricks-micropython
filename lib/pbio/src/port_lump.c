@@ -1084,6 +1084,10 @@ pbio_error_t pbio_port_lump_is_ready(pbio_port_lump_dev_t *lump_dev) {
 
     // Not ready if waiting for mode change
     if (lump_dev->mode != lump_dev->mode_switch.desired_mode) {
+        if (time - lump_dev->mode_switch.time > 500) {
+            debug_pr("Mode switch timed out. Retrying.\n");
+            pbio_port_lump_request_mode(lump_dev, lump_dev->mode_switch.desired_mode);
+        }
         return PBIO_ERROR_AGAIN;
     }
 
@@ -1112,6 +1116,8 @@ pbio_error_t pbio_port_lump_is_ready(pbio_port_lump_dev_t *lump_dev) {
  *                          ::PBIO_ERROR_AGAIN if the device is not ready for this operation.
  */
 pbio_error_t pbio_port_lump_set_mode(pbio_port_lump_dev_t *lump_dev, uint8_t mode) {
+
+    debug_pr("Set mode to %d\n.", mode);
 
     if (!lump_dev) {
         return PBIO_ERROR_NO_DEV;
