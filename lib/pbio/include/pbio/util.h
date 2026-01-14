@@ -122,6 +122,8 @@ void pbio_uuid128_le_copy(uint8_t *dst, const uint8_t *src);
 bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2);
 void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 
+typedef void (*pbio_util_void_callback_t)(void);
+
 /**
  * Declares a new oneshot state variable.
  * @param [in]  name    The name of the variable.

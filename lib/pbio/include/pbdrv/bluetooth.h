@@ -309,6 +309,13 @@ const char *pbdrv_bluetooth_get_fw_version(void);
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
 
 /**
+ * Sets a callback to be called when a Bluetooth host is connected or disconnected.
+ *
+ * @param [in]  callback    The function that will be called.
+ */
+void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback);
+
+/**
  * Registers a callback that will be called when Pybricks data is received via a
  * characteristic write.
  *
@@ -633,6 +640,9 @@ static inline const char *pbdrv_bluetooth_get_fw_version(void) {
 
 static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     return false;
+}
+
+static inline void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
 }
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {

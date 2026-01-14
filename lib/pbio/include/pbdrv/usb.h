@@ -60,6 +60,13 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void);
 void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler);
 
 /**
+ * Sets a callback to be called when a USB host is connected or disconnected.
+ *
+ * @param [in]  callback    The function that will be called.
+ */
+void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback);
+
+/**
  * Schedules Pybricks status to be sent soon.
  *
  * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
@@ -129,6 +136,9 @@ static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
 }
 
 static inline void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+}
+
+static inline void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
 }
 
 static inline void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {

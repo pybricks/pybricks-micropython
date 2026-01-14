@@ -889,6 +889,7 @@ static void handle_event(hci_event_pckt *event) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
                 uart_tx_notify_en = false;
+                pbdrv_bluetooth_host_connection_changed();
             } else if (evt->handle == peri->con_handle) {
                 peri->con_handle = 0;
             }
@@ -946,6 +947,7 @@ static void handle_event(hci_event_pckt *event) {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
+                        pbdrv_bluetooth_host_connection_changed();
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         // not implemented
                     } else if (subevt->attr_handle == uart_tx_char_handle + 2) {

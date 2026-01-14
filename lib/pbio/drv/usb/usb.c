@@ -23,10 +23,22 @@
 
 #include <lwrb/lwrb.h>
 
+static pbio_util_void_callback_t pbdrv_usb_host_connection_changed_callback;
+
+void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
+    pbdrv_usb_host_connection_changed_callback = callback;
+}
 /**
  * Host is subscribed to our outgoing event messages.
  */
 static bool pbdrv_usb_events_subscribed;
+
+static void pbdrv_usb_events_subscribed_set(bool subscribed) {
+    pbdrv_usb_events_subscribed = subscribed;
+    if (pbdrv_usb_host_connection_changed_callback) {
+        pbdrv_usb_host_connection_changed_callback();
+    }
+}
 
 bool pbdrv_usb_connection_is_active(void) {
     return pbdrv_usb_events_subscribed && pbdrv_usb_is_ready();
@@ -226,7 +238,7 @@ static void pbdrv_usb_handle_data_in(void) {
 
     switch (data_in[0]) {
         case PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE:
-            pbdrv_usb_events_subscribed = data_in[1];
+            pbdrv_usb_events_subscribed_set(data_in[1]);
             pbdrv_usb_respond_result = PBIO_PYBRICKS_ERROR_OK;
             pbdrv_usb_respond_soon = true;
 
@@ -243,7 +255,7 @@ static void pbdrv_usb_handle_data_in(void) {
 }
 
 static void pbdrv_usb_reset_state(void) {
-    pbdrv_usb_events_subscribed = false;
+    pbdrv_usb_events_subscribed_set(false);
     pbdrv_usb_respond_soon = false;
     pbdrv_usb_status_data_pending = false;
     lwrb_reset(&pbdrv_usb_stdout_ring_buf);
@@ -302,6 +314,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
         }
 
         PBIO_OS_AWAIT_WHILE(state, pbdrv_usb_is_ready());
+
         pbdrv_usb_reset_state();
         PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
     }

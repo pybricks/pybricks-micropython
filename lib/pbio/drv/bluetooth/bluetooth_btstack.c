@@ -141,6 +141,7 @@ static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_hand
 
 static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) {
     pybricks_con_handle = value ? tx_con_handle : HCI_CON_HANDLE_INVALID;
+    pbdrv_bluetooth_host_connection_changed();
 }
 
 static bool hci_event_is_type(uint8_t *packet, uint8_t event_type) {
@@ -370,6 +371,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 le_con_handle = HCI_CON_HANDLE_INVALID;
                 pybricks_con_handle = HCI_CON_HANDLE_INVALID;
                 uart_con_handle = HCI_CON_HANDLE_INVALID;
+                pbdrv_bluetooth_host_connection_changed();
             } else {
                 for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
                     pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);

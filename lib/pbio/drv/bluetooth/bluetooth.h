@@ -37,6 +37,8 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size);
 
+void pbdrv_bluetooth_host_connection_changed(void);
+
 extern pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
 
 extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];

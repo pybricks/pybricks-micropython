@@ -79,6 +79,18 @@ void pbdrv_bluetooth_init(void) {
     pbdrv_bluetooth_init_hci();
 }
 
+static pbio_util_void_callback_t pbdrv_bluetooth_host_connection_changed_callback;
+
+void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
+    pbdrv_bluetooth_host_connection_changed_callback = callback;
+}
+
+void pbdrv_bluetooth_host_connection_changed(void) {
+    if (pbdrv_bluetooth_host_connection_changed_callback) {
+        pbdrv_bluetooth_host_connection_changed_callback();
+    }
+}
+
 pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 
     // make sure we have a Bluetooth connection

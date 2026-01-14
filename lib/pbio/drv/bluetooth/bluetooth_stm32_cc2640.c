@@ -1268,6 +1268,7 @@ static void handle_event(uint8_t *packet) {
                         pybricks_notify_en = data[10];
                         err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", pybricks_notify_en);
+                        pbdrv_bluetooth_host_connection_changed();
                     } else if (char_handle == uart_rx_char_handle) {
                         // Not implemented
                     } else if (char_handle == uart_tx_char_handle + 1) {
@@ -1369,6 +1370,7 @@ static void handle_event(uint8_t *packet) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
                         uart_tx_notify_en = false;
+                        pbdrv_bluetooth_host_connection_changed();
                     } else if (peri->con_handle == connection_handle) {
                         peri->con_handle = NO_CONNECTION;
                     }
