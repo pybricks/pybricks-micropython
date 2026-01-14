@@ -37,6 +37,7 @@
   connection. All of the above Remote and Xbox Controller were introduced in
   the previous beta release, so did not affect any stable release ([support#2521]).
 - Fixed Xbox Controller sometimes not working the first time ([support#1509]).
+- Fixed motors sometimes not working after boot.
 
 [support#1509]: https://github.com/pybricks/support/issues/1509
 [support#1962]: https://github.com/pybricks/support/issues/1962
