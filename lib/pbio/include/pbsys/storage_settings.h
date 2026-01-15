@@ -22,8 +22,8 @@
 #include <pbsys/config.h>
 
 /**
- * System setting flags
- */
+  * System setting flags
+  */
 typedef enum {
     /**
      * Bluetooth is enabled by the user (defaults to true).
@@ -40,6 +40,9 @@ typedef struct _pbsys_storage_settings_t {
     #if PBIO_CONFIG_IMU
     pbio_imu_persistent_settings_t imu_settings;
     #endif
+    #if PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE > 0
+    uint8_t bluetooth_classic_link_db[PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE];
+    #endif
 } pbsys_storage_settings_t;
 
 #if PBSYS_CONFIG_STORAGE
@@ -52,6 +55,15 @@ bool pbsys_storage_settings_bluetooth_enabled_get(void);
 
 void pbsys_storage_settings_bluetooth_enabled_set(bool enable);
 
+// Persistent storage for the bluetooth classic link key database.
+#if PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE > 0
+uint8_t *pbsys_storage_settings_get_link_key_db(void);
+#else
+static inline uint8_t *pbsys_storage_settings_get_link_key_db(void) {
+    return NULL;
+}
+#endif
+
 #else
 
 static inline void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
@@ -62,6 +74,9 @@ static inline bool pbsys_storage_settings_bluetooth_enabled_get(void) {
     return true;
 }
 static inline void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
+}
+static inline uint8_t *pbsys_storage_settings_get_link_key_db(void) {
+    return NULL;
 }
 
 #endif // PBSYS_CONFIG_STORAGE
