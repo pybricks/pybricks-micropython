@@ -538,6 +538,13 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Don't advertise if already connected. BTstack also protects against this,
+    // but it means we never get the HCI event complete command because it is
+    // never given.
+    if (le_con_handle != HCI_CON_HANDLE_INVALID) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     init_advertising_data();
     gap_advertisements_enable(true);
 
