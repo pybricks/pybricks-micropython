@@ -47,7 +47,7 @@ void pbsys_host_schedule_status_update(const uint8_t *buf) {
  * @return              @c true if connection is active, else @c false.
  */
 bool pbsys_host_is_connected(void) {
-    return pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) ||
+    return pbdrv_bluetooth_host_is_connected() ||
            pbdrv_usb_connection_is_active();
 }
 

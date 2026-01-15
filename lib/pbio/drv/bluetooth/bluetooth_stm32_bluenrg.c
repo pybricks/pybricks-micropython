@@ -137,6 +137,14 @@ bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri)
     return peri == &peripheral_singleton && peri->con_handle != 0;
 }
 
+bool pbdrv_bluetooth_host_is_connected(void) {
+    return pybricks_notify_en;
+}
+
+bool pbdrv_bluetooth_hci_is_enabled(void) {
+    return true;
+}
+
 /**
  * Converts a BlueNRG-MS error code to a PBIO error code.
  * @param [in]  status  The BlueNRG-MS error code.
@@ -299,28 +307,6 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-
-bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_notify_en) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
-        return true;
-    }
-
-    return false;
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
@@ -889,6 +875,7 @@ static void handle_event(hci_event_pckt *event) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
                 uart_tx_notify_en = false;
+                pbdrv_bluetooth_host_connection_changed();
             } else if (evt->handle == peri->con_handle) {
                 peri->con_handle = 0;
             }
@@ -946,6 +933,7 @@ static void handle_event(hci_event_pckt *event) {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
+                        pbdrv_bluetooth_host_connection_changed();
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         // not implemented
                     } else if (subevt->attr_handle == uart_tx_char_handle + 2) {

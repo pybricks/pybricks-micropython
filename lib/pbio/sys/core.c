@@ -42,25 +42,6 @@ static pbio_error_t pbsys_system_poll_process_thread(pbio_os_state_t *state, voi
 
         // keep the hub from resetting itself
         pbdrv_watchdog_update();
-
-        if (pbsys_system_poll_process.request == PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
-            // After shutdown we only poll critical system processes.
-            continue;
-        }
-
-        // Monitor USB state.
-        if (pbdrv_usb_connection_is_active()) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
-        } else {
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
-        }
-
-        // Monitor BLE state.
-        if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
-            pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-        } else {
-            pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
-        }
     }
 
     // Unreachable
@@ -89,8 +70,6 @@ void pbsys_deinit(void) {
 
     // Used by status indications during shutdown.
     pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST);
-
-    pbio_os_process_make_request(&pbsys_system_poll_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 
     pbsys_storage_deinit();
     pbsys_hmi_deinit();
