@@ -654,8 +654,8 @@ bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr);
  */
 pbio_error_t
 pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
-                               int32_t timeout,
-                               pbdrv_bluetooth_rfcomm_conn_t *conn);
+    int32_t timeout,
+    pbdrv_bluetooth_rfcomm_conn_t *conn);
 
 /**
  * Listens for an incoming RFCOMM connection.
@@ -666,8 +666,8 @@ pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
  * @return                Success, PBIO_ERROR_AGAIN, or a final error code.
  */
 pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state,
-                                           int32_t timeout,
-                                           pbdrv_bluetooth_rfcomm_conn_t *conn);
+    int32_t timeout,
+    pbdrv_bluetooth_rfcomm_conn_t *conn);
 
 /**
  * Closes an RFCOMM connection.
@@ -692,8 +692,8 @@ pbdrv_bluetooth_rfcomm_close(const pbdrv_bluetooth_rfcomm_conn_t *conn);
  */
 pbio_error_t
 pbdrv_bluetooth_rfcomm_send(const pbdrv_bluetooth_rfcomm_conn_t *conn,
-                            const uint8_t *data, size_t length,
-                            size_t *sent_length);
+    const uint8_t *data, size_t length,
+    size_t *sent_length);
 
 /**
  * Receives data from an RFCOMM connection.
@@ -708,8 +708,8 @@ pbdrv_bluetooth_rfcomm_send(const pbdrv_bluetooth_rfcomm_conn_t *conn,
  */
 pbio_error_t
 pbdrv_bluetooth_rfcomm_recv(const pbdrv_bluetooth_rfcomm_conn_t *conn,
-                            uint8_t *buffer, size_t buffer_length,
-                            size_t *received_length);
+    uint8_t *buffer, size_t buffer_length,
+    size_t *received_length);
 
 /**
  * Returns whether the RFCOMM connection is connected.
@@ -854,26 +854,27 @@ static inline pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *s
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {}
+static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {
+}
 
 static inline const char *pbdrv_bluetooth_bdaddr_to_str(const bdaddr_t addr) {
     return NULL;
 }
 
 static inline bool pbdrv_bluetooth_str_to_bdaddr(const char *str,
-                                                 bdaddr_t addr) {
+    bdaddr_t addr) {
     return false;
 }
 
 pbio_error_t pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state,
-                                            bdaddr_t bdaddr, int32_t timeout,
-                                            void *conn) {
+    bdaddr_t bdaddr, int32_t timeout,
+    void *conn) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state,
-                                                         int32_t timeout,
-                                                         void *conn) {
+    int32_t timeout,
+    void *conn) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
@@ -882,22 +883,23 @@ static inline pbio_error_t pbdrv_bluetooth_rfcomm_close(const void *conn) {
 }
 
 static inline pbio_error_t pbdrv_bluetooth_rfcomm_send(const void *conn,
-                                                       const uint8_t *data,
-                                                       size_t length,
-                                                       size_t *sent_length) {
+    const uint8_t *data,
+    size_t length,
+    size_t *sent_length) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t
 pbdrv_bluetooth_rfcomm_recv(const void *conn, uint8_t *buffer,
-                            size_t buffer_length, size_t *received_length) {
+    size_t buffer_length, size_t *received_length) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {}
+static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {
+}
 
 static inline bool pbdrv_bluetooth_str_to_bdaddr(const char *str,
-                                                 bdaddr_t addr) {
+    bdaddr_t addr) {
     return false;
 }
 

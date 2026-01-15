@@ -1107,8 +1107,6 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
-
 static int link_db_entry_size() {
     return sizeof(bd_addr_t) + sizeof(link_key_t) + sizeof(link_key_type_t);
 }
@@ -1246,11 +1244,14 @@ typedef struct {
     // too large, we grant more credits.
     int credits_outstanding;
 
-    pbio_error_t err;  // The first encountered error.
+    pbio_error_t err;         // The first encountered error.
     uint16_t cid;             // The local rfcomm connection handle.
     uint16_t server_channel;  // The remote rfcomm channel we're connected to.
-    bool used;         // Is this socket descriptor in use?
-    bool connected;    // Is this socket descriptor connected?
+    bool is_used;             // Is this socket descriptor in use?
+    bool is_connected;        // Is this socket descriptor connected?
+    bool is_cancelled; // Has this socket been cancelled? Interrupts pending
+                       // listen() or connect calls.
+    bool is_using_sdp_system; // Is this socket currently using the SDP system?
 } pbdrv_bluetooth_classic_rfcomm_socket_t;
 
 #define MAX_NUM_CONNECTIONS (7)
@@ -1293,8 +1294,14 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_
     }
     lwrb_free(&socket->rx_buffer);
     lwrb_free(&socket->tx_buffer);
-    socket->used = false;
-    socket->connected = false;
+    // A non-zero duration on these timers is used as a flag to indicate the
+    // presence of a deadline on a connection attempt.
+    socket->rx_timer.duration = 0;
+    socket->tx_timer.duration = 0;
+    socket->is_used = false;
+    socket->is_connected = false;
+    socket->is_cancelled = false;
+    socket->is_using_sdp_system = false;
     socket->cid = (uint16_t)-1;
     socket->mtu = 0;
     socket->credits_outstanding = 0;
@@ -1303,15 +1310,15 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_socket_alloc() {
     for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_bluetooth_classic_rfcomm_sockets); i++) {
-        if (!pbdrv_bluetooth_classic_rfcomm_sockets[i].used) {
+        if (!pbdrv_bluetooth_classic_rfcomm_sockets[i].is_used) {
             pbdrv_bluetooth_classic_rfcomm_socket_t *sock = &pbdrv_bluetooth_classic_rfcomm_sockets[i];
             pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
-            sock->used = true;
+            sock->is_used = true;
             sock->rx_buffer_data = umm_malloc(RFCOMM_RX_BUFFER_SIZE);
             sock->tx_buffer_data = umm_malloc(RFCOMM_TX_BUFFER_SIZE);
             if (!sock->rx_buffer_data) {
                 DEBUG_PRINT("Failed to allocate RFCOMM RX buffer.\n");
-                sock->used = false;
+                sock->is_used = false;
                 return NULL;
             }
             lwrb_init(&sock->rx_buffer, sock->rx_buffer_data, RFCOMM_RX_BUFFER_SIZE);
@@ -1326,7 +1333,8 @@ static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_s
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(uint16_t cid) {
     for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
-        if (pbdrv_bluetooth_classic_rfcomm_sockets[i].used && pbdrv_bluetooth_classic_rfcomm_sockets[i].cid == cid) {
+        if (pbdrv_bluetooth_classic_rfcomm_sockets[i].is_used &&
+            pbdrv_bluetooth_classic_rfcomm_sockets[i].cid == cid) {
             return &pbdrv_bluetooth_classic_rfcomm_sockets[i];
         }
     }
@@ -1489,8 +1497,14 @@ static void handle_hci_event_packet(uint8_t *packet, uint16_t size) {
                 DEBUG_PRINT("RFCOMM channel open failed with status: %d", status);
                 sock->err = PBIO_ERROR_FAILED;
             } else {
-                sock->connected = true;
+                DEBUG_PRINT("RFCOMM channel opened: cid=%u.\n", cid);
                 sock->mtu = rfcomm_event_channel_opened_get_max_frame_size(packet);
+                if (sock->mtu == 0) {
+                    rfcomm_disconnect(cid);
+                    DEBUG_PRINT("RFCOMM channel opened with invalid MTU=0, dropping connection.\n");
+                    sock->err = PBIO_ERROR_FAILED;
+                }
+                sock->is_connected = true;
                 sock->credits_outstanding = 0;
                 pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
             }
@@ -1566,16 +1580,18 @@ static void handle_hci_event_packet(uint8_t *packet, uint16_t size) {
             uint16_t cid = rfcomm_event_channel_closed_get_rfcomm_cid(packet);
             pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(cid);
             if (!sock) {
-                DEBUG_PRINT("Unknown cid (%u) for CHANNEL_CLOSED event\n", cid);
+                // If !sock, we closed the channel ourselves and there's nothing left to do.
                 break;
             }
-            // Note: we do not reset the socket, since the user is expected
-            // to call pbdrv_bluetooth_rfcomm_close() on the connection first.
 
-            if (sock->connected) {
-                DEBUG_PRINT("RFCOMM channel (cid=%u) closed for unknown reason.\n", cid);
+            DEBUG_PRINT("RFCOMM_EVENT_CHANNEL_CLOSED by remote for cid=%u.\n", cid);
+
+            // Note: we do not reset the socket, since the user is expected
+            // to call pbdrv_bluetooth_rfcomm_close() or disconnect_all() first.
+            if (sock->is_connected) {
+                DEBUG_PRINT("RFCOMM channel closed: cid=%u.\n", cid);
                 sock->err = PBIO_ERROR_IO;
-                sock->connected = false;
+                sock->is_connected = false;
             }
             break;
         }
@@ -1585,14 +1601,14 @@ static void handle_hci_event_packet(uint8_t *packet, uint16_t size) {
     }
 }
 
-// sdp_query_pending is true while some rfcomm_connect is using the sdp query
-// mechanism. A new query can't be started while this is true.
+// Is some active rfcomm_connect call using the SDP system?
+static bool sdp_system_in_use = false;
+// Is there an ongoing SDP query? Even if nobody is using the SDP system (e.g. a
+// query was started then abandoned), we can't issue a new query until we get
+// the SDP_EVENT_QUERY_COMPLETE event.
 static bool sdp_query_pending = false;
-// sdp_query_channel_id_result is a pointer to where we should store the
-// resulting rfcomm remote channel ID. We set this to NULL after we find a
-// channel. This is used to indicate that the query is complete, but the
-// caller is still responsible for setting sdp_query_pending to false.
-static uint16_t *sdp_query_rfcomm_channel;
+// Memory location for the result of the current SDP query.
+static uint16_t sdp_query_rfcomm_channel;
 
 static void bluetooth_btstack_classic_sdp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     if (packet_type != HCI_EVENT_PACKET) {
@@ -1604,7 +1620,7 @@ static void bluetooth_btstack_classic_sdp_packet_handler(uint8_t packet_type, ui
                 DEBUG_PRINT("Received unexpected SDP query result.\n");
                 return;
             }
-            if (*sdp_query_rfcomm_channel != 1) {
+            if (sdp_query_rfcomm_channel != 1) {
                 // Note: we prefer to return channel 1 over any other channel, since this is the default
                 // spp profile channel. The main purpose of this SDP query is to find channels *other* than
                 // one, since the default channel may not be served especially in the case of Windows bluetooth
@@ -1614,17 +1630,15 @@ static void bluetooth_btstack_classic_sdp_packet_handler(uint8_t packet_type, ui
                 // between multiple RFCOMM channels. Perhaps in the future we will allow users to manually specify
                 // the channel if they know their server will be listening on a channel other than 1. All EV3s
                 // will listen on channel 1.
-                *sdp_query_rfcomm_channel = sdp_event_query_rfcomm_service_get_rfcomm_channel(packet);
+                sdp_query_rfcomm_channel =
+                    sdp_event_query_rfcomm_service_get_rfcomm_channel(packet);
             }
-            DEBUG_PRINT("Found RFCOMM channel: %u\n", *sdp_query_rfcomm_channel);
+            DEBUG_PRINT("Found RFCOMM channel: %u\n", sdp_query_rfcomm_channel);
             break;
         }
         case SDP_EVENT_QUERY_COMPLETE: {
-            // Note: we don't indicate query completion to the caller until we get
-            // this query complete signal. This is to prevent another query being
-            // started while this query is ongoing.
             DEBUG_PRINT("SDP query complete.\n");
-            sdp_query_rfcomm_channel = NULL;
+            sdp_query_pending = false;
             pbio_os_request_poll();
             break;
         }
@@ -1681,72 +1695,102 @@ bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr) {
     return sscanf_bd_addr(str, addr) == 1;
 }
 
-pbio_error_t pbdrv_bluetooth_rfcomm_connect(
-    pbio_os_state_t *state,
-    bdaddr_t bdaddr,
+// Returns whether this socket is in a state where we should abandon
+// our connection attempt, either listening or connecting.
+static bool
+should_abandon_connection(pbdrv_bluetooth_classic_rfcomm_socket_t *sock) {
+    if (!sock) {
+        return false;
+    }
+    if (sock->rx_timer.duration > 0 &&
+        pbio_os_timer_is_expired(&sock->rx_timer)) {
+        sock->err = PBIO_ERROR_TIMEDOUT;
+        return true;
+    }
+    if (sock->is_cancelled) {
+        sock->err = PBIO_ERROR_CANCELED;
+        return true;
+    }
+    if (sock->err != PBIO_SUCCESS) {
+        return true;
+    }
+    return false;
+}
+
+pbio_error_t
+pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
     int32_t timeout,
-    pbdrv_bluetooth_rfcomm_conn_t *conn_out) {
-    pbio_error_t err;
+    pbdrv_bluetooth_rfcomm_conn_t *conn) {
 
     // Each time we resume this function, we need to load the socket pointer.
-    // On the first time through, this may find a spurious socket, but not to
-    // worry, we reset the pointer in the first async stage before allocating
-    // the socket.
-    pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn_out);
+    // On the first time through, initialize the conn_id to some non-matching
+    // value to prevent finding a socket owned by someone else.
+    if (*state == 0) {
+        conn->conn_id = -1;
+    }
+    pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+        pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
+    if (should_abandon_connection(sock)) {
+        goto cleanup;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    // The link db is loaded lazily since the storage settings system may not be
+    // ready when the bluetooth system is initialized, but it will be ready by
+    // the time we try to make any rfcomm connections.
     link_db_settings_load_once();
 
     sock = pbdrv_bluetooth_classic_rfcomm_socket_alloc();
     if (!sock) {
         DEBUG_PRINT("[btc:rfcomm_connect] No more sockets.\n");
+        // In this one case we need to return directly, because the cleanup
+        // handler would try to access sock.
         return PBIO_ERROR_RESOURCE_EXHAUSTED;
     }
+    conn->conn_id = pbdrv_bluetooth_classic_rfcomm_socket_id(sock);
 
     if (timeout > 0) {
-        pbio_os_timer_set(&sock->tx_timer, timeout);
+        // The rx_timer is used to track connection timeouts both for
+        // rfcomm_connect and ..._listen.
+        pbio_os_timer_set(&sock->rx_timer, timeout);
     }
 
     // Wait until the Bluetooth controller is up.
-    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING || pbio_os_timer_is_expired(&sock->tx_timer));
+    PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING);
 
     // Wait until any other pending SDP query is done.
-    PBIO_OS_AWAIT_UNTIL(state, !sdp_query_pending || pbio_os_timer_is_expired(&sock->tx_timer));
-
-    if (timeout > 0 && pbio_os_timer_is_expired(&sock->tx_timer)) {
-        DEBUG_PRINT("[btc:rfcomm_connect] Timed out waiting for HCI_STATE_WORKING.\n");
-        err = PBIO_ERROR_TIMEDOUT;
-        goto cleanup;
-    }
-
-    conn_out->conn_id = pbdrv_bluetooth_classic_rfcomm_socket_id(sock);
+    PBIO_OS_AWAIT_UNTIL(state, !sdp_query_pending && !sdp_system_in_use);
 
     // TODO: allow manually specifying the channel if the user knows it already.
     DEBUG_PRINT("[btc:rfcomm_connect] Starting SDP query...\n");
+    sdp_system_in_use = true;
     sdp_query_pending = true;
+    sock->is_using_sdp_system = true;
 
     // Note: valid server channels from 1-30, so this should never be returned
     // by a real SDP response.
 #define SERVER_CHANNEL_UNSET ((uint16_t)-1)
 
-    sock->server_channel = SERVER_CHANNEL_UNSET;
-    sdp_query_rfcomm_channel = &sock->server_channel;
+    sdp_query_rfcomm_channel = sock->server_channel = SERVER_CHANNEL_UNSET;
     uint8_t sdp_err = sdp_client_query_rfcomm_channel_and_name_for_service_class_uuid(
         bluetooth_btstack_classic_sdp_packet_handler, (uint8_t *)bdaddr, BLUETOOTH_SERVICE_CLASS_SERIAL_PORT);
     if (sdp_err != 0) {
         DEBUG_PRINT("[btc:rfcomm_connect] Failed to start SDP query: %d\n", sdp_err);
+        // Since we won't get any SDP query events following this, we must
+        // manually mark the query as no longer pending.
         sdp_query_pending = false;
-        sdp_query_rfcomm_channel = NULL;
-        err = PBIO_ERROR_FAILED;
+        sock->err = PBIO_ERROR_FAILED;
         goto cleanup;
     }
-    PBIO_OS_AWAIT_UNTIL(state, !sdp_query_rfcomm_channel);
-    // Allow other SDP queries to go ahead.
-    sdp_query_pending = false;
+    PBIO_OS_AWAIT_UNTIL(state, !sdp_query_pending);
+    sock->server_channel = sdp_query_rfcomm_channel;
 
+    // Allow other SDP queries to go ahead.
+    sdp_system_in_use = sock->is_using_sdp_system = false;
     if (sock->server_channel == SERVER_CHANNEL_UNSET) {
         DEBUG_PRINT("[btc:rfcomm_connect] Failed to find RFCOMM channel for device.\n");
-        err = PBIO_ERROR_FAILED;
+        sock->err = PBIO_ERROR_FAILED;
         goto cleanup;
     }
     DEBUG_PRINT("[btc:rfcomm_connect] Found RFCOMM channel %d for device.\n", sock->server_channel);
@@ -1757,24 +1801,11 @@ pbio_error_t pbdrv_bluetooth_rfcomm_connect(
     if ((rfcomm_err = rfcomm_create_channel_with_initial_credits(&pbdrv_bluetooth_classic_handle_packet, (uint8_t *)bdaddr, sock->server_channel, 0, &sock->cid)) != 0) {
         DEBUG_PRINT("[btc:rfcomm_connect] Failed to create RFCOMM channel: %d\n", rfcomm_err);
         (void)rfcomm_err;
-        err = PBIO_ERROR_FAILED;
+        sock->err = PBIO_ERROR_FAILED;
         goto cleanup;
     }
-    PBIO_OS_AWAIT_UNTIL(state, sock->connected || sock->err != PBIO_SUCCESS || (timeout > 0 && pbio_os_timer_is_expired(&sock->tx_timer)));
-    if (timeout > 0 && pbio_os_timer_is_expired(&sock->tx_timer)) {
-        DEBUG_PRINT("[btc:rfcomm_connect] Timed out waiting for RFCOMM channel to connect.\n");
-        err = PBIO_ERROR_TIMEDOUT;
-        goto cleanup;
-    }
-    if (!sock->connected) {
-        DEBUG_PRINT("[btc:rfcomm_connect] Other error.\n");
-        err = sock->err;
-        goto cleanup;
-    }
-    if (sock->mtu <= 0) {
-        DEBUG_PRINT("[btc:rfcomm_connect] Failed to get MTU for RFCOMM channel, will not be able to send.\n");
-        rfcomm_disconnect(sock->cid);
-        err = PBIO_ERROR_FAILED;
+    PBIO_OS_AWAIT_UNTIL(state, sock->is_connected);
+    if (!sock->is_connected) {
         goto cleanup;
     }
 
@@ -1784,6 +1815,11 @@ pbio_error_t pbdrv_bluetooth_rfcomm_connect(
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 
 cleanup:
+    if (sock->is_using_sdp_system) {
+        sdp_system_in_use = false;
+        sock->is_using_sdp_system = false;
+    }
+    pbio_error_t err = sock->err;
     pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
     return err;
 }
@@ -1792,10 +1828,20 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     pbio_os_state_t *state,
     int32_t timeout,
     pbdrv_bluetooth_rfcomm_conn_t *conn) {
-    pbio_error_t err;
-    pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
+    if (*state == 0) {
+        conn->conn_id = -1;
+    }
+    pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+        pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
+    if (should_abandon_connection(sock)) {
+        goto cleanup;
+    }
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    // The link db is loaded lazily since the storage settings system may not be
+    // ready when the bluetooth system is initialized, but it will be ready by
+    // the time we try to make any rfcomm connections.
     link_db_settings_load_once();
 
     sock = pbdrv_bluetooth_classic_rfcomm_socket_alloc();
@@ -1812,18 +1858,12 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     }
 
     PBIO_OS_AWAIT_UNTIL(state, hci_get_state() == HCI_STATE_WORKING);
-    if (timeout > 0 && pbio_os_timer_is_expired(&sock->rx_timer)) {
-        DEBUG_PRINT("[btc:rfcomm_listen] Timed out waiting for HCI_STATE_WORKING.\n");
-        err = PBIO_ERROR_TIMEDOUT;
-        goto cleanup;
-    }
-
     if (pending_listen_socket) {
         // Unlike with connect, where it's plausible for multiple async contexts
         // to be connecting to different devices, it's always going to be an
         // error to listen more than once at a time.
         DEBUG_PRINT("[btc:rfcomm_listen] Already listening.\n");
-        err = PBIO_ERROR_BUSY;
+        sock->err = PBIO_ERROR_BUSY;
         goto cleanup;
     }
 
@@ -1832,20 +1872,11 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     pending_listen_socket = sock;
     gap_connectable_control(1);
     DEBUG_PRINT("[btc:rfcomm_listen] Listening for incoming RFCOMM connections...\n");
-    PBIO_OS_AWAIT_UNTIL(state, sock->connected || sock->err != PBIO_SUCCESS || (timeout > 0 && pbio_os_timer_is_expired(&sock->rx_timer)));
+    PBIO_OS_AWAIT_UNTIL(state, sock->is_connected);
     pending_listen_socket = NULL;
 
-    if (timeout > 0 && pbio_os_timer_is_expired(&sock->rx_timer)) {
-        // Note: if we timed out and the connection later establishes after we
-        // free up the socket, it's fine, because we'll just disconnect
-        // automatically in the packet handler.
-        DEBUG_PRINT("[btc:rfcomm_listen] Timed out.\n");
-        err = PBIO_ERROR_TIMEDOUT;
-        goto cleanup;
-    }
     if (sock->err != PBIO_SUCCESS) {
         DEBUG_PRINT("[btc:rfcomm_listen] Other error.\n");
-        err = sock->err;
         goto cleanup;
     }
 
@@ -1854,6 +1885,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 
 cleanup:
+    pbio_error_t err = sock->err;
     pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
     return err;
 }
@@ -1865,7 +1897,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_close(
         DEBUG_PRINT("[btc:rfcomm_close] Invalid CID: %d\n", conn->conn_id);
         return PBIO_ERROR_INVALID_OP;
     }
-    gap_disconnect(sock->cid);
+    rfcomm_disconnect(sock->cid);
     pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
     return PBIO_SUCCESS;
 }
@@ -1876,7 +1908,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_send(
     size_t length,
     size_t *bytes_sent) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
-    if (!sock || !sock->connected) {
+    if (!sock || !sock->is_connected) {
         DEBUG_PRINT("[btc:rfcomm_send] Socket is not connected or does not exist.\n");
         return PBIO_ERROR_FAILED;
     }
@@ -1901,7 +1933,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_recv(
     size_t *bytes_received) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
 
-    if (!sock || !sock->connected) {
+    if (!sock || !sock->is_connected) {
         DEBUG_PRINT("[btc:rfcomm_recv] Socket is not connected or does not exist.\n");
         return PBIO_ERROR_FAILED;
     }
@@ -1918,7 +1950,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_recv(
 
 bool pbdrv_bluetooth_rfcomm_is_writeable(const pbdrv_bluetooth_rfcomm_conn_t *conn) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
-    if (!sock || !sock->connected) {
+    if (!sock || !sock->is_connected) {
         return false;
     }
     return lwrb_get_free(&sock->tx_buffer) > 0;
@@ -1937,10 +1969,29 @@ bool pbdrv_bluetooth_rfcomm_is_connected(const pbdrv_bluetooth_rfcomm_conn_t *co
     if (!sock) {
         return false;
     }
-    return sock->connected;
+    return sock->is_connected;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
+void pbdrv_bluetooth_rfcomm_cancel_connection() {
+    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+        pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+            &pbdrv_bluetooth_classic_rfcomm_sockets[i];
+        if (sock->is_used) {
+            sock->is_cancelled = true;
+        }
+    }
+}
+
+void pbdrv_bluetooth_rfcomm_disconnect_all() {
+    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+        pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+            &pbdrv_bluetooth_classic_rfcomm_sockets[i];
+        if (sock->is_used && sock->is_connected) {
+            rfcomm_disconnect(sock->cid);
+            pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
+        }
+    }
+}
 
 static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
 
@@ -2154,8 +2205,8 @@ void pbdrv_bluetooth_init_hci(void) {
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, true);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, true);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, true);
-    hci_dump_enable_packet_log(true);
-    #endif
+    hci_dump_enable_packet_log(false);
+#endif
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
