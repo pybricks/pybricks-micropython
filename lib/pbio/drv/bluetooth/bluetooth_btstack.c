@@ -16,7 +16,6 @@
 #include <btstack.h>
 #include <btstack_run_loop.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC
 #include <bluetooth_sdp.h>
 #include <classic/rfcomm.h>
 #include <classic/sdp_client.h>
@@ -26,7 +25,6 @@
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 #include <lwrb/lwrb.h>
-#endif
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
