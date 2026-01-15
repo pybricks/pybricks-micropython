@@ -60,6 +60,24 @@
 #define MAX_NR_MESH_TRANSPORT_KEYS    16
 #define MAX_NR_MESH_VIRTUAL_ADDRESSES 16
 
+#define MAX_ATT_DB_SIZE 512
+#define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES 20
+#define MAX_NR_HCI_CONNECTIONS 7 // CC2560/A limit.
+#define MAX_NR_HFP_CONNECTIONS 0
+// Up to 7 RFCOMM channels, plus 2 for transient use.
+#define MAX_NR_L2CAP_CHANNELS 9
+#define MAX_NR_L2CAP_SERVICES 7
+// We can have up to 7 connections, so we keep one extra spare.
+#define MAX_NR_RFCOMM_CHANNELS 8
+// We have one rfcomm service for the SPP profile.
+#define MAX_NR_RFCOMM_MULTIPLEXERS 1
+#define MAX_NR_RFCOMM_SERVICES 1
+#define MAX_NR_SERVICE_RECORD_ITEMS 1
+#define MAX_NR_SM_LOOKUP_ENTRIES 3
+#define MAX_NR_WHITELIST_ENTRIES 0
+#define MAX_NR_LE_DEVICE_DB_ENTRIES 3
+#define MAX_NR_SDP_CLIENTS 1
+
 // allow for one NetKey update
 #define MAX_NR_MESH_NETWORK_KEYS      (MAX_NR_MESH_SUBNETS + 1)
 
