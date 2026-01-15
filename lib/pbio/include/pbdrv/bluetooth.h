@@ -22,20 +22,6 @@
 #define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
 #define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
 
-/**
- * BLE characteristic connection identifiers.
- */
-typedef enum {
-    /* Whether Bluetooth is present and enabled on this platform. */
-    PBDRV_BLUETOOTH_CONNECTION_HCI,
-    /* A low energy device connection. */
-    PBDRV_BLUETOOTH_CONNECTION_LE,
-    /** The Pybricks service. */
-    PBDRV_BLUETOOTH_CONNECTION_PYBRICKS,
-    /** The Nordic UART service. */
-    PBDRV_BLUETOOTH_CONNECTION_UART,
-} pbdrv_bluetooth_connection_t;
-
 /** Data structure that holds context needed for sending BLE notifications. */
 typedef struct _pbdrv_bluetooth_send_context_t pbdrv_bluetooth_send_context_t;
 
@@ -85,8 +71,6 @@ struct _pbdrv_bluetooth_send_context_t {
     const uint8_t *data;
     /** The size of @p data. */
     uint8_t size;
-    /** The connection to use. Only characteristics with notify capability are allowed. */
-    pbdrv_bluetooth_connection_t connection;
 };
 
 /**
@@ -301,12 +285,21 @@ const char *pbdrv_bluetooth_get_hub_name(void);
 const char *pbdrv_bluetooth_get_fw_version(void);
 
 /**
- * Tests if a central is connected to the Bluetooth chip.
+ * Tests if a central is connected to the Bluetooth chip and subscribed to
+ * Pybricks events.
+ *
  * @param [in]  connection  The type of connection of interest.
- * @return                  True if the requested connection type is present,
+ * @return                  True if Pybricks host connected, otherwise false.
+ */
+bool pbdrv_bluetooth_host_is_connected(void);
+
+/**
+ * Tests if the Bluetooth controller is up and running.
+ *
+ * @return                  True if running,
  *                          otherwise false.
  */
-bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
+bool pbdrv_bluetooth_hci_is_enabled(void);
 
 /**
  * Sets a callback to be called when a Bluetooth host is connected or disconnected.
@@ -638,7 +631,11 @@ static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return "";
 }
 
-static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+static inline bool pbdrv_bluetooth_host_is_connected(void) {
+    return false;
+}
+
+static inline bool pbdrv_bluetooth_hci_is_enabled(void) {
     return false;
 }
 

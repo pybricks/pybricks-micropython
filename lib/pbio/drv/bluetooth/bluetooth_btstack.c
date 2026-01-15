@@ -185,12 +185,6 @@ static void pbdrv_bluetooth_peripheral_disconnect_now(pbdrv_bluetooth_peripheral
     gap_disconnect(peri->con_handle);
 }
 
-/**
- * Checks if the given peripheral is connected.
- */
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
-    return peri->con_handle != HCI_CON_HANDLE_INVALID;
-}
 
 static pbio_os_state_t bluetooth_thread_state;
 static pbio_os_state_t bluetooth_thread_err;
@@ -214,30 +208,16 @@ static void propagate_event(uint8_t *packet) {
     event_packet = NULL;
 }
 
-bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+    return peri->con_handle != HCI_CON_HANDLE_INVALID;
+}
 
-    // Nothing connected if HCI is not running.
-    if (bluetooth_thread_err != PBIO_ERROR_AGAIN) {
-        return false;
-    }
+bool pbdrv_bluetooth_host_is_connected(void) {
+    return pybricks_con_handle != HCI_CON_HANDLE_INVALID;
+}
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && le_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_con_handle != HCI_CON_HANDLE_INVALID) {
-        return true;
-    }
-
-    return false;
+bool pbdrv_bluetooth_hci_is_enabled(void) {
+    return bluetooth_thread_err == PBIO_ERROR_AGAIN;
 }
 
 static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
@@ -1203,7 +1183,7 @@ static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *stat
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 

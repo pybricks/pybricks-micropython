@@ -143,7 +143,7 @@ static void pbsys_hmi_host_update_indications(void) {
     }
 
     // Update BLE light indication.
-    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+    if (pbdrv_bluetooth_host_is_connected()) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);

@@ -94,7 +94,7 @@ void pbdrv_bluetooth_host_connection_changed(void) {
 pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 
     // make sure we have a Bluetooth connection
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+    if (!pbdrv_bluetooth_host_is_connected()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -112,7 +112,7 @@ pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 }
 
 uint32_t pbdrv_bluetooth_tx_available(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+    if (!pbdrv_bluetooth_host_is_connected()) {
         return UINT32_MAX;
     }
 
@@ -120,7 +120,7 @@ uint32_t pbdrv_bluetooth_tx_available(void) {
 }
 
 bool pbdrv_bluetooth_tx_is_idle(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+    if (!pbdrv_bluetooth_host_is_connected()) {
         return true;
     }
 
@@ -130,7 +130,7 @@ bool pbdrv_bluetooth_tx_is_idle(void) {
 pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
     PBIO_OS_ASYNC_BEGIN(state);
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+    if (!pbdrv_bluetooth_host_is_connected()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -194,7 +194,7 @@ const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *pe
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_peripheral_t *peri, pbdrv_bluetooth_peripheral_connect_config_t *config) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -332,7 +332,7 @@ pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
 
 pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -367,7 +367,7 @@ uint8_t pbdrv_bluetooth_broadcast_data_size;
 
 pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -417,7 +417,7 @@ pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
 
 pbio_error_t pbdrv_bluetooth_start_observing(pbdrv_bluetooth_start_observing_callback_t callback) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -514,7 +514,7 @@ static pbdrv_bluetooth_classic_task_context_t pbdrv_bluetooth_classic_task_conte
 
 pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
 
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -582,7 +582,7 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
     pbio_error_t err;
 
     // Shorthand notation accessible throughout.
-    bool can_send = pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS);
+    bool can_send = pbdrv_bluetooth_host_is_connected();
 
     // For looping over peripherals.
     static uint8_t peri_index;
@@ -724,7 +724,7 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
 void pbdrv_bluetooth_deinit(void) {
 
     // If Bluetooth is not even initialized, nothing to do.
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return;
     }
 

@@ -156,6 +156,14 @@ bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri)
     return peri == &peripheral_singleton && peri->con_handle != NO_CONNECTION;
 }
 
+bool pbdrv_bluetooth_host_is_connected(void) {
+    return pybricks_notify_en && !busy_disconnecting;
+}
+
+bool pbdrv_bluetooth_hci_is_enabled(void) {
+    return true;
+}
+
 /**
  * Converts a ble error code to the most appropriate pbio error code.
  * @param [in]  status      The ble error code.
@@ -343,27 +351,6 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle != NO_CONNECTION && !busy_disconnecting) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_notify_en) {
-        return true;
-    }
-
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
-        return true;
-    }
-
-    return false;
-}
-
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
 
     static attHandleValueNoti_t notification;
@@ -403,8 +390,8 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     if (conn_handle != NO_CONNECTION &&
         (peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
         DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
-        // Guard used in pbdrv_bluetooth_is_connected so higher level processes
-        // won't try to send anything while we are disconnecting.
+        // Guard used in pbdrv_bluetooth_host_is_connected so higher level
+        // processes won't try to send anything while we are disconnecting.
         busy_disconnecting = true;
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         GAP_TerminateLinkReq(conn_handle, 0x13);
