@@ -102,6 +102,14 @@ typedef struct {
 } pbdrv_bluetooth_value_t;
 
 /**
+ * RFCOMM connection handle. For new handles, initialize conn_id to -1.
+ */
+typedef struct {
+    /** The connection ID. */
+    int conn_id;
+} pbdrv_bluetooth_rfcomm_conn_t;
+
+/**
  * Client characteristic discovery request and resulting handle.
  *
  * These structures are (statically) allocated in the application and are
@@ -159,6 +167,9 @@ typedef struct {
 
 /** Platform-specific state needed to operate the peripheral. */
 typedef struct _pbdrv_bluetooth_peripheral_platform_state_t pbdrv_bluetooth_peripheral_platform_state_t;
+
+/** Bluetooth address type. */
+typedef uint8_t bdaddr_t[6];
 
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
@@ -615,6 +626,109 @@ pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t
  */
 pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
 
+/**
+ * Copies the local Bluetooth address into addr.
+ *
+ * @param [out] addr   The Bluetooth address.
+ */
+void pbdrv_bluetooth_local_address(bdaddr_t addr);
+
+/**
+ * Converts a string representation of a Bluetooth address into bdaddr_t format.
+ *
+ * @param [in]  str   The string representation (e.g., "01:23:45:67:89:AB").
+ * @param [out] addr  The Bluetooth address in bdaddr_t format.
+ * @return            True if conversion was successful, false otherwise.
+ */
+bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr);
+
+/**
+ * Connects to a remote device via RFCOMM.
+ *
+ * @param [in]  state     Protothread state.
+ * @param [in]  bdaddr    The Bluetooth address of the remote device.
+ * @param [in]  timeout   Timeout in milliseconds for the connection attempt.
+ * @param [out] conn      The RFCOMM connection handle.
+ * @return                Success, PBIO_ERROR_AGAIN, or a final error code.
+ *
+ */
+pbio_error_t
+pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
+    int32_t timeout,
+    pbdrv_bluetooth_rfcomm_conn_t *conn);
+
+/**
+ * Listens for an incoming RFCOMM connection.
+ *
+ * @param [in]  state     Protothread state.
+ * @param [in]  timeout   Timeout in milliseconds for the listen attempt.
+ * @param [out] conn      The RFCOMM connection handle.
+ * @return                Success, PBIO_ERROR_AGAIN, or a final error code.
+ */
+pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state,
+    int32_t timeout,
+    pbdrv_bluetooth_rfcomm_conn_t *conn);
+
+/**
+ * Closes an RFCOMM connection.
+ *
+ * @param [in]  conn   The RFCOMM connection handle.
+ * @return             Success or error code.
+ */
+pbio_error_t
+pbdrv_bluetooth_rfcomm_close(pbdrv_bluetooth_rfcomm_conn_t *conn);
+
+/**
+ * Sends data over an RFCOMM connection.
+ *
+ * We will send as many bytes as we can, but if the transmit buffer is full, not
+ * all bytes will be sent.
+ *
+ * @param [in]  conn          The RFCOMM connection handle.
+ * @param [in]  data          The data to send.
+ * @param [in]  length        The length of the data to send.
+ * @param [out] sent_length   The number of bytes actually sent.
+ * @return                    Success or error code.
+ */
+pbio_error_t
+pbdrv_bluetooth_rfcomm_send(const pbdrv_bluetooth_rfcomm_conn_t *conn,
+    const uint8_t *data, size_t length,
+    size_t *sent_length);
+
+/**
+ * Receives data from an RFCOMM connection.
+ *
+ * We will receive as many bytes as are available, up to the size of the buffer.
+ *
+ * @param [in]  conn              The RFCOMM connection handle.
+ * @param [out] buffer            The buffer to store received data.
+ * @param [in]  buffer_length     The length of the buffer.
+ * @param [out] received_length   The number of bytes actually received.
+ * @return                        Success or error code.
+ */
+pbio_error_t
+pbdrv_bluetooth_rfcomm_recv(const pbdrv_bluetooth_rfcomm_conn_t *conn,
+    uint8_t *buffer, size_t buffer_length,
+    size_t *received_length);
+
+/**
+ * Returns whether the RFCOMM connection is connected.
+ */
+bool pbdrv_bluetooth_rfcomm_is_connected(
+    const pbdrv_bluetooth_rfcomm_conn_t *conn);
+
+/**
+ * Returns whether there is data available to read from the RFCOMM connection.
+ */
+bool pbdrv_bluetooth_rfcomm_is_readable(
+    const pbdrv_bluetooth_rfcomm_conn_t *conn);
+
+/**
+ * Returns whether data can be written to the RFCOMM connection.
+ */
+bool pbdrv_bluetooth_rfcomm_is_writeable(
+    const pbdrv_bluetooth_rfcomm_conn_t *conn);
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
@@ -738,6 +852,59 @@ static inline pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_in
 
 static inline pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {
+}
+
+static inline const char *pbdrv_bluetooth_bdaddr_to_str(const bdaddr_t addr) {
+    return NULL;
+}
+
+static inline bool pbdrv_bluetooth_str_to_bdaddr(const char *str,
+    bdaddr_t addr) {
+    return false;
+}
+
+static inline pbio_error_t
+pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
+    int32_t timeout, void *conn) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state,
+    int32_t timeout,
+    void *conn) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_rfcomm_close(const void *conn) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_rfcomm_send(const void *conn,
+    const uint8_t *data,
+    size_t length,
+    size_t *sent_length) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t
+pbdrv_bluetooth_rfcomm_recv(const void *conn, uint8_t *buffer,
+    size_t buffer_length, size_t *received_length) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_bluetooth_rfcomm_is_writeable(const void *conn) {
+    return false;
+}
+
+static inline bool pbdrv_bluetooth_rfcomm_is_readable(const void *conn) {
+    return false;
+}
+
+static inline bool pbdrv_bluetooth_rfcomm_is_connected(const void *conn) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

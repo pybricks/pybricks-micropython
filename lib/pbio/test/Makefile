@@ -116,6 +116,16 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
 	hci_dump_posix_stdout.c \
 	)
 
+BTSTACK_SRC = $(addprefix lib/btstack/src/classic/,\
+	btstack_link_key_db_memory.c \
+	rfcomm.c \
+	sdp_client.c \
+	sdp_client_rfcomm.c \
+	sdp_server.c \
+	sdp_util.c \
+	spp_server.c \
+	)
+
 # pbio library
 PBIO_DIR = ..
 PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
