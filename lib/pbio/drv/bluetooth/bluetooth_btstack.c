@@ -105,9 +105,42 @@ char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
-static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
-static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
-static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
+
+/**
+ * State of a connected host (Pybricks Code or similar).
+ */
+typedef struct {
+    /** Connection handle. */
+    hci_con_handle_t con_handle;
+    /** Pybricks service is configured. */
+    bool pybricks_configured;
+    /** UART service is configured. */
+    bool uart_configured;
+    /** Notification to send when ready. */
+    btstack_context_callback_registration_t send_request;
+    /** Notification to send. */
+    const uint8_t *notification_data;
+    /** Notification size to send. */
+    uint16_t notification_size;
+    /** Notification has been sent. */
+    bool notification_done;
+} pbdrv_bluetooth_btstack_host_connection_t;
+
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+static pbdrv_bluetooth_btstack_host_connection_t host_connections[PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS];
+#endif
+
+static pbdrv_bluetooth_btstack_host_connection_t *pbdrv_bluetooth_btstack_get_host_connection(hci_con_handle_t con_handle) {
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        if (host->con_handle == con_handle) {
+            return host;
+        }
+    }
+    #endif
+    return NULL;
+}
 
 /**
  * Converts BTStack error to most appropriate PBIO error.
@@ -132,6 +165,7 @@ static pbio_error_t att_error_to_pbio_error(uint8_t status) {
 }
 
 static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
+    // Treating all incoming host data the same.
     if (pbdrv_bluetooth_receive_handler) {
         return pbdrv_bluetooth_receive_handler(data, size);
     }
@@ -140,7 +174,11 @@ static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_hand
 }
 
 static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) {
-    pybricks_con_handle = value ? tx_con_handle : HCI_CON_HANDLE_INVALID;
+    pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(tx_con_handle);
+    if (host == NULL) {
+        return;
+    }
+    host->pybricks_configured = !!value;
     pbdrv_bluetooth_host_connection_changed();
 }
 
@@ -213,7 +251,15 @@ bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri)
 }
 
 bool pbdrv_bluetooth_host_is_connected(void) {
-    return pybricks_con_handle != HCI_CON_HANDLE_INVALID;
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        if (host->con_handle != HCI_CON_HANDLE_INVALID) {
+            return true;
+        }
+    }
+    #endif
+    return false;
 }
 
 bool pbdrv_bluetooth_hci_is_enabled(void) {
@@ -228,12 +274,22 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
             }
 
             switch (hci_event_gattservice_meta_get_subevent_code(packet)) {
-                case GATTSERVICE_SUBEVENT_SPP_SERVICE_CONNECTED:
-                    uart_con_handle = gattservice_subevent_spp_service_connected_get_con_handle(packet);
+                case GATTSERVICE_SUBEVENT_SPP_SERVICE_CONNECTED: {
+                    uint16_t handle = gattservice_subevent_spp_service_connected_get_con_handle(packet);
+                    pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(handle);
+                    if (host) {
+                        host->uart_configured = true;
+                    }
                     break;
-                case GATTSERVICE_SUBEVENT_SPP_SERVICE_DISCONNECTED:
-                    uart_con_handle = HCI_CON_HANDLE_INVALID;
+                }
+                case GATTSERVICE_SUBEVENT_SPP_SERVICE_DISCONNECTED: {
+                    uint16_t handle = gattservice_subevent_spp_service_disconnected_get_con_handle(packet);
+                    pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(handle);
+                    if (host) {
+                        host->uart_configured = false;
+                    }
                     break;
+                }
                 default:
                     break;
             }
@@ -338,32 +394,42 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             // HCI_ROLE_SLAVE means the connecting device is the central and the hub is the peripheral
             // HCI_ROLE_MASTER means the connecting device is the peripheral and the hub is the central.
             if (hci_subevent_le_connection_complete_get_role(packet) == HCI_ROLE_SLAVE) {
-                le_con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+                uint16_t handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+                pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(HCI_CON_HANDLE_INVALID);
+                if (host == NULL) {
+                    DEBUG_PRINT("Warning: more than %d LE connections established.\n", PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS);
+                    break;
+                }
+                host->con_handle = handle;
 
                 // don't start advertising again on disconnect
                 gap_advertisements_enable(false);
                 pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
             }
             break;
-        case HCI_EVENT_DISCONNECTION_COMPLETE:
+        case HCI_EVENT_DISCONNECTION_COMPLETE: {
             DEBUG_PRINT("HCI_EVENT_DISCONNECTION_COMPLETE\n");
-            if (hci_event_disconnection_complete_get_connection_handle(packet) == le_con_handle) {
-                le_con_handle = HCI_CON_HANDLE_INVALID;
-                pybricks_con_handle = HCI_CON_HANDLE_INVALID;
-                uart_con_handle = HCI_CON_HANDLE_INVALID;
+            uint16_t handle = hci_event_disconnection_complete_get_connection_handle(packet);
+            pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(handle);
+            if (host) {
+                host->con_handle = HCI_CON_HANDLE_INVALID;
+                host->pybricks_configured = false;
+                host->uart_configured = false;
                 pbdrv_bluetooth_host_connection_changed();
+                DEBUG_PRINT("Host with handle %u disconnected\n", handle);
             } else {
                 for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
                     pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
-                    if (peri && hci_event_disconnection_complete_get_connection_handle(packet) == peri->con_handle) {
+                    if (peri && handle == peri->con_handle) {
                         DEBUG_PRINT("Peripheral %u with handle %u disconnected\n", i, peri->con_handle);
                         gatt_client_stop_listening_for_characteristic_value_updates(&peri->platform_state->notification);
                         peri->con_handle = HCI_CON_HANDLE_INVALID;
+                        break;
                     }
                 }
             }
             break;
-
+        }
         case GAP_EVENT_ADVERTISING_REPORT: {
             uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
             uint8_t data_length = gap_event_advertising_report_get_data_length(packet);
@@ -508,7 +574,7 @@ static void init_advertising_data(void) {
 }
 
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
+    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
     return PBIO_ERROR_NOT_SUPPORTED;
     #endif
 
@@ -518,10 +584,10 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Don't advertise if already connected. BTstack also protects against this,
-    // but it means we never get the HCI event complete command because it is
-    // never given.
-    if (le_con_handle != HCI_CON_HANDLE_INVALID) {
+    pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(HCI_CON_HANDLE_INVALID);
+    if (host == NULL) {
+        // There should be at least one available host connection. Otherwise
+        // we will never receive the advertise completion event below.
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -551,43 +617,50 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-typedef struct {
-    const uint8_t *data;
-    uint16_t size;
-    bool done;
-} send_data_t;
-
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
 static void pybricks_on_ready_to_send(void *context) {
-    send_data_t *send = context;
-    pybricks_service_server_send(pybricks_con_handle, send->data, send->size);
-    send->done = true;
+    pbdrv_bluetooth_btstack_host_connection_t *host = context;
+    pybricks_service_server_send(host->con_handle, host->notification_data, host->notification_size);
+    host->notification_done = true;
     pbio_os_request_poll();
 }
+#endif
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
-    #if !PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
-    return PBIO_ERROR_NOT_SUPPORTED;
-    #endif
-
     if (!pbdrv_bluetooth_btstack_ble_supported()) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    static send_data_t send_data;
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    static size_t i;
+    static pbdrv_bluetooth_btstack_host_connection_t *host;
 
-    static btstack_context_callback_registration_t send_request = {
-        .callback = pybricks_on_ready_to_send,
-        .context = &send_data,
-    };
     PBIO_OS_ASYNC_BEGIN(state);
 
-    send_data.data = data;
-    send_data.size = size;
-    send_data.done = false;
-    pybricks_service_server_request_can_send_now(&send_request, pybricks_con_handle);
-    PBIO_OS_AWAIT_UNTIL(state, send_data.done);
+    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        host = &host_connections[i];
+        if (host->con_handle != HCI_CON_HANDLE_INVALID && host->pybricks_configured) {
+            host->notification_data = data;
+            host->notification_size = size;
+            host->notification_done = false;
+            pybricks_service_server_request_can_send_now(&host->send_request, host->con_handle);
+        } else {
+            // No connection or not configured, don't hold up wait loop below.
+            host->notification_done = true;
+        }
+    }
+
+    // Wait for all notifications to be sent. BTstack handles sending
+    // asynchronously. This loop completes when the slowest one is done.
+    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        host = &host_connections[i];
+        PBIO_OS_AWAIT_UNTIL(state, host->notification_done);
+    }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    #else
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
@@ -1192,10 +1265,18 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Disconnect gracefully if connected to host.
-    if (le_con_handle != HCI_CON_HANDLE_INVALID) {
-        gap_disconnect(le_con_handle);
-        PBIO_OS_AWAIT_UNTIL(state, le_con_handle == HCI_CON_HANDLE_INVALID);
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    static size_t i;
+    static pbdrv_bluetooth_btstack_host_connection_t *host;
+    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        host = &host_connections[i];
+        if (host->con_handle == HCI_CON_HANDLE_INVALID) {
+            continue;
+        }
+        gap_disconnect(host->con_handle);
+        PBIO_OS_AWAIT_UNTIL(state, host->con_handle == HCI_CON_HANDLE_INVALID);
     }
+    #endif
 
     // Wait for power off.
     PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_OFF, HCI_STATE_OFF));
@@ -1341,7 +1422,7 @@ void pbdrv_bluetooth_init_hci(void) {
     // GATT Client setup
     gatt_client_init();
 
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
     // setup ATT server
     att_server_init(profile_data, att_read_callback, NULL);
 
@@ -1352,6 +1433,13 @@ void pbdrv_bluetooth_init_hci(void) {
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
+
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        host->con_handle = HCI_CON_HANDLE_INVALID;
+        host->send_request.callback = pybricks_on_ready_to_send;
+        host->send_request.context = host;
+    }
     #else
     (void)pybricks_data_received;
     (void)att_read_callback;

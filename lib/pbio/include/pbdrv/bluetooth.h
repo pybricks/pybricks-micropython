@@ -285,8 +285,8 @@ const char *pbdrv_bluetooth_get_hub_name(void);
 const char *pbdrv_bluetooth_get_fw_version(void);
 
 /**
- * Tests if a central is connected to the Bluetooth chip and subscribed to
- * Pybricks events.
+ * Tests if at least one central is connected to the Bluetooth chip and
+ * subscribed to Pybricks events.
  *
  * @param [in]  connection  The type of connection of interest.
  * @return                  True if Pybricks host connected, otherwise false.

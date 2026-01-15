@@ -19,6 +19,8 @@
 - Reduced user stack size to `12 KB` on SPIKE Prime Hub to make it the same as
   SPIKE Essential Hub. This frees up some RAM for system resources, and we never
   use this much in practice.
+- Allow simultaneous USB and up to two Bluetooth connections to SPIKE Prime.
+  Press the Bluetooth button to allow a connection when already connected.
 
 ### Fixed
 - Fixed `race=False` ignored in `pybricks.tools.multitask()` ([support#2468]).

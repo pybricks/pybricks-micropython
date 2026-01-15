@@ -10,7 +10,7 @@
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE_SERVER            (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS         (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND             0xff
 
