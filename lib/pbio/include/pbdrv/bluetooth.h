@@ -895,14 +895,6 @@ pbdrv_bluetooth_rfcomm_recv(const void *conn, uint8_t *buffer,
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_local_address(bdaddr_t addr) {
-}
-
-static inline bool pbdrv_bluetooth_str_to_bdaddr(const char *str,
-    bdaddr_t addr) {
-    return false;
-}
-
 static inline bool pbdrv_bluetooth_rfcomm_is_writeable(const void *conn) {
     return false;
 }
