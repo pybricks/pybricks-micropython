@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include <pbdrv/charger.h>
+#include <pbdrv/config.h>
 #include <pbdrv/led.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
@@ -27,10 +28,11 @@ typedef enum {
 } pbsys_status_light_indication_warning_t;
 
 typedef enum {
-    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE,
-    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING,
-    PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED,
-    PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY,
+    PBSYS_STATUS_LIGHT_INDICATION_NONE,
+    PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING,
+    PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED,
+    PBSYS_STATUS_LIGHT_INDICATION_USB_CONNECTED,
+    PBSYS_STATUS_LIGHT_INDICATION_USB_AND_BLE_CONNECTED,
 } pbsys_status_light_indication_usb_ble_t;
 
 /** A single element of a status light indication pattern. */
@@ -94,12 +96,12 @@ pbsys_status_light_indication_pattern_warning[] = {
 
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
-    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE] =
+    [PBSYS_STATUS_LIGHT_INDICATION_NONE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
     },
     // Two blue blinks, pause, then repeat.
-    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING] =
+    [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
@@ -108,15 +110,22 @@ pbsys_status_light_indication_pattern_ble[] = {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Blue, always on.
-    [PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED] =
+    [PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLUE),
     },
+    #if PBDRV_CONFIG_USB
     // Green, always on.
-    [PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY] =
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_CONNECTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_GREEN),
     },
+    // Cyan, always on.
+    [PBSYS_STATUS_LIGHT_INDICATION_USB_AND_BLE_CONNECTED] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_CYAN),
+    },
+    #endif
 };
 
 typedef struct {
@@ -203,19 +212,25 @@ void pbsys_status_light_handle_status_change(void) {
     }
 
     // USB/BLE pattern precedence.
-    pbsys_status_light_indication_usb_ble_t usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE;
-    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
-        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_ACTIVE_BLE_ANY;
-    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
-        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_ADVERTISING;
+    pbsys_status_light_indication_usb_ble_t usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
+
+    // Advertising gets precedence because mixing it in with the other states
+    // is confusing. It is generally a temporary state, so eventually the
+    // solid color or off state will return.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING;
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED) && pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_AND_BLE_CONNECTED;
+    } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_CONNECTED;
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
-        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_CONNECTED;
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED;
     }
 
     #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
     // Hubs without Bluetooth light don't show connectivity state if program is running.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_NONE_BLE_NONE;
+        usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
     }
     #endif
 
