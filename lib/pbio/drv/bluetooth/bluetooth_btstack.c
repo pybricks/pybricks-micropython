@@ -21,10 +21,13 @@
 #include <classic/sdp_client.h>
 #include <classic/sdp_server.h>
 #include <classic/spp_server.h>
-#include <umm_malloc.h>
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 #include <lwrb/lwrb.h>
+
+#if HAVE_UMM_MALLOC
+#include <umm_malloc.h>
+#endif
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
@@ -1225,15 +1228,36 @@ bool is_already_paired(bd_addr_t addr) {
     return gap_get_link_key_for_bd_addr(addr, key, &type);
 }
 
-typedef struct {
-    uint8_t *tx_buffer_data;  // tx_buffer from customer. We don't own this.
-    uint8_t *rx_buffer_data;
-    pbio_os_timer_t tx_timer;  // Timer for tracking timeouts on the current send.
-    pbio_os_timer_t rx_timer;  // Timer for tracking timeouts on the current receive.
-    lwrb_t tx_buffer;  // Ring buffer to contain outgoing data.
-    lwrb_t rx_buffer;  // Ring buffer to contain incoming data.
+#ifndef MAX_NR_RFCOMM_CHANNELS
+#define MAX_NR_RFCOMM_CHANNELS 0
+#endif
 
-    int mtu;           // MTU for this connection.
+#define RFCOMM_SOCKET_COUNT (MAX_NR_RFCOMM_CHANNELS > 0 ? MAX_NR_RFCOMM_CHANNELS - 1 : 0)
+#if HAVE_UMM_MALLOC
+#define RFCOMM_RX_BUFFER_SIZE (4 * 1024)
+#define RFCOMM_TX_BUFFER_SIZE (2 * 1024)
+#else
+// When we don't have umm_malloc, statically allocate small buffers.
+// This limits throughput but doesn't constraint the logical size of
+// messages we can send.
+#define RFCOMM_RX_BUFFER_SIZE (256)
+#define RFCOMM_TX_BUFFER_SIZE (256)
+#endif
+
+typedef struct {
+    #if HAVE_UMM_MALLOC
+    uint8_t *tx_buffer_data; // tx_buffer from customer. We don't own this.
+    uint8_t *rx_buffer_data;
+    #else
+    uint8_t tx_buffer_data[RFCOMM_TX_BUFFER_SIZE];
+    uint8_t rx_buffer_data[RFCOMM_RX_BUFFER_SIZE];
+    #endif
+    pbio_os_timer_t tx_timer; // Timer for tracking timeouts on the current send.
+    pbio_os_timer_t rx_timer; // Timer for tracking timeouts on the current receive.
+    lwrb_t tx_buffer;         // Ring buffer to contain outgoing data.
+    lwrb_t rx_buffer;         // Ring buffer to contain incoming data.
+
+    int mtu; // MTU for this connection.
 
     // How many rfcomm credits are outstanding? When the connection is first started,
     // this is the rx buffer size divided by the MTU (the frame size). Each time we receive
@@ -1247,16 +1271,12 @@ typedef struct {
     uint16_t server_channel;  // The remote rfcomm channel we're connected to.
     bool is_used;             // Is this socket descriptor in use?
     bool is_connected;        // Is this socket descriptor connected?
-    bool is_cancelled; // Has this socket been cancelled? Interrupts pending
-                       // listen() or connect calls.
+    bool is_cancelled;        // Has this socket been cancelled? Interrupts pending
+                              // listen() or connect calls.
     bool is_using_sdp_system; // Is this socket currently using the SDP system?
 } pbdrv_bluetooth_classic_rfcomm_socket_t;
 
-#define MAX_NUM_CONNECTIONS (7)
-#define RFCOMM_RX_BUFFER_SIZE (4 * 1024)
-#define RFCOMM_TX_BUFFER_SIZE (2 * 1024)
-
-static pbdrv_bluetooth_classic_rfcomm_socket_t pbdrv_bluetooth_classic_rfcomm_sockets[MAX_NUM_CONNECTIONS];
+static pbdrv_bluetooth_classic_rfcomm_socket_t pbdrv_bluetooth_classic_rfcomm_sockets[RFCOMM_SOCKET_COUNT];
 
 static int pbdrv_bluetooth_classic_rfcomm_socket_max_credits(pbdrv_bluetooth_classic_rfcomm_socket_t *socket) {
     return RFCOMM_RX_BUFFER_SIZE / socket->mtu;
@@ -1282,6 +1302,7 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(pbdrv_bluet
 }
 
 static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_rfcomm_socket_t *socket) {
+    #if HAVE_UMM_MALLOC
     if (socket->rx_buffer_data) {
         umm_free(socket->rx_buffer_data);
         socket->rx_buffer_data = NULL;
@@ -1290,6 +1311,7 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_
         umm_free(socket->tx_buffer_data);
         socket->tx_buffer_data = NULL;
     }
+    #endif
     lwrb_free(&socket->rx_buffer);
     lwrb_free(&socket->tx_buffer);
     // A non-zero duration on these timers is used as a flag to indicate the
@@ -1307,18 +1329,20 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_
 }
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_socket_alloc() {
-    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_bluetooth_classic_rfcomm_sockets); i++) {
+    for (int i = 0; i < RFCOMM_SOCKET_COUNT; i++) {
         if (!pbdrv_bluetooth_classic_rfcomm_sockets[i].is_used) {
             pbdrv_bluetooth_classic_rfcomm_socket_t *sock = &pbdrv_bluetooth_classic_rfcomm_sockets[i];
             pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
             sock->is_used = true;
+            #if HAVE_UMM_MALLOC
             sock->rx_buffer_data = umm_malloc(RFCOMM_RX_BUFFER_SIZE);
             sock->tx_buffer_data = umm_malloc(RFCOMM_TX_BUFFER_SIZE);
-            if (!sock->rx_buffer_data) {
-                DEBUG_PRINT("Failed to allocate RFCOMM RX buffer.\n");
+            if (!sock->rx_buffer_data || !sock->tx_buffer_data) {
+                DEBUG_PRINT("Failed to allocate RFCOMM RX or TX buffer.\n");
                 sock->is_used = false;
                 return NULL;
             }
+            #endif
             lwrb_init(&sock->rx_buffer, sock->rx_buffer_data, RFCOMM_RX_BUFFER_SIZE);
             lwrb_init(&sock->tx_buffer, sock->tx_buffer_data, RFCOMM_TX_BUFFER_SIZE);
             return sock;
@@ -1330,7 +1354,7 @@ static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_s
 
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(uint16_t cid) {
-    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+    for (int i = 0; i < RFCOMM_SOCKET_COUNT; i++) {
         if (pbdrv_bluetooth_classic_rfcomm_sockets[i].is_used &&
             pbdrv_bluetooth_classic_rfcomm_sockets[i].cid == cid) {
             return &pbdrv_bluetooth_classic_rfcomm_sockets[i];
@@ -1340,14 +1364,14 @@ static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_s
 }
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(const pbdrv_bluetooth_rfcomm_conn_t *c) {
-    if (c->conn_id < 0 || c->conn_id >= MAX_NUM_CONNECTIONS) {
+    if (c->conn_id < 0 || c->conn_id >= RFCOMM_SOCKET_COUNT) {
         return NULL;
     }
     return &pbdrv_bluetooth_classic_rfcomm_sockets[c->conn_id];
 }
 
 static int pbdrv_bluetooth_classic_rfcomm_socket_id(pbdrv_bluetooth_classic_rfcomm_socket_t *socket) {
-    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+    for (int i = 0; i < RFCOMM_SOCKET_COUNT; i++) {
         if (&pbdrv_bluetooth_classic_rfcomm_sockets[i] == socket) {
             return i;
         }
@@ -1971,7 +1995,7 @@ bool pbdrv_bluetooth_rfcomm_is_connected(const pbdrv_bluetooth_rfcomm_conn_t *co
 }
 
 void pbdrv_bluetooth_rfcomm_cancel_connection() {
-    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+    for (int i = 0; i < RFCOMM_SOCKET_COUNT; i++) {
         pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
             &pbdrv_bluetooth_classic_rfcomm_sockets[i];
         if (sock->is_used) {
@@ -1981,7 +2005,7 @@ void pbdrv_bluetooth_rfcomm_cancel_connection() {
 }
 
 void pbdrv_bluetooth_rfcomm_disconnect_all() {
-    for (size_t i = 0; i < MAX_NUM_CONNECTIONS; i++) {
+    for (int i = 0; i < RFCOMM_SOCKET_COUNT; i++) {
         pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
             &pbdrv_bluetooth_classic_rfcomm_sockets[i];
         if (sock->is_used && sock->is_connected) {
@@ -2204,7 +2228,7 @@ void pbdrv_bluetooth_init_hci(void) {
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, true);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, true);
     hci_dump_enable_packet_log(false);
-#endif
+    #endif
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 

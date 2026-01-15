@@ -527,7 +527,7 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 SRC_UMM_MALLOC = lib/umm_malloc/src/umm_malloc.c
 
 ifeq ($(PB_LIB_UMM_MALLOC),1)
-CFLAGS += -I$(PBTOP)/lib/umm_malloc/src
+CFLAGS += -I$(PBTOP)/lib/umm_malloc/src -DHAVE_UMM_MALLOC=1
 endif
 
 # NXT OS
