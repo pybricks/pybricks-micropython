@@ -15,8 +15,8 @@
 #define ENABLE_PRINTF_HEXDUMP
 
 // #define ENABLE_LOG_DEBUG
-// #define ENABLE_LOG_ERROR
-// #define ENABLE_LOG_INFO
+#define ENABLE_LOG_ERROR
+#define ENABLE_LOG_INFO
 
 // BTstack configuration. buffers, sizes, ...
 #define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
