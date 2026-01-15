@@ -414,6 +414,16 @@ BTSTACK_BLE_SRC_C += $(addprefix lib/btstack/src/ble/,\
 	sm.c \
 	)
 
+BTSTACK_CLASSIC_SRC_C = $(addprefix lib/btstack/src/classic/,\
+	btstack_link_key_db_memory.c \
+	rfcomm.c \
+	sdp_client.c \
+	sdp_client_rfcomm.c \
+	sdp_server.c \
+	sdp_util.c \
+	spp_server.c \
+	)
+
 BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 	btstack_chipset_cc256x.c \
 	)
@@ -571,6 +581,7 @@ ifeq ($(PB_LIB_BTSTACK),1)
 ifneq ($(CI_MODE),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_BLE_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_CLASSIC_SRC_C:.c=.o))
 $(BUILD)/lib/btstack/%.o: CFLAGS += -Wno-error
 endif
 endif

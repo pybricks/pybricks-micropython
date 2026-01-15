@@ -20,6 +20,7 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
 bool pbsys_storage_slot_change_is_allowed(void);
 void pbsys_storage_get_program_data(pbsys_main_program_t *program);
 pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void);
+bool pbsys_storage_settings_ready();
 
 #else
 static inline void pbsys_storage_init(void) {
@@ -48,6 +49,9 @@ static inline void pbsys_storage_get_program_data(pbsys_main_program_t *program)
 
     program->user_ram_start = &pbsys_storage_heap_start;
     program->user_ram_end = &pbsys_storage_heap_end;
+}
+static inline bool pbsys_storage_settings_ready() {
+    return true;
 }
 
 #endif // PBSYS_CONFIG_STORAGE
