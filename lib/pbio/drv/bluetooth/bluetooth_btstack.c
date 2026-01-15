@@ -47,7 +47,7 @@
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
 
-#define DEBUG 0
+#define DEBUG 2
 
 #if DEBUG
 #include <pbio/debug.h>
