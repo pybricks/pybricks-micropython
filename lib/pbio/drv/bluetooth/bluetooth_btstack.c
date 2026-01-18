@@ -2015,6 +2015,7 @@ void pbdrv_bluetooth_rfcomm_disconnect_all() {
             pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
         }
     }
+    pending_listen_socket = NULL;
 }
 
 static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
