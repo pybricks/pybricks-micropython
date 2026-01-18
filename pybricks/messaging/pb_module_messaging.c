@@ -209,7 +209,7 @@ static void pb_type_messaging_rfcomm_socket_print(const mp_print_t *print, mp_ob
 static const mp_obj_type_t pb_type_messaging_rfcomm_socket;
 
 // Constructor for RFCOMMSocket
-static mp_obj_t pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t* type, size_t n_args, size_t n_kw, const mp_obj_t* args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     pb_type_messaging_rfcomm_socket_obj_t *self = mp_obj_malloc(pb_type_messaging_rfcomm_socket_obj_t, &pb_type_messaging_rfcomm_socket);
     self->conn.conn_id = -1;
@@ -219,22 +219,22 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t* ty
 // RFCOMM connect method
 
 typedef struct {
-    pb_type_messaging_rfcomm_socket_obj_t* socket;
+    pb_type_messaging_rfcomm_socket_obj_t *socket;
     bdaddr_t bdaddr;
     int32_t timeout;
 } pb_type_messaging_rfcomm_socket_connect_context_t;
 
-static pbio_error_t pb_type_messaging_rfcomm_socket_connect_iterate(pbio_os_state_t* state, mp_obj_t parent_obj) {
-    pb_type_messaging_rfcomm_socket_connect_context_t* context = (pb_type_messaging_rfcomm_socket_connect_context_t*)parent_obj;
+static pbio_error_t pb_type_messaging_rfcomm_socket_connect_iterate(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pb_type_messaging_rfcomm_socket_connect_context_t *context = (pb_type_messaging_rfcomm_socket_connect_context_t *)parent_obj;
     return pbdrv_bluetooth_rfcomm_connect(state, context->bdaddr, context->timeout, &context->socket->conn);
 }
 
 static mp_obj_t pb_type_messaging_rfcomm_socket_connect_return_map(mp_obj_t context_obj) {
-    pb_type_messaging_rfcomm_socket_connect_context_t* context = (pb_type_messaging_rfcomm_socket_connect_context_t*)context_obj;
+    pb_type_messaging_rfcomm_socket_connect_context_t *context = (pb_type_messaging_rfcomm_socket_connect_context_t *)context_obj;
     return MP_OBJ_FROM_PTR(context->socket);
 }
 
-static mp_obj_t pb_type_messaging_rfcomm_socket_connect(size_t n_args, const mp_obj_t* pos_args, mp_map_t* kw_args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_connect(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, pb_type_messaging_rfcomm_socket_obj_t, self, PB_ARG_REQUIRED(address), PB_ARG_DEFAULT_INT(timeout, 10000));
 
     // Check if socket is already connected
@@ -242,7 +242,7 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_connect(size_t n_args, const mp_
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("socket is already connected"));
     }
 
-    pb_type_messaging_rfcomm_socket_connect_context_t* context = m_new(pb_type_messaging_rfcomm_socket_connect_context_t, 1);
+    pb_type_messaging_rfcomm_socket_connect_context_t *context = m_new(pb_type_messaging_rfcomm_socket_connect_context_t, 1);
     context->socket = self;
 
     const char *address_str = mp_obj_str_get_str(address_in);
@@ -270,21 +270,21 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_messaging_rfcomm_socket_connect_obj, 1
 // RFCOMM listen method
 
 typedef struct {
-    pb_type_messaging_rfcomm_socket_obj_t* socket;
+    pb_type_messaging_rfcomm_socket_obj_t *socket;
     int32_t timeout;
 } pb_type_messaging_rfcomm_socket_listen_context_t;
 
-static pbio_error_t pb_type_messaging_rfcomm_socket_listen_iterate(pbio_os_state_t* state, mp_obj_t parent_obj) {
-    pb_type_messaging_rfcomm_socket_listen_context_t* context = (pb_type_messaging_rfcomm_socket_listen_context_t*)parent_obj;
+static pbio_error_t pb_type_messaging_rfcomm_socket_listen_iterate(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pb_type_messaging_rfcomm_socket_listen_context_t *context = (pb_type_messaging_rfcomm_socket_listen_context_t *)parent_obj;
     return pbdrv_bluetooth_rfcomm_listen(state, context->timeout, &context->socket->conn);
 }
 
 static mp_obj_t pb_type_messaging_rfcomm_socket_listen_return_map(mp_obj_t context_obj) {
-    pb_type_messaging_rfcomm_socket_listen_context_t* context = (pb_type_messaging_rfcomm_socket_listen_context_t*)context_obj;
+    pb_type_messaging_rfcomm_socket_listen_context_t *context = (pb_type_messaging_rfcomm_socket_listen_context_t *)context_obj;
     return MP_OBJ_FROM_PTR(context->socket);
 }
 
-static mp_obj_t pb_type_messaging_rfcomm_socket_listen(size_t n_args, const mp_obj_t* pos_args, mp_map_t* kw_args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_listen(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, pb_type_messaging_rfcomm_socket_obj_t, self, PB_ARG_DEFAULT_INT(timeout, 0));
 
     // Check if socket is already connected
@@ -292,7 +292,7 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_listen(size_t n_args, const mp_o
         mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT("socket is already connected"));
     }
 
-    pb_type_messaging_rfcomm_socket_listen_context_t* context = m_new(pb_type_messaging_rfcomm_socket_listen_context_t, 1);
+    pb_type_messaging_rfcomm_socket_listen_context_t *context = m_new(pb_type_messaging_rfcomm_socket_listen_context_t, 1);
     context->socket = self;
 
     context->timeout = mp_obj_get_int(timeout_in);

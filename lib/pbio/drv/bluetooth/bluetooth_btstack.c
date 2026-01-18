@@ -1913,7 +1913,7 @@ cleanup:
 }
 
 pbio_error_t pbdrv_bluetooth_rfcomm_close(
-    pbdrv_bluetooth_rfcomm_conn_t* conn) {
+    pbdrv_bluetooth_rfcomm_conn_t *conn) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
     if (!sock) {
         DEBUG_PRINT("[btc:rfcomm_close] Invalid CID: %d\n", conn->conn_id);

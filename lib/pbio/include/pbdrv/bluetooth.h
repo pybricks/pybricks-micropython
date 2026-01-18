@@ -676,7 +676,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state,
  * @return             Success or error code.
  */
 pbio_error_t
-pbdrv_bluetooth_rfcomm_close(pbdrv_bluetooth_rfcomm_conn_t* conn);
+pbdrv_bluetooth_rfcomm_close(pbdrv_bluetooth_rfcomm_conn_t *conn);
 
 /**
  * Sends data over an RFCOMM connection.
