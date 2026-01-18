@@ -1355,4 +1355,8 @@ void pbdrv_bluetooth_init_hci(void) {
     pbio_os_process_start(&pbdrv_bluetooth_spi_process, pbdrv_bluetooth_spi_process_thread, NULL);
 }
 
+void pbdrv_bluetooth_rfcomm_disconnect_all(void) {
+    // RFCOMM not supported on our STM32 platforms.
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG

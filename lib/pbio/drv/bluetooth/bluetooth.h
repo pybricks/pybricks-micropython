@@ -97,6 +97,17 @@ typedef struct {
 
 pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context);
 
+// The following functions are defined in each Bluetooth implementation that
+// supports RFCOMM sockets.
+
+// Cancels all pending connection attempts. Called e.g. when the user interrupts
+// execution to drop into the debug REPL.
+void pbdrv_bluetooth_rfcomm_cancel_connection();
+
+// Disconnects all active RFCOMM connections and cleans up all sockets. Called
+// during user program termination.
+void pbdrv_bluetooth_rfcomm_disconnect_all();
+
 #endif // PBDRV_CONFIG_BLUETOOTH
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_H_

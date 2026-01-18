@@ -60,6 +60,7 @@ static struct {
  */
 static pbsys_storage_data_map_t *map;
 static bool data_map_write_on_shutdown = false;
+static bool settings_ready = false;
 
 /**
  * Gets program size or the total size of the sequentially stored slots.
@@ -128,6 +129,9 @@ void pbsys_storage_reset_storage(void) {
 
     // Set firmware version used to create current storage map.
     strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
+
+    // Mark settings as ready after reset.
+    settings_ready = true;
 
     // Ensure new firmware version and default settings are written on poweroff.
     pbsys_storage_request_write();
@@ -391,6 +395,9 @@ void pbsys_storage_init(void) {
     // otherwise reset storage.
     if (err != PBIO_SUCCESS || strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash))) {
         pbsys_storage_reset_storage();
+    } else {
+        // Mark settings as ready after successful load.
+        settings_ready = true;
     }
 
     // Apply loaded settings as necesary.
@@ -411,6 +418,15 @@ void pbsys_storage_deinit(void) {
 
     pbio_busy_count_up();
     pbio_os_process_start(&pbsys_storage_deinit_process, pbsys_storage_deinit_process_thread, NULL);
+}
+
+/**
+ * Checks if storage settings have been initialized.
+ *
+ * @returns             True if settings have been reset or loaded, false otherwise.
+ */
+bool pbsys_storage_settings_ready(void) {
+    return settings_ready;
 }
 
 #endif // PBSYS_CONFIG_STORAGE

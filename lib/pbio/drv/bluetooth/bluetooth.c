@@ -548,6 +548,7 @@ void pbdrv_bluetooth_cancel_operation_request(void) {
     #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
     // Revisit: Cancel all.
     pbdrv_bluetooth_classic_task_context.cancel = true;
+    pbdrv_bluetooth_rfcomm_cancel_connection();
     #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 }
 
@@ -683,6 +684,10 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
 
     // Requests peripheral operations to cancel, if they support it.
     pbdrv_bluetooth_cancel_operation_request();
+
+    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+    pbdrv_bluetooth_rfcomm_disconnect_all();
+    #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 
     for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
         peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
