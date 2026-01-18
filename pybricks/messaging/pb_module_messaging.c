@@ -311,7 +311,23 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_listen(size_t n_args, const mp_o
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_messaging_rfcomm_socket_listen_obj, 0, pb_type_messaging_rfcomm_socket_listen);
 
+// Context manager support for RFCOMMSocket
+static mp_obj_t pb_type_messaging_rfcomm_socket_enter(mp_obj_t self_in) {
+    return self_in;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_enter_obj, pb_type_messaging_rfcomm_socket_enter);
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_exit(size_t n_args, const mp_obj_t *args) {
+    // args[0] is self, args[1:4] are exc_type, exc_val, exc_tb
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbdrv_bluetooth_rfcomm_close(&self->conn);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR(pb_type_messaging_rfcomm_socket_exit_obj, 4, pb_type_messaging_rfcomm_socket_exit);
+
 static const mp_rom_map_elem_t pb_type_messaging_rfcomm_socket_locals_dict_table[] = {
+    {MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_enter_obj)},
+    {MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_exit_obj)},
     {MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_connect_obj)},
     {MP_ROM_QSTR(MP_QSTR_listen), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_listen_obj)},
     {MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_stream_read_obj)},
