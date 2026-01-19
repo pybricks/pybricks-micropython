@@ -313,11 +313,19 @@ static bool pbdrv_bluetooth_btstack_ble_supported(void) {
     return chipset_info && chipset_info->supports_ble;
 }
 
+static void maybe_handle_classic_security_packet(uint8_t *packet, uint16_t size);
+
 // currently, this function just handles the Powered Up handset control.
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 
     // Platform-specific platform handler has priority.
     pbdrv_bluetooth_btstack_platform_packet_handler(packet_type, channel, packet, size);
+
+    if (packet_type == HCI_EVENT_PACKET) {
+        // We have a separate handler for classic security packets,
+        // which we don't mix in here for clarity's sake.
+        maybe_handle_classic_security_packet(packet, size);
+    }
 
     switch (hci_event_packet_get_type(packet)) {
         case HCI_EVENT_COMMAND_COMPLETE: {
@@ -1386,124 +1394,9 @@ static int pbdrv_bluetooth_classic_rfcomm_socket_id(pbdrv_bluetooth_classic_rfco
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t *pending_listen_socket;
 
-static void handle_hci_event_packet(uint8_t *packet, uint16_t size);
-
-void pbdrv_bluetooth_classic_handle_packet(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
-    switch (packet_type) {
-        case HCI_EVENT_PACKET: {
-            handle_hci_event_packet(packet, size);
-            break;
-        }
-
-        case RFCOMM_DATA_PACKET: {
-            pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(channel);
-
-            if (!sock) {
-                DEBUG_PRINT("Received RFCOMM data for unknown channel: 0x%04x\n", channel);
-                break;
-            }
-
-            if (size > lwrb_get_free(&sock->rx_buffer)) {
-                DEBUG_PRINT("Received RFCOMM data that exceeds buffer capacity: %u\n", size);
-                sock->err = PBIO_ERROR_FAILED;
-            }
-
-            lwrb_write(&sock->rx_buffer, packet, size);
-
-            // Each packet we receive consumed a credit on the remote side.
-            --sock->credits_outstanding;
-
-            // If we receive a tiny packet, maybe we can grant more credits.
-            pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
-            pbio_os_request_poll();
-            break;
-        }
-    }
-}
-
-static bool hci_handle_to_bd_addr(uint16_t handle, bd_addr_t addr) {
-    hci_connection_t *conn = hci_connection_for_handle(handle);
-    if (!conn) {
-        return false;
-    }
-    memcpy(addr, conn->address, sizeof(bd_addr_t));
-    return true;
-}
-
-static void handle_hci_event_packet(uint8_t *packet, uint16_t size) {
-    switch (hci_event_packet_get_type(packet)) {
-        case HCI_EVENT_USER_CONFIRMATION_REQUEST: {
-            // Pairing handlers, in case auto-accept doesn't work.
-            bd_addr_t requester_addr;
-            hci_event_user_confirmation_request_get_bd_addr(packet, requester_addr);
-            DEBUG_PRINT("SSP User Confirmation Request. Auto-accepting...\n");
-            gap_ssp_confirmation_response(requester_addr);
-            break;
-        }
-
-        case HCI_EVENT_PIN_CODE_REQUEST: {
-            bd_addr_t requester_addr;
-            hci_event_pin_code_request_get_bd_addr(packet, requester_addr);
-
-            DEBUG_PRINT("LEGACY: PIN Request. Trying '0000'...\n");
-
-            // 0000 is used as the default pin code for many devices. We'll try it, and if
-            // we fail, we just won't be able to connect.
-            gap_pin_code_response(requester_addr, "0000");
-            break;
-        }
-
-        case HCI_EVENT_AUTHENTICATION_COMPLETE: {
-            // If authentication fails, we may need to drop the link key from the database.
-            uint8_t auth_status = hci_event_authentication_complete_get_status(packet);
-            if (auth_status == ERROR_CODE_AUTHENTICATION_FAILURE || auth_status == ERROR_CODE_PIN_OR_KEY_MISSING) {
-                DEBUG_PRINT("AUTH FAIL: Link key rejected/missing (Status 0x%02x).\n", auth_status);
-                uint16_t handle = hci_event_authentication_complete_get_connection_handle(packet);
-                bd_addr_t addr;
-                if (!hci_handle_to_bd_addr(handle, addr)) {
-                    DEBUG_PRINT("AUTH FAIL: Unknown address for handle 0x%04x\n", handle);
-                    break;
-                }
-
-                gap_drop_link_key_for_bd_addr(addr);
-                link_db_settings_save();
-            }
-            pbio_os_request_poll();
-            break;
-        }
-
-        case HCI_EVENT_DISCONNECTION_COMPLETE: {
-            // HCI disconnection events are our chance to check if we've failed to connect due to
-            // some error in authentication, which might indicate that our link key database contains
-            // some manner of stale key. This is not where we handle RFCOMM socket disconnections! See
-            // below for the relevant RFCOMM events.
-            uint8_t reason = hci_event_disconnection_complete_get_reason(packet);
-            uint16_t handle = hci_event_disconnection_complete_get_connection_handle(packet);
-            bd_addr_t addr;
-            if (reason == ERROR_CODE_AUTHENTICATION_FAILURE) { // Authentication Failure
-                if (!hci_handle_to_bd_addr(handle, addr)) {
-                    // Can't do anything without the address.
-                    DEBUG_PRINT("DISCONNECTED: Unknown address for handle 0x%04x\n", handle);
-                    break;
-                }
-
-                DEBUG_PRINT("DISCONNECTED: Bad Link Key.\n");
-                gap_drop_link_key_for_bd_addr(addr);
-                link_db_settings_save();
-            } else {
-                DEBUG_PRINT("DISCONNECTED: Reason 0x%02x\n", reason);
-            }
-
-            break;
-        }
-
-        case HCI_EVENT_LINK_KEY_NOTIFICATION: {
-            // BTStack has already updated the link key database, so we just need to save it.
-            DEBUG_PRINT("Link key updated, saving to settings.\n");
-            link_db_settings_save();
-            break;
-        }
-
+void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
+    uint8_t event_type = hci_event_packet_get_type(packet);
+    switch (event_type) {
         case RFCOMM_EVENT_CHANNEL_OPENED: {
             // TODO: rescue the linked key for this address if we're above capacity in the saved settings buffer.
             uint8_t bdaddr[6];
@@ -1624,7 +1517,108 @@ static void handle_hci_event_packet(uint8_t *packet, uint16_t size) {
         }
 
         default:
+            DEBUG_PRINT("Received unknown RFCOMM event: %u\n", event_type);
             break;
+    }
+}
+
+void user_rfcomm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    switch (packet_type) {
+        case HCI_EVENT_PACKET: {
+            user_rfcomm_event_handler(packet, size);
+            break;
+        }
+        case RFCOMM_DATA_PACKET: {
+            pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(channel);
+
+            if (!sock) {
+                DEBUG_PRINT("Received RFCOMM data for unknown channel: 0x%04x\n", channel);
+                break;
+            }
+
+            if (size > lwrb_get_free(&sock->rx_buffer)) {
+                DEBUG_PRINT("Received RFCOMM data that exceeds buffer capacity: %u\n", size);
+                sock->err = PBIO_ERROR_FAILED;
+            }
+
+            lwrb_write(&sock->rx_buffer, packet, size);
+
+            // Each packet we receive consumed a credit on the remote side.
+            --sock->credits_outstanding;
+
+            // See if we have enough space such that we should grand more credits.
+            pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
+            pbio_os_request_poll();
+            break;
+        }
+    }
+}
+
+static bool hci_handle_to_bd_addr(uint16_t handle, bd_addr_t addr) {
+    hci_connection_t *conn = hci_connection_for_handle(handle);
+    if (!conn) {
+        return false;
+    }
+    memcpy(addr, conn->address, sizeof(bd_addr_t));
+    return true;
+}
+
+static void maybe_handle_classic_security_packet(uint8_t *packet, uint16_t size) {
+    switch (hci_event_packet_get_type(packet)) {
+        case HCI_EVENT_USER_CONFIRMATION_REQUEST: {
+            // Pairing handlers, in case auto-accept doesn't work.
+            bd_addr_t requester_addr;
+            hci_event_user_confirmation_request_get_bd_addr(packet, requester_addr);
+            DEBUG_PRINT("SSP User Confirmation Request. Auto-accepting...\n");
+            gap_ssp_confirmation_response(requester_addr);
+            break;
+        }
+        case HCI_EVENT_AUTHENTICATION_COMPLETE: {
+            // If authentication fails, we may need to drop the link key from the database.
+            uint8_t auth_status = hci_event_authentication_complete_get_status(packet);
+            if (auth_status == ERROR_CODE_AUTHENTICATION_FAILURE || auth_status == ERROR_CODE_PIN_OR_KEY_MISSING) {
+                DEBUG_PRINT("AUTH FAIL: Link key rejected/missing (Status 0x%02x).\n", auth_status);
+                uint16_t handle = hci_event_authentication_complete_get_connection_handle(packet);
+                bd_addr_t addr;
+                if (!hci_handle_to_bd_addr(handle, addr)) {
+                    DEBUG_PRINT("AUTH FAIL: Unknown address for handle 0x%04x\n", handle);
+                    break;
+                }
+                gap_drop_link_key_for_bd_addr(addr);
+                link_db_settings_save();
+            }
+            pbio_os_request_poll();
+            break;
+        }
+        case HCI_EVENT_DISCONNECTION_COMPLETE: {
+            // HCI disconnection events are our chance to check if we've failed to connect due to
+            // some error in authentication, which might indicate that our link key database contains
+            // some manner of stale key. This is not where we handle RFCOMM socket disconnections! See
+            // below for the relevant RFCOMM events.
+            uint8_t reason = hci_event_disconnection_complete_get_reason(packet);
+            uint16_t handle = hci_event_disconnection_complete_get_connection_handle(packet);
+            bd_addr_t addr;
+            if (reason == ERROR_CODE_AUTHENTICATION_FAILURE) { // Authentication Failure
+                if (!hci_handle_to_bd_addr(handle, addr)) {
+                    // Can't do anything without the address.
+                    DEBUG_PRINT("DISCONNECTED: Unknown address for handle 0x%04x\n", handle);
+                    break;
+                }
+                DEBUG_PRINT("DISCONNECTED: Bad Link Key.\n");
+                gap_drop_link_key_for_bd_addr(addr);
+                link_db_settings_save();
+            } else {
+                DEBUG_PRINT("DISCONNECTED: Reason 0x%02x\n", reason);
+            }
+
+            break;
+        }
+        case HCI_EVENT_LINK_KEY_NOTIFICATION: {
+            // BTStack has already updated the link key database, so we just need to save it.
+            DEBUG_PRINT("Link key updated, saving to settings.\n");
+            link_db_settings_save();
+            break;
+        }
     }
 }
 
@@ -1639,6 +1633,8 @@ static uint16_t sdp_query_rfcomm_channel;
 
 static void bluetooth_btstack_classic_sdp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     if (packet_type != HCI_EVENT_PACKET) {
+        DEBUG_PRINT("SDP packet handler unexpected packet type %u\n",
+            packet_type);
         return;
     }
     switch (hci_event_packet_get_type(packet)) {
@@ -1670,17 +1666,14 @@ static void bluetooth_btstack_classic_sdp_packet_handler(uint8_t packet_type, ui
             break;
         }
         default: {
-            DEBUG_PRINT("Received ignored SDP event: %u\n", packet_type);
+            DEBUG_PRINT("Received ignored SDP event: %u\n",
+                hci_event_packet_get_type(packet));
             break;
         }
     }
 }
 
 void pbdrv_bluetooth_classic_init() {
-    static btstack_packet_callback_registration_t hci_event_handler_registration;
-    hci_event_handler_registration.callback = pbdrv_bluetooth_classic_handle_packet;
-    hci_add_event_handler(&hci_event_handler_registration);
-
     l2cap_init();
     rfcomm_init();
     sdp_init();
@@ -1703,11 +1696,7 @@ void pbdrv_bluetooth_classic_init() {
     sdp_register_service(spp_service_buffer);
 
     // All EV3s listen only on channel 1 (the default SPP channel).
-    rfcomm_register_service_with_initial_credits(
-        &pbdrv_bluetooth_classic_handle_packet,
-        1,
-        1024,
-        0);
+    rfcomm_register_service_with_initial_credits(&user_rfcomm_packet_handler, 1, 1024, 0);
 }
 
 void pbdrv_bluetooth_local_address(bdaddr_t addr) {
@@ -1825,7 +1814,7 @@ pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
     // We establish the channel with no credits. Once we know the negotiated
     // MTU, we can calculate the number of credits we should grant.
     uint8_t rfcomm_err;
-    if ((rfcomm_err = rfcomm_create_channel_with_initial_credits(&pbdrv_bluetooth_classic_handle_packet, (uint8_t *)bdaddr, sock->server_channel, 0, &sock->cid)) != 0) {
+    if ((rfcomm_err = rfcomm_create_channel_with_initial_credits(&user_rfcomm_packet_handler, (uint8_t *)bdaddr, sock->server_channel, 0, &sock->cid)) != 0) {
         DEBUG_PRINT("[btc:rfcomm_connect] Failed to create RFCOMM channel: %d\n", rfcomm_err);
         (void)rfcomm_err;
         sock->err = PBIO_ERROR_FAILED;
@@ -1912,6 +1901,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 
 cleanup:
+    ;
     pbio_error_t err = sock->err;
     pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
     return err;
