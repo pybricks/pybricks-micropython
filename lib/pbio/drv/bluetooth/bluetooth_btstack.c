@@ -1967,6 +1967,21 @@ pbio_error_t pbdrv_bluetooth_rfcomm_recv(
     return PBIO_SUCCESS;
 }
 
+pbio_error_t
+pbdrv_bluetooth_rfcomm_in_waiting(const pbdrv_bluetooth_rfcomm_conn_t *conn,
+    size_t *waiting) {
+    pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+        pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
+
+    if (!sock || !sock->is_connected) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    *waiting = lwrb_get_full(&sock->rx_buffer);
+
+    return PBIO_SUCCESS;
+}
+
 bool pbdrv_bluetooth_rfcomm_is_writeable(const pbdrv_bluetooth_rfcomm_conn_t *conn) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
     if (!sock || !sock->is_connected) {

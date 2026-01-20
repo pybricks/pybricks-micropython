@@ -140,81 +140,266 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_messaging_local_address_obj, pb_messaging_lo
 typedef struct {
     mp_obj_base_t base;
     pbdrv_bluetooth_rfcomm_conn_t conn;
+    uint32_t timeout;
+    pb_type_async_t *write_iter;
+    mp_obj_t write_obj;
+    pb_type_async_t *read_iter;
+    mp_obj_str_t *read_obj;
+    const byte *wait_data;
+    size_t wait_len;
+    size_t read_offset;
+    size_t write_offset;
 } pb_type_messaging_rfcomm_socket_obj_t;
-
-static mp_uint_t pb_type_messaging_rfcomm_socket_read(mp_obj_t self_in, void *buf, mp_uint_t size, int *errcode) {
-    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    size_t bytes_received;
-    pbio_error_t err = pbdrv_bluetooth_rfcomm_recv(&self->conn, buf, size, &bytes_received);
-    if (err != PBIO_SUCCESS) {
-        *errcode = MP_EIO;
-        return MP_STREAM_ERROR;
-    }
-    return bytes_received;
-}
-
-static mp_uint_t pb_type_messaging_rfcomm_socket_write(mp_obj_t self_in, const void *buf, mp_uint_t size, int *errcode) {
-    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    size_t bytes_sent;
-    pbio_error_t err = pbdrv_bluetooth_rfcomm_send(&self->conn, buf, size, &bytes_sent);
-    if (err != PBIO_SUCCESS) {
-        *errcode = MP_EIO;
-        return MP_STREAM_ERROR;
-    }
-    return bytes_sent;
-}
-
-static mp_uint_t pb_type_messaging_rfcomm_socket_ioctl(mp_obj_t self_in, mp_uint_t request, uintptr_t arg, int *errcode) {
-    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    switch (request) {
-        case MP_STREAM_POLL: {
-            mp_uint_t flags = 0;
-            if ((request & MP_STREAM_POLL_HUP) && !pbdrv_bluetooth_rfcomm_is_connected(&self->conn)) {
-                flags |= MP_STREAM_POLL_HUP;
-            }
-            if ((request & MP_STREAM_POLL_RD) && pbdrv_bluetooth_rfcomm_is_readable(&self->conn)) {
-                flags |= MP_STREAM_POLL_RD;
-            }
-            if ((request & MP_STREAM_POLL_WR) && pbdrv_bluetooth_rfcomm_is_writeable(&self->conn)) {
-                flags |= MP_STREAM_POLL_WR;
-            }
-            return flags;
-        }
-        case MP_STREAM_CLOSE: {
-            pbdrv_bluetooth_rfcomm_close(&self->conn);
-            return 0;
-        }
-        case MP_STREAM_FLUSH: {
-            // No buffering, so nothing to flush.
-            return 0;
-        }
-        default:
-            return MP_STREAM_ERROR;
-    }
-}
-
-static const mp_stream_p_t pb_type_messaging_rfcomm_socket_stream_p = {
-    .read = pb_type_messaging_rfcomm_socket_read,
-    .write = pb_type_messaging_rfcomm_socket_write,
-    .ioctl = pb_type_messaging_rfcomm_socket_ioctl,
-};
-
-static void pb_type_messaging_rfcomm_socket_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "RFCOMMSocket(conn_id=%d)", self->conn.conn_id);
-}
 
 // Forward declaration of the RFCOMMSocket type
 static const mp_obj_type_t pb_type_messaging_rfcomm_socket;
 
 // Constructor for RFCOMMSocket
-static mp_obj_t pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+static mp_obj_t
+pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type,
+    size_t n_args, size_t n_kw,
+    const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
-    pb_type_messaging_rfcomm_socket_obj_t *self = mp_obj_malloc(pb_type_messaging_rfcomm_socket_obj_t, &pb_type_messaging_rfcomm_socket);
+    pb_type_messaging_rfcomm_socket_obj_t *self = mp_obj_malloc(
+        pb_type_messaging_rfcomm_socket_obj_t, &pb_type_messaging_rfcomm_socket);
     self->conn.conn_id = -1;
+    self->timeout = 10000;
+    self->write_iter = NULL;
+    self->write_obj = MP_OBJ_NULL;
+    self->read_iter = NULL;
+    self->read_obj = NULL;
+    self->wait_data = NULL;
+    self->wait_data = NULL;
+    self->wait_len = 0;
+    self->read_offset = 0;
+    self->write_offset = 0;
     return MP_OBJ_FROM_PTR(self);
 }
+
+static pbio_error_t
+pb_type_messaging_rfcomm_socket_write_iter_once(pbio_os_state_t *state,
+    mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    GET_STR_DATA_LEN(self->write_obj, data, data_len);
+
+    size_t len;
+    pbio_error_t err = pbdrv_bluetooth_rfcomm_send(
+        &self->conn, (uint8_t *)data + self->write_offset,
+        data_len - self->write_offset, &len);
+
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    self->write_offset += len;
+    if (self->write_offset < data_len) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+static mp_obj_t
+pb_type_messaging_rfcomm_socket_write_return_map(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->write_obj = MP_OBJ_NULL;
+    return mp_const_none;
+}
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_write(size_t n_args,
+    const mp_obj_t *pos_args,
+    mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_messaging_rfcomm_socket_obj_t, self,
+        PB_ARG_REQUIRED(data));
+
+    if (!(mp_obj_is_str_or_bytes(data_in) ||
+          mp_obj_is_type(data_in, &mp_type_bytearray))) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    self->write_obj = data_in;
+    self->write_offset = 0;
+
+    pb_type_async_t config = {
+        .iter_once = pb_type_messaging_rfcomm_socket_write_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .return_map = pb_type_messaging_rfcomm_socket_write_return_map,
+    };
+    return pb_type_async_wait_or_await(&config, &self->write_iter, true);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_messaging_rfcomm_socket_write_obj, 1,
+    pb_type_messaging_rfcomm_socket_write);
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_waiting(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    size_t waiting = 0;
+    pb_assert(pbdrv_bluetooth_rfcomm_in_waiting(&self->conn, &waiting));
+    return mp_obj_new_int(waiting);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_waiting_obj,
+    pb_type_messaging_rfcomm_socket_waiting);
+
+static pbio_error_t
+pb_type_messaging_rfcomm_socket_read_iter_once(pbio_os_state_t *state,
+    mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    size_t len = 0;
+    pb_assert(pbdrv_bluetooth_rfcomm_recv(
+        &self->conn, (uint8_t *)self->read_obj->data + self->read_offset,
+        self->read_obj->len - self->read_offset, &len));
+
+    self->read_offset += len;
+    if (self->read_offset < self->read_obj->len) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+static mp_obj_t
+pb_type_messaging_rfcomm_socket_read_return_map(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_obj_str_t *result = self->read_obj;
+    self->read_obj = NULL;
+    return pb_obj_new_bytes_finish(result);
+}
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_read(size_t n_args,
+    const mp_obj_t *pos_args,
+    mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_messaging_rfcomm_socket_obj_t, self,
+        PB_ARG_DEFAULT_INT(length, 1));
+
+    self->read_obj = pb_obj_new_bytes_prepare(pb_obj_get_positive_int(length_in));
+    self->read_offset = 0;
+
+    pb_type_async_t config = {
+        .iter_once = pb_type_messaging_rfcomm_socket_read_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .return_map = pb_type_messaging_rfcomm_socket_read_return_map,
+    };
+    return pb_type_async_wait_or_await(&config, &self->read_iter, true);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_messaging_rfcomm_socket_read_obj, 1,
+    pb_type_messaging_rfcomm_socket_read);
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_read_all(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    size_t in_waiting = 0;
+    pb_assert(pbdrv_bluetooth_rfcomm_in_waiting(&self->conn, &in_waiting));
+
+    if (in_waiting == 0) {
+        return mp_const_empty_bytes;
+    }
+
+    mp_obj_str_t *result = pb_obj_new_bytes_prepare(in_waiting);
+
+    size_t len;
+    pb_assert(pbdrv_bluetooth_rfcomm_recv(&self->conn, (uint8_t *)result->data,
+        in_waiting, &len));
+
+    return pb_obj_new_bytes_finish(result);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_read_all_obj,
+    pb_type_messaging_rfcomm_socket_read_all);
+
+static mp_obj_t pb_type_messaging_rfcomm_socket_clear(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    size_t in_waiting = 0;
+    pb_assert(pbdrv_bluetooth_rfcomm_in_waiting(&self->conn, &in_waiting));
+
+    if (in_waiting > 0) {
+        uint8_t buf[16];
+        size_t len;
+        while (in_waiting > 0) {
+            pb_assert(
+                pbdrv_bluetooth_rfcomm_recv(&self->conn, buf, sizeof(buf), &len));
+            if (len == 0) {
+                break;
+            }
+            if (len > in_waiting) {
+                in_waiting = 0;
+            } else {
+                in_waiting -= len;
+            }
+        }
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_clear_obj,
+    pb_type_messaging_rfcomm_socket_clear);
+
+static pbio_error_t
+pb_type_messaging_rfcomm_socket_wait_until_iter_once(pbio_os_state_t *state,
+    mp_obj_t self_in) {
+
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+retry:
+    size_t waiting = 0;
+    pb_assert(pbdrv_bluetooth_rfcomm_in_waiting(&self->conn, &waiting));
+
+    if (waiting < self->wait_len) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    for (size_t i = 0; i < self->wait_len; i++) {
+        uint8_t rx;
+        size_t len;
+
+        // This is inefficient but we have to peek/read byte by byte to match
+        // efficiently without consuming extra. Actually, UART device implementation
+        // reads one byte at a time to check. But here we can't easily "unread". The
+        // UART implementation actually reads it out. If it doesn't match, it is
+        // consumed anyway! "Not the character we expected, so start over". SO we
+        // just read one byte.
+
+        pb_assert(pbdrv_bluetooth_rfcomm_recv(&self->conn, &rx, 1, &len));
+
+        if (rx != self->wait_data[i]) {
+            goto retry;
+        }
+    }
+    return PBIO_SUCCESS;
+}
+
+static mp_obj_t
+pb_type_messaging_rfcomm_socket_wait_until_return_map(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->wait_len = 0;
+    self->wait_data = NULL;
+    return mp_const_none;
+}
+
+static mp_obj_t
+pb_type_messaging_rfcomm_socket_wait_until(mp_obj_t self_in,
+    mp_obj_t pattern_in) {
+
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (self->wait_len) {
+        pb_assert(PBIO_ERROR_BUSY);
+    }
+
+    self->wait_data =
+        (const uint8_t *)mp_obj_str_get_data(pattern_in, &self->wait_len);
+    if (self->wait_len == 0) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    pb_type_async_t config = {
+        .iter_once = pb_type_messaging_rfcomm_socket_wait_until_iter_once,
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .return_map = pb_type_messaging_rfcomm_socket_wait_until_return_map,
+    };
+    return pb_type_async_wait_or_await(&config, &self->read_iter, true);
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_type_messaging_rfcomm_socket_wait_until_obj,
+    pb_type_messaging_rfcomm_socket_wait_until);
 
 // RFCOMM connect method
 
@@ -325,28 +510,43 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_exit(size_t n_args, const mp_obj
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(pb_type_messaging_rfcomm_socket_exit_obj, 4, pb_type_messaging_rfcomm_socket_exit);
 
-static const mp_rom_map_elem_t pb_type_messaging_rfcomm_socket_locals_dict_table[] = {
-    {MP_ROM_QSTR(MP_QSTR___enter__), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_enter_obj)},
-    {MP_ROM_QSTR(MP_QSTR___exit__), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_exit_obj)},
-    {MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_connect_obj)},
-    {MP_ROM_QSTR(MP_QSTR_listen), MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_listen_obj)},
-    {MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_stream_read_obj)},
-    {MP_ROM_QSTR(MP_QSTR_readinto), MP_ROM_PTR(&mp_stream_readinto_obj)},
-    {MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&mp_stream_write_obj)},
-    {MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&mp_stream_close_obj)},
+static const mp_rom_map_elem_t
+    pb_type_messaging_rfcomm_socket_locals_dict_table[] = {
+    {MP_ROM_QSTR(MP_QSTR___enter__),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_enter_obj)},
+    {MP_ROM_QSTR(MP_QSTR___exit__),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_exit_obj)},
+    {MP_ROM_QSTR(MP_QSTR_connect),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_connect_obj)},
+    {MP_ROM_QSTR(MP_QSTR_listen),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_listen_obj)},
+    {MP_ROM_QSTR(MP_QSTR_read),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_read_obj)},
+    {MP_ROM_QSTR(MP_QSTR_read_all),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_read_all_obj)},
+    {MP_ROM_QSTR(MP_QSTR_write),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_write_obj)},
+    {MP_ROM_QSTR(MP_QSTR_waiting),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_waiting_obj)},
+    {MP_ROM_QSTR(MP_QSTR_wait_until),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_wait_until_obj)},
+    {MP_ROM_QSTR(MP_QSTR_clear),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_clear_obj)},
 };
 static MP_DEFINE_CONST_DICT(pb_type_messaging_rfcomm_socket_locals_dict, pb_type_messaging_rfcomm_socket_locals_dict_table);
 
-static MP_DEFINE_CONST_OBJ_TYPE(
-    pb_type_messaging_rfcomm_socket,
-    MP_QSTR_RFCOMMSocket,
-    MP_TYPE_FLAG_NONE,
+static void pb_type_messaging_rfcomm_socket_print(const mp_print_t *print,
+    mp_obj_t self_in,
+    mp_print_kind_t kind) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "RFCOMMSocket(conn_id=%d)", self->conn.conn_id);
+}
+
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_messaging_rfcomm_socket,
+    MP_QSTR_RFCOMMSocket, MP_TYPE_FLAG_NONE,
     make_new,
-    pb_type_messaging_rfcomm_socket_make_new,
-    print,
+    pb_type_messaging_rfcomm_socket_make_new, print,
     pb_type_messaging_rfcomm_socket_print,
-    protocol,
-    &pb_type_messaging_rfcomm_socket_stream_p,
     locals_dict,
     &pb_type_messaging_rfcomm_socket_locals_dict);
 

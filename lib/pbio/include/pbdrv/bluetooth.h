@@ -729,6 +729,17 @@ bool pbdrv_bluetooth_rfcomm_is_readable(
 bool pbdrv_bluetooth_rfcomm_is_writeable(
     const pbdrv_bluetooth_rfcomm_conn_t *conn);
 
+/**
+ * Returns the number of bytes available to read from the RFCOMM connection.
+ *
+ * @param [in]  conn              The RFCOMM connection handle.
+ * @param [out] waiting           The number of bytes available.
+ * @return                        Success or error code.
+ */
+pbio_error_t
+pbdrv_bluetooth_rfcomm_in_waiting(const pbdrv_bluetooth_rfcomm_conn_t *conn,
+    size_t *waiting);
+
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
@@ -772,6 +783,15 @@ static inline bool pbdrv_bluetooth_tx_is_idle(void) {
 
 static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
     pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t
+pbdrv_bluetooth_rfcomm_in_waiting(const pbdrv_bluetooth_rfcomm_conn_t *conn,
+    size_t *waiting) {
+    if (waiting) {
+        *waiting = 0;
+    }
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
