@@ -32,6 +32,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
 
+#include <pbio/int_math.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 #include <pbio/version.h>
@@ -1291,26 +1292,21 @@ typedef struct {
 
 static pbdrv_bluetooth_classic_rfcomm_socket_t pbdrv_bluetooth_classic_rfcomm_sockets[RFCOMM_SOCKET_COUNT];
 
-static int pbdrv_bluetooth_classic_rfcomm_socket_max_credits(pbdrv_bluetooth_classic_rfcomm_socket_t *socket) {
-    return RFCOMM_RX_BUFFER_SIZE / socket->mtu;
-}
-
-// Give back credits that we owe and which we have space available to serve.
-// We will give back credits when:
-// 1. We owe two or more.
-// 2. We owe one and the peer has no credits available.
-// In no event will we give back credits such that the peer has enough credits
-// to overflow our rx buffer.
+// The flow control mechanism in RFCOMM works on a credit system. Before a
+// peer can send us a message, it needs a credit to do so. Each message sent
+// consumes one credit.
+//
+// We allow a number of outstanding credits equal to the number of MTU-sized
+// frames we have space for in the RX buffer. If the granted outstanding credits
+// are less than this number, we grant the difference.
 static void pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(pbdrv_bluetooth_classic_rfcomm_socket_t *socket) {
-    const int avail_frames = lwrb_get_free(&socket->rx_buffer) / socket->mtu;
-    const int max_credits = pbdrv_bluetooth_classic_rfcomm_socket_max_credits(socket);
-    int max_grant = max_credits - socket->credits_outstanding;
-    if (max_grant > avail_frames) {
-        max_grant = avail_frames;
-    }
-    if (max_grant > 1 || (max_grant > 0 && socket->credits_outstanding <= 1)) {
-        rfcomm_grant_credits(socket->cid, max_grant);
-        socket->credits_outstanding += max_grant;
+    const int desired_outstanding_credits =
+        lwrb_get_free(&socket->rx_buffer) / socket->mtu;
+    const int owed_credits =
+        desired_outstanding_credits - socket->credits_outstanding;
+    if (owed_credits > 0) {
+        rfcomm_grant_credits(socket->cid, owed_credits);
+        socket->credits_outstanding += owed_credits;
     }
 }
 
@@ -1398,17 +1394,14 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
     uint8_t event_type = hci_event_packet_get_type(packet);
     switch (event_type) {
         case RFCOMM_EVENT_CHANNEL_OPENED: {
-            // TODO: rescue the linked key for this address if we're above capacity in the saved settings buffer.
-            uint8_t bdaddr[6];
-            rfcomm_event_channel_opened_get_bd_addr(packet, bdaddr);
             uint16_t cid = rfcomm_event_channel_opened_get_rfcomm_cid(packet);
-            pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(cid);
-
+            pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
+                pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(cid);
             if (!sock) {
-                // If we have no allocated socket for this cid, disconnect. It shouldn't
-                // be possible for this to happen, but just in case . . .
-                DEBUG_PRINT("Unknown cid (%u) associated with address %s\n",
-                    cid, bd_addr_to_str(bdaddr));
+                uint8_t bdaddr[6];
+                rfcomm_event_channel_opened_get_bd_addr(packet, bdaddr);
+                DEBUG_PRINT("Unknown cid (%u) associated with address %s\n", cid,
+                    bd_addr_to_str(bdaddr));
                 rfcomm_disconnect(cid);
                 break;
             }
@@ -1416,18 +1409,19 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
             if (status != 0) {
                 DEBUG_PRINT("RFCOMM channel open failed with status: %d", status);
                 sock->err = PBIO_ERROR_FAILED;
-            } else {
-                DEBUG_PRINT("RFCOMM channel opened: cid=%u.\n", cid);
-                sock->mtu = rfcomm_event_channel_opened_get_max_frame_size(packet);
-                if (sock->mtu == 0) {
-                    rfcomm_disconnect(cid);
-                    DEBUG_PRINT("RFCOMM channel opened with invalid MTU=0, dropping connection.\n");
-                    sock->err = PBIO_ERROR_FAILED;
-                }
-                sock->is_connected = true;
-                sock->credits_outstanding = 0;
-                pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
+                break;
             }
+            DEBUG_PRINT("RFCOMM channel opened: cid=%u.\n", cid);
+            sock->mtu = rfcomm_event_channel_opened_get_max_frame_size(packet);
+            if (sock->mtu == 0) {
+                rfcomm_disconnect(cid);
+                DEBUG_PRINT("RFCOMM channel opened with invalid MTU==0, dropping "
+                    "connection.\n");
+                sock->err = PBIO_ERROR_FAILED;
+            }
+            sock->is_connected = true;
+            sock->credits_outstanding = 0;
+            pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
             break;
         }
 
@@ -1435,20 +1429,15 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
             uint16_t cid = rfcomm_event_incoming_connection_get_rfcomm_cid(packet);
 
             if (!pending_listen_socket) {
-                DEBUG_PRINT("Received unexpected incoming RFCOMM connection.\n");
-                rfcomm_disconnect(cid);
+                // Someone tried to connect while we weren't listening.
+                rfcomm_decline_connection(cid);
                 break;
             }
             pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pending_listen_socket;
             pending_listen_socket = NULL;
 
-            // Note: we aren't connected yet. We'll get an RFCOMM_EVENT_CHANNEL_OPENED for
-            // this channel once we're officially online.
             rfcomm_accept_connection(cid);
             sock->cid = cid;
-
-            // Mark ourselves as no longer connectable, since we aren't listening.
-            gap_connectable_control(0);
             break;
         }
 
@@ -1462,20 +1451,12 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
             }
 
             if (lwrb_get_full(&sock->tx_buffer) == 0) {
-                // Nothing to send. This is normal, since we get this event immediately when the
-                // channel is opened, and the Python code won't usually have gotten around to giving
-                // us a transmit buffer yet.
                 break;
             }
 
             uint8_t *data = lwrb_get_linear_block_read_address(&sock->tx_buffer);
-            uint16_t write_len = lwrb_get_linear_block_read_length(&sock->tx_buffer);
-
-
-            if (write_len > sock->mtu) {
-                write_len = sock->mtu;
-            }
-
+            int write_len = pbio_int_math_min(
+                sock->mtu, lwrb_get_linear_block_read_length(&sock->tx_buffer));
             int err = rfcomm_send(sock->cid, data, write_len);
             lwrb_skip(&sock->tx_buffer, write_len);
             if (err) {
@@ -1485,13 +1466,13 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
                 break;
             }
 
-
-            if (lwrb_get_full(&sock->tx_buffer) == 0) {
-                pbio_os_request_poll();
-            } else {
-                // If there's more data we need to do another send request.
+            if (lwrb_get_full(&sock->tx_buffer) > 0) {
+                // More to send.
                 rfcomm_request_can_send_now_event(sock->cid);
             }
+            // Threads may be waiting for the notification that there's room in
+            // the send buffer.
+            pbio_os_request_poll();
 
             break;
         }
@@ -1500,7 +1481,6 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
             uint16_t cid = rfcomm_event_channel_closed_get_rfcomm_cid(packet);
             pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_cid(cid);
             if (!sock) {
-                // If !sock, we closed the channel ourselves and there's nothing left to do.
                 break;
             }
 
@@ -1545,9 +1525,9 @@ void user_rfcomm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
 
             // Each packet we receive consumed a credit on the remote side.
             --sock->credits_outstanding;
-
-            // See if we have enough space such that we should grand more credits.
             pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
+            // Threads may be waiting for the notification that there's data in
+            // the receive buffer.
             pbio_os_request_poll();
             break;
         }
@@ -1566,7 +1546,6 @@ static bool hci_handle_to_bd_addr(uint16_t handle, bd_addr_t addr) {
 static void maybe_handle_classic_security_packet(uint8_t *packet, uint16_t size) {
     switch (hci_event_packet_get_type(packet)) {
         case HCI_EVENT_USER_CONFIRMATION_REQUEST: {
-            // Pairing handlers, in case auto-accept doesn't work.
             bd_addr_t requester_addr;
             hci_event_user_confirmation_request_get_bd_addr(packet, requester_addr);
             DEBUG_PRINT("SSP User Confirmation Request. Auto-accepting...\n");
@@ -1574,43 +1553,43 @@ static void maybe_handle_classic_security_packet(uint8_t *packet, uint16_t size)
             break;
         }
         case HCI_EVENT_AUTHENTICATION_COMPLETE: {
-            // If authentication fails, we may need to drop the link key from the database.
-            uint8_t auth_status = hci_event_authentication_complete_get_status(packet);
-            if (auth_status == ERROR_CODE_AUTHENTICATION_FAILURE || auth_status == ERROR_CODE_PIN_OR_KEY_MISSING) {
-                DEBUG_PRINT("AUTH FAIL: Link key rejected/missing (Status 0x%02x).\n", auth_status);
-                uint16_t handle = hci_event_authentication_complete_get_connection_handle(packet);
+            uint8_t auth_status =
+                hci_event_authentication_complete_get_status(packet);
+            if (auth_status == ERROR_CODE_AUTHENTICATION_FAILURE ||
+                auth_status == ERROR_CODE_PIN_OR_KEY_MISSING) {
+                DEBUG_PRINT(
+                    "AUTH FAIL: Link key rejected/missing (Status 0x%02x).\n",
+                    auth_status);
+                uint16_t handle =
+                    hci_event_authentication_complete_get_connection_handle(packet);
                 bd_addr_t addr;
                 if (!hci_handle_to_bd_addr(handle, addr)) {
-                    DEBUG_PRINT("AUTH FAIL: Unknown address for handle 0x%04x\n", handle);
+                    DEBUG_PRINT("AUTH FAIL: Unknown address for handle 0x%04x\n",
+                        handle);
                     break;
                 }
                 gap_drop_link_key_for_bd_addr(addr);
                 link_db_settings_save();
             }
-            pbio_os_request_poll();
             break;
         }
         case HCI_EVENT_DISCONNECTION_COMPLETE: {
-            // HCI disconnection events are our chance to check if we've failed to connect due to
-            // some error in authentication, which might indicate that our link key database contains
-            // some manner of stale key. This is not where we handle RFCOMM socket disconnections! See
-            // below for the relevant RFCOMM events.
             uint8_t reason = hci_event_disconnection_complete_get_reason(packet);
-            uint16_t handle = hci_event_disconnection_complete_get_connection_handle(packet);
+            uint16_t handle =
+                hci_event_disconnection_complete_get_connection_handle(packet);
             bd_addr_t addr;
-            if (reason == ERROR_CODE_AUTHENTICATION_FAILURE) { // Authentication Failure
+            if (reason == ERROR_CODE_AUTHENTICATION_FAILURE) {
                 if (!hci_handle_to_bd_addr(handle, addr)) {
-                    // Can't do anything without the address.
-                    DEBUG_PRINT("DISCONNECTED: Unknown address for handle 0x%04x\n", handle);
+                    DEBUG_PRINT("DISCONNECTED: Unknown address for handle 0x%04x\n",
+                        handle);
                     break;
                 }
-                DEBUG_PRINT("DISCONNECTED: Bad Link Key.\n");
+                DEBUG_PRINT("DISCONNECTED: Authentication failure.\n");
                 gap_drop_link_key_for_bd_addr(addr);
                 link_db_settings_save();
             } else {
                 DEBUG_PRINT("DISCONNECTED: Reason 0x%02x\n", reason);
             }
-
             break;
         }
         case HCI_EVENT_LINK_KEY_NOTIFICATION: {
@@ -1886,7 +1865,6 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     // Wait until either we time out, there is an error, or the socket is
     // connected.
     pending_listen_socket = sock;
-    gap_connectable_control(1);
     DEBUG_PRINT("[btc:rfcomm_listen] Listening for incoming RFCOMM connections...\n");
     PBIO_OS_AWAIT_UNTIL(state, sock->is_connected);
     pending_listen_socket = NULL;
