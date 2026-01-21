@@ -1256,7 +1256,7 @@ static pbio_error_t bluetooth_btstack_handle_power_control(pbio_os_state_t *stat
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
-    if (pbdrv_bluetooth_hci_is_enabled()) {
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
