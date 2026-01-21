@@ -252,7 +252,16 @@ pb_type_messaging_rfcomm_socket_read_iter_once(pbio_os_state_t *state,
 
     self->read_offset += len;
     if (self->read_offset < self->read_obj->len) {
+        if (len > 0) {
+            DEBUG_PRINT("[msg:rfcomm_socket_read_iter_once] Read %d bytes, "
+                "need %d more bytes.\n",
+                len, self->read_obj->len - self->read_offset);
+        }
         return PBIO_ERROR_AGAIN;
+    } else {
+        DEBUG_PRINT(
+            "[msg:rfcomm_socket_read_iter_once] Completed read of %d bytes.\n",
+            self->read_offset);
     }
 
     return PBIO_SUCCESS;
@@ -263,6 +272,8 @@ pb_type_messaging_rfcomm_socket_read_return_map(mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_str_t *result = self->read_obj;
     self->read_obj = NULL;
+    DEBUG_PRINT("[msg:rfcomm_socket_read_return_map] Returning %d bytes.\n",
+        result->len);
     return pb_obj_new_bytes_finish(result);
 }
 
@@ -276,6 +287,8 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_read(size_t n_args,
 
     self->read_obj = pb_obj_new_bytes_prepare(pb_obj_get_positive_int(length_in));
     self->read_offset = 0;
+    DEBUG_PRINT("[msg:rfcomm_socket_read] Reading %d bytes.\n",
+        self->read_obj->len);
 
     pb_type_async_t config = {
         .iter_once = pb_type_messaging_rfcomm_socket_read_iter_once,
@@ -339,7 +352,7 @@ pb_type_messaging_rfcomm_socket_wait_until_iter_once(pbio_os_state_t *state,
 
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-retry:
+retry:;
     size_t waiting = 0;
     pb_assert(pbdrv_bluetooth_rfcomm_in_waiting(&self->conn, &waiting));
 
@@ -351,13 +364,9 @@ retry:
         uint8_t rx;
         size_t len;
 
-        // This is inefficient but we have to peek/read byte by byte to match
-        // efficiently without consuming extra. Actually, UART device implementation
-        // reads one byte at a time to check. But here we can't easily "unread". The
-        // UART implementation actually reads it out. If it doesn't match, it is
-        // consumed anyway! "Not the character we expected, so start over". SO we
-        // just read one byte.
-
+        // Read one byte at a time to avoid overshooting. There are more efficient
+        // algorithms for this (e.g. KMP), but we currently don't need that level
+        // of efficiency.
         pb_assert(pbdrv_bluetooth_rfcomm_recv(&self->conn, &rx, 1, &len));
 
         if (rx != self->wait_data[i]) {
@@ -510,12 +519,22 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_exit(size_t n_args, const mp_obj
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR(pb_type_messaging_rfcomm_socket_exit_obj, 4, pb_type_messaging_rfcomm_socket_exit);
 
+static mp_obj_t pb_type_messaging_rfcomm_socket_close(mp_obj_t self_in) {
+    pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbdrv_bluetooth_rfcomm_close(&self->conn);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_close_obj,
+    pb_type_messaging_rfcomm_socket_close);
+
 static const mp_rom_map_elem_t
     pb_type_messaging_rfcomm_socket_locals_dict_table[] = {
     {MP_ROM_QSTR(MP_QSTR___enter__),
      MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_enter_obj)},
     {MP_ROM_QSTR(MP_QSTR___exit__),
      MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_exit_obj)},
+    {MP_ROM_QSTR(MP_QSTR_close),
+     MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_close_obj)},
     {MP_ROM_QSTR(MP_QSTR_connect),
      MP_ROM_PTR(&pb_type_messaging_rfcomm_socket_connect_obj)},
     {MP_ROM_QSTR(MP_QSTR_listen),

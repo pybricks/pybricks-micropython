@@ -61,7 +61,7 @@
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
 
-#define DEBUG 2
+#define DEBUG 0
 
 #if DEBUG
 #include <pbio/debug.h>
@@ -1455,16 +1455,21 @@ void user_rfcomm_event_handler(uint8_t *packet, uint16_t size) {
             }
 
             uint8_t *data = lwrb_get_linear_block_read_address(&sock->tx_buffer);
-            int write_len = pbio_int_math_min(
-                sock->mtu, lwrb_get_linear_block_read_length(&sock->tx_buffer));
-            int err = rfcomm_send(sock->cid, data, write_len);
+            const int desired_send =
+                lwrb_get_linear_block_read_length(&sock->tx_buffer);
+            int write_len = pbio_int_math_min(sock->mtu, desired_send);
             lwrb_skip(&sock->tx_buffer, write_len);
+            int err = rfcomm_send(sock->cid, data, write_len);
             if (err) {
                 DEBUG_PRINT("Failed to send RFCOMM data: %d\n", err);
                 sock->err = PBIO_ERROR_FAILED;
                 rfcomm_disconnect(sock->cid);
                 break;
             }
+
+            DEBUG_PRINT(
+                "[btc:rfcomm_send] Sent %d/%d bytes to RFCOMM channel.\n",
+                write_len, desired_send);
 
             if (lwrb_get_full(&sock->tx_buffer) > 0) {
                 // More to send.
@@ -1520,7 +1525,7 @@ void user_rfcomm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 DEBUG_PRINT("Received RFCOMM data that exceeds buffer capacity: %u\n", size);
                 sock->err = PBIO_ERROR_FAILED;
             }
-
+            DEBUG_PRINT("[btc:rfcomm_recv] %d bytes\n", size);
             lwrb_write(&sock->rx_buffer, packet, size);
 
             // Each packet we receive consumed a credit on the remote side.
@@ -1910,10 +1915,13 @@ pbio_error_t pbdrv_bluetooth_rfcomm_send(
         return PBIO_ERROR_FAILED;
     }
 
-    DEBUG_PRINT("[btc:rfcomm_send] Sending '%.*s' to RFCOMM channel.\n", (int)length, data);
-
     bool was_idle = lwrb_get_full(&sock->tx_buffer) == 0;
     *bytes_sent = lwrb_write(&sock->tx_buffer, data, length);
+    if (*bytes_sent > 0) {
+        DEBUG_PRINT("[btc:rfcomm_send] Queued %d/%d bytes to RFCOMM channel.\n",
+            *bytes_sent, (int)length);
+    }
+
     if (was_idle && *bytes_sent > 0) {
         // If we were idle before, we need to request a send event to kick
         // things off.
@@ -1939,6 +1947,9 @@ pbio_error_t pbdrv_bluetooth_rfcomm_recv(
     if (*bytes_received > 0) {
         // After reading data, we may have freed up enough space to grant some
         // credits back to our peer.
+        DEBUG_PRINT("[btc:rfcomm_recv] Received %d bytes for requested read of "
+            "%d bytes, granting credits.\n",
+            *bytes_received, buffer_size);
         pbdrv_bluetooth_classic_rfcomm_socket_grant_owed_credits(sock);
     }
 
