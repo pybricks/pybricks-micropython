@@ -36,6 +36,8 @@ const char *pbio_error_str(pbio_error_t err) {
             return "Timed out";
         case PBIO_ERROR_CANCELED:
             return "Canceled";
+        case PBIO_ERROR_RESOURCE_EXHAUSTED:
+            return "Resource exhausted";
     }
 
     return NULL;

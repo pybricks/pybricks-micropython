@@ -79,6 +79,7 @@
                 "gcc",
                 "MICROPY_MODULE_FROZEN_MPY",
                 "MICROPY_ROM_TEXT_COMPRESSION",
+                "HAVE_UMM_MALLOC=1"
             ],
             "compilerArgs": [
                 "-Wall",
@@ -286,7 +287,8 @@
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",
-                "MICROPY_ROM_TEXT_COMPRESSION"
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HAVE_UMM_MALLOC=1"
             ],
             "compilerArgs": [
                 "-mthumb",
@@ -404,7 +406,8 @@
             ],
             "defines": [
                 "MICROPY_MODULE_FROZEN_MPY",
-                "MICROPY_USE_READLINE=1"
+                "MICROPY_USE_READLINE=1",
+                "HAVE_UMM_MALLOC=1",
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
