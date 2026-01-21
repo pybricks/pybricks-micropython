@@ -53,16 +53,16 @@ static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t po
     pb_assert(pbio_port_get_port(port_id, &port));
 
     // Check for touch sensor first.
-    lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_LPF2_TOUCH;
-    pbio_error_t err = pbio_port_dcm_assert_type_id(pbio_port_dcm_init_instance(port_id - PBIO_PORT_ID_A), &type_id);
+    uint32_t value;
+    pbio_error_t err = pbio_port_get_analog_value(port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, false, &value);
     if (err == PBIO_SUCCESS) {
-        self->passive_id = type_id;
+        self->passive_id = LEGO_DEVICE_TYPE_ID_LPF2_TOUCH;
         self->passive_port = port;
         return true;
     }
 
     // Check for DC motor.
-    type_id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
+    lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
     pbio_dcmotor_t *dcmotor;
     err = pbio_port_get_dcmotor(port, &type_id, &dcmotor);
 
