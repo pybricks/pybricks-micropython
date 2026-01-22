@@ -119,7 +119,7 @@
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (64)
-#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS       (20)
+#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS       (2)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        0xFFFF
 #define PBDRV_CONFIG_USB_PID_0                      LEGO_USB_PID_SPIKE_PRIME
@@ -128,7 +128,7 @@
 #define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR   0x08007d80
-#define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)
+#define PBDRV_CONFIG_USB_CHARGE_ONLY                (1)
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)
