@@ -22,6 +22,7 @@
 #include <pbsys/status.h>
 
 #include "hmi.h"
+#include "storage.h"
 
 /**
  * State of incoming program data.
@@ -251,6 +252,11 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
     // Pybricks Code sends size 0 to clear the state before sending the new
     // program, then sends the size on completion.
     if (new_size == 0) {
+        if (!pbsys_storage_slot_change_is_allowed()) {
+            // Cannot start a new download while another is in progress.
+            return PBIO_ERROR_INVALID_OP;
+        }
+
         pbsys_storage_prepare_receive();
 
         // Keep track of busy state to disallow some operations while busy.
