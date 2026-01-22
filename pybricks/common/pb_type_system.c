@@ -43,6 +43,10 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System
 static mp_obj_t pb_type_System_info(void) {
     const char *hub_name = pbdrv_bluetooth_get_hub_name();
 
+    pbio_pybricks_user_program_id_t program_id;
+    pbsys_main_program_start_request_type_t program_start_type;
+    pbsys_main_program_get_info(&program_id, &program_start_type);
+
     mp_map_elem_t info[] = {
         {MP_OBJ_NEW_QSTR(MP_QSTR_name), mp_obj_new_str(hub_name, strlen(hub_name))},
         #if PBDRV_CONFIG_RESET
@@ -54,7 +58,8 @@ static mp_obj_t pb_type_System_info(void) {
         #if PBDRV_CONFIG_USB
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_usb), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED))},
         #endif // PBDRV_CONFIG_USB
-        {MP_OBJ_NEW_QSTR(MP_QSTR_program_start_type), mp_obj_new_int(pbsys_main_program_get_start_request_type())},
+        {MP_OBJ_NEW_QSTR(MP_QSTR_program_id), mp_obj_new_int(program_id)},
+        {MP_OBJ_NEW_QSTR(MP_QSTR_program_start_type), mp_obj_new_int(program_start_type)},
     };
     mp_obj_t info_dict = mp_obj_new_dict(MP_ARRAY_SIZE(info));
 

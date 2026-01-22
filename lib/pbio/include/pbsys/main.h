@@ -76,7 +76,7 @@ typedef struct _pbsys_main_program_t {
 
 #if PBSYS_CONFIG_MAIN
 
-pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void);
+void pbsys_main_program_get_info(pbio_pybricks_user_program_id_t *id, pbsys_main_program_start_request_type_t *start_type);
 
 /**
  * Requests a program to be started soon.
@@ -154,8 +154,7 @@ const char *pbsys_main_get_application_version_hash(void);
 
 #else // PBSYS_CONFIG_MAIN
 
-static inline pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void) {
-    return PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
+static inline void pbsys_main_program_get_info(pbio_pybricks_user_program_id_t *id, pbsys_main_program_start_request_type_t *start_type) {
 }
 
 static inline pbio_error_t pbsys_main_program_request_start(pbio_pybricks_user_program_id_t id, pbsys_main_program_start_request_type_t start_request_type) {

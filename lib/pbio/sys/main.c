@@ -38,8 +38,9 @@ bool pbsys_main_program_start_is_requested() {
  * @param [in]  program A pointer to the main program structure.
  * @returns     The type of start request.
  */
-pbsys_main_program_start_request_type_t pbsys_main_program_get_start_request_type(void) {
-    return program.start_request_type;
+void pbsys_main_program_get_info(pbio_pybricks_user_program_id_t *id, pbsys_main_program_start_request_type_t *start_type) {
+    *id = program.id;
+    *start_type = program.start_request_type;
 }
 
 /**

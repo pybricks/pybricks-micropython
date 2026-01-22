@@ -10,6 +10,7 @@
 - Added preliminary BTstack support for EV3 ([pybricks-micropython#405]).
 - Enabled NXT Light Sensor, NXT Touch Sensor, NXT Sound Sensor on NXT.
 - Added `host_connected_usb` to `hub.system.info()` dictionary.
+- Added `program_id` to `hub.system.info()` dictionary ([support#2538]).
 
 ### Changed
 - Make 3D orientation default for heading and drivebase heading control ([support#1962]).
@@ -48,6 +49,7 @@
 [support#2500]: https://github.com/pybricks/support/issues/2500
 [support#2521]: https://github.com/pybricks/support/issues/2521
 [support#2522]: https://github.com/pybricks/support/issues/2522
+[support#2538]: https://github.com/pybricks/support/issues/2538
 [support#2550]: https://github.com/pybricks/support/issues/2550
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
