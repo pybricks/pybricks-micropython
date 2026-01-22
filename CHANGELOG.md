@@ -1234,7 +1234,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...HEAD
+[4.0.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...v4.0.0b4
 [4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
 [4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
 [4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
