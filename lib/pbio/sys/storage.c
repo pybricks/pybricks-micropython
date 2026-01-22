@@ -22,7 +22,6 @@
 #include <pbsys/status.h>
 
 #include "hmi.h"
-#include "storage.h"
 
 /**
  * State of incoming program data.
@@ -30,11 +29,24 @@
 static struct {
     /** Where incoming program data is placed. */
     uint8_t slot;
-    /** Currently downloading. */
-    bool busy;
-    /** Latest incoming message time. Only relevant while busy. */
+    /** Latest incoming message time. */
     pbio_os_timer_t timer;
 } download_state;
+
+/**
+ * Polls storage system for timeouts.
+ *
+ * This should be called periodically.
+ */
+void pbsys_storage_poll(void) {
+    // If we are receiving a program, check for timeout and clear
+    // busy state if timed out.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
+        if (pbio_os_timer_is_expired(&download_state.timer)) {
+            pbsys_status_clear(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS);
+        }
+    }
+}
 
 /**
  * Map of loaded data. This is kept in memory between successive runs of the
@@ -252,17 +264,23 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
     // Pybricks Code sends size 0 to clear the state before sending the new
     // program, then sends the size on completion.
     if (new_size == 0) {
-        if (!pbsys_storage_slot_change_is_allowed()) {
+        if (pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
             // Cannot start a new download while another is in progress.
             return PBIO_ERROR_INVALID_OP;
         }
 
         pbsys_storage_prepare_receive();
 
-        // Keep track of busy state to disallow some operations while busy.
-        download_state.busy = true;
+        // Set busy status to disallow some operations while busy.
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS);
         pbio_os_timer_set(&download_state.timer, 1000);
         return PBIO_SUCCESS;
+    }
+
+    // This is also called on completion of the program download, in which
+    // case we expect that a download is in progress.
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
+        return PBIO_ERROR_INVALID_OP;
     }
 
     // Expecting that the slot has been cleared as per the above.
@@ -278,29 +296,11 @@ pbio_error_t pbsys_storage_set_program_size(uint32_t new_size) {
 
     // Program download complete, so request saving on poweroff.
     pbsys_storage_request_write();
-    download_state.busy = false;
+
+    // Clear busy status.
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS);
 
     return PBIO_SUCCESS;
-}
-
-/**
- * Tests whether a slot change is allowed.
- *
- * @return True when allowed, false if not, i.e. when new a new program is being downloaded.
- */
-bool pbsys_storage_slot_change_is_allowed(void) {
-    #if !PBSYS_CONFIG_HMI_NUM_SLOTS
-    return false;
-    #endif
-
-    if (download_state.busy && pbio_os_timer_is_expired(&download_state.timer)) {
-        // Download must have been interrupted midway through. Give up
-        // and unblock anything waiting on download to complete.
-        download_state.busy = false;
-    }
-
-    // Slot change is allowed when no longer busy.
-    return !download_state.busy;
 }
 
 /**
@@ -328,7 +328,7 @@ pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, u
     }
 
     // A program transfer should have been started.
-    if (!download_state.busy) {
+    if (!pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
         return PBIO_ERROR_INVALID_OP;
     }
 

@@ -39,6 +39,7 @@ static pbio_error_t pbsys_system_poll_process_thread(pbio_os_state_t *state, voi
         pbsys_battery_poll();
         pbsys_program_stop_poll();
         pbsys_status_light_poll();
+        pbsys_storage_poll();
 
         // keep the hub from resetting itself
         pbdrv_watchdog_update();

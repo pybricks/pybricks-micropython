@@ -15,9 +15,9 @@
 
 void pbsys_storage_init(void);
 void pbsys_storage_deinit(void);
+void pbsys_storage_poll(void);
 pbio_error_t pbsys_storage_set_program_size(uint32_t size);
 pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size);
-bool pbsys_storage_slot_change_is_allowed(void);
 void pbsys_storage_get_program_data(pbsys_main_program_t *program);
 pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void);
 
@@ -25,6 +25,8 @@ pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void);
 static inline void pbsys_storage_init(void) {
 }
 static inline void pbsys_storage_deinit(void) {
+}
+static inline void pbsys_storage_poll(void) {
 }
 static inline pbsys_storage_settings_t *pbsys_storage_settings_get_settings(void) {
     return NULL;
@@ -34,9 +36,6 @@ static inline pbio_error_t pbsys_storage_set_program_size(uint32_t size) {
 }
 static inline pbio_error_t pbsys_storage_set_program_data(uint32_t offset, const void *data, uint32_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline bool pbsys_storage_slot_change_is_allowed(void) {
-    return false;
 }
 static inline void pbsys_storage_get_program_data(pbsys_main_program_t *program) {
     program->code_start = NULL;

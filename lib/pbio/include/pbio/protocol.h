@@ -363,6 +363,12 @@ typedef enum {
      * @since Pybricks Profile v1.5.0
      */
     PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED = 12,
+    /**
+     * Hub is receiving, transmitting, or moving a file.
+     *
+     * @since Pybricks Profile v1.5.0
+     */
+    PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS = 13,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_flags_t;
