@@ -34,6 +34,8 @@
 #define DEBUG_PRINT(...)
 #endif
 
+#if PYBRICKS_PY_MESSAGING_RFCOMM
+
 typedef struct {
     mp_obj_base_t base;
     uint32_t num_results;
@@ -125,9 +127,13 @@ static mp_obj_t pb_messaging_bluetooth_scan(size_t n_args, const mp_obj_t *pos_a
 // See also messaging_globals_table below. This function object is added there to make it importable.
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_messaging_bluetooth_scan_obj, 0, pb_messaging_bluetooth_scan);
 
+#endif // PYBRICKS_PY_MESSAGING_RFCOMM
+
 static const mp_rom_map_elem_t messaging_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_messaging) },
+    #if PYBRICKS_PY_MESSAGING_RFCOMM
     { MP_ROM_QSTR(MP_QSTR_bluetooth_scan), MP_ROM_PTR(&pb_messaging_bluetooth_scan_obj) },
+    #endif // PYBRICKS_PY_MESSAGING_RFCOMM
 };
 static MP_DEFINE_CONST_DICT(pb_module_messaging_globals, messaging_globals_table);
 
