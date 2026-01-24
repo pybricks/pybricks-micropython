@@ -32,6 +32,8 @@ typedef struct _iodevices_PUPDevice_obj_t {
     uint8_t last_mode;
     // ID of a passive device, if any.
     lego_device_type_id_t passive_id;
+    // Port for passive devices.
+    pbio_port_t *passive_port;
 } iodevices_PUPDevice_obj_t;
 
 /**
@@ -50,12 +52,23 @@ static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t po
     pbio_port_t *port;
     pb_assert(pbio_port_get_port(port_id, &port));
 
+    // Check for touch sensor first.
+    uint32_t value;
+    pbio_error_t err = pbio_port_get_analog_value(port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, false, &value);
+    if (err == PBIO_SUCCESS) {
+        self->passive_id = LEGO_DEVICE_TYPE_ID_LPF2_TOUCH;
+        self->passive_port = port;
+        return true;
+    }
+
+    // Check for DC motor.
     lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
     pbio_dcmotor_t *dcmotor;
-    pbio_error_t err = pbio_port_get_dcmotor(port, &type_id, &dcmotor);
+    err = pbio_port_get_dcmotor(port, &type_id, &dcmotor);
 
     if (err == PBIO_SUCCESS) {
         self->passive_id = type_id;
+        self->passive_port = port;
         return true;
     }
     return false;
@@ -163,6 +176,13 @@ static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode));
+
+    if (self->passive_id == LEGO_DEVICE_TYPE_ID_LPF2_TOUCH) {
+        // Get the touch sensor value from the port.
+        uint32_t value;
+        pb_assert(pbio_port_get_analog_value(self->passive_port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, false, &value));
+        return mp_obj_new_bool(value);
+    }
 
     // Passive devices don't support reading.
     if (self->passive_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART) {
