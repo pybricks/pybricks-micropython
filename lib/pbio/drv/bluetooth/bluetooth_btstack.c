@@ -1321,8 +1321,12 @@ static void pbdrv_bluetooth_classic_rfcomm_socket_reset(pbdrv_bluetooth_classic_
         socket->tx_buffer_data = NULL;
     }
     #endif
-    lwrb_free(&socket->rx_buffer);
-    lwrb_free(&socket->tx_buffer);
+    if (lwrb_is_ready(&socket->rx_buffer)) {
+        lwrb_free(&socket->rx_buffer);
+    }
+    if (lwrb_is_ready(&socket->tx_buffer)) {
+        lwrb_free(&socket->tx_buffer);
+    }
     // A non-zero duration on these timers is used as a flag to indicate the
     // presence of a deadline on a connection attempt.
     socket->rx_timer.duration = 0;
