@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fix missing classes in `pybricks.iodevices` on SPIKE Prime (regression in
+  4.0.0b2) ([pybricks-micropython#456]).
+
+[pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
+
 ## [4.0.0b4] - 2026-01-22
 
 ### Added
