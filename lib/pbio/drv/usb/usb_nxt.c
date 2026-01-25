@@ -853,9 +853,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -864,20 +862,17 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
     //     return PBIO_ERROR_BUSY;
     // }
 
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
     pbdrv_usb_nxt_write_data(2, data, size);
 
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || cancel);
+    if (pbdrv_usb_nxt_state.status != USB_READY && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code, bool cancel) {
 
     static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
 
@@ -888,13 +883,12 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
     //     return PBIO_ERROR_BUSY;
     // }
 
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
     pbio_set_uint32_le(&usb_response_buf[1], code);
     pbdrv_usb_nxt_write_data(2, usb_response_buf, sizeof(usb_response_buf));
 
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || cancel);
+    if (pbdrv_usb_nxt_state.status != USB_READY && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

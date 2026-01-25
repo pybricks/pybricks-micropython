@@ -292,48 +292,50 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    if (cancel) {
+        return PBIO_ERROR_CANCELED;
+    }
 
     if (transmitting) {
         return PBIO_ERROR_BUSY;
     }
 
     transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
     USBD_Pybricks_TransmitPacket(&husbd, (uint8_t *)data, size);
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || cancel);
 
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    if (transmitting && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    if (cancel) {
+        return PBIO_ERROR_CANCELED;
+    }
 
     if (transmitting) {
         return PBIO_ERROR_BUSY;
     }
 
     transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
 
     pbio_set_uint32_le(&usb_response_buf[1], code);
 
     USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, sizeof(usb_response_buf));
 
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || cancel);
+    if (transmitting && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
