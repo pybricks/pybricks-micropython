@@ -294,14 +294,14 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                 pbdrv_usb_respond_soon = false;
 
                 // Send the response.
-                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_response(&sub, error_code));
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_response(&sub, error_code, pbdrv_usb_process.request == PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL));
                 if (err != PBIO_SUCCESS) {
                     pbdrv_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
             } else if (pbdrv_usb_connection_is_active() && update_and_get_event_buffer(&noti_buf, &noti_size)) {
                 // Send out pending event if any.
-                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_event(&sub, noti_buf, *noti_size));
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_event(&sub, noti_buf, *noti_size, pbdrv_usb_process.request == PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL));
                 *noti_size = 0;
                 if (err != PBIO_SUCCESS) {
                     pbdrv_usb_reset_state();
