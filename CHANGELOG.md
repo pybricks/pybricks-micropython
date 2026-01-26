@@ -4,6 +4,13 @@
 
 ## [Unreleased]
 
+### Added
+- Added support for Powered Up touch sensors that are supported according to
+  the specification, but were never released. Users can make their own switch
+  inputs  ([pybricks-micropython#454]).
+
+[pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
+
 ## [4.0.0b4] - 2026-01-22
 
 ### Added

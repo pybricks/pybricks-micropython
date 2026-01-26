@@ -43,6 +43,8 @@ struct _pbio_port_dcm_t {
     dev_id_group_t dev_id1_group;
     uint8_t gpio_value;
     uint8_t prev_gpio_value;
+    /** Touch sensor data. */
+    uint32_t sensor_data;
 };
 
 pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -127,8 +129,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             PBIO_OS_AWAIT_MS(state, timer, DCM_AWAIT_MS);
 
             // ID1 is inverse of touch sensor value
-            // TODO: save this value to sensor dcm
-            // sensor_data = !pbdrv_gpio_input(&pins->p5);
+            dcm->sensor_data = !pbdrv_gpio_input(&pins->p5);
         }
         // if ID2 changed from low to high
         else if (dcm->prev_gpio_value == 0 && dcm->gpio_value == 1) {
@@ -320,10 +321,18 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
         case LEGO_DEVICE_TYPE_ID_LPF2_MMOTOR:
         case LEGO_DEVICE_TYPE_ID_LPF2_TRAIN:
         case LEGO_DEVICE_TYPE_ID_LPF2_LIGHT:
-            // On Powered Up, the only known existing passive devices are DC
+            // On Powered Up, the only known official passive devices are DC
             // devices. Pass if requesting a specific match or any DC device.
             if (*type_id == LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR || *type_id == dcm->prev_type_id) {
                 *type_id = dcm->prev_type_id;
+                return PBIO_SUCCESS;
+            }
+            return PBIO_ERROR_NO_DEV;
+        case LEGO_DEVICE_TYPE_ID_LPF2_TOUCH:
+            // The Powered Up protocol appears to have been designed to support
+            // basic switches as touch sensors. None of such sensors were ever
+            // released, but we can still detect matching custom devices here.
+            if (*type_id == LEGO_DEVICE_TYPE_ID_LPF2_TOUCH) {
                 return PBIO_SUCCESS;
             }
             return PBIO_ERROR_NO_DEV;
@@ -338,7 +347,9 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
 }
 
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
-    return 0;
+    // This platform does not have any analog sensors, but we can use this to
+    // return the state of a passive touch sensor.
+    return dcm->sensor_data;
 }
 
 pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {

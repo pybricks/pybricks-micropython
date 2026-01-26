@@ -32,35 +32,36 @@ typedef struct _iodevices_PUPDevice_obj_t {
     uint8_t last_mode;
     // ID of a passive device, if any.
     lego_device_type_id_t passive_id;
+    // Device port.
+    pbio_port_t *port;
 } iodevices_PUPDevice_obj_t;
 
 /**
  * Tests if the given device is a passive device and stores ID.
  *
  * @param [in]  self        The PUP device.
- * @param [in]  port_in     The port.
  * @return                  True if passive device, false otherwise.
  */
-static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self, mp_obj_t port_in) {
-    pb_module_tools_assert_blocking();
+static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self) {
 
-    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    // Check for custom devices that follow the Powered Up spec for simple
+    // switches as touch sensors.
+    uint32_t value;
+    pbio_error_t err = pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, false, &value);
+    if (err == PBIO_SUCCESS) {
+        self->passive_id = LEGO_DEVICE_TYPE_ID_LPF2_TOUCH;
+        return true;
+    }
 
-    // Get the port instance.
-    pbio_port_t *port;
-    pb_assert(pbio_port_get_port(port_id, &port));
-
+    // Check for DC motor or light.
     lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
     pbio_dcmotor_t *dcmotor;
-    pbio_error_t err = pbio_port_get_dcmotor(port, &type_id, &dcmotor);
-
+    err = pbio_port_get_dcmotor(self->port, &type_id, &dcmotor);
     if (err == PBIO_SUCCESS) {
         self->passive_id = type_id;
         return true;
     }
     return false;
-
-    self->passive_id = type_id;
 }
 
 // pybricks.iodevices.PUPDevice.__init__
@@ -70,8 +71,14 @@ static mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 
     iodevices_PUPDevice_obj_t *self = mp_obj_malloc(iodevices_PUPDevice_obj_t, type);
 
+    pb_module_tools_assert_blocking();
+
+    // Get the port instance.
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &self->port));
+
     // For backwards compatibility, allow class to be used with passive devices.
-    if (init_passive_pup_device(self, port_in)) {
+    if (init_passive_pup_device(self)) {
         return MP_OBJ_FROM_PTR(self);
     }
 
@@ -164,7 +171,16 @@ static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
         iodevices_PUPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode));
 
-    // Passive devices don't support reading.
+    // Allow reading from passive touch sensors as per the Powered Up spec.
+    // These do not have modes. For this special case, alwyas return a bool,
+    // even in async mode when other reads would return awaitables.
+    if (self->passive_id == LEGO_DEVICE_TYPE_ID_LPF2_TOUCH) {
+        uint32_t value;
+        pb_assert(pbio_port_get_analog_value(self->port, self->passive_id, false, &value));
+        return mp_obj_new_bool(value);
+    }
+
+    // Other passive devices don't support reading.
     if (self->passive_id != LEGO_DEVICE_TYPE_ID_LPF2_UNKNOWN_UART) {
         pb_assert(PBIO_ERROR_INVALID_OP);
     }
