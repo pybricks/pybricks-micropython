@@ -9,6 +9,9 @@
   and `XboxController` classes, along with a `connect()` method to optionally
   connect later ([support#1800]).
 - Added `timeout` and `name` parameters to the `XboxController`.
+- Added support for Powered Up touch sensors that are supported according to
+  the specification, but were never released. Users can make their own switch
+  inputs ([pybricks-micropython#454]).
 
 ### Changed
 - Changed the default `XboxController` connection timeout from indefinite
@@ -18,6 +21,7 @@
 
 [support#1382]: https://github.com/pybricks/support/issues/1382
 [support#1800]: https://github.com/pybricks/support/issues/1800
+[pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 
 ## [4.0.0b5] - 2026-01-30
 
