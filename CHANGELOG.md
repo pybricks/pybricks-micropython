@@ -4,10 +4,15 @@
 
 ## [Unreleased]
 
+### Changed
+- Reset IMU heading to `0.0` at the start of a user program for consistent
+  drivebase behavior.
+
 ### Fixed
 - Fix missing classes in `pybricks.iodevices` on SPIKE Prime (regression in
   4.0.0b2) ([pybricks-micropython#456]).
 
+[pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 [pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
 
 ## [4.0.0b4] - 2026-01-22

@@ -12,6 +12,7 @@
 
 void pbio_init(void);
 void pbio_deinit(void);
+pbio_error_t pbio_main_start_application_resources(void);
 pbio_error_t pbio_main_stop_application_resources(void);
 void pbio_main_soft_stop(void);
 

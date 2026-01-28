@@ -109,6 +109,7 @@ void pbsys_main(void) {
         pbsys_host_stdin_flush();
 
         // Run the main application.
+        pbio_main_start_application_resources();
         pbsys_main_run_program(&program);
 
         // Stop motors, user animations, user bluetooth activity, etc.

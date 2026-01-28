@@ -66,6 +66,15 @@ void pbio_main_soft_stop(void) {
 }
 
 /**
+ * Starts application-level resources. Called before starting user application.
+ */
+void pbio_main_start_application_resources(void) {
+    // Reset IMU heading to zero at the start of each application for
+    // consistency, so that absolute drive base headings are the same each time.
+    pbio_imu_set_heading(0.0f);
+}
+
+/**
  * Stops all application-level background processes. Called when the user
  * application completes to get these modules back into their default state.
  * Drivers and OS-level processes continue running.
