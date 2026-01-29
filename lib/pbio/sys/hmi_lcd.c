@@ -13,8 +13,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
+#include <pbdrv/usb.h>
 
 #include <pbio/button.h>
 #include <pbio/os.h>
@@ -105,10 +105,35 @@ static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
 }
 #endif
 
+static void pbsys_hmi_host_update_indications(void) {
+    if (pbdrv_usb_connection_is_active()) {
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
+    } else {
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
+    }
+}
+
+static bool pbsys_hmi_handle_connection_change;
+
+/**
+ * Called from the USB and Bluetooth driver if a host connection state changes.
+ */
+static void pbsys_hmi_connection_changed_callback(void) {
+    DEBUG_PRINT("A host connected or disconnected.\n");
+    pbsys_hmi_handle_connection_change = true;
+    pbsys_hmi_host_update_indications();
+}
+
+
 void pbsys_hmi_init(void) {
+    pbdrv_usb_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
 }
 
 void pbsys_hmi_deinit(void) {
+
+    pbdrv_usb_set_host_connection_changed_callback(NULL);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
+
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_fill(display, 0);
     pbdrv_display_update();
@@ -136,6 +161,8 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         #endif
 
         pbdrv_display_update();
+
+        pbsys_hmi_host_update_indications();
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -165,8 +192,14 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             }
 
             // Wait for button press, external program start, or connection change.
-            pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested();
+            pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested() || pbsys_hmi_handle_connection_change;
         }));
+
+        // On setting or closing a connection, start from a clean slate.
+        if (pbsys_hmi_handle_connection_change) {
+            pbsys_hmi_handle_connection_change = false;
+            continue;
+        }
 
         // External progran request takes precedence over buttons.
         if (pbsys_main_program_start_is_requested()) {
