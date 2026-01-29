@@ -150,13 +150,14 @@ static mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, 
         pb_type_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
-        PB_ARG_DEFAULT_TRUE(wait));
+        PB_ARG_DEFAULT_TRUE(wait),
+        PB_ARG_DEFAULT_FALSE(absolute));
 
     mp_int_t angle = pb_obj_get_int(angle_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Turning in place is done as a curve with zero radius and a given angle.
-    pb_assert(pbio_drivebase_drive_curve(self->db, 0, angle, then));
+    pb_assert(pbio_drivebase_drive_turn(self->db, angle, mp_obj_is_true(absolute_in), then));
 
     // Old way to do parallel movement is to start and not wait on anything.
     if (!mp_obj_is_true(wait_in)) {

@@ -65,6 +65,7 @@ pbio_error_t pbio_drivebase_is_stalled(pbio_drivebase_t *db, bool *stalled, uint
 
 pbio_error_t pbio_drivebase_drive_straight(pbio_drivebase_t *db, int32_t distance, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle, pbio_control_on_completion_t on_completion);
+pbio_error_t pbio_drivebase_drive_turn(pbio_drivebase_t *db, int32_t angle, bool absolute, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_drivebase_drive_arc_angle(pbio_drivebase_t *db, int32_t radius, int32_t angle, pbio_control_on_completion_t on_completion);
 pbio_error_t pbio_drivebase_drive_arc_distance(pbio_drivebase_t *db, int32_t radius, int32_t distance, pbio_control_on_completion_t on_completion);
 

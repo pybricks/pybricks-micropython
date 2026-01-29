@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added support for absolute turns with and without the gyro.
+
 ### Changed
 - Reset IMU heading to `0.0` at the start of a user program for consistent
   drivebase behavior.

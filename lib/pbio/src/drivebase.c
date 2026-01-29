@@ -651,6 +651,73 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
 }
 
 /**
+ * Starts the drivebase controllers to turn in place by or to a given angle.
+ *
+ * This could have been a special case of pbio_drivebase_drive_relative.
+ * Rather than wrapping around it, this partially re-imlements it to avoid
+ * internal rounding errors for absolute targets of whole degrees.
+ *
+ * @param [in]  db              The drivebase instance.
+ * @param [in]  angle           Angle in degrees.
+ * @param [in]  absolute        If true, turn to the given angle, else turn by the given angle.
+ * @param [in]  on_completion   What to do when reaching the target.
+ * @return                      Error code.
+ */
+pbio_error_t pbio_drivebase_drive_turn(pbio_drivebase_t *db, int32_t angle, bool absolute, pbio_control_on_completion_t on_completion) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_drivebase_update_loop_is_running(db)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Stop servo control in case it was running.
+    pbio_drivebase_stop_servo_control(db);
+
+    // Get current time
+    uint32_t time_now = pbio_control_get_time_ticks();
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state_control(db, &state_distance, &state_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Hold distance in place.
+    err = pbio_control_start_position_control_relative(&db->control_distance, time_now, &state_distance, 0, 0, on_completion, false);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Start controller that controls half the difference between both angles,
+    // using 0 for speed to indicate default speed.
+    if (absolute) {
+        // Find the matching whole rotation instead of using the modulo of the
+        // rounded remainder. This sets the (gyro) target exactly equal to the
+        // user target instead of losing up to half a degree.
+        int32_t current = pbio_control_settings_ctl_to_app_long(&db->control_heading.settings, &state_heading.position);
+        while (angle - current > 180) {
+            angle -= 360;
+        }
+        while (angle - current < -180) {
+            angle += 360;
+        }
+        err = pbio_control_start_position_control(&db->control_heading, time_now, &state_heading, angle, 0, on_completion);
+    } else {
+        // Relative case maps the user argument directly.
+        err = pbio_control_start_position_control_relative(&db->control_heading, time_now, &state_heading, angle, 0, on_completion, false);
+    }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Stretch the no-op distance controller to have the same duration.
+    pbio_trajectory_stretch(&db->control_distance.trajectory, &db->control_heading.trajectory);
+
+    return PBIO_SUCCESS;
+}
+
+/**
  * Starts the drivebase controllers to run by an arc of given radius and angle.
  *
  * With a positive radius, the robot drives along a circle to its right.
