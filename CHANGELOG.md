@@ -5,7 +5,10 @@
 ## [Unreleased]
 
 ### Added
-- Added support for absolute turns with and without the gyro.
+- Added support for absolute turns with and without the gyro
+  with `drive_base.turn(angle, absolute=True)` ([pybricks-micropython#458]).
+- Added support for coordinate traversals with `drive_base.move_by(dx, dy)` for
+  practical navigation ([pybricks-micropython#458]).
 
 ### Changed
 - Reset IMU heading to `0.0` at the start of a user program for consistent
@@ -17,6 +20,7 @@
 
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 [pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
+[pybricks-micropython#458]: https://github.com/pybricks/pybricks-micropython/pull/458
 
 ## [4.0.0b4] - 2026-01-22
 

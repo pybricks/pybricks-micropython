@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include <pbio/drivebase.h>
+#include <pbio/geometry.h>
 #include <pbio/int_math.h>
 
 #include "py/mphal.h"
@@ -34,6 +35,12 @@ struct _pb_type_DriveBase_obj_t {
     mp_obj_t distance_control;
     #endif
     pb_type_async_t *last_awaitable;
+    /**
+     * The move_by method is a sequence of a turn and a straight, so we
+     * need to cache the arguments for the straight.
+     */
+    int32_t secondary_distance;
+    pbio_control_on_completion_t secondary_completion;
 };
 
 // pybricks.robotics.DriveBase.reset
@@ -156,7 +163,6 @@ static mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, 
     mp_int_t angle = pb_obj_get_int(angle_in);
     pbio_control_on_completion_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    // Turning in place is done as a curve with zero radius and a given angle.
     pb_assert(pbio_drivebase_drive_turn(self->db, angle, mp_obj_is_true(absolute_in), then));
 
     // Old way to do parallel movement is to start and not wait on anything.
@@ -167,6 +173,67 @@ static mp_obj_t pb_type_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, 
     return await_or_wait(self);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_turn_obj, 1, pb_type_DriveBase_turn);
+
+#if MICROPY_PY_BUILTINS_FLOAT
+static pbio_error_t pb_type_drivebase_move_by_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    pb_type_DriveBase_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    // Handle I/O exceptions like port unplugged.
+    if (!pbio_drivebase_update_loop_is_running(self->db)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Turn has already been started. Await that first.
+    PBIO_OS_AWAIT_UNTIL(state, pbio_drivebase_is_done(self->db));
+
+    // Use the cached arguments to start the straight.
+    pbio_error_t err = pbio_drivebase_drive_straight(self->db, self->secondary_distance, self->secondary_completion);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Now await the straight move.
+    PBIO_OS_AWAIT_UNTIL(state, pbio_drivebase_is_done(self->db));
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+// pybricks.robotics.DriveBase.move_by
+static mp_obj_t pb_type_DriveBase_move_by(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_DriveBase_obj_t, self,
+        PB_ARG_REQUIRED(dx),
+        PB_ARG_REQUIRED(dy),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj));
+
+    int32_t dx = pb_obj_get_int(dx_in);
+    int32_t dy = pb_obj_get_int(dy_in);
+
+    int32_t direction = (int32_t)pbio_geometry_radians_to_degrees(atan2f(dy, dx));
+
+    // Can't overflow the square root argument.
+    if (pbio_int_math_max(pbio_int_math_abs(dx), pbio_int_math_abs(dy)) > INT16_MAX) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Turn towards the required heading.
+    pb_assert(pbio_drivebase_drive_turn(self->db, -direction, true, PBIO_CONTROL_ON_COMPLETION_HOLD));
+
+    self->secondary_distance = (int32_t)sqrtf(dx * dx + dy * dy);
+    self->secondary_completion = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+
+    pb_type_async_t config = {
+        .parent_obj = MP_OBJ_FROM_PTR(self),
+        .iter_once = pb_type_drivebase_move_by_iterate_once,
+        .close = pb_type_DriveBase_stop,
+    };
+    // New operation always wins; ongoing awaitable motion is cancelled.
+    return pb_type_async_wait_or_await(&config, &self->last_awaitable, true);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_DriveBase_move_by_obj, 1, pb_type_DriveBase_move_by);
+#endif // MICROPY_PY_BUILTINS_FLOAT
 
 // pybricks.robotics.DriveBase.curve
 static mp_obj_t pb_type_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -409,6 +476,9 @@ static const mp_rom_map_elem_t pb_type_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stalled),          MP_ROM_PTR(&pb_type_DriveBase_stalled_obj)  },
     #if PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO
     { MP_ROM_QSTR(MP_QSTR_use_gyro),         MP_ROM_PTR(&pb_type_DriveBase_use_gyro_obj) },
+    #endif
+    #if MICROPY_PY_BUILTINS_FLOAT
+    { MP_ROM_QSTR(MP_QSTR_move_by),          MP_ROM_PTR(&pb_type_DriveBase_move_by_obj)  },
     #endif
 };
 // First N entries are common to both drive base classes.
