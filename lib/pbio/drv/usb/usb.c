@@ -280,6 +280,10 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
     for (;;) {
 
+        if (pbdrv_usb_host_connection_changed_callback) {
+            pbdrv_usb_host_connection_changed_callback();
+        }
+
         // Run charger detection: wait for USB to become physically plugged in.
         PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_until_configured(&sub));
 
