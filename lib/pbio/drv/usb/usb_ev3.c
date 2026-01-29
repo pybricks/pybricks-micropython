@@ -989,12 +989,11 @@ void pbdrv_usb_init_device(void) {
 }
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+    return pbdrv_usb_config ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 bool pbdrv_usb_is_ready(void) {
-    // REVISIT: Return whether physically plugged in.
-    return true;
+    return pbdrv_usb_config;
 }
 
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
