@@ -837,7 +837,7 @@ void pbdrv_usb_deinit_device(void) {
     pbdrv_usb_nxt_deinit();
 }
 
-pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_BEGIN(state);
 
     PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY);

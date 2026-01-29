@@ -281,7 +281,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
     for (;;) {
 
         // Run charger detection: wait for USB to become physically plugged in.
-        PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_for_charger(&sub));
+        PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_until_configured(&sub));
 
         while (pbdrv_usb_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL && pbdrv_usb_is_ready()) {
 

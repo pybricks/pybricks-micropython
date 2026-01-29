@@ -988,7 +988,7 @@ void pbdrv_usb_init_device(void) {
     USBDevConnect(USB0_BASE);
 }
 
-pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

@@ -56,7 +56,7 @@ static pbdrv_usb_bcd_t pbdrv_usb_bcd;
  *
  * @param [in]  pt  The protothread.
  */
-pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     static pbio_os_timer_t timer;
     USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
 

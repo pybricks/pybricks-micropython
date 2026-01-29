@@ -96,14 +96,14 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state);
 
 /**
- * Waits for USB to be plugged in and detects what charger type is connected.
+ * Waits for USB to be plugged. Detects what charger type is connected if
+ * applicable.
  *
  * @param [in] state    Protothread state.
  * @return              ::PBIO_SUCCESS on completion.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
- *                      ::PBIO_ERROR_NOT_SUPPORTED if platform has no charger.
  */
-pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state);
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state);
 
 /**
  * Tests if USB is ready for communication.
@@ -136,7 +136,7 @@ static inline pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-static inline pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+static inline pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 

@@ -26,7 +26,7 @@
 static lwrb_t pbdrv_usb_simulation_pico_in_ringbuf;
 static volatile bool pbdrv_usb_simulation_tx_ready;
 
-pbio_error_t pbdrv_usb_wait_for_charger(pbio_os_state_t *state) {
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
