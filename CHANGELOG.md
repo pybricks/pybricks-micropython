@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [4.0.0b5] - 2026-01-30
+
 ### Added
 - Added support for absolute turns with and without the gyro
   with `drive_base.turn(angle, absolute=True)` ([pybricks-micropython#458]).
@@ -1252,7 +1254,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...HEAD
+[4.0.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...v4.0.0b5
 [4.0.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...v4.0.0b4
 [4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
 [4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
