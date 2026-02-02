@@ -75,6 +75,8 @@ typedef struct {
 
 mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **prev, bool stop_prev);
 
+mp_obj_t pb_type_async_return_result(mp_obj_t result_obj, pb_type_async_t **prev);
+
 void pb_type_async_schedule_stop_iteration(pb_type_async_t *iter);
 
 #endif // PYBRICKS_INCLUDED_ASYNC_H

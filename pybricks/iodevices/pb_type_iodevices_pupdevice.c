@@ -165,18 +165,6 @@ static mp_obj_t get_pup_data_tuple(mp_obj_t self_in) {
     return mp_obj_new_tuple(mode_info[current_mode].num_values, values);
 }
 
-static mp_obj_t iodevices_PUPDevice_touch_sensor_true(mp_obj_t self_in) {
-    return mp_const_true;
-}
-
-static mp_obj_t iodevices_PUPDevice_touch_sensor_false(mp_obj_t self_in) {
-    return mp_const_false;
-}
-
-static pbio_error_t iodevices_PUPDevice_touch_sensor_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
-    return PBIO_SUCCESS;
-}
-
 // pybricks.iodevices.PUPDevice.read
 static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -189,19 +177,7 @@ static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
     if (self->passive_id == LEGO_DEVICE_TYPE_ID_LPF2_TOUCH) {
         uint32_t value;
         pb_assert(pbio_port_get_analog_value(self->port, self->passive_id, false, &value));
-
-        if (!pb_module_tools_run_loop_is_active()) {
-            return mp_obj_new_bool(value);
-        }
-
-        // REVISIT: we could probably make something more efficient here.
-        pb_type_async_t config = {
-            .parent_obj = MP_OBJ_FROM_PTR(self),
-            .iter_once = iodevices_PUPDevice_touch_sensor_iter_once,
-            .return_map = value ? iodevices_PUPDevice_touch_sensor_true : iodevices_PUPDevice_touch_sensor_false,
-        };
-
-        return pb_type_async_wait_or_await(&config, &self->device_base.last_awaitable, false);
+        return pb_type_async_return_result(mp_obj_new_bool(value), &self->device_base.last_awaitable);
     }
 
     // Other passive devices don't support reading.

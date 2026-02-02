@@ -103,7 +103,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_async,
  * Returns an awaitable operation if the runloop is active, or awaits the
  * operation here and now.
  *
- * @param  [in]       config     Configuration of the operation
+ * @param  [in]       config     Configuration of the operation. NB: State will not be reset.
  * @param  [in, out]  prev       Candidate iterable object that might be re-used, otherwise assigned newly allocated object.
  * @param  [in]       stop_prev  Whether to stop ongoing awaitable if it is active.
  * @returns An awaitable if the runloop is active, otherwise the mapped return value.
@@ -146,4 +146,58 @@ mp_obj_t pb_type_async_wait_or_await(pb_type_async_t *config, pb_type_async_t **
     }
     pb_assert(err);
     return config->return_map ? config->return_map(config->parent_obj) : mp_const_none;
+}
+
+/**
+ * Iteration for a constant awaitable that yields once before returning.
+ *
+ * This is different from omitting iter_once to achieve a single yield, since
+ * that special case cannot have a return value.
+ *
+ * @param  [in]   state        Protothread state.
+ * @param  [in]   parent_obj   The constant.
+ */
+static pbio_error_t pb_type_async_constant_iter_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT_ONCE(state);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Return map for a constant awaitable.
+ *
+ * @param  [in]   parent_obj   The constant.
+ * @returns                    The same constant.
+ */
+static mp_obj_t pb_type_async_constant_return_map(mp_obj_t parent_obj) {
+    return parent_obj;
+}
+
+/**
+ * Returns an awaitable operation that yields once and then returns a constant
+ * result. If the runloop is not active, this just returns the given value.
+ *
+ * Can be used to return constants from functions that still need to be
+ * awaitable for other reasons.
+ *
+ * @param  [in]       result_obj Return result.
+ * @param  [in, out]  prev       Candidate iterable object that might be
+ *                               re-used, otherwise assigned newly allocated object.
+ * @returns An awaitable if the runloop is active, otherwise the constant return value.
+ */
+mp_obj_t pb_type_async_return_result(mp_obj_t result_obj, pb_type_async_t **prev) {
+
+    // In synchronous mode, return right away.
+    if (!pb_module_tools_run_loop_is_active()) {
+        return result_obj;
+    }
+
+    // Async case returns soon.
+    pb_type_async_t config = {
+        .parent_obj = result_obj,
+        .iter_once = pb_type_async_constant_iter_once,
+        .return_map = pb_type_async_constant_return_map,
+        .state = 0,
+    };
+    return pb_type_async_wait_or_await(&config, prev, false);
 }
