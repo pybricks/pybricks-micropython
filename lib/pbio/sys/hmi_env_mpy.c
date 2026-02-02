@@ -34,16 +34,16 @@ void pbsys_hmi_deinit(void) {
 uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
 uint32_t pbsys_hmi_native_program_size;
 
+static uint32_t pbsys_hmi_native_program_count;
+
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     pbio_os_run_processes_and_wait_for_event();
 
-    // With this HMI, we run a script once and then exit.
-    static bool ran_once = false;
-    if (ran_once) {
+    // With this HMI, we run a script several times and then exit.
+    if (pbsys_hmi_native_program_count++ >= PBSYS_CONFIG_HMI_ENV_MPY_NUM_RUNS) {
         return PBIO_ERROR_CANCELED;
     }
-    ran_once = true;
 
     // Start REPL if no program given.
     if (pbsys_hmi_native_program_size == 0) {
