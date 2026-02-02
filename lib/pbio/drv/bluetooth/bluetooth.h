@@ -18,9 +18,9 @@
 #include <stdint.h>
 
 void pbdrv_bluetooth_init_hci(void);
-void pbdrv_bluetooth_controller_reset_hard(void);
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer);
+pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state);
 
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context);
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context);

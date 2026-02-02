@@ -1264,20 +1264,6 @@ pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_ti
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Disconnect gracefully if connected to host.
-    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
-    static size_t i;
-    static pbdrv_bluetooth_btstack_host_connection_t *host;
-    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
-        host = &host_connections[i];
-        if (host->con_handle == HCI_CON_HANDLE_INVALID) {
-            continue;
-        }
-        gap_disconnect(host->con_handle);
-        PBIO_OS_AWAIT_UNTIL(state, host->con_handle == HCI_CON_HANDLE_INVALID);
-    }
-    #endif
-
     // Wait for power off.
     PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_OFF, HCI_STATE_OFF));
 
@@ -1292,6 +1278,44 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
 
     // Wait for power on.
     PBIO_OS_AWAIT(state, &sub, bluetooth_btstack_handle_power_control(&sub, HCI_POWER_ON, HCI_STATE_WORKING));
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    static pbio_os_state_t sub;
+    static uint8_t i;
+    static pbdrv_bluetooth_peripheral_t *peri;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Disconnect gracefully if connected to peripherals.
+    #if PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS
+    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        // Must call the platform specific function since this runs after
+        // the Bluetooth main loop ends.
+        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_peripheral_disconnect_func(&sub, peri));
+    }
+    #endif
+
+    // Disconnect gracefully if connected to hosts.
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    static pbdrv_bluetooth_btstack_host_connection_t *host;
+    for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        host = &host_connections[i];
+        if (host->con_handle == HCI_CON_HANDLE_INVALID) {
+            continue;
+        }
+        gap_disconnect(host->con_handle);
+        PBIO_OS_AWAIT_UNTIL(state, host->con_handle == HCI_CON_HANDLE_INVALID);
+    }
+    #endif
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }

@@ -1855,18 +1855,8 @@ void pbdrv_bluetooth_controller_reset_hard(void) {
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     PBIO_OS_ASYNC_BEGIN(state);
-
-    // Disconnect gracefully if connected to host.
-    if (conn_handle != NO_CONNECTION) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        GAP_TerminateLinkReq(conn_handle, 0x13);
-        PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
-    }
-
     pbdrv_bluetooth_controller_reset_hard();
-
     PBIO_OS_AWAIT_MS(state, timer, 150);
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -1905,6 +1895,24 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
+
+    static pbio_os_state_t sub;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_peripheral_disconnect_func(&sub, &peripheral_singleton));
+
+    // Disconnect gracefully if connected to host.
+    if (conn_handle != NO_CONNECTION) {
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        GAP_TerminateLinkReq(conn_handle, 0x13);
+        PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

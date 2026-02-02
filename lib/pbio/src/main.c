@@ -57,12 +57,8 @@ void pbio_deinit(void) {
  * MicroPython REPL.
  */
 void pbio_main_soft_stop(void) {
-
     pbio_port_stop_user_actions(false);
-
     pbdrv_sound_stop();
-
-    pbdrv_bluetooth_cancel_operation_request();
 }
 
 /**
@@ -91,7 +87,7 @@ pbio_error_t pbio_main_stop_application_resources(void) {
     pbio_error_t err;
     pbio_os_state_t state = 0;
     pbio_os_timer_t timer;
-    pbio_os_timer_set(&timer, 5000);
+    pbio_os_timer_set(&timer, 3000);
 
     DEBUG_PRINT("Waiting for Bluetooth user tasks to close...\n");
 

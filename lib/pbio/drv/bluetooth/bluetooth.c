@@ -550,20 +550,8 @@ pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *co
 }
 #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 
-void pbdrv_bluetooth_cancel_operation_request(void) {
-    // Only some peripheral actions support cancellation.
-    DEBUG_PRINT("Bluetooth operation cancel requested.\n");
-    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
-        peri->cancel = true;
-    }
-    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
-    // Revisit: Cancel all.
-    pbdrv_bluetooth_classic_task_context.cancel = true;
-    #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
-}
-
-static bool shutting_down;
+static bool pbdrv_bluetooth_shutting_down;
+static pbio_os_timer_t pbdrv_bluetooth_shutting_down_watchdog;
 
 /**
  * This is the main high level pbdrv/bluetooth thread. It is driven forward by
@@ -588,6 +576,11 @@ pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *contex
     static uint8_t peri_index;
     static pbdrv_bluetooth_peripheral_t *peri;
 
+    // Force shutdown if Bluetooth fails to deinit gracefully.
+    if (pbdrv_bluetooth_shutting_down && pbio_os_timer_is_expired(&pbdrv_bluetooth_shutting_down_watchdog)) {
+        goto shutdown;
+    }
+
     PBIO_OS_ASYNC_BEGIN(state);
 
 init:
@@ -607,7 +600,7 @@ init:
     DEBUG_PRINT("Bluetooth is now on and initialized.\n");
 
     // Service scheduled tasks as long as Bluetooth is enabled.
-    while (!shutting_down) {
+    while (!pbdrv_bluetooth_shutting_down) {
 
         // In principle, this wait is only needed if there is nothing to do.
         // In practice, leaving it here helps rather than hurts since it
@@ -668,14 +661,22 @@ init:
 
     DEBUG_PRINT("Shutdown requested.\n");
 
-    // Power down the chip. This will disconnect from the host first.
-    // The peripheral has already been disconnected in the cleanup that runs after
-    // every program. If we change that behavior, we can do the disconnect here.
+    // Gracefully disconnect from the hosts and peripherals.
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_disconnect_all(&sub));
+
+    DEBUG_PRINT("Hosts and peripherals disconnected. Resetting Bluetooth controller.\n");
+
+shutdown:
 
     PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
 
+    pbdrv_bluetooth_shutting_down = false;
     pbio_busy_count_down();
 
+    // Due to the nested logic of the Bluetooth process, this may be called
+    // again after completion. Re-enter here if that happens for safety, so we
+    // don't run the code since the last checkpoint over and over.
+    PBIO_OS_ASYNC_SET_CHECKPOINT(state);
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -693,21 +694,15 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Requests peripheral operations to cancel, if they support it.
-    pbdrv_bluetooth_cancel_operation_request();
-
     for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
         peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
-
-        // Await ongoing peripheral user task.
-        PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, peri));
-
-        // Disconnect peripheral.
-        pbdrv_bluetooth_peripheral_disconnect(peri);
+        // Await ongoing peripheral user task, requesting cancellation to
+        // expedite this if the task supports it. Peripherals remain connected.
+        peri->cancel = true;
         PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, peri));
     }
 
-    // Let ongoing user task finish first.
+    // Let ongoing user advertising or scan task finish first.
     PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
     // Stop scanning.
@@ -717,6 +712,8 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
     // Stop advertising.
     pbdrv_bluetooth_start_broadcasting(NULL, 0);
     PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // TODO: Close Bluetooth classic tasks.
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -728,29 +725,10 @@ void pbdrv_bluetooth_deinit(void) {
         return;
     }
 
-    // Under normal operation ::pbdrv_bluetooth_close_user_tasks completes
-    // normally and there should be no user activity at this point. If there
-    // is, a task got stuck, so exit forcefully.
-    bool failed_to_stop = advertising_or_scan_err == PBIO_ERROR_AGAIN;
-    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
-        if (peri->err == PBIO_ERROR_AGAIN) {
-            failed_to_stop = true;
-            break;
-        }
-    }
-
-    if (failed_to_stop) {
-        // Hard reset without waiting on completion of any process.
-        DEBUG_PRINT("Bluetooth deinit: forcing hard reset due to busy tasks.\n");
-        pbdrv_bluetooth_controller_reset_hard();
-        return;
-    }
-
-    // Gracefully disconnect from host and power down.
+    // Ask Bluetooth process to proceed to shutdown.
+    pbio_os_timer_set(&pbdrv_bluetooth_shutting_down_watchdog, 3000);
+    pbdrv_bluetooth_shutting_down = true;
     pbio_busy_count_up();
-    pbdrv_bluetooth_cancel_operation_request();
-    shutting_down = true;
     pbio_os_request_poll();
 }
 

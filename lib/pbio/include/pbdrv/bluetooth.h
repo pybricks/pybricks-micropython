@@ -501,15 +501,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_per
  */
 pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context);
 
-/**
- * Requests active Bluetooth tasks to be cancelled. It is up to the task
- * implementation to respect or ignore it. The task should still be awaited
- * with ::pbdrv_bluetooth_await_advertise_or_scan_command or
- * with ::pbdrv_bluetooth_await_peripheral_command. Cancelling just allows
- * some commands to exit earlier.
- */
-void pbdrv_bluetooth_cancel_operation_request(void);
-
 //
 // Functions related to advertising and scanning.
 //
@@ -709,9 +700,6 @@ static inline pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv
 
 static inline pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbdrv_bluetooth_cancel_operation_request(void) {
 }
 
 static inline pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {

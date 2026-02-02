@@ -569,6 +569,10 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
+        return PBIO_SUCCESS;
+    }
+
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gap_terminate_begin(peri->con_handle, HCI_OE_USER_ENDED_CONNECTION);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -1246,20 +1250,8 @@ void pbdrv_bluetooth_controller_reset_hard(void) {
 
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     PBIO_OS_ASYNC_BEGIN(state);
-
-    // Disconnect gracefully if connected to host.
-    if (conn_handle) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_terminate_begin(conn_handle, HCI_OE_USER_ENDED_CONNECTION);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
-        aci_gap_terminate_end();
-        PBIO_OS_AWAIT_UNTIL(state, conn_handle == 0);
-    }
-
     pbdrv_bluetooth_controller_reset_hard();
-
     PBIO_OS_AWAIT_MS(state, timer, 50);
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -1287,6 +1279,26 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
+
+    static pbio_os_state_t sub;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_peripheral_disconnect_func(&sub, &peripheral_singleton));
+
+    // Disconnect gracefully if connected to host.
+    if (conn_handle) {
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        aci_gap_terminate_begin(conn_handle, HCI_OE_USER_ENDED_CONNECTION);
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+        aci_gap_terminate_end();
+        PBIO_OS_AWAIT_UNTIL(state, conn_handle == 0);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
