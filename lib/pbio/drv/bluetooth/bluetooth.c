@@ -166,7 +166,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral
         pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
 
         // Test if not already in use, not connected, and not busy.
-        if (!pbdrv_bluetooth_peripheral_is_connected(peri) && !peri->user && !peri->func) {
+        if (!pbdrv_bluetooth_peripheral_is_connected(peri) && !peri->func) {
             // Claim this device for new user.
             peri->user = user;
             *peripheral = peri;
@@ -700,6 +700,9 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
         // expedite this if the task supports it. Peripherals remain connected.
         peri->cancel = true;
         PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_peripheral_command(&sub, peri));
+
+        // Allow peripheral to be used again next time, even if still connected.
+        peri->user = NULL;
     }
 
     // Let ongoing user advertising or scan task finish first.
