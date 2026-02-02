@@ -212,7 +212,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
     memset(peri->bdaddr, 0, sizeof(peri->bdaddr));
 
     // Initialize operation for handling on the main thread.
-    peri->config = config;
+    peri->config = *config;
     peri->func = pbdrv_bluetooth_peripheral_scan_and_connect_func;
     peri->err = PBIO_ERROR_AGAIN;
     peri->cancel = false;

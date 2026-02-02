@@ -160,7 +160,7 @@ struct _pbdrv_bluetooth_peripheral_t {
     /** The characteristic currently being discovered. */
     pbdrv_bluetooth_peripheral_char_discovery_t char_disc;
     /** Scan and connect configuration. */
-    pbdrv_bluetooth_peripheral_connect_config_t *config;
+    pbdrv_bluetooth_peripheral_connect_config_t config;
     /** Currently ongoing peripheral function. */
     pbio_os_process_func_t func;
     /** Most recent result of calling above function from main process. */

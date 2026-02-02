@@ -377,13 +377,13 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         case GATT_EVENT_NOTIFICATION:
             for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
                 pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
-                if (!peri || !peri->config || !peri->config->notification_handler) {
+                if (!peri || !peri->config.notification_handler) {
                     continue;
                 }
                 if (gatt_event_notification_get_handle(packet) == peri->con_handle) {
                     uint16_t length = gatt_event_notification_get_value_length(packet);
                     const uint8_t *value = gatt_event_notification_get_value(packet);
-                    peri->config->notification_handler(peri->user, value, length);
+                    peri->config.notification_handler(peri->user, value, length);
                 }
             }
             break;
@@ -691,7 +691,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 start_scan:
 
     // Wait for advertisement that matches the filter unless timed out or cancelled.
-    PBIO_OS_AWAIT_UNTIL(state, (peri->config->timeout && pbio_os_timer_is_expired(&peri->timer)) ||
+    PBIO_OS_AWAIT_UNTIL(state, (peri->config.timeout && pbio_os_timer_is_expired(&peri->timer)) ||
         peri->cancel || (hci_event_is_type(event_packet, GAP_EVENT_ADVERTISING_REPORT) && ({
 
         uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(event_packet);
@@ -700,7 +700,7 @@ start_scan:
         gap_event_advertising_report_get_address(event_packet, address);
 
         // Match advertisement data against context-specific filter.
-        flags = peri->config->match_adv(peri->user, event_type, data, NULL, address, peri->bdaddr);
+        flags = peri->config.match_adv(peri->user, event_type, data, NULL, address, peri->bdaddr);
 
         // Store the address to compare with scan response later.
         if (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) {
@@ -714,7 +714,7 @@ start_scan:
         (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && !(flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS);
     })));
 
-    if ((peri->config->timeout && pbio_os_timer_is_expired(&peri->timer)) || peri->cancel) {
+    if ((peri->config.timeout && pbio_os_timer_is_expired(&peri->timer)) || peri->cancel) {
         DEBUG_PRINT("Scan %s.\n", peri->cancel ? "canceled": "timed out");
         gap_stop_scan();
         return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
@@ -736,7 +736,7 @@ start_scan:
         bd_addr_t address;
         gap_event_advertising_report_get_address(event_packet, address);
 
-        flags = peri->config->match_adv_rsp(peri->user, event_type, NULL, detected_name, address, peri->bdaddr);
+        flags = peri->config.match_adv_rsp(peri->user, event_type, NULL, detected_name, address, peri->bdaddr);
 
         (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && (flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS);
     })));
@@ -787,7 +787,7 @@ start_scan:
     DEBUG_PRINT("Connected with handle %d.\n", peri->con_handle);
 
     // We are done if no pairing is requested.
-    if (!peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) {
+    if (!(peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
         DEBUG_PRINT("Simple connection done.\n");
         return PBIO_SUCCESS;
     }

@@ -59,6 +59,10 @@ typedef struct _pb_type_xbox_obj_t {
      */
     pbdrv_bluetooth_peripheral_t *peripheral;
     /**
+     * Whether to disconnect from host before connecting to controller.
+     **/
+    bool disconnect_host;
+    /**
      * Timer used to delay between connection attempts.
      */
     pbio_os_timer_t retry_timer;
@@ -266,13 +270,6 @@ static mp_obj_t pb_type_xbox_button_pressed(mp_obj_t self_in) {
     return mp_obj_new_set(count, items);
 }
 
-static pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
-    .match_adv = xbox_advertisement_matches,
-    .match_adv_rsp = xbox_advertisement_response_matches,
-    .notification_handler = handle_notification,
-    // Option flags are variable.
-};
-
 static mp_obj_t pb_type_xbox_close(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Disables notification handler from accessing allocated memory.
@@ -299,6 +296,17 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     // of disconnecting from Pybricks Code if needed.
 retry:
     DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
+    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+        .match_adv = xbox_advertisement_matches,
+        .match_adv_rsp = xbox_advertisement_response_matches,
+        .notification_handler = handle_notification,
+        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+        .timeout = 0,
+    };
+    if (self->disconnect_host) {
+        scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
+    }
+
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
 
@@ -447,14 +455,11 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(input, 0, sizeof(xbox_input_map_t));
     input->x = input->y = input->z = input->rz = INT16_MAX;
 
-    // Xbox Controller requires pairing.
-    scan_config.options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
-
     // By default, disconnect Technic Hub from host, as this is required for
     // most hosts. Stay connected only if the user explicitly requests it.
     #if PYBRICKS_HUB_TECHNICHUB
-    if (!mp_obj_is_true(stay_connected_in) && pbdrv_bluetooth_host_is_connected()) {
-        scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
+    self->disconnect_host = !mp_obj_is_true(stay_connected_in);
+    if (self->disconnect_host) {
         mp_printf(&mp_plat_print, "The hub may disconnect from the computer for better connectivity with the controller.\n");
         mp_hal_delay_ms(500);
     }

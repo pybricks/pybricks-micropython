@@ -220,12 +220,6 @@ static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_match
     return flags;
 }
 
-static pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
-    .match_adv = lwp3_advertisement_matches,
-    .match_adv_rsp = lwp3_advertisement_response_matches,
-    // other options are variable.
-};
-
 static pbio_error_t pb_type_pupdevices_Remote_write_light_msg(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
 
     struct {
@@ -298,11 +292,7 @@ static pbio_error_t pb_lwp3device_connect_thread(pbio_os_state_t *state, mp_obj_
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Get available peripheral instance.
-    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
-
-    // Scan and connect with timeout.
-    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
+    // Scan and connect operation was already started. Just await it here.
     PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         // Not successful, release peripheral.
@@ -434,12 +424,18 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
         strncpy(self->name, name, sizeof(self->name));
     }
 
-    scan_config.notification_handler = notification_handler;
-    scan_config.options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE;
-    if (pair) {
-        scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR;
-    }
-    scan_config.timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1;
+    // Get available peripheral instance.
+    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
+
+    // Initiate scan and connect with timeout.
+    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+        .match_adv = lwp3_advertisement_matches,
+        .match_adv_rsp = lwp3_advertisement_response_matches,
+        .notification_handler = notification_handler,
+        .options = pair ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+        .timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1,
+    };
+    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
 
     pb_type_async_t config = {
         .iter_once = pb_lwp3device_connect_thread,
@@ -447,7 +443,6 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
     };
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
-
 
 mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);

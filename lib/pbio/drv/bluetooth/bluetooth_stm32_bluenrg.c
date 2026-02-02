@@ -334,7 +334,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     pbdrv_bluetooth_peripheral_t *peri = context;
 
     // Scan and connect timeout, if applicable.
-    bool timed_out = peri->config->timeout && pbio_os_timer_is_expired(&peri->timer);
+    bool timed_out = peri->config.timeout && pbio_os_timer_is_expired(&peri->timer);
 
     // Operation can be explicitly cancelled or automatically on inactivity.
     if (!peri->cancel) {
@@ -367,7 +367,7 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // Context specific advertisement filter.
-        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config->match_adv(peri->user, subevt->evt_type, subevt->data_RSSI, NULL, subevt->bdaddr, peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config.match_adv(peri->user, subevt->evt_type, subevt->data_RSSI, NULL, subevt->bdaddr, peri->bdaddr);
 
         // If it doesn't match context-specific filter, keep scanning.
         if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
@@ -404,7 +404,7 @@ try_again:
         // If the response data is not right or if the address doesn't match advertisement, keep scanning.
         le_advertising_info *subevt = (void *)&read_buf[5];
         const char *detected_name = (char *)&subevt->data_RSSI[2];
-        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config->match_adv_rsp(peri->user, subevt->evt_type, NULL, detected_name, subevt->bdaddr, peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config.match_adv_rsp(peri->user, subevt->evt_type, NULL, detected_name, subevt->bdaddr, peri->bdaddr);
         if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
             continue;
         }
@@ -948,8 +948,8 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_NOTIFICATION: {
                     evt_gatt_attr_notification *subevt = (void *)evt->data;
-                    if (peri->config->notification_handler) {
-                        peri->config->notification_handler(peri->user, subevt->attr_value, subevt->event_data_length - 2);
+                    if (peri->config.notification_handler) {
+                        peri->config.notification_handler(peri->user, subevt->attr_value, subevt->event_data_length - 2);
                     }
                 }
                 break;

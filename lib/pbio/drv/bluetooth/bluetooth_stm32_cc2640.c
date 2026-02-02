@@ -375,7 +375,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     static pbio_os_timer_t peripheral_scan_restart_timer;
 
     // Scan and connect timeout, if applicable.
-    bool timed_out = peri->config->timeout && pbio_os_timer_is_expired(&peri->timer);
+    bool timed_out = peri->config.timeout && pbio_os_timer_is_expired(&peri->timer);
 
     // Operation can be explicitly cancelled or automatically on inactivity.
     if (!peri->cancel) {
@@ -388,7 +388,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 
     // Optionally, disconnect from host (usually Pybricks Code).
     if (conn_handle != NO_CONNECTION &&
-        (peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
+        (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
         DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
         // Guard used in pbdrv_bluetooth_host_is_connected so higher level
         // processes won't try to send anything while we are disconnecting.
@@ -444,7 +444,7 @@ try_again:
         }
 
         // Context specific advertisement filter.
-        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config->match_adv(peri->user, read_buf[9], &read_buf[19], NULL, &read_buf[11], peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config.match_adv(peri->user, read_buf[9], &read_buf[19], NULL, &read_buf[11], peri->bdaddr);
 
         // If it doesn't match context-specific filter, keep scanning.
         if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
@@ -491,7 +491,7 @@ try_again:
 
         const char *detected_name = (const char *)&read_buf[21];
         const uint8_t *response_address = &read_buf[11];
-        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config->match_adv_rsp(peri->user, read_buf[9], NULL, detected_name, response_address, peri->bdaddr);
+        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config.match_adv_rsp(peri->user, read_buf[9], NULL, detected_name, response_address, peri->bdaddr);
 
         // If the response data is not right or if the address doesn't match advertisement, keep scanning.
         if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
@@ -523,7 +523,7 @@ try_again:
     // Pybricks Code or it will try to pair with the PC. We do this just before
     // starting to advertise again, which covers all our use cases.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    bond_auth_mode_last = (peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
+    bond_auth_mode_last = (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
         GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
     GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, sizeof(bond_auth_mode_last), &bond_auth_mode_last);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -545,7 +545,7 @@ try_again:
 
     DEBUG_PRINT("Connected.\n");
 
-    if (!(peri->config->options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
+    if (!(peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
         // Pairing not required, so we are done here.
         return PBIO_SUCCESS;
     }
@@ -1305,8 +1305,8 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_HANDLE_VALUE_NOTI: {
                     // TODO: match callback to handle
                     // uint8_t attr_handle = (data[7] << 8) | data[6];
-                    if (peri->config->notification_handler) {
-                        peri->config->notification_handler(peri->user, &data[8], pdu_len - 2);
+                    if (peri->config.notification_handler) {
+                        peri->config.notification_handler(peri->user, &data[8], pdu_len - 2);
                     }
                 }
                 break;
