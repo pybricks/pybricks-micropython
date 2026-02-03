@@ -669,7 +669,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
-    pbdrv_bluetooth_ad_match_result_flags_t flags;
+    bool advertising_matched;
     uint8_t btstack_error;
 
     // Operation can be explicitly cancelled or automatically on inactivity.
@@ -696,14 +696,20 @@ start_scan:
 
         uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(event_packet);
         const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
-        bd_addr_t address;
-        gap_event_advertising_report_get_address(event_packet, address);
+        uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
 
         // Match advertisement data against context-specific filter.
-        flags = peri->config.match_adv(peri->user, event_type, data, NULL, address, peri->bdaddr);
+        advertising_matched = false;
+        if (event_type <= PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND) {
+            advertising_matched = peri->config.match_adv(peri->user, data, data_len);
+        }
 
-        // Store the address to compare with scan response later.
-        if (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) {
+        // On match, store the address to compare with scan response later.
+        bool saw_before = false;
+        if (advertising_matched) {
+            bd_addr_t address;
+            gap_event_advertising_report_get_address(event_packet, address);
+            saw_before = !memcmp(peri->bdaddr, address, sizeof(bd_addr_t));
             memcpy(peri->bdaddr, address, sizeof(bd_addr_t));
             peri->bdaddr_type = gap_event_advertising_report_get_address_type(event_packet);
         }
@@ -711,7 +717,7 @@ start_scan:
         // Wait condition: Advertisement matched and it isn't the same as before.
         // If it was the same and we're here, it means the scan response didn't match
         // so we shouldn't try it again.
-        (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && !(flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS);
+        advertising_matched && !saw_before;
     })));
 
     if ((peri->config.timeout && pbio_os_timer_is_expired(&peri->timer)) || peri->cancel) {
@@ -732,31 +738,40 @@ start_scan:
 
         uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(event_packet);
         const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
-        char *detected_name = (char *)&data[2];
+        uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
+
+        // We are looking for a scan response from the same device as before.
         bd_addr_t address;
         gap_event_advertising_report_get_address(event_packet, address);
+        bool is_valid_response = event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP && !memcmp(peri->bdaddr, address, sizeof(bd_addr_t));
 
-        flags = peri->config.match_adv_rsp(peri->user, event_type, NULL, detected_name, address, peri->bdaddr);
+        advertising_matched = false;
+        if (is_valid_response) {
+            advertising_matched = peri->config.match_adv_rsp(peri->user, data, data_len);
+        }
 
-        (flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) && (flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS);
+        // If we're going to successfully proceed below, make a copy of the
+        // discovered device name while we're here.
+        if (advertising_matched && data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
+            memcpy(peri->name, &data[2], sizeof(peri->name));
+        }
+
+        // We want to exit this state on a valid response, even if the filter
+        // did not match so we can go back to scanning.
+        is_valid_response;
     })));
 
-    if (pbio_os_timer_is_expired(&peri->timer) || peri->cancel) {
-        DEBUG_PRINT("Scan response %s.\n", peri->cancel ? "canceled": "timed out");
-        gap_stop_scan();
-        return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
-    }
-
-    if (flags & PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED) {
+    if (!advertising_matched) {
+        if (pbio_os_timer_is_expired(&peri->timer) || peri->cancel) {
+            DEBUG_PRINT("Scan response %s.\n", peri->cancel ? "canceled": "timed out");
+            gap_stop_scan();
+            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+        }
+        // If we get here, we got a valid scan response from the device that
+        // matched our advertising filter, but it did not match the response
+        // filter (e.g. requested name did not match), so scan again.
         DEBUG_PRINT("Name requested but did not match. Scan again.\n");
         goto start_scan;
-    }
-
-    // When we get here, we have just matched a scan response and we are still
-    // handling the same event packet, so we can still extract the name.
-    const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
-    if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
-        memcpy(peri->name, &data[2], sizeof(peri->name));
     }
 
     DEBUG_PRINT("Scan response matched, initiate connection to %s.\n", bd_addr_to_str(peri->bdaddr));

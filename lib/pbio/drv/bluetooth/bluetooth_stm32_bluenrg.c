@@ -366,25 +366,21 @@ try_again:
 
         le_advertising_info *subevt = (void *)&read_buf[5];
 
-        // Context specific advertisement filter.
-        pbdrv_bluetooth_ad_match_result_flags_t adv_flags = peri->config.match_adv(peri->user, subevt->evt_type, subevt->data_RSSI, NULL, subevt->bdaddr, peri->bdaddr);
-
-        // If it doesn't match context-specific filter, keep scanning.
-        if (!(adv_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE)) {
+        // If advertisement doesn't match context-specific filter, keep scanning.
+        if (subevt->evt_type > PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, subevt->data_RSSI, subevt->data_length)) {
             continue;
         }
 
         // If the value matched but it's the same device as last time, we're
         // here because the scan response failed the last time. It probably
         // won't match now and we should try a different device.
-        if (adv_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS) {
+        if (!memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
             goto try_again;
         }
 
         // save the Bluetooth address for later
         peri->bdaddr_type = subevt->bdaddr_type;
-        memcpy(peri->bdaddr, subevt->bdaddr, 6);
-
+        memcpy(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr));
         break;
     }
 
@@ -401,20 +397,20 @@ try_again:
             return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
         }
 
-        // If the response data is not right or if the address doesn't match advertisement, keep scanning.
         le_advertising_info *subevt = (void *)&read_buf[5];
-        const char *detected_name = (char *)&subevt->data_RSSI[2];
-        pbdrv_bluetooth_ad_match_result_flags_t rsp_flags = peri->config.match_adv_rsp(peri->user, subevt->evt_type, NULL, detected_name, subevt->bdaddr, peri->bdaddr);
-        if (!(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_VALUE) || !(rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_ADDRESS)) {
+
+        // We are looking for a scan response from the same device as before, else keep scanning for responses.
+        if (subevt->evt_type != PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
             continue;
         }
 
         // If the device checks passed but the name doesn't match, start over.
-        if (rsp_flags & PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED) {
+        if (!peri->config.match_adv_rsp(peri->user, subevt->data_RSSI, subevt->data_length)) {
             goto try_again;
         }
 
-        memcpy(peri->name, detected_name, sizeof(peri->name));
+        // All checks passed, so copy the device name for later use.
+        memcpy(peri->name, &subevt->data_RSSI[2], sizeof(peri->name));
         break;
     }
 

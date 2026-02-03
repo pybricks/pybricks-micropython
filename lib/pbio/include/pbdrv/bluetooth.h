@@ -38,31 +38,15 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  */
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(const uint8_t *data, uint32_t size);
 
-/** Advertisement of scan response match result */
-typedef enum {
-    /** No match. */
-    PBDRV_BLUETOOTH_AD_MATCH_NONE = 0,
-    /** Matched the expected value such as device type or manufacturer data. */
-    PBDRV_BLUETOOTH_AD_MATCH_VALUE = 1 << 0,
-    /** Failed to matched the expected Bluetooth address.*/
-    PBDRV_BLUETOOTH_AD_MATCH_ADDRESS = 1 << 1,
-    /** A name filter was given and it did NOT match. */
-    PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED = 1 << 2,
-} pbdrv_bluetooth_ad_match_result_flags_t;
-
 /**
  * Callback to match an advertisement or scan response.
  *
  * @param [in]  user        The user of this peripheral, usually a high-level object.
- * @param [in]  event_type  The type of advertisement.
  * @param [in]  data        The advertisement data.
- * @param [in]  name        The name to match. If NULL, no name filter is applied.
- * @param [in]  addr        The currently detected address if known, else NULL.
- * @param [in]  match_addr  The address to match. If NULL, no address filter is applied.
+ * @param [in]  length      The advertisement data size.
  * @return                  True if the advertisement matches, false otherwise.
  */
-typedef pbdrv_bluetooth_ad_match_result_flags_t (*pbdrv_bluetooth_ad_match_t)
-    (void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr);
+typedef bool (*pbdrv_bluetooth_advertising_callback_t)(void *user, const uint8_t *data, uint8_t length);
 
 struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
@@ -130,9 +114,9 @@ typedef void (*pbdrv_bluetooth_peripheral_notification_handler_t)(void *user, co
 /** Peripheral scan and connection configuration */
 typedef struct {
     /** Matcher for advertisement */
-    pbdrv_bluetooth_ad_match_t match_adv;
+    pbdrv_bluetooth_advertising_callback_t match_adv;
     /** Matcher for scan response */
-    pbdrv_bluetooth_ad_match_t match_adv_rsp;
+    pbdrv_bluetooth_advertising_callback_t match_adv_rsp;
     /** Handler for received notifications after connecting */
     pbdrv_bluetooth_peripheral_notification_handler_t notification_handler;
     /** Option flags governing connection and pairing */

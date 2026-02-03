@@ -166,58 +166,31 @@ static void handle_remote_notification(void *user, const uint8_t *value, uint32_
     }
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
-
-    pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
+static bool lwp3_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
 
     pb_lwp3device_obj_t *self = user;
     if (!self) {
-        return flags;
+        return false;
     }
 
     // Whether this looks like a LWP3 advertisement of the correct hub kind.
-    if (event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_IND
-        && data[3] == 17 /* length */
+    return
+        data[3] == 17 /* length */
         && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
             || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
         && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
-        && data[26] == self->hub_kind) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_VALUE;
-    }
-
-    // Compare address in advertisement to previously scanned address.
-    if (memcmp(addr, match_addr, 6) == 0) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
-    }
-    return flags;
+        && data[26] == self->hub_kind;
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t lwp3_advertisement_response_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
-
-    pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
+static bool lwp3_advertisement_response_matches(void *user, const uint8_t *data, uint8_t length) {
 
     pb_lwp3device_obj_t *self = user;
     if (!self) {
-        return flags;
+        return false;
     }
 
-    // This is the only value check we do on LWP3 response messages.
-    if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_VALUE;
-    }
-
-    // Compare address in response to previously scanned address.
-    if (memcmp(addr, match_addr, 6) == 0) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
-    }
-
-    // Compare name to user-provided name if given, checking only up to the
-    // user provided name length.
-    if (self->name[0] != '\0' && strncmp(name, self->name, strlen(self->name)) != 0) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_NAME_FAILED;
-    }
-
-    return flags;
+    // Pass if no name filter specified or the given name matches, checking only up to provided name length.
+    return self->name[0] == '\0' || strncmp((const char *)&data[2], self->name, strlen(self->name)) == 0;
 }
 
 static pbio_error_t pb_type_pupdevices_Remote_write_light_msg(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {

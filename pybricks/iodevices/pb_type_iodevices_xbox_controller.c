@@ -107,7 +107,7 @@ static void handle_notification(void *user, const uint8_t *value, uint32_t size)
 
 #define _16BIT_AS_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff)
 
-static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
+static bool xbox_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
 
     // The controller seems to advertise three different packets, so allow all.
 
@@ -141,38 +141,16 @@ static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_matches(void *
     memcpy(advertising_data3, advertising_data2, sizeof(advertising_data2));
     advertising_data3[2] = 0x04;
 
-    // Exit if neither of the expected values match.
-    if (memcmp(data, advertising_data1, sizeof(advertising_data1)) &&
-        memcmp(data, advertising_data2, sizeof(advertising_data2)) &&
-        memcmp(data, advertising_data3, sizeof(advertising_data3))) {
-        return PBDRV_BLUETOOTH_AD_MATCH_NONE;
-    }
-
-    // Expected value matches at this point.
-    pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_VALUE;
-
-    // Compare address in advertisement to previously scanned address.
-    if (memcmp(addr, match_addr, 6) == 0) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
-    }
-    return flags;
+    // At least one must match.
+    return
+        !memcmp(data, advertising_data1, sizeof(advertising_data1)) ||
+        !memcmp(data, advertising_data2, sizeof(advertising_data2)) ||
+        !memcmp(data, advertising_data3, sizeof(advertising_data3));
 }
 
-static pbdrv_bluetooth_ad_match_result_flags_t xbox_advertisement_response_matches(void *user, uint8_t event_type, const uint8_t *data, const char *name, const uint8_t *addr, const uint8_t *match_addr) {
-
-    pbdrv_bluetooth_ad_match_result_flags_t flags = PBDRV_BLUETOOTH_AD_MATCH_NONE;
-
-    // This is currently the only requirement.
-    if (event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_VALUE;
-    }
-
-    // Compare address in response to previously scanned address.
-    if (memcmp(addr, match_addr, 6) == 0) {
-        flags |= PBDRV_BLUETOOTH_AD_MATCH_ADDRESS;
-    }
-
-    return flags;
+static bool xbox_advertisement_response_matches(void *user, const uint8_t *data, uint8_t length) {
+    // No further filtering applied.
+    return true;
 }
 
 static xbox_input_map_t *pb_type_xbox_get_input(mp_obj_t self_in) {
