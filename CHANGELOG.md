@@ -11,6 +11,8 @@
   with `drive_base.turn(angle, absolute=True)` ([pybricks-micropython#458]).
 - Added support for coordinate traversals with `drive_base.move_by(dx, dy)` for
   practical navigation ([pybricks-micropython#458]).
+- Added `connect=True` parameter to the `Remote` and `LWP3Device` classes,
+  along with a `connect()` method to optionally connect later ([support#1800]).
 
 ### Changed
 - Reset IMU heading to `0.0` at the start of a user program for consistent
@@ -20,6 +22,7 @@
 - Fix missing classes in `pybricks.iodevices` on SPIKE Prime (regression in
   4.0.0b2) ([pybricks-micropython#456]).
 
+[support#1800]: https://github.com/pybricks/support/issues/1800
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 [pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
 [pybricks-micropython#458]: https://github.com/pybricks/pybricks-micropython/pull/458

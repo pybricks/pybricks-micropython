@@ -465,6 +465,7 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in) {
     };
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_connect_obj, pb_lwp3device_connect);
 
 mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -509,7 +510,9 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
 static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_NONE(name),
-        PB_ARG_DEFAULT_INT(timeout, 10000));
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_TRUE(connect)
+        );
 
     pb_module_tools_assert_blocking();
 
@@ -523,7 +526,9 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
     self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
+    if (mp_obj_is_true(connect_in)) {
+        pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
+    }
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -594,6 +599,7 @@ static const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
 
 static const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_lwp3device_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_lwp3device_connect_obj) },
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
 };
@@ -615,7 +621,9 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000),
         PB_ARG_DEFAULT_FALSE(pair),
-        PB_ARG_DEFAULT_INT(num_notifications, 8));
+        PB_ARG_DEFAULT_INT(num_notifications, 8),
+        PB_ARG_DEFAULT_TRUE(connect)
+        );
 
     size_t noti_num = mp_obj_get_int(num_notifications_in);
     if (!noti_num) {
@@ -629,7 +637,9 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
 
     pb_module_tools_assert_blocking();
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
+    if (mp_obj_is_true(connect_in)) {
+        pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
+    }
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -691,6 +701,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
 
 static const mp_rom_map_elem_t pb_type_iodevices_LWP3Device_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_lwp3device_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_lwp3device_connect_obj) },
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_lwp3device_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_lwp3device_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&lwp3device_write_obj) },
