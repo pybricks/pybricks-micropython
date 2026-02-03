@@ -121,6 +121,14 @@ typedef struct {
     // Also used as the name of the device when setting the name, since this
     // is not updated in the driver until the next time it connects.
     char name[LWP3_MAX_HUB_PROPERTY_NAME_SIZE + 1];
+    /**
+     * The timeout used during scan and connect.
+     */
+    uint32_t scan_timeout;
+    /**
+     * Whether to use pairing during scan and connect.
+     */
+    bool scan_needs_pairing;
     #if PYBRICKS_PY_IODEVICES
     /**
      * Maximum number of stored notifications.
@@ -399,7 +407,14 @@ disconnect:
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
-static void pb_lwp3device_filter_hub_and_type(pb_lwp3device_obj_t *self, mp_obj_t name_in, lwp3_hub_kind_t hub_kind) {
+/**
+ * Caches the make_new arguments so they can be re-used for all connect() calls.
+ */
+static void pb_lwp3device_set_connection_args(pb_lwp3device_obj_t *self, mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, bool pair) {
+
+    self->scan_timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1;
+    self->scan_needs_pairing = pair;
+
     // Hub kind and name are set to filter advertisements and responses.
     self->hub_kind = hub_kind;
     if (name_in == mp_const_none) {
@@ -415,7 +430,7 @@ static void pb_lwp3device_filter_hub_and_type(pb_lwp3device_obj_t *self, mp_obj_
     }
 }
 
-static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in,  mp_obj_t timeout_in, bool pair) {
+static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in) {
 
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -439,8 +454,8 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in,  mp_obj_t timeout_in, bo
         .match_adv = lwp3_advertisement_matches,
         .match_adv_rsp = lwp3_advertisement_response_matches,
         .notification_handler = pb_lwp3device_handle_notification,
-        .options = pair ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
-        .timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1,
+        .options = self->scan_needs_pairing ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+        .timeout = self->scan_timeout,
     };
     pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
 
@@ -504,11 +519,11 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     self->noti_num = 0;
     #endif
 
-    pb_lwp3device_filter_hub_and_type(self, name_in, LWP3_HUB_KIND_HANDSET);
+    pb_lwp3device_set_connection_args(self, name_in, timeout_in, LWP3_HUB_KIND_HANDSET, false);
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
     self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), timeout_in, false);
+    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -602,8 +617,6 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_FALSE(pair),
         PB_ARG_DEFAULT_INT(num_notifications, 8));
 
-    bool pair = mp_obj_is_true(pair_in);
-
     size_t noti_num = mp_obj_get_int(num_notifications_in);
     if (!noti_num) {
         noti_num = 1;
@@ -612,11 +625,11 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     pb_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_lwp3device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
     self->iter = NULL;
     self->noti_num = noti_num;
-    pb_lwp3device_filter_hub_and_type(self, name_in, mp_obj_get_int(hub_kind_in));
+    pb_lwp3device_set_connection_args(self, name_in, timeout_in, mp_obj_get_int(hub_kind_in), mp_obj_is_true(pair_in));
 
     pb_module_tools_assert_blocking();
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), timeout_in, pair);
+    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
 
     return MP_OBJ_FROM_PTR(self);
 }
