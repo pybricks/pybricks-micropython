@@ -43,7 +43,6 @@
 #endif
 
 // Timeouts for various steps in the scan and connect process.
-#define PERIPHERAL_TIMEOUT_MS_SCAN_RESPONSE (2000)
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
 
@@ -669,13 +668,13 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     }
 
     pbdrv_bluetooth_peripheral_t *peri = context;
-    bool advertising_matched;
     uint8_t btstack_error;
 
     // Operation can be explicitly cancelled or automatically on inactivity.
     if (!peri->cancel) {
         peri->cancel = pbio_os_timer_is_expired(&peri->watchdog);
     }
+    bool scan_timed_out = peri->config.timeout && pbio_os_timer_is_expired(&peri->timer);
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -691,18 +690,17 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 start_scan:
 
     // Wait for advertisement that matches the filter unless timed out or cancelled.
-    PBIO_OS_AWAIT_UNTIL(state, (peri->config.timeout && pbio_os_timer_is_expired(&peri->timer)) ||
-        peri->cancel || (hci_event_is_type(event_packet, GAP_EVENT_ADVERTISING_REPORT) && ({
+    PBIO_OS_AWAIT_UNTIL(state, scan_timed_out || peri->cancel ||
+        (hci_event_is_type(event_packet, GAP_EVENT_ADVERTISING_REPORT) && ({
 
         uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(event_packet);
         const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
         uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
 
         // Match advertisement data against context-specific filter.
-        advertising_matched = false;
-        if (event_type <= PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND) {
-            advertising_matched = peri->config.match_adv(peri->user, data, data_len);
-        }
+        bool advertising_matched =
+            event_type <= PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND &&
+            peri->config.match_adv(peri->user, data, data_len);
 
         // On match, store the address to compare with scan response later.
         bool saw_before = false;
@@ -720,7 +718,7 @@ start_scan:
         advertising_matched && !saw_before;
     })));
 
-    if ((peri->config.timeout && pbio_os_timer_is_expired(&peri->timer)) || peri->cancel) {
+    if (scan_timed_out || peri->cancel) {
         DEBUG_PRINT("Scan %s.\n", peri->cancel ? "canceled": "timed out");
         gap_stop_scan();
         return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
@@ -728,48 +726,37 @@ start_scan:
 
     DEBUG_PRINT("Advertisement matched, waiting for scan response\n");
 
-    // The user timeout applies only to finding the device. We still want to
-    // have a reasonable timeout for the scan response, connecting and pairing.
-    pbio_os_timer_set(&peri->timer, PERIPHERAL_TIMEOUT_MS_SCAN_RESPONSE);
-
-    // Wait for advertising response that matches the filter unless timed out or cancelled.
-    PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&peri->timer) || peri->cancel ||
+    // Wait for advertising response unless timed out or cancelled.
+    PBIO_OS_AWAIT_UNTIL(state, scan_timed_out || peri->cancel ||
         (hci_event_is_type(event_packet, GAP_EVENT_ADVERTISING_REPORT) && ({
 
         uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(event_packet);
-        const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
-        uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
-
-        // We are looking for a scan response from the same device as before.
         bd_addr_t address;
         gap_event_advertising_report_get_address(event_packet, address);
-        bool is_valid_response = event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP && !memcmp(peri->bdaddr, address, sizeof(bd_addr_t));
 
-        advertising_matched = false;
-        if (is_valid_response) {
-            advertising_matched = peri->config.match_adv_rsp(peri->user, data, data_len);
-        }
-
-        // If we're going to successfully proceed below, make a copy of the
-        // discovered device name while we're here.
-        if (advertising_matched && data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
-            memcpy(peri->name, &data[2], sizeof(peri->name));
-        }
-
-        // We want to exit this state on a valid response, even if the filter
-        // did not match so we can go back to scanning.
-        is_valid_response;
+        // Wait for the scan response from the previously matching device.
+        event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP && !memcmp(peri->bdaddr, address, sizeof(bd_addr_t));
     })));
 
-    if (!advertising_matched) {
-        if (pbio_os_timer_is_expired(&peri->timer) || peri->cancel) {
-            DEBUG_PRINT("Scan response %s.\n", peri->cancel ? "canceled": "timed out");
-            gap_stop_scan();
-            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+    if (scan_timed_out || peri->cancel) {
+        DEBUG_PRINT("Scan response %s.\n", peri->cancel ? "canceled": "timed out");
+        gap_stop_scan();
+        return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+    }
+
+    // If we got here, we just finished waiting for a response and we still have
+    // that event data for processing.
+    const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
+    uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
+    if (peri->config.match_adv_rsp(peri->user, data, data_len)) {
+        // Copy name for later use.
+        if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
+            memcpy(peri->name, &data[2], sizeof(peri->name));
         }
-        // If we get here, we got a valid scan response from the device that
-        // matched our advertising filter, but it did not match the response
-        // filter (e.g. requested name did not match), so scan again.
+    } else {
+        // We got a valid scan response from the device that matched our
+        // advertising filter, but it did not match the response filter (e.g.
+        // requested name did not match), so scan again.
         DEBUG_PRINT("Name requested but did not match. Scan again.\n");
         goto start_scan;
     }
@@ -780,6 +767,8 @@ start_scan:
     gap_stop_scan();
 
     // Initiate connection and await connection complete event.
+    // The user timeout applies only to finding the device. We still want to
+    // have a reasonable timeout for connecting and pairing.
     pbio_os_timer_set(&peri->timer, PERIPHERAL_TIMEOUT_MS_CONNECT);
     btstack_error = gap_connect(peri->bdaddr, peri->bdaddr_type);
     if (btstack_error != ERROR_CODE_SUCCESS) {
