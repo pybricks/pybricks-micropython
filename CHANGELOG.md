@@ -11,12 +11,16 @@
   with `drive_base.turn(angle, absolute=True)` ([pybricks-micropython#458]).
 - Added support for coordinate traversals with `drive_base.move_by(dx, dy)` for
   practical navigation ([pybricks-micropython#458]).
-- Added `connect=True` parameter to the `Remote` and `LWP3Device` classes,
-  along with a `connect()` method to optionally connect later ([support#1800]).
+- Added `connect=True` parameter to the `Remote`, `LWP3Device`
+  and `XboxController` classes, along with a `connect()` method to optionally
+  connect later ([support#1800]).
+- Added `timeout` and `name` parameters to the `XboxController`.
 
 ### Changed
 - Reset IMU heading to `0.0` at the start of a user program for consistent
   drivebase behavior.
+- Changed the default `XboxController` connection timeout from indefinite
+  to 10 seconds, consistent with the `Remote`.
 
 ### Fixed
 - Fix missing classes in `pybricks.iodevices` on SPIKE Prime (regression in

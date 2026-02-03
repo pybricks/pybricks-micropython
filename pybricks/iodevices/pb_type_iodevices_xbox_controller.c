@@ -59,6 +59,14 @@ typedef struct _pb_type_xbox_obj_t {
      */
     pbdrv_bluetooth_peripheral_t *peripheral;
     /**
+     * Null-terminated name used to filter advertisements and responses.
+     */
+    char name[PBDRV_BLUETOOTH_MAX_ADV_SIZE - 2];
+    /**
+     * The timeout used during scan and connect.
+     */
+    uint32_t scan_timeout;
+    /**
      * Whether to disconnect from host before connecting to controller.
      **/
     bool disconnect_host;
@@ -149,8 +157,12 @@ static bool xbox_advertisement_matches(void *user, const uint8_t *data, uint8_t 
 }
 
 static bool xbox_advertisement_response_matches(void *user, const uint8_t *data, uint8_t length) {
-    // No further filtering applied.
-    return true;
+    pb_type_xbox_obj_t *self = user;
+    if (!self) {
+        return false;
+    }
+    // Pass if no name filter specified or the given name matches, checking only up to provided name length.
+    return self->name[0] == '\0' || strncmp((const char *)&data[2], self->name, strlen(self->name)) == 0;
 }
 
 static xbox_input_map_t *pb_type_xbox_get_input(mp_obj_t self_in) {
@@ -279,7 +291,7 @@ retry:
         .match_adv_rsp = xbox_advertisement_response_matches,
         .notification_handler = handle_notification,
         .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
-        .timeout = 0,
+        .timeout = self->scan_timeout,
     };
     if (self->disconnect_host) {
         scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
@@ -379,13 +391,13 @@ disconnect:
 
 static mp_obj_t pb_type_xbox_connect(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
     pb_type_async_t config = {
         .iter_once = xbox_connect_thread,
         .parent_obj = MP_OBJ_FROM_PTR(self),
     };
     return pb_type_async_wait_or_await(&config, &self->iter, true);
 }
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_connect_obj, pb_type_xbox_connect);
 
 static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -411,7 +423,10 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_disconnect_obj, pb_type_xbox_disco
 static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_INT(joystick_deadzone, 10)
+        PB_ARG_DEFAULT_INT(joystick_deadzone, 10),
+        PB_ARG_DEFAULT_NONE(name),
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_TRUE(connect)
         // Debug parameter to stay connected to the host on Technic Hub.
         // Works only on some hosts for the moment, so False by default.
         #if PYBRICKS_HUB_TECHNICHUB
@@ -433,6 +448,18 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     memset(input, 0, sizeof(xbox_input_map_t));
     input->x = input->y = input->z = input->rz = INT16_MAX;
 
+    self->scan_timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1;
+    if (name_in == mp_const_none) {
+        self->name[0] = '\0';
+    } else {
+        const char *name = mp_obj_str_get_str(name_in);
+        size_t len = strlen(name);
+        if (len > sizeof(self->name) - 1) {
+            mp_raise_ValueError(MP_ERROR_TEXT("Name too long"));
+        }
+        strncpy(self->name, name, sizeof(self->name));
+    }
+
     // By default, disconnect Technic Hub from host, as this is required for
     // most hosts. Stay connected only if the user explicitly requests it.
     #if PYBRICKS_HUB_TECHNICHUB
@@ -443,7 +470,9 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
-    pb_type_xbox_connect(MP_OBJ_FROM_PTR(self));
+    if (mp_obj_is_true(connect_in)) {
+        pb_type_xbox_connect(MP_OBJ_FROM_PTR(self));
+    }
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -614,6 +643,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_xbox_rumble_obj, 1, pb_type_xbox_rumbl
 static const mp_rom_map_elem_t pb_type_xbox_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_xbox_name_obj)  },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_xbox_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_xbox_connect_obj) },
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_xbox_disconnect_obj) },
     { MP_ROM_QSTR(MP_QSTR_state), MP_ROM_PTR(&pb_type_xbox_state_obj) },
     { MP_ROM_QSTR(MP_QSTR_dpad), MP_ROM_PTR(&pb_type_xbox_dpad_obj) },
