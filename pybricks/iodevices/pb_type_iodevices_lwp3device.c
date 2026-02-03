@@ -145,14 +145,7 @@ typedef struct {
     #endif // PYBRICKS_PY_IODEVICES
 } pb_lwp3device_obj_t;
 
-// Handles LEGO Wireless protocol messages from the Powered Up Remote.
-static void handle_remote_notification(void *user, const uint8_t *value, uint32_t size) {
-
-    pb_lwp3device_obj_t *self = user;
-    if (!self) {
-        return;
-    }
-
+static void handle_remote_notification(pb_lwp3device_obj_t *self, const uint8_t *value) {
     if (value[0] == 5 && value[2] == LWP3_MSG_TYPE_HW_NET_CMDS && value[3] == LWP3_HW_NET_CMD_CONNECTION_REQ) {
         // This message is meant for something else, but contains the center button state
         self->center = value[4];
@@ -164,6 +157,41 @@ static void handle_remote_notification(void *user, const uint8_t *value, uint32_
             memcpy(self->right, &value[4], 3);
         }
     }
+}
+
+// Handles LEGO Wireless protocol messages.
+static void pb_lwp3device_handle_notification(void *user, const uint8_t *value, uint32_t size) {
+
+    pb_lwp3device_obj_t *self = user;
+    if (!self) {
+        return;
+    }
+
+    // Remote has a dedicated handler.
+    if (mp_obj_get_type(MP_OBJ_FROM_PTR(user)) == &pb_type_pupdevices_Remote) {
+        handle_remote_notification(self, value);
+        return;
+    }
+
+    #if PYBRICKS_PY_IODEVICES
+    if (!self->noti_num) {
+        // Allocated data not ready.
+        return;
+    }
+
+    // Buffer is full, so drop oldest sample by advancing read index.
+    if (self->noti_data_full) {
+        self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
+    }
+
+    memcpy(&self->notification_buffer[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
+    self->noti_idx_write = (self->noti_idx_write + 1) % self->noti_num;
+
+    // After writing it is full if the _next_ write will override the
+    // to-be-read data. If it was already full when we started writing, both
+    // indexes have now advanced so it is still full now.
+    self->noti_data_full = self->noti_idx_read == self->noti_idx_write;
+    #endif
 }
 
 static bool lwp3_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
@@ -371,18 +399,7 @@ disconnect:
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
-static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj_t timeout_in, lwp3_hub_kind_t hub_kind, pbdrv_bluetooth_peripheral_notification_handler_t notification_handler, bool pair) {
-
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    self->iter = NULL;
-
-    // needed to ensure that no buttons are "pressed" after reconnecting since
-    // we are using static memory
-    memset(&self->left, 0, sizeof(self->left));
-    memset(&self->right, 0, sizeof(self->right));
-    self->center = 0;
-
+static void pb_lwp3device_filter_hub_and_type(pb_lwp3device_obj_t *self, mp_obj_t name_in, lwp3_hub_kind_t hub_kind) {
     // Hub kind and name are set to filter advertisements and responses.
     self->hub_kind = hub_kind;
     if (name_in == mp_const_none) {
@@ -396,6 +413,23 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
         }
         strncpy(self->name, name, sizeof(self->name));
     }
+}
+
+static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in,  mp_obj_t timeout_in, bool pair) {
+
+    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Needed to ensure that no buttons are "pressed" after reconnecting
+    memset(&self->left, 0, sizeof(self->left));
+    memset(&self->right, 0, sizeof(self->right));
+    self->center = 0;
+
+    #if PYBRICKS_PY_IODEVICES
+    memset(self->notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * self->noti_num);
+    self->noti_idx_read = 0;
+    self->noti_idx_write = 0;
+    self->noti_data_full = false;
+    #endif
 
     // Get available peripheral instance.
     pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
@@ -404,7 +438,7 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in, mp_obj_t name_in, mp_obj
     pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
         .match_adv = lwp3_advertisement_matches,
         .match_adv_rsp = lwp3_advertisement_response_matches,
-        .notification_handler = notification_handler,
+        .notification_handler = pb_lwp3device_handle_notification,
         .options = pair ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
         .timeout = timeout_in == mp_const_none ? 0 : pb_obj_get_positive_int(timeout_in) + 1,
     };
@@ -465,14 +499,16 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_module_tools_assert_blocking();
 
     pb_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_lwp3device_obj_t, type);
-
-    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
-    self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
+    self->iter = NULL;
     #if PYBRICKS_PY_IODEVICES
     self->noti_num = 0;
     #endif
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), name_in, timeout_in, LWP3_HUB_KIND_HANDSET, handle_remote_notification, false);
+    pb_lwp3device_filter_hub_and_type(self, name_in, LWP3_HUB_KIND_HANDSET);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
+    self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
+
+    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), timeout_in, false);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -558,33 +594,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_pupdevices_Remote,
 
 #if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
 
-/**
- * Handles LEGO Wireless protocol messages from generic LWP3 devices.
- */
-static void handle_lwp3_generic_notification(void *user, const uint8_t *value, uint32_t size) {
-
-    pb_lwp3device_obj_t *self = user;
-
-    if (!self || !self->noti_num) {
-        // Allocated data not ready.
-        return;
-    }
-
-    // Buffer is full, so drop oldest sample by advancing read index.
-    if (self->noti_data_full) {
-        self->noti_idx_read = (self->noti_idx_read + 1) % self->noti_num;
-    }
-
-    memcpy(&self->notification_buffer[self->noti_idx_write * LWP3_MAX_MESSAGE_SIZE], &value[0], (size < LWP3_MAX_MESSAGE_SIZE) ? size : LWP3_MAX_MESSAGE_SIZE);
-    self->noti_idx_write = (self->noti_idx_write + 1) % self->noti_num;
-
-    // After writing it is full if the _next_ write will override the
-    // to-be-read data. If it was already full when we started writing, both
-    // indexes have now advanced so it is still full now.
-    self->noti_data_full = self->noti_idx_read == self->noti_idx_write;
-    return;
-}
-
 static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
@@ -593,7 +602,6 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
         PB_ARG_DEFAULT_FALSE(pair),
         PB_ARG_DEFAULT_INT(num_notifications, 8));
 
-    uint8_t hub_kind = pb_obj_get_positive_int(hub_kind_in);
     bool pair = mp_obj_is_true(pair_in);
 
     size_t noti_num = mp_obj_get_int(num_notifications_in);
@@ -602,16 +610,13 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
     }
 
     pb_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_lwp3device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
-
-    memset(self->notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * noti_num);
+    self->iter = NULL;
     self->noti_num = noti_num;
-    self->noti_idx_read = 0;
-    self->noti_idx_write = 0;
-    self->noti_data_full = false;
+    pb_lwp3device_filter_hub_and_type(self, name_in, mp_obj_get_int(hub_kind_in));
 
     pb_module_tools_assert_blocking();
 
-    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), name_in, timeout_in, hub_kind, handle_lwp3_generic_notification, pair);
+    pb_lwp3device_connect(MP_OBJ_FROM_PTR(self), timeout_in, pair);
 
     return MP_OBJ_FROM_PTR(self);
 }
