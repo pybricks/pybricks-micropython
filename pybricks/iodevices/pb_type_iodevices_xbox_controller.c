@@ -101,7 +101,7 @@ typedef struct _pb_type_xbox_obj_t {
 } pb_type_xbox_obj_t;
 
 // Handles LEGO Wireless protocol messages from the XBOX Device.
-static void handle_notification(void *user, const uint8_t *value, uint32_t size) {
+static void pb_type_xbox_handle_notification(void *user, const uint8_t *value, uint32_t size) {
 
     pb_type_xbox_obj_t *self = user;
     if (!self) {
@@ -115,7 +115,7 @@ static void handle_notification(void *user, const uint8_t *value, uint32_t size)
 
 #define _16BIT_AS_LE(x) ((x) & 0xff), (((x) >> 8) & 0xff)
 
-static bool xbox_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
+static bool pb_type_xbox_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
 
     // The controller seems to advertise three different packets, so allow all.
 
@@ -156,7 +156,7 @@ static bool xbox_advertisement_matches(void *user, const uint8_t *data, uint8_t 
         !memcmp(data, advertising_data3, sizeof(advertising_data3));
 }
 
-static bool xbox_advertisement_response_matches(void *user, const uint8_t *data, uint8_t length) {
+static bool pb_type_xbox_advertisement_response_matches(void *user, const uint8_t *data, uint8_t length) {
     pb_type_xbox_obj_t *self = user;
     if (!self) {
         return false;
@@ -287,9 +287,9 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
 retry:
     DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
     pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
-        .match_adv = xbox_advertisement_matches,
-        .match_adv_rsp = xbox_advertisement_response_matches,
-        .notification_handler = handle_notification,
+        .match_adv = pb_type_xbox_advertisement_matches,
+        .match_adv_rsp = pb_type_xbox_advertisement_response_matches,
+        .notification_handler = pb_type_xbox_handle_notification,
         .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
         .timeout = self->scan_timeout,
     };
@@ -470,9 +470,25 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     #endif // PYBRICKS_HUB_TECHNICHUB
 
-    if (mp_obj_is_true(connect_in)) {
+    bool want_connection = mp_obj_is_true(connect_in);
+
+    // Attempt to re-use existing connection.
+    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+        .match_adv = pb_type_xbox_advertisement_matches,
+        .match_adv_rsp = pb_type_xbox_advertisement_response_matches,
+        .notification_handler = pb_type_xbox_handle_notification,
+    };
+    pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &scan_config);
+
+    // If we aren't already connected, do so now if requested.
+    if (err == PBIO_ERROR_NO_DEV && want_connection) {
         pb_type_xbox_connect(MP_OBJ_FROM_PTR(self));
     }
+    // If being connected now is not desired, disconnect.
+    else if (err == PBIO_SUCCESS && !want_connection) {
+        pb_type_xbox_disconnect(MP_OBJ_FROM_PTR(self));
+    }
+    // Other combinations are already in the desired state, so do nothing else.
 
     return MP_OBJ_FROM_PTR(self);
 }

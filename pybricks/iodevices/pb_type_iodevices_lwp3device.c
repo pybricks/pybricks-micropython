@@ -467,6 +467,18 @@ static mp_obj_t pb_lwp3device_connect(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_connect_obj, pb_lwp3device_connect);
 
+static mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
+    // Needed to release claim on allocated data so we can make a new
+    // connection later.
+    pb_lwp3device_close(self_in);
+
+    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
+    return wait_or_await_operation(self_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_disconnect_obj, pb_lwp3device_disconnect);
+
 mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -506,6 +518,30 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     #endif
 }
 
+static void pb_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t connect_in) {
+    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    bool want_connection = mp_obj_is_true(connect_in);
+
+    // Attempt to re-use existing connection.
+    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+        .match_adv = lwp3_advertisement_matches,
+        .match_adv_rsp = lwp3_advertisement_response_matches,
+        .notification_handler = pb_lwp3device_handle_notification,
+    };
+    pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &scan_config);
+
+    // If we aren't already connected, do so now if requested.
+    if (err == PBIO_ERROR_NO_DEV && want_connection) {
+        pb_lwp3device_connect(self_in);
+    }
+    // If being connected now is not desired, disconnect.
+    else if (err == PBIO_SUCCESS && !want_connection) {
+        pb_lwp3device_disconnect(self_in);
+    }
+    // Other combinations are already in the desired state, so do nothing else.
+}
+
 
 static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -526,10 +562,7 @@ static mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_remote_button_pressed);
     self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pb_type_pupdevices_Remote_light_on);
 
-    if (mp_obj_is_true(connect_in)) {
-        pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
-    }
-
+    pb_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -579,18 +612,6 @@ static mp_obj_t pb_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_lwp3device_name_obj, 1, 2, pb_lwp3device_name);
 
-static mp_obj_t pb_lwp3device_disconnect(mp_obj_t self_in) {
-    // Needed to release claim on allocated data so we can make a new
-    // connection later.
-    pb_lwp3device_close(self_in);
-
-    pb_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
-    return wait_or_await_operation(self_in);
-}
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_lwp3device_disconnect_obj, pb_lwp3device_disconnect);
-
 static const pb_attr_dict_entry_t pb_type_pupdevices_Remote_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, pb_lwp3device_obj_t, buttons),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, pb_lwp3device_obj_t, light),
@@ -637,10 +658,7 @@ static mp_obj_t pb_type_iodevices_LWP3Device_make_new(const mp_obj_type_t *type,
 
     pb_module_tools_assert_blocking();
 
-    if (mp_obj_is_true(connect_in)) {
-        pb_lwp3device_connect(MP_OBJ_FROM_PTR(self));
-    }
-
+    pb_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
     return MP_OBJ_FROM_PTR(self);
 }
 

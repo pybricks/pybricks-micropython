@@ -179,6 +179,33 @@ pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral
     return PBIO_ERROR_BUSY;
 }
 
+pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral_t **peripheral, void *user, pbdrv_bluetooth_peripheral_connect_config_t *config) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+
+        // Should be connected and not already in use.
+        if (!pbdrv_bluetooth_peripheral_is_connected(peri) || peri->user) {
+            continue;
+        }
+
+        // Callbacks must be the same.
+        if (peri->config.match_adv != config->match_adv ||
+            peri->config.match_adv_rsp != config->match_adv_rsp ||
+            peri->config.notification_handler != config->notification_handler) {
+            continue;
+        }
+
+        // Claim this device for new user.
+        peri->user = user;
+        *peripheral = peri;
+        return PBIO_SUCCESS;
+    }
+
+    // No more connected devices available.
+    *peripheral = NULL;
+    return PBIO_ERROR_NO_DEV;
+}
+
 void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {
     // Only release if the user matches. A new user may have already safely
     // claimed it, and this call to release may come from an orphaned user.

@@ -372,7 +372,7 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
 //
 
 /**
- * Gets an available peripheral instance.
+ * Gets an available (free and unconnected) peripheral instance.
  *
  * @param [out] peripheral   Pointer to the peripheral instance if found.
  * @param [in]  user         Optional user reference to associate with the peripheral.
@@ -381,6 +381,17 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
  *                          ::PBIO_ERROR_BUSY if all peripheral instances are in use.
  */
 pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user);
+
+/**
+ * Gets an matching connected peripheral if available,
+ *
+ * @param [out] peripheral   Pointer to the peripheral instance if found.
+ * @param [in]  user         Optional user reference to associate with the peripheral.
+ * @param [in]  config       Config as in scan and connect, used to match previously connected device.
+ * @return                   ::PBIO_SUCCESS if a peripheral instance is connected and available.
+ *                           ::PBIO_ERROR_NO_DEV if no matching peripheral instance connected or is available.
+ */
+pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral_t **peripheral, void *user, pbdrv_bluetooth_peripheral_connect_config_t *config);
 
 /**
  * Checks if the given peripheral is connected.
@@ -644,6 +655,10 @@ static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
 }
 
 static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral_t **peripheral, void *user, pbdrv_bluetooth_peripheral_connect_config_t *config) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+### Added
+- Added `connect=True` parameter to the `Remote`, `LWP3Device`
+  and `XboxController` classes, along with a `connect()` method to optionally
+  connect later ([support#1800]).
+- Added `timeout` and `name` parameters to the `XboxController`.
+
+### Changed
+- Changed the default `XboxController` connection timeout from indefinite
+  to 10 seconds, consistent with the `Remote`.
+- Devices like the `Remote`, `LWP3Device`, and the `XboxController` now stay
+  connected when the program ends ([support#1382]).
+
+[support#1382]: https://github.com/pybricks/support/issues/1382
+[support#1800]: https://github.com/pybricks/support/issues/1800
+
 ## [4.0.0b5] - 2026-01-30
 
 ### Added
@@ -11,22 +26,15 @@
   with `drive_base.turn(angle, absolute=True)` ([pybricks-micropython#458]).
 - Added support for coordinate traversals with `drive_base.move_by(dx, dy)` for
   practical navigation ([pybricks-micropython#458]).
-- Added `connect=True` parameter to the `Remote`, `LWP3Device`
-  and `XboxController` classes, along with a `connect()` method to optionally
-  connect later ([support#1800]).
-- Added `timeout` and `name` parameters to the `XboxController`.
 
 ### Changed
 - Reset IMU heading to `0.0` at the start of a user program for consistent
   drivebase behavior.
-- Changed the default `XboxController` connection timeout from indefinite
-  to 10 seconds, consistent with the `Remote`.
 
 ### Fixed
 - Fix missing classes in `pybricks.iodevices` on SPIKE Prime (regression in
   4.0.0b2) ([pybricks-micropython#456]).
 
-[support#1800]: https://github.com/pybricks/support/issues/1800
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 [pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
 [pybricks-micropython#458]: https://github.com/pybricks/pybricks-micropython/pull/458
