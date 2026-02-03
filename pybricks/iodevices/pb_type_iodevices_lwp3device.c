@@ -539,7 +539,12 @@ static void pb_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t connec
     else if (err == PBIO_SUCCESS && !want_connection) {
         pb_lwp3device_disconnect(self_in);
     }
-    // Other combinations are already in the desired state, so do nothing else.
+
+    // If we have reconnected virtually, we're skipping the discovery phase,
+    // so use the result from last time.
+    if (pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        self->lwp3_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
+    }
 }
 
 
