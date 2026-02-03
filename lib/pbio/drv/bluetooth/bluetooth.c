@@ -188,10 +188,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral
             continue;
         }
 
-        // Callbacks must be the same.
+        // Callbacks must be the same, and still match with the given user.
+        // This ensures that we fail as intended when the same classes are used
+        // but the user has configured different filters such as the name.
         if (peri->config.match_adv != config->match_adv ||
             peri->config.match_adv_rsp != config->match_adv_rsp ||
-            peri->config.notification_handler != config->notification_handler) {
+            peri->config.notification_handler != config->notification_handler ||
+            !peri->config.match_adv(user, peri->config.match_adv_data, peri->config.match_adv_data_len) ||
+            !peri->config.match_adv_rsp(user, peri->config.match_adv_rsp_data, peri->config.match_adv_rsp_data_len)) {
             continue;
         }
 

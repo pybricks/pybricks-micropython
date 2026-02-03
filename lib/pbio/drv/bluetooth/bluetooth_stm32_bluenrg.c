@@ -381,6 +381,9 @@ try_again:
         // save the Bluetooth address for later
         peri->bdaddr_type = subevt->bdaddr_type;
         memcpy(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr));
+        // Copy data to allow virtual re-connect in a new user program.
+        peri->config.match_adv_data_len = subevt->data_length;
+        memcpy(peri->config.match_adv_data, subevt->data_RSSI, subevt->data_length);
         break;
     }
 
@@ -411,6 +414,9 @@ try_again:
 
         // All checks passed, so copy the device name for later use.
         memcpy(peri->name, &subevt->data_RSSI[2], sizeof(peri->name));
+        // Copy data to allow virtual re-connect in a new user program.
+        peri->config.match_adv_rsp_data_len = subevt->data_length;
+        memcpy(peri->config.match_adv_rsp_data, subevt->data_RSSI, subevt->data_length);
         break;
     }
 

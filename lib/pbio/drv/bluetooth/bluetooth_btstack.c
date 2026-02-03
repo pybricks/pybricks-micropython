@@ -726,6 +726,10 @@ start_scan:
 
     DEBUG_PRINT("Advertisement matched, waiting for scan response\n");
 
+    // Copy data to allow virtual re-connect in a new user program.
+    peri->config.match_adv_data_len = gap_event_advertising_report_get_data_length(event_packet);
+    memcpy(peri->config.match_adv_data, gap_event_advertising_report_get_data(event_packet), peri->config.match_adv_data_len);
+
     // Wait for advertising response unless timed out or cancelled.
     PBIO_OS_AWAIT_UNTIL(state, scan_timed_out || peri->cancel ||
         (hci_event_is_type(event_packet, GAP_EVENT_ADVERTISING_REPORT) && ({
@@ -748,12 +752,7 @@ start_scan:
     // that event data for processing.
     const uint8_t *data = gap_event_advertising_report_get_data(event_packet);
     uint8_t data_len = gap_event_advertising_report_get_data_length(event_packet);
-    if (peri->config.match_adv_rsp(peri->user, data, data_len)) {
-        // Copy name for later use.
-        if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
-            memcpy(peri->name, &data[2], sizeof(peri->name));
-        }
-    } else {
+    if (!peri->config.match_adv_rsp(peri->user, data, data_len)) {
         // We got a valid scan response from the device that matched our
         // advertising filter, but it did not match the response filter (e.g.
         // requested name did not match), so scan again.
@@ -762,6 +761,14 @@ start_scan:
     }
 
     DEBUG_PRINT("Scan response matched, initiate connection to %s.\n", bd_addr_to_str(peri->bdaddr));
+
+    // Copy name for later use.
+    if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
+        memcpy(peri->name, &data[2], sizeof(peri->name));
+    }
+    // Copy response data to allow virtual re-connect in a new user program.
+    peri->config.match_adv_rsp_data_len = data_len;
+    memcpy(peri->config.match_adv_rsp_data, data, data_len);
 
     // We can stop scanning now.
     gap_stop_scan();

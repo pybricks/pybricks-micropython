@@ -123,6 +123,14 @@ typedef struct {
     pbdrv_bluetooth_peripheral_options_t options;
     /** Timeout before aborting scan and connect. Use 0 for no timeout. */
     uint32_t timeout;
+    /** Last matching advertisement data for this peripheral. */
+    uint8_t match_adv_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
+    /** Last matching advertisement data length for this peripheral. */
+    uint8_t match_adv_data_len;
+    /** Last matching advertisement response data for this peripheral. */
+    uint8_t match_adv_rsp_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
+    /** Last matching advertisement response data length for this peripheral. */
+    uint8_t match_adv_rsp_data_len;
 } pbdrv_bluetooth_peripheral_connect_config_t;
 
 /** Platform-specific state needed to operate the peripheral. */
