@@ -12,6 +12,7 @@
 
 #include <pbdrv/display.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/image.h>
 #include <pbio/os.h>
@@ -54,6 +55,7 @@ static pbio_error_t pbdrv_display_virtual_process_thread(pbio_os_state_t *state,
     // Clear display to start with.
     memset(&pbdrv_display_user_frame, 0, sizeof(pbdrv_display_user_frame));
     pbdrv_display_user_frame_update_requested = true;
+    pbio_busy_count_down();
 
     // Update the display with the user frame buffer, if changed.
     for (;;) {
@@ -77,6 +79,7 @@ void pbdrv_display_init(void) {
     display_image.print_font = &pbio_font_terminus_normal_16;
     display_image.print_value = 3;
 
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_display_virtual_process, pbdrv_display_virtual_process_thread, NULL);
 }
 
