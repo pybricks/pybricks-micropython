@@ -713,6 +713,10 @@ shutdown:
 
 pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_SUCCESS;
+    }
+
     static pbio_os_state_t sub;
 
     // For looping over peripherals.
