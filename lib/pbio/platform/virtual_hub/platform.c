@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
-#include <arpa/inet.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
@@ -153,48 +152,10 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
     .ir_key = (const uint8_t *)"placeholderplaceholder",
 };
 
-// Socket used to send data to Python animation.
-static int data_socket = -1;
-static struct sockaddr_in serv_addr;
-
-void virtual_hub_socket_send(const uint8_t *data, uint32_t size) {
-    if (data_socket < 0) {
-        return;
-    }
-    ssize_t sent = sendto(data_socket, data, size, 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    if (sent < 0) {
-        printf("send() failed");
-        close(data_socket);
-        data_socket = -1;
-    }
-}
-
-static void virtual_hub_socket_init(void) {
-    if (!getenv("PBIO_TEST_CONNECT_SOCKET")) {
-        return;
-    }
-    data_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (data_socket < 0) {
-        printf("socket() failed");
-        return;
-    }
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5002);
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        printf("inet_pton() failed");
-        close(data_socket);
-        data_socket = -1;
-        return;
-    }
-}
-
 // The 'embedded' main.
 extern void pbsys_main(void);
 
 int main(int argc, char **argv) {
-
-    // Optional output via animated hub.
-    virtual_hub_socket_init();
 
     // Separate heap for large allocations - defined in linker script.
     static uint8_t umm_heap[1024 * 1024 * 2];

@@ -17,6 +17,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "../rproc/rproc_virtual.h"
+
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -42,9 +44,8 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
         (void)ret;
     }
 
-    #ifndef PBDRV_CONFIG_RUN_ON_CI
-    extern void virtual_hub_socket_send(const uint8_t *data, uint32_t size);
-    virtual_hub_socket_send(data + 1, size - 1);
+    #ifdef PBDRV_CONFIG_RPROC_VIRTUAL
+    pbdrv_rproc_virtual_socket_send(data + 1, size - 1);
     #endif
 
     // Simulate some I/O time.

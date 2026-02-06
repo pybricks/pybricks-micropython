@@ -16,6 +16,8 @@
 #include <pbio/image.h>
 #include <pbio/os.h>
 
+#include "../rproc/rproc_virtual.h"
+
 /**
  * User frame buffer. Each value is one pixel with value:
  *
@@ -57,8 +59,7 @@ static pbio_error_t pbdrv_display_virtual_process_thread(pbio_os_state_t *state,
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
         pbdrv_display_user_frame_update_requested = false;
-        extern void virtual_hub_socket_send(const uint8_t *data, uint32_t size);
-        virtual_hub_socket_send(display_image.pixels, sizeof(pbdrv_display_user_frame));
+        pbdrv_rproc_virtual_socket_send(display_image.pixels, sizeof(pbdrv_display_user_frame));
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

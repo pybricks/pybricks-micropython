@@ -54,7 +54,9 @@
 #define PBDRV_CONFIG_HAS_PORT_F (1)
 #define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)
 
-// USB mock driver used on CI.
+#define PBDRV_CONFIG_RPROC                                  (1)
+#define PBDRV_CONFIG_RPROC_VIRTUAL                          (1)
+
 #define PBDRV_CONFIG_USB                                    (1)
 #define PBDRV_CONFIG_USB_SIMULATION                         (1)
 #define PBDRV_CONFIG_USB_MAX_PACKET_SIZE                    (64)
