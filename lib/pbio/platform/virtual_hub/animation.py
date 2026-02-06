@@ -8,7 +8,8 @@ import struct
 
 IMG_PATH = Path("lib/pbio/test/animator/img")
 HOST = "127.0.0.1"
-PORT = 5002
+RECV_PORT = 5002
+SEND_SEND = 5003
 SCREEN_WIDTH = 1400
 SCREEN_HEIGHT = 1000
 FPS = 25
@@ -33,8 +34,8 @@ data_queue = queue.Queue()
 # for fast debugging.
 def socket_listener_thread():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((HOST, PORT))
-    print(f"Listening on {HOST}:{PORT}")
+    sock.bind((HOST, RECV_PORT))
+    print(f"Listening on {HOST}:{RECV_PORT}")
     while True:
         data, _ = sock.recvfrom(DISPLAY_WIDTH * DISPLAY_HEIGHT)
         data_queue.put(data)
@@ -131,11 +132,25 @@ def main():
     # Start the socket listener thread
     threading.Thread(target=socket_listener_thread, daemon=True).start()
 
+    send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    SEND_ADDR = (HOST, SEND_SEND)
+    NUMPAD_KEYS = [getattr(pygame, f"K_KP{i}") for i in range(10)]
+    numpad_state = 0
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                for i, key_const in enumerate(NUMPAD_KEYS):
+                    if event.key == key_const:
+                        if event.type == pygame.KEYDOWN:
+                            numpad_state |= 1 << i
+                        else:
+                            numpad_state &= ~(1 << i)
+                        # REVISIT: Generalize to reverse telemetry command.
+                        send_sock.sendto(struct.pack("<I", numpad_state), SEND_ADDR)
 
         # Parse queued incoming data.
         update_state()

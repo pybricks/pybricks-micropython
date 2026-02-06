@@ -130,6 +130,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/button/button_nxt.c \
 	drv/button/button_resistor_ladder.c \
 	drv/button/button_test.c \
+	drv/button/button_virtual.c \
 	drv/cache/cache_ev3.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_ev3.c \

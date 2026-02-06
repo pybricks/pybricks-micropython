@@ -20,7 +20,7 @@
 #endif // PBDRV_CONFIG_RUN_ON_CI
 
 #define PBDRV_CONFIG_BUTTON                                 (1)
-#define PBDRV_CONFIG_BUTTON_TEST                            (1)
+#define PBDRV_CONFIG_BUTTON_VIRTUAL                         (1)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #ifdef PBDRV_CONFIG_RUN_ON_CI
