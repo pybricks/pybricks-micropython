@@ -1401,6 +1401,16 @@ const uint8_t cc256x_init_script[] = {};
 
 void pbdrv_bluetooth_init_hci(void) {
 
+    // Initialize host structs as not connected.
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        host->con_handle = HCI_CON_HANDLE_INVALID;
+        host->send_request.callback = pybricks_on_ready_to_send;
+        host->send_request.context = host;
+    }
+    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+
     // Proceed to start Bluetooth process only if platform init passes.
     pbio_error_t err = pbdrv_bluetooth_btstack_platform_init();
     if (err != PBIO_SUCCESS) {
@@ -1468,13 +1478,6 @@ void pbdrv_bluetooth_init_hci(void) {
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
-
-    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
-        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
-        host->con_handle = HCI_CON_HANDLE_INVALID;
-        host->send_request.callback = pybricks_on_ready_to_send;
-        host->send_request.context = host;
-    }
     #else
     (void)pybricks_data_received;
     (void)att_read_callback;
