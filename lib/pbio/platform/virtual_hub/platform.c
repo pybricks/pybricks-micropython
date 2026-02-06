@@ -155,35 +155,16 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
 // The 'embedded' main.
 extern void pbsys_main(void);
 
+int main_argc;
+char **main_argv;
+
 int main(int argc, char **argv) {
+    main_argc = argc;
+    main_argv = argv;
 
     // Separate heap for large allocations - defined in linker script.
     static uint8_t umm_heap[1024 * 1024 * 2];
     umm_init_heap(umm_heap, sizeof(umm_heap));
-
-    // Parse given program, else otherwise default to REPL.
-    if (argc > 1) {
-
-        // Pybricksdev helper script, pipes multi-mpy to us.
-        char command[512];
-        snprintf(command, sizeof(command), "pybricksdev compile --bin %s", argv[argc - 1]);
-        FILE *pipe = popen(command, "r");
-        if (!pipe) {
-            printf("Failed to compile program with Pybricksdev\n");
-            return 0;
-        }
-
-        // Read the multi-mpy file from pipe.
-        extern uint8_t pbsys_hmi_native_program_buf[PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE];
-        extern uint32_t pbsys_hmi_native_program_size;
-        pbsys_hmi_native_program_size = fread(pbsys_hmi_native_program_buf, 1, sizeof(pbsys_hmi_native_program_buf), pipe);
-        pclose(pipe);
-
-        if (pbsys_hmi_native_program_size == 0) {
-            printf("Error reading from pipe\n");
-            return 0;
-        }
-    }
 
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // On the CI modifying settings for stdin causes problems. The REPL isn't

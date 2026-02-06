@@ -92,6 +92,39 @@
             ],
             "preLaunchTask": "build virtualhub (debug)"
         },
+{
+            "name": "virtualhub with menu (no bluetooth)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
+            "args": [
+                "${workspaceFolder}/tests/virtualhub/basics/hello.py",
+                "${workspaceFolder}/tests/virtualhub/color/basic.py",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PBIO_TEST_CONNECT_SOCKET",
+                    "value": "true"
+                },
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore timer signal",
+                    "text": "handle SIG34 noprint pass",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build virtualhub (debug)"
+        },
         {
             "name": "virtualhub (UB500_INDEX=0)",
             "type": "cppdbg",
