@@ -175,6 +175,15 @@ def main():
         )
         screen.blit(scaled_surface, DISPLAY_POS)
 
+        # Draw red circles for pressed numpad keys, positioned as on a numpad
+        for i in range(1, 10):
+            if numpad_state & (1 << i):
+                dx = -1 if i in (1, 4, 7) else 1 if i in (9, 6, 3) else 0
+                dy = -1 if i in (7, 8, 9) else 1 if i in (1, 2, 3) else 0
+                x = 595 + dx * 52
+                y = 694 + dy * 52
+                pygame.draw.circle(screen, (140, 20, 20), (x, y), 20)
+
         # Update display
         pygame.display.flip()
         clock.tick(FPS)
