@@ -27,6 +27,8 @@ make -s -j $(nproc --all) -C "$BRICK_DIR" BUILD="$BUILD_DIR_NAME" CI_MODE=1
 
 export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
 
+find "$BUILD_DIR" -name '*.gcda' -type f -delete
+
 cd "$MP_TEST_DIR"
 ./run-tests.py --test-dirs $(find "$PB_TEST_DIR/virtualhub" -type d -and ! -wholename "*/build/*"  -and ! -wholename "*/run_test.py") "$@" || \
     (code=$?; ./run-tests.py --print-failures; exit $code)
