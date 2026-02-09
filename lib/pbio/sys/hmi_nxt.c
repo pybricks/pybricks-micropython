@@ -2,11 +2,11 @@
 // Copyright (c) 2018-2025 The Pybricks Authors
 
 // Provides Human Machine Interface (HMI) between hub and user for systems
-// with directional buttons and an LCD display.
+// with directional buttons and an NXT display.
 
 #include <pbsys/config.h>
 
-#if PBSYS_CONFIG_HMI_LCD
+#if PBSYS_CONFIG_HMI_NXT
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -23,11 +23,8 @@
 #include <pbsys/light.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
-#include <pbsys/storage.h>
-#include <pbsys/storage_settings.h>
 
 #include "hmi.h"
-#include "storage.h"
 
 #define DEBUG 0
 
@@ -56,11 +53,12 @@ static uint32_t sr(uint32_t r) {
 }
 
 /**
- * Draws the Pybricks logo on the screen.
+ * Draws the Pybricks logo on the screen with some text below.
  *
  * @param  x     [in] Horizontal offset from the left.
  * @param  y     [in] Vertical offset from the top.
  * @param  width [in] Width (natural size is 154 x 84).
+ * @param  text  [in] Width (natural size is 154 x 84).
  */
 static void draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t width) {
     _offset_x = x;
@@ -94,16 +92,12 @@ static void draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t width) {
     pbdrv_display_update();
 }
 
-#if PBSYS_CONFIG_HMI_NUM_SLOTS
-static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
+static void draw_status_text(const char *status) {
     pbio_image_t *display = pbdrv_display_get_image();
-    uint8_t value = on ? pbdrv_display_get_max_value(): 0;
-    const uint32_t size = PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBSYS_CONFIG_HMI_NUM_SLOTS;
-    const uint32_t width = size * 4 / 5;
-    const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
-    pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
+    pbio_image_fill_rect(display, 0, 48, 128, 32, 0);
+    pbio_image_draw_text(display, &pbio_font_mono_8x5_8, 0, 60, status, strlen(status), pbdrv_display_get_max_value());
+    pbdrv_display_update();
 }
-#endif
 
 static void pbsys_hmi_host_update_indications(void) {
     if (pbdrv_usb_connection_is_active()) {
@@ -143,7 +137,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Centered above 5 code slot indicators.
+    // Centered.
     const uint32_t width = PBDRV_CONFIG_DISPLAY_NUM_COLS * 7 / 10;
     draw_pybricks_logo((PBDRV_CONFIG_DISPLAY_NUM_COLS - width) / 2,
         PBDRV_CONFIG_DISPLAY_NUM_ROWS / 10, width);
@@ -152,15 +146,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         DEBUG_PRINT("Start HMI loop\n");
 
-        // Visually indicate current slot.
-        #if PBSYS_CONFIG_HMI_NUM_SLOTS
-        uint8_t selected_slot = pbsys_status_get_selected_slot();
-        for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
-            hmi_lcd_grid_show_pixel(4, c, c == selected_slot);
-        }
-        #endif
-
-        pbdrv_display_update();
+        draw_status_text("     Ready.");
 
         pbsys_hmi_host_update_indications();
 
@@ -207,17 +193,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             break;
         }
 
-        // On right, increment slot when possible, then start waiting on new inputs.
-        if (pbdrv_button_get_pressed() & PBIO_BUTTON_RIGHT) {
-            pbsys_status_increment_selected_slot(true);
-            continue;
-        }
-        // On left, decrement slot when possible, then start waiting on new inputs.
-        if (pbdrv_button_get_pressed() & PBIO_BUTTON_LEFT) {
-            pbsys_status_increment_selected_slot(false);
-            continue;
-        }
-
         // On center, attempt to start program.
         if (pbdrv_button_get_pressed() & PBIO_BUTTON_CENTER) {
             pbio_error_t err = pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
@@ -243,11 +218,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         pbdrv_button_get_pressed();
     }));
 
-    // Start light or display animations.
-    #if PBIO_CONFIG_LIGHT
-    pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
-    #endif
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -272,8 +242,14 @@ pbio_error_t pbsys_hmi_await_program_selection(void) {
         // run all processes and wait for next event.
         pbio_os_run_processes_and_wait_for_event();
     }
+    if (err == PBIO_SUCCESS) {
+        draw_status_text("   Running...");
+    } else if (err == PBIO_ERROR_CANCELED) {
+        draw_status_text("Shutting down...");
+    }
+
     DEBUG_PRINT("Finished program selection with status: %d\n", err);
     return err;
 }
 
-#endif // PBSYS_CONFIG_HMI_LCD
+#endif // PBSYS_CONFIG_HMI_NXT

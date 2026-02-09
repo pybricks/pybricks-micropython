@@ -13,7 +13,7 @@
 #define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 7) // top left, back button
-#define PBSYS_CONFIG_HMI_LCD                        (1)
+#define PBSYS_CONFIG_HMI_EV3                        (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (5)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (21)
