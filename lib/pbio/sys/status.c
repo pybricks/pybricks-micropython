@@ -99,6 +99,24 @@ void pbsys_status_increment_selected_slot(bool increment) {
 }
 
 /**
+ * Sets the currently active slot if it is valid.
+ *
+ * @param [in]  slot   Slot id to set.
+ */
+void pbsys_status_set_selected_slot(uint8_t slot) {
+    #if PBSYS_CONFIG_HMI_NUM_SLOTS
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
+        return;
+    }
+
+    if (slot < PBSYS_CONFIG_HMI_NUM_SLOTS) {
+        pbsys_status.slot = slot;
+        pbsys_status_update_emit();
+    }
+    #endif
+}
+
+/**
  * Gets the currently selected program slot.
  *
  * @return The currently selected program slot (zero-indexed).
