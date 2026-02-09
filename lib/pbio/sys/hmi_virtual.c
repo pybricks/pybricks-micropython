@@ -21,6 +21,7 @@
 
 #include "storage.h"
 #include "hmi.h"
+#include "hmi_ev3_ui.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -115,15 +116,6 @@ void pbsys_hmi_init(void) {
     }
 }
 
-static void hmi_lcd_grid_show_pixel(uint8_t row, uint8_t col, bool on) {
-    pbio_image_t *display = pbdrv_display_get_image();
-    uint8_t value = on ? pbdrv_display_get_max_value(): 0;
-    const uint32_t size = PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBSYS_CONFIG_HMI_NUM_SLOTS;
-    const uint32_t width = size * 4 / 5;
-    const uint32_t offset = (PBDRV_CONFIG_DISPLAY_NUM_COLS - (PBSYS_CONFIG_HMI_NUM_SLOTS * size)) / 2;
-    pbio_image_fill_rect(display, col * size + offset, row * size, width, width, value);
-}
-
 void pbsys_hmi_deinit(void) {
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_fill(display, 0);
@@ -134,19 +126,13 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    pbsys_hmi_ev3_ui_initialize();
+
     for (;;) {
 
         DEBUG_PRINT("Start HMI loop\n");
 
-        // Visually indicate current slot.
-        #if PBSYS_CONFIG_HMI_NUM_SLOTS
-        uint8_t selected_slot = pbsys_status_get_selected_slot();
-        for (uint8_t c = 0; c < PBSYS_CONFIG_HMI_NUM_SLOTS; c++) {
-            hmi_lcd_grid_show_pixel(4, c, c == selected_slot);
-        }
-        #endif
-
-        pbdrv_display_update();
+        pbsys_hmi_ev3_ui_draw();
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -185,30 +171,31 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             break;
         }
 
-        // On right, increment slot when possible, then start waiting on new inputs.
-        if (pbdrv_button_get_pressed() & PBIO_BUTTON_RIGHT) {
-            pbsys_status_increment_selected_slot(true);
-            continue;
-        }
-        // On left, decrement slot when possible, then start waiting on new inputs.
-        if (pbdrv_button_get_pressed() & PBIO_BUTTON_LEFT) {
-            pbsys_status_increment_selected_slot(false);
+        // Update UI state for buttons.
+        uint8_t payload;
+        pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+
+        if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
+            pbsys_status_set_selected_slot(payload);
             continue;
         }
 
-        // On center, attempt to start program.
-        if (pbdrv_button_get_pressed() & PBIO_BUTTON_CENTER) {
-            pbio_error_t err = pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
-            if (err == PBIO_SUCCESS) {
-                DEBUG_PRINT("Start program with button\n");
-                break;
-            } else {
+        if (action == PBSYS_HMI_EV3_UI_ACTION_SHUTDOWN) {
+            return PBIO_ERROR_CANCELED;
+        }
+
+        if (action == PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM) {
+            pbio_error_t err = pbsys_main_program_request_start(payload, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
+            if (err != PBIO_SUCCESS) {
                 DEBUG_PRINT("Requested program not available.\n");
-                // We can run an animation here to indicate that the program is not available.
+                pbsys_hmi_ev3_ui_handle_error(err);
+                continue;
             }
-        }
 
-        DEBUG_PRINT("No valid action selected, start over.\n");
+            // Exit HMI loop if valid program selected.
+            DEBUG_PRINT("Start program with button\n");
+            break;
+        }
     }
 
     // Wait for all buttons to be released so the user doesn't accidentally
