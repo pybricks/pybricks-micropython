@@ -49,6 +49,7 @@
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
 #define PYBRICKS_PY_PARAMETERS_ICON             (1)
 #define PYBRICKS_PY_PARAMETERS_IMAGE            (1)
+#define PYBRICKS_PY_PARAMETERS_IMAGE_FILE       (1)
 #define PYBRICKS_PY_DEVICES                     (1)
 #define PYBRICKS_PY_PUPDEVICES                  (0)
 #define PYBRICKS_PY_PUPDEVICES_REMOTE           (0)

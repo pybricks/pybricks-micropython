@@ -69,7 +69,11 @@ extern const mp_obj_base_t pb_Icon_obj;
 #if PYBRICKS_PY_PARAMETERS_IMAGE
 
 extern const mp_obj_type_t pb_type_Image;
+extern const mp_obj_base_t pb_image_file_obj;
 mp_obj_t pb_type_Image_display_obj_new(void);
+extern const mp_rom_map_elem_t pb_type_image_attributes_dict_table[];
+
+extern const mp_obj_dict_t pb_type_image_attributes_dict;
 
 extern const mp_obj_type_t pb_type_Font;
 const pbio_font_t *pb_type_Font_get_font(mp_obj_t obj);

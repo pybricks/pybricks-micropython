@@ -70,6 +70,25 @@ typedef struct _pbio_image_t {
 } pbio_image_t;
 
 /**
+ * Compressed monochrome image.
+ */
+typedef struct _pbio_image_monochrome_t {
+    /**
+     * Width of the image, or number of columns.
+     */
+    int width;
+    /**
+     * Height of the image, or number of rows.
+     */
+    int height;
+    /**
+     * One byte is 8 pixels. High is black, low is transparent. Most
+     * significant bit is first pixel.
+     */
+    const uint8_t *data;
+} pbio_image_monochrome_t;
+
+/**
  * Coordinates of a rectangle.
  */
 typedef struct _pbio_image_rect_t {
@@ -106,6 +125,9 @@ void pbio_image_draw_image(pbio_image_t *image, const pbio_image_t *source,
 
 void pbio_image_draw_image_transparent(pbio_image_t *image,
     const pbio_image_t *source, int x, int y, uint8_t value);
+
+void pbio_image_draw_image_transparent_from_monochrome(pbio_image_t *image,
+    const pbio_image_monochrome_t *source, int x, int y, uint8_t value);
 
 void pbio_image_draw_pixel(pbio_image_t *image, int x, int y, uint8_t value);
 

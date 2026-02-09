@@ -162,6 +162,7 @@ DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 PYBRICKSDEV = pybricksdev
 METADATA = $(PBTOP)/tools/metadata.py
+MEDIA_CONVERT = $(PBTOP)/lib/pbio/src/image/media.py
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
@@ -549,6 +550,11 @@ ifneq ($(PB_MCU_FAMILY),TIAM1808)
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
 endif
 
+ifeq ($(PB_MEDIA),1)
+PYBRICKS_PYBRICKS_SRC_C += $(BUILD)/pb_type_image_attributes.c
+PBIO_SRC_C += $(BUILD)/pbio_image_media.c
+endif
+
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
@@ -663,6 +669,10 @@ FW_SECTIONS := -j .isr_vector -j .text -j .data -j .name
 else
 FW_SECTIONS :=
 endif
+
+$(BUILD)/pbio_image_media.c $(BUILD)/pb_type_image_attributes.c: $(MEDIA_CONVERT)
+	$(ECHO) "MEDIA generating image media files"
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) $(BUILD)
 
 $(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"

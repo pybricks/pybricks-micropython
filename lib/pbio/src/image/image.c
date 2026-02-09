@@ -197,6 +197,53 @@ void pbio_image_draw_image_transparent(pbio_image_t *image,
 }
 
 /**
+ * Draw an image inside another image with transparency. The source is
+ * a compressed monochrome image.
+ *
+ * @param [in] image   Destination image to draw into.
+ * @param [in] source  Source image.
+ * @param [in] x       X coordinate of the top-left point in destination
+ *                     image.
+ * @param [in] y       Y coordinate of the top-left point in destination
+ *                     image.
+ * @param [in] value   Pixel value in destination for black.
+ *
+ * Source image pixels are copied into destination image. When a source pixel
+ * matches the transparent value, the corresponding destination pixel is left
+ * untouched.
+ *
+ * Clipping: drawing is clipped to destination image dimensions.
+ */
+void pbio_image_draw_image_transparent_from_monochrome(pbio_image_t *image,
+    const pbio_image_monochrome_t *source, int x, int y, uint8_t value) {
+    // Clipping.
+    int ox = x;
+    int oy = y;
+    int x2 = x + source->width;
+    int y2 = y + source->height;
+    clip_or_return(x, x2, image->width);
+    clip_or_return(y, y2, image->height);
+
+    // Initial index in source.
+    size_t index = (y - oy) * source->width + (x - ox);
+
+    // Draw pixels.
+    uint8_t *dst = image->pixels + y * image->stride + x;
+    int w = x2 - x;
+    for (int h = y2 - y; h; h--) {
+        for (int i = w; i; i--) {
+            if (source->data[index / 8] & (1 << (7 - index % 8))) {
+                *dst = value;
+            }
+            index++;
+            dst++;
+        }
+        dst += image->stride - w;
+        index += source->width - w;
+    }
+}
+
+/**
  * Draw a single pixel.
  * @param [in] image  Image to draw into.
  * @param [in] x      X coordinate of the pixel.

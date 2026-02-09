@@ -3,5 +3,6 @@ PB_MCU_FAMILY = TIAM1808
 
 PB_LIB_UMM_MALLOC = 1
 PB_LIB_BTSTACK = 1
+PB_MEDIA = 1
 
 include ../_common/common.mk

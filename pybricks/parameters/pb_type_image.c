@@ -23,6 +23,10 @@
 
 #include <pbdrv/display.h>
 
+#if PYBRICKS_PY_PARAMETERS_IMAGE_FILE
+#include "pbio_image_media.h"
+#endif // PYBRICKS_PY_PARAMETERS_IMAGE_FILE
+
 extern const mp_obj_type_t pb_type_Image;
 
 // pybricks.parameters.Image class object
@@ -450,5 +454,63 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Image,
     make_new, pb_type_Image_make_new,
     attr, pb_type_Image_attr,
     locals_dict, &pb_type_Image_locals_dict);
+
+#if PYBRICKS_PY_PARAMETERS_IMAGE_FILE
+// pybricks.parameters.ImageFile.ARROW_UP
+// pybricks.parameters.ImageFile.ARROW_LEFT
+// etc.
+static void pb_type_image_file_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+
+    mp_map_t *map = mp_obj_dict_get_map((mp_obj_t)&pb_type_image_attributes_dict);
+    mp_map_elem_t *elem = mp_map_lookup(map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+
+    // Proceed only for read and if found.
+    if (dest[0] != MP_OBJ_NULL || !elem) {
+        return;
+    }
+
+    pbio_image_monochrome_t *compressed = elem->value;
+    pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
+
+    // This is a standalone image.
+    self->owner = MP_OBJ_NULL;
+    self->is_display = false;
+
+    // Default to same colors as display.
+    pbio_image_t *display = pbdrv_display_get_image();
+    self->image.print_font = display->print_font;
+    self->image.print_value = display->print_value;
+    self->image.print_x_left = 0;
+    self->image.print_y_top = 0;
+
+    // Size is given by source.
+    self->image.height = compressed->height;
+    self->image.width = compressed->width;
+    self->image.stride = compressed->width;
+    self->image.pixels = m_malloc0(compressed->width * compressed->height);
+
+    pbio_image_draw_image_transparent_from_monochrome(&self->image, compressed, 0, 0, self->image.print_value);
+
+    dest[0] = MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.parameters.ImageFile(x)
+static mp_obj_t pb_type_image_file_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    // TODO: open from file system.
+    return mp_const_none;
+}
+
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_image_file,
+    MP_QSTR_ImageFile,
+    MP_TYPE_FLAG_NONE,
+    call, pb_type_image_file_call,
+    attr, pb_type_image_file_attr);
+
+// We expose an instance instead of the type. This allows us to provide class
+// attributes via the object instance attribute handler.
+const mp_obj_base_t pb_image_file_obj = {
+    &pb_type_image_file
+};
+#endif // PYBRICKS_PY_PARAMETERS_IMAGE_FILE
 
 #endif // PYBRICKS_PY_PARAMETERS_IMAGE
