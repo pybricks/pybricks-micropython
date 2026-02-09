@@ -8,7 +8,6 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-freetype-py = "^2.5.1"
 
 [tool.poetry.group.dev.dependencies]
 eventlet = "^0.40.3"
@@ -24,12 +23,13 @@ sympy = "^1.10.1"
 pre-commit = ">=3.6.2"
 pygame = "^2.6.1"
 
-[tool.poetry.group.stats.dependencies]
+[tool.poetry.group.build.dependencies]
 azure-data-tables = "^12.4.2"
 gql = {extras = ["requests"], version = "^3.4.0"}
 gitpython = "^3.1.31"
 plotly = "^5.14.1"
 pygithub = "^1.58.1"
+freetype-py = "^2.5.1"
 
 
 [tool.poetry.group.lint.dependencies]

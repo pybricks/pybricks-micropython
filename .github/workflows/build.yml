@@ -108,7 +108,7 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/build/mpy-cross
     - run: pipx install poetry
-    - run: poetry install --only=stats
+    - run: poetry install --only=build
     - name: Build firmware (pull request)
       if: ${{ github.base_ref != null }}
       run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
@@ -168,8 +168,10 @@ jobs:
         path: micropython/mpy-cross/build
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/build/mpy-cross
+    - run: pipx install poetry
+    - run: poetry install --only=build
     - name: Build and test
-      run: ./test-virtualhub.sh
+      run: poetry run ./test-virtualhub.sh
     - name: Coveralls
       uses: coverallsapp/github-action@v2
       with:

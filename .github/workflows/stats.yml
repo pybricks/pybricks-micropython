@@ -20,7 +20,7 @@ jobs:
           submodules: true
           fetch-depth: 0
       - run: pipx install poetry
-      - run: poetry install --only=stats
+      - run: poetry install --only=build
       - name: Build missing commits
         env:
           STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
