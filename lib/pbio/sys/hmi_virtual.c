@@ -208,6 +208,8 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         pbdrv_button_get_pressed();
     }));
 
+    pbsys_hmi_ev3_ui_run_animation_start();
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 

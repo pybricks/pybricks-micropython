@@ -173,6 +173,8 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
     #endif
 
+    pbsys_hmi_ev3_ui_run_animation_start();
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
