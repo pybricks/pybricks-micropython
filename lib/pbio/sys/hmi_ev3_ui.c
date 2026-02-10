@@ -9,17 +9,20 @@
 #if PBSYS_CONFIG_HMI_EV3_UI
 
 #include <pbsys/main.h>
-#include "storage.h"
+#include <pbsys/status.h>
 
 #include <pbdrv/display.h>
 
 #include <pbio/light_animation.h>
+#include <pbio/battery.h>
 #include <pbio/button.h>
 #include <pbio/image.h>
 #include <pbio/version.h>
+#include <pbio/int_math.h>
 
 #include "hmi_ev3_ui.h"
 #include "pbio_image_media.h"
+#include "storage.h"
 
 #define BLACK (3)
 #define WHITE (0)
@@ -300,6 +303,22 @@ void pbsys_hmi_ev3_ui_handle_error(pbio_error_t err) {
 // -----------------------------------------------------------------------------
 
 /**
+ * Draw text relative to the horizontal center.
+ *
+ * @param [in] font      Font to use for drawing.
+ * @param [in] x         X coordinate of the baseline relative to if centered text.
+ * @param [in] y         Y coordinate of the baseline.
+ * @param [in] text      Text string.
+ */
+static void pbsys_hmi_ev3_ui_draw_centered_text(const pbio_font_t *font, const char *text, int x_offset, int y) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_rect_t rect;
+    pbio_image_bbox_text(font, text, strlen(text), &rect);
+    int x = (display->width - rect.width) / 2 + x_offset;
+    pbio_image_draw_text(display, &pbio_font_terminus_normal_16, x, y, text, strlen(text), BLACK);
+}
+
+/**
  * Draws the overlay.
  *
  * @param  [in]  overlay The overlay to draw.
@@ -345,10 +364,7 @@ static void pbsys_hmi_ev3_ui_draw_overlay(pbsys_hmi_ev3_ui_overlay_type_t overla
         case PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON:
             pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_accept24_fill, 76, bar_y + 3, BLACK);
             const char *text = overlay == PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM ? "No program!" : "Coming soon!";
-            pbio_image_rect_t rect;
-            pbio_image_bbox_text(&pbio_font_liberationsans_regular_14, text, strlen(text), &rect);
-            pbio_image_draw_text(display, &pbio_font_liberationsans_regular_14,
-                (178 - rect.width) / 2, bar_y - 16, text, strlen(text), BLACK);
+            pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, text, 0, bar_y - 16);
         default:
             break;
     }
@@ -373,9 +389,6 @@ void pbsys_hmi_ev3_ui_draw(void) {
         pbio_image_draw_text(display, &pbio_font_liberationsans_regular_14, 8, 52 + s * 20, text, strlen(text), color);
         pbio_image_fill_rect(display, 172, 41, 6, 20 * 4, WHITE);
     }
-
-    // Draw upper status bar.
-    pbio_image_draw_hline(display, 0, 10, 178, BLACK);
 
     // Draw box around tab entries.
     pbio_image_draw_rect(display, 1, 38, 176, 89, BLACK);
@@ -420,6 +433,24 @@ void pbsys_hmi_ev3_ui_draw(void) {
 
     // Settings icon.
     pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_wrench17, 101, 16, BLACK);
+
+    // Draw upper status bar.
+    pbio_image_draw_hline(display, 0, 10, 178, BLACK);
+
+    // Battery indicator: REVISIT: better percentage estimation at driver level.
+    const int vmin = 5800;
+    const int vmax = 8000;
+    int voltage = pbio_int_math_bind(pbio_battery_get_average_voltage(), vmin, vmax);
+    int bars = (voltage - vmin) * 11 / (vmax - vmin);
+    pbio_image_draw_rect(display, 160, 1, 15, 8, BLACK);
+    pbio_image_draw_vline(display, 174, 4, 2, WHITE);
+    pbio_image_draw_vline(display, 175, 3, 4, BLACK);
+    pbio_image_fill_rect(display, 162, 3, bars, 4, BLACK);
+
+    // USB if connected.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
+        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_usb_host, 130, 2, BLACK);
+    }
 
     // Draw the overlay on top of everything else.
     pbsys_hmi_ev3_ui_draw_overlay(state.overlay);
@@ -485,7 +516,7 @@ static void pbsys_hmi_ev3_ui_draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t
 #define ANIMATION_BLINK_MS (300)
 #define ANIMATION_BLINK_AT_MS (2000)
 #define ANIMATION_UP_MS (800 / 2)
-#define ANIMATION_DY (15)
+#define ANIMATION_DY (12)
 
 /**
  * Elapsed time in animation.
@@ -546,11 +577,7 @@ void pbsys_hmi_ev3_ui_run_animation_start(void) {
     pbsys_main_program_get_info(&id, &type);
     if (id < PBSYS_CONFIG_HMI_NUM_SLOTS) {
         const char *name = pbsys_hmi_ev3_ui_get_program_name_at_slot(id);
-        pbio_image_rect_t rect;
-        pbio_image_bbox_text(&pbio_font_terminus_normal_16, name, strlen(name), &rect);
-        uint8_t x = rect.width > 178 ? 0 : (178 - rect.width) / 2;
-        x = x < 10 ? x : x - 10;
-        pbio_image_draw_text(display, &pbio_font_terminus_normal_16, x, 116, name, strlen(name), BLACK);
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_terminus_normal_16, name, -10, 116);
     }
     // Not updating display here. First animation frame will do that.
 }
