@@ -16,6 +16,7 @@
 #include <pbsys/status.h>
 
 #include "../src/light/color_light.h"
+#include "light.h"
 
 #if PBSYS_CONFIG_STATUS_LIGHT
 
@@ -193,6 +194,8 @@ void pbsys_status_light_init(void) {
     pbdrv_led_get_dev(2, &pbsys_status_light_instance_usb_ble.led);
     pbio_color_light_init(&pbsys_status_light_instance_usb_ble.color_light, &pbsys_status_light_funcs);
     #endif
+
+    pbsys_status_light_handle_status_change();
 }
 
 void pbsys_status_light_handle_status_change(void) {
@@ -226,6 +229,12 @@ void pbsys_status_light_handle_status_change(void) {
     } else if (pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED)) {
         usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_CONNECTED;
     }
+
+    // REVISIT: Generalize setting of non-pattern colors. This workaround
+    // is currently needed because simply turning a light on is impossible.
+    #if PBSYS_CONFIG_HMI_EV3
+    usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_CONNECTED;
+    #endif
 
     #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
     // Hubs without Bluetooth light don't show connectivity state if program is running.
