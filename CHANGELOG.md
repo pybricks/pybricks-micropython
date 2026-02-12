@@ -12,6 +12,8 @@
 - Added support for Powered Up touch sensors that are supported according to
   the specification, but were never released. Users can make their own switch
   inputs ([pybricks-micropython#454]).
+- Added `pybricks.pupdevices.TechnicMoveHub` to control it as a peripheral. It
+  cannot be used as a standalone device since it cannot run third-party firmware.
 
 ### Changed
 - Changed the default `XboxController` connection timeout from indefinite

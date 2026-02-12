@@ -20,9 +20,11 @@ extern const mp_obj_type_t pb_type_pupdevices_ForceSensor;
 extern const mp_obj_type_t pb_type_pupdevices_InfraredSensor;
 extern const mp_obj_type_t pb_type_pupdevices_Light;
 extern const mp_obj_type_t pb_type_pupdevices_PFMotor;
-extern const mp_obj_type_t pb_type_remote;
 extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
 extern const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
+
+extern const mp_obj_type_t pb_type_remote;
+extern const mp_obj_type_t pb_type_technic_move_hub;
 
 pb_type_device_obj_base_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj);
 

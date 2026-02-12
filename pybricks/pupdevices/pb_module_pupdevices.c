@@ -32,7 +32,7 @@ static const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Remote),              MP_ROM_PTR(&pb_type_remote)                        },
     #endif
     #if PYBRICKS_PY_PUPDEVICES_TECHNIC_MOVE_HUB
-    { MP_ROM_QSTR(MP_QSTR_TechnicMoveHub),      MP_ROM_PTR(&pb_type_remote)                        },
+    { MP_ROM_QSTR(MP_QSTR_TechnicMoveHub),      MP_ROM_PTR(&pb_type_technic_move_hub)              },
     #endif
     { MP_ROM_QSTR(MP_QSTR_TiltSensor),          MP_ROM_PTR(&pb_type_pupdevices_TiltSensor)         },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pb_type_pupdevices_UltrasonicSensor)   },

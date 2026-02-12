@@ -12,6 +12,7 @@
 
 #include <pbio/button.h>
 #include <pbio/color.h>
+#include <pbio/int_math.h>
 #include <pbio/error.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
@@ -137,6 +138,10 @@ typedef struct {
      * The hub kind to filter advertisements for.
      */
     lwp3_hub_kind_t hub_kind;
+    /**
+     * General purpose timer.
+     */
+    pbio_os_timer_t timer;
     /**
      * Maximum number of stored notifications.
      */
@@ -622,6 +627,174 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_remote,
     attr, pb_attribute_handler,
     protocol, pb_type_remote_attr_dict,
     locals_dict, &pb_type_remote_locals_dict);
+
+
+// -----------------------------------------------------------------------------
+// pybricks.pupdevices.TechnicMoveHub (special case of LWP3).
+// -----------------------------------------------------------------------------
+
+static const uint8_t pb_type_technic_move_hub_setup1[] = {
+    0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, 0x00, 0x00, 0x10, 0x00,
+};
+
+static const uint8_t pb_type_technic_move_hub_setup2[] = {
+    0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, 0x00, 0x00, 0x08, 0x00,
+};
+
+static void pb_type_technic_move_hub_handle_notification(void *user, const uint8_t *value, uint32_t size) {
+    // Not processing any notifications. We could monitor the hub's internal sensors.
+}
+
+static pbio_error_t pb_type_technic_move_hub_write_command(mp_obj_t self_in) {
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Don't repeat again if already sent idential values this many
+    // times in this interval.
+    const uint8_t max_repeat = 2;
+    const uint32_t max_repeat_timeout = 500;
+    
+    // Reusing the remote button buffer to store drive state.
+    bool identical = self->right[0] == self->left[0] && self->right[1] == self->left[1];
+
+    // Count identical messages sent in short time span, using center for counter.
+    if (!identical || pbio_os_timer_is_expired(&self->timer)) {
+        self->center = 0;
+    }
+
+    // If we sent the same thing several times within timeout, it probably arrived.
+    if (self->center == max_repeat) {
+        return PBIO_SUCCESS;
+    }
+
+    // Send command and keep track of the time.
+    uint8_t light_mode = 0;
+    self->right[0] = self->left[0];
+    self->right[1] = self->left[1];
+
+    self->center = pbio_int_math_min(self->center + 1, max_repeat);
+    pbio_os_timer_set(&self->timer, max_repeat_timeout);
+    
+    const uint8_t cmd[] = {
+        0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, self->left[0], self->left[1], light_mode, 0,
+    };
+    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd));
+}
+
+static pbio_error_t pb_type_technic_move_hub_post_connect(pbio_os_state_t *state, mp_obj_t parent_obj) {
+
+    pbio_os_state_t unused;
+
+    pbio_error_t err;
+
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    // Send first setup command.
+    PBIO_OS_ASYNC_BEGIN(state);
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+        self->lwp3_char_handle, pb_type_technic_move_hub_setup1, sizeof(pb_type_technic_move_hub_setup1));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Send second setup command.
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+        self->lwp3_char_handle, pb_type_technic_move_hub_setup2, sizeof(pb_type_technic_move_hub_setup2));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Initialize at 0 speed and 0 steering.
+    err = pb_type_technic_move_hub_write_command(parent_obj);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+static mp_obj_t pb_type_technic_move_hub_drive_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_REQUIRED(power));
+    
+    mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
+    self->left[0] = pbio_int_math_clamp(pb_obj_get_int(power_in), 100);
+    pb_assert(pb_type_technic_move_hub_write_command(self_in));
+    return wait_or_await_operation(self_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_drive_power_obj, 1, pb_type_technic_move_hub_drive_power);
+
+static mp_obj_t pb_type_technic_move_hub_steer(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_REQUIRED(percentage));
+    mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
+
+    // Steering is a percentage of the calibrated angle. Go just under maximum
+    // to avoid pushing against the mechanical constraint.
+    self->left[1] = pbio_int_math_clamp(pb_obj_get_int(percentage_in), 97);
+    pb_assert(pb_type_technic_move_hub_write_command(self_in));
+    return wait_or_await_operation(self_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_steer_obj, 1, pb_type_technic_move_hub_steer);
+
+static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_NONE(name),
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_TRUE(connect)
+        );
+
+    pb_module_tools_assert_blocking();
+
+    pb_type_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_lwp3device_obj_t, type);
+    self->iter = NULL;
+    self->noti_num = 0;
+
+    self->hub_kind = LWP3_HUB_KIND_TECHNIC_MOVE;
+    self->post_connect_setup_func = pb_type_technic_move_hub_post_connect;
+
+    // Re-using the unused remote left buffer to store drive state.
+    self->pre_connect_func = pb_type_remote_clear;
+
+    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+        .match_adv = pb_type_lwp3device_advertisement_matches,
+        .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
+        .notification_handler = pb_type_technic_move_hub_handle_notification,
+        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+    };
+    pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
+
+    pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static const mp_rom_map_elem_t pb_type_technic_move_hub_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_lwp3device_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_lwp3device_connect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_lwp3device_disconnect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_drive_power), MP_ROM_PTR(&pb_type_technic_move_hub_drive_power_obj) },
+    { MP_ROM_QSTR(MP_QSTR_steer), MP_ROM_PTR(&pb_type_technic_move_hub_steer_obj) },
+};
+static MP_DEFINE_CONST_DICT(pb_type_technic_move_hub_locals_dict, pb_type_technic_move_hub_locals_dict_table);
+
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
+    MP_QSTR_TechnicMoveHub,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_technic_move_hub_make_new,
+    locals_dict, &pb_type_technic_move_hub_locals_dict);
 
 // -----------------------------------------------------------------------------
 // pybricks.iodevices.LWP3Device (most generic LWP3).
