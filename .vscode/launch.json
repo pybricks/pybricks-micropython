@@ -64,7 +64,7 @@
             "name": "virtualhub (no bluetooth)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
             "args": [
                 "${workspaceFolder}/tests/virtualhub/basics/hello.py",
             ],
@@ -101,7 +101,7 @@
             "name": "virtualhub with menu (no bluetooth)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
             "args": [
                 "${workspaceFolder}/tests/virtualhub/basics/hello.py",
                 "${workspaceFolder}/tests/virtualhub/color/basic.py",
@@ -139,7 +139,7 @@
             "name": "virtualhub (UB500_INDEX=0)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
             "args": [
                 "${workspaceFolder}/tests/bluetooth/virtual0.py",
             ],
@@ -180,7 +180,7 @@
             "name": "virtualhub (UB500_INDEX=1)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/firmware.elf",
+            "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
             "args": [
                 "${workspaceFolder}/tests/bluetooth/virtual1.py",
             ],
@@ -264,7 +264,7 @@
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "executable": "${workspaceRoot}/bricks/debug/build/firmware.elf",
+            "executable": "${workspaceRoot}/bricks/debug/build/pybricks-virtualhub",
             "preLaunchTask": "build debug",
             "device": "STM32F446ZE",
             "configFiles": [

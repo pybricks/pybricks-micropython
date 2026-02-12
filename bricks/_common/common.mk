@@ -633,7 +633,7 @@ ifneq ($(PB_MCU_FAMILY),native)
 # Main firmware build targets
 TARGETS := $(BUILD)/firmware.zip
 else
-TARGETS := $(BUILD)/firmware.elf
+TARGETS := $(BUILD)/pybricks-virtualhub
 endif
 
 all: $(TARGETS)
@@ -674,7 +674,7 @@ $(BUILD)/pbio_image_media.c $(BUILD)/pb_type_image_attributes.c: $(MEDIA_CONVERT
 	$(ECHO) "MEDIA generating image media files"
 	$(Q)$(PYTHON) $(MEDIA_CONVERT) $(BUILD)
 
-$(BUILD)/firmware.elf: $(LD_FILES) $(OBJ)
+$(BUILD)/firmware.elf $(BUILD)/pybricks-virtualhub: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) -A $@
@@ -748,9 +748,5 @@ deploy: $(BUILD)/firmware.zip
 deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
-
-# Run emulation build on a POSIX system using normal stdio
-run: $(BUILD)/firmware.elf
-	@$(BUILD)/firmware.elf
 
 include $(TOP)/py/mkrules.mk

@@ -25,7 +25,7 @@ PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 make mpy-cross -j
 make -s -j $(nproc --all) -C "$BRICK_DIR" BUILD="$BUILD_DIR_NAME" CI_MODE=1
 
-export MICROPY_MICROPYTHON="$BUILD_DIR/firmware.elf"
+export MICROPY_MICROPYTHON="$BUILD_DIR/pybricks-virtualhub"
 
 find "$BUILD_DIR" -name '*.gcda' -type f -delete
 
