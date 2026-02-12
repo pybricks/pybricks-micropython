@@ -55,6 +55,15 @@
             "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-base.bin -j"
         },
         {
+            "label": "Send SIGUSR1 to pybricks-virtualhub",
+            "type": "shell",
+            "command": "pkill -SIGUSR1 -f pybricks-virtualhub",
+            "problemMatcher": [],
+            "presentation": {
+                "close": true,
+            }
+        },
+        {
             "label": "Run with mpremote",
             "type": "shell",
             "command": "mpremote run tests/ev3/basics.py",

@@ -92,6 +92,10 @@ static pbio_error_t pbsys_hmi_await_program_selection_one_off(void) {
     return pbsys_main_program_request_start(id, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }
 
+/**
+ * Reload programs from disk, allowing user to change them locally while the
+ * virtual animation is active.
+ */
 void pbsys_hmi_virtual_reload_programs(void) {
     extern int main_argc;
     extern char **main_argv;
@@ -120,9 +124,11 @@ void pbsys_hmi_virtual_reload_programs(void) {
 
 void pbsys_hmi_init_start_current_slot_from_signal(int sig) {
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
-        return;
+        pbsys_main_stop_program(false);
+    } else {
+        pbsys_hmi_virtual_reload_programs();
+        pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE);
     }
-    pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE);
 }
 
 void pbsys_hmi_init(void) {
@@ -200,8 +206,6 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         if (action == PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM) {
 
-            // Reload programs from disk, allowing user to change them locally
-            // while the virtual animation is active.
             pbsys_hmi_virtual_reload_programs();
 
             pbio_error_t err = pbsys_main_program_request_start(payload, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
