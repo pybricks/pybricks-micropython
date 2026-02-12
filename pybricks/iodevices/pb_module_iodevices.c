@@ -23,7 +23,7 @@ static const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
     #endif
     #if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
-    { MP_ROM_QSTR(MP_QSTR_LWP3Device),       MP_ROM_PTR(&pb_type_iodevices_LWP3Device)     },
+    { MP_ROM_QSTR(MP_QSTR_LWP3Device),       MP_ROM_PTR(&pb_type_lwp3device)               },
     #endif
     #if PYBRICKS_PY_IODEVICES_PUP_DEVICE
     { MP_ROM_QSTR(MP_QSTR_PUPDevice),        MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },

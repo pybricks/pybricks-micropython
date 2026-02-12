@@ -21,7 +21,7 @@ extern const mp_obj_type_t pb_type_uart_device;
 #endif
 
 #if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
-extern const mp_obj_type_t pb_type_iodevices_LWP3Device;
+extern const mp_obj_type_t pb_type_lwp3device;
 #endif
 
 #if PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER
