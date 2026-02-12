@@ -92,9 +92,13 @@ static pbio_error_t pbsys_hmi_await_program_selection_one_off(void) {
     return pbsys_main_program_request_start(id, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }
 
-void pbsys_hmi_init(void) {
+void pbsys_hmi_virtual_reload_programs(void) {
     extern int main_argc;
     extern char **main_argv;
+
+    static uint8_t original_slot;
+
+    original_slot = pbsys_status_get_selected_slot();
 
     // Parse given programs.
     for (int i = 1; i < main_argc; i++) {
@@ -110,10 +114,12 @@ void pbsys_hmi_init(void) {
         pbsys_hmi_num_programs++;
     }
 
-    // Start at zero.
-    for (int i = 0; i < pbsys_hmi_num_programs; i++) {
-        pbsys_status_increment_selected_slot(false);
-    }
+    // Restore original slot.
+    pbsys_status_set_selected_slot(original_slot);
+}
+
+void pbsys_hmi_init(void) {
+    pbsys_hmi_virtual_reload_programs();
 }
 
 void pbsys_hmi_deinit(void) {
@@ -185,6 +191,11 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
 
         if (action == PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM) {
+
+            // Reload programs from disk, allowing user to change them locally
+            // while the virtual animation is active.
+            pbsys_hmi_virtual_reload_programs();
+
             pbio_error_t err = pbsys_main_program_request_start(payload, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
             if (err != PBIO_SUCCESS) {
                 DEBUG_PRINT("Requested program not available.\n");
