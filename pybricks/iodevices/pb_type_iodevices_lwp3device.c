@@ -767,6 +767,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_lwp3device,
     make_new, pb_type_lwp3device_make_new,
     locals_dict, &pb_type_lwp3device_locals_dict);
 
-MP_REGISTER_ROOT_POINTER(uint8_t * notification_buffer);
-
 #endif // PYBRICKS_PY_PUPDEVICES
