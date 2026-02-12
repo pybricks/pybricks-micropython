@@ -118,7 +118,15 @@ void pbsys_hmi_virtual_reload_programs(void) {
     pbsys_status_set_selected_slot(original_slot);
 }
 
+void pbsys_hmi_init_start_current_slot_from_signal(int sig) {
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)) {
+        return;
+    }
+    pbsys_main_program_request_start(pbsys_status_get_selected_slot(), PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_REMOTE);
+}
+
 void pbsys_hmi_init(void) {
+    signal(SIGUSR1, pbsys_hmi_init_start_current_slot_from_signal);
     pbsys_hmi_virtual_reload_programs();
 }
 

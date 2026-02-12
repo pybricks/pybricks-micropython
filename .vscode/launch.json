@@ -85,6 +85,11 @@
                     "ignoreFailures": true
                 },
                 {
+                    "description": "Ignore SIGUSR1 signal",
+                    "text": "handle SIGUSR1 nostop noprint pass",
+                    "ignoreFailures": false
+                },
+                {
                     "description": "Ignore timer signal",
                     "text": "handle SIG34 noprint pass",
                     "ignoreFailures": false
@@ -116,6 +121,11 @@
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore SIGUSR1 signal",
+                    "text": "handle SIGUSR1 nostop noprint pass",
+                    "ignoreFailures": false
                 },
                 {
                     "description": "Ignore timer signal",
@@ -154,6 +164,11 @@
                     "ignoreFailures": true
                 },
                 {
+                    "description": "Ignore SIGUSR1 signal",
+                    "text": "handle SIGUSR1 nostop noprint pass",
+                    "ignoreFailures": false
+                },
+                {
                     "description": "Ignore timer signal",
                     "text": "handle SIG34 noprint pass",
                     "ignoreFailures": false
@@ -188,6 +203,11 @@
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore SIGUSR1 signal",
+                    "text": "handle SIGUSR1 nostop noprint pass",
+                    "ignoreFailures": false
                 },
                 {
                     "description": "Ignore timer signal",
@@ -225,6 +245,11 @@
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore SIGUSR1 signal",
+                    "text": "handle SIGUSR1 nostop noprint pass",
+                    "ignoreFailures": false
                 },
                 {
                     "description": "Ignore timer signal",
