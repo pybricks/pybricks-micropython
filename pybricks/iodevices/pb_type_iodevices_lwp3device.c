@@ -14,6 +14,7 @@
 #include <pbio/color.h>
 #include <pbio/int_math.h>
 #include <pbio/error.h>
+#include <pbio/util.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 #include <pbsys/storage_settings.h>
@@ -311,6 +312,7 @@ static void pb_type_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t c
     self->noti_data_full = false;
 
     // Attempt to re-use existing connection.
+    self->peripheral = NULL;
     pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &self->scan_config);
 
     // If we aren't already connected, do so now if requested.
@@ -682,8 +684,9 @@ static pbio_error_t pb_type_technic_move_hub_post_connect(pbio_os_state_t *state
 
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
 
-    // Send first setup command.
     PBIO_OS_ASYNC_BEGIN(state);
+
+    // Send first setup command.
     err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
         self->lwp3_char_handle, pb_type_technic_move_hub_setup1, sizeof(pb_type_technic_move_hub_setup1));
     if (err != PBIO_SUCCESS) {
@@ -788,6 +791,402 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_technic_move_hub_make_new,
     locals_dict, &pb_type_technic_move_hub_locals_dict);
+
+
+// -----------------------------------------------------------------------------
+// pybricks.pupdevices.DuploTrain (special case of LWP3).
+// -----------------------------------------------------------------------------
+
+#define DUPLO_OLD_PORT_COLOR (0x12)
+#define DUPLO_OLD_PORT_COLOR_MODE_RGB (0x03)
+#define DUPLO_OLD_PORT_SPEED (0x13)
+#define DUPLO_OLD_PORT_SPEED_MODE_SPEED (0x00)
+
+#define DUPLO_NEW_PORT_COLOR (0x33)
+#define DUPLO_NEW_PORT_COLOR_MODE_TAG (0x00)
+#define DUPLO_NEW_PORT_SPEED (0x36)
+#define DUPLO_NEW_PORT_SPEED_MODE_SPEED (0)
+
+static const uint8_t pb_type_duplo_train_old_activate_speaker[] = {
+    0x0a, 0x00, 0x41, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x01,
+};
+
+static pbio_error_t pb_type_duplo_train_subscribe_values(pb_type_lwp3device_obj_t *self, uint8_t port, uint8_t mode) {
+    const uint8_t subscribe[] = {
+        0x0a, 0x00, 0x41, port, mode, 0x01, 0x00, 0x00, 0x00, 0x01,
+    };
+    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, subscribe, sizeof(subscribe));
+}
+
+static void pb_type_duplo_train_handle_notification(void *user, const uint8_t *value, uint32_t size) {
+
+    pb_type_lwp3device_obj_t *self = user;
+
+    // Want only port value messages.
+    if (!user || size < 4 || value[2] != 0x45) {
+        return;
+    }
+
+    uint8_t port = value[3];
+
+    // Store speed byte as data 0.
+    if ((size == 6 && port == DUPLO_OLD_PORT_SPEED) || (size == 5 && port == DUPLO_NEW_PORT_SPEED)) {
+        self->data[0] = value[4];
+    }
+
+    // Store tag id bytes for new trains.
+    if (size == 6 && port == DUPLO_NEW_PORT_COLOR) {
+        memcpy(&self->data[1], &value[4], 2);
+    }
+
+    // Store rgb bytes for old trains.
+    if (size == 10 && port == DUPLO_OLD_PORT_COLOR) {
+        memcpy(&self->data[1], &value[4], 6);
+    }
+}
+
+static pbio_error_t pb_type_duplo_train_post_connect(pbio_os_state_t *state, mp_obj_t parent_obj) {
+
+    pbio_os_state_t unused;
+
+    pbio_error_t err;
+
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Activate speaker.
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+        self->lwp3_char_handle, pb_type_duplo_train_old_activate_speaker, sizeof(pb_type_duplo_train_old_activate_speaker));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Subscribe to color sensor.
+    if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
+        err = pb_type_duplo_train_subscribe_values(self, DUPLO_OLD_PORT_COLOR, DUPLO_OLD_PORT_COLOR_MODE_RGB);
+    } else {
+        err = pb_type_duplo_train_subscribe_values(self, DUPLO_NEW_PORT_COLOR, DUPLO_NEW_PORT_COLOR_MODE_TAG);
+    }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Subscribe to speed.
+    if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
+        err = pb_type_duplo_train_subscribe_values(self, DUPLO_OLD_PORT_SPEED, DUPLO_OLD_PORT_SPEED_MODE_SPEED);
+    } else {
+        err = pb_type_duplo_train_subscribe_values(self, DUPLO_NEW_PORT_SPEED, DUPLO_NEW_PORT_SPEED_MODE_SPEED);
+    }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+static mp_obj_t pb_type_duplo_train_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_REQUIRED(power));
+
+    uint8_t power_byte = pbio_int_math_clamp(pb_obj_get_int(power_in), 100);
+    uint8_t port_byte = self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK ? 0x00 : 0x32;
+    uint8_t mode_byte = 0x00;
+    const uint8_t message[] = {
+        0x08, 0x00, 0x81, port_byte, 0x01, 0x51, mode_byte, power_byte
+    };
+    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message, sizeof(message)));
+    return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_duplo_train_drive_obj, 1, pb_type_duplo_train_drive);
+
+static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_REQUIRED(color));
+
+    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
+
+    if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
+        uint8_t id;
+        if (hsv->s < 10) {
+            // Desaturated, so pick white or black.
+            id = hsv->v > 50 ? 10 : 0;
+        } else if (hsv->h < 15) {
+            id = 9; // red
+        } else if (hsv->h < 45) {
+            id = 8; // orange
+        } else if (hsv->h < 90) {
+            id = 7; // yellow
+        } else if (hsv->h < 150) {
+            id = 6; // green
+        } else if (hsv->h < 170) {
+            id = 5; // torquoise
+        } else if (hsv->h < 210) {
+            id = 4; // light blue
+        } else if (hsv->h < 270) {
+            id = 3; // blue
+        } else if (hsv->h < 305) {
+            id = 2; // magenta
+        } else {
+            id = 1; // violet red
+        }
+        const uint8_t message_old[] = {
+            0x08, 0x00, 0x81, 0x11, 0x11, 0x51, 0x00, id
+        };
+        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
+    } else {
+        uint8_t id;
+        if (hsv->s < 10) {
+            // Desaturated, so pick white or black.
+            id = hsv->v > 50 ? 1 : 0;
+        } else if (hsv->h < 15) {
+            id = 2; // red
+        } else if (hsv->h < 90) {
+            id = 4; // yellow/orange
+        } else if (hsv->h < 150) {
+            id = 5; // green
+        } else if (hsv->h < 210) {
+            id = 3; // light blue
+        } else if (hsv->h < 270) {
+            id = 15; // blue
+        } else {
+            id = 14; // violet red
+        }
+        const uint8_t message_new[] = {
+            10, 0, 129, 52, 17, 0x51, 0x01, 0x04, 0x01, id
+        };
+        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
+    }
+    return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_duplo_train_headlights_obj, 1, pb_type_duplo_train_headlights);
+
+static mp_obj_t pb_type_duplo_train_sound(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_REQUIRED(sound));
+
+    qstr selection = mp_obj_str_get_qstr(sound_in);
+    uint8_t sound_byte;
+
+    switch (selection) {
+        case MP_QSTR_brake:
+            sound_byte = 3;
+            break;
+        case MP_QSTR_depart:
+            sound_byte = 5;
+            break;
+        case MP_QSTR_water:
+            sound_byte = 7;
+            break;
+        case MP_QSTR_horn:
+            sound_byte = 9;
+            break;
+        case MP_QSTR_steam:
+            sound_byte = 10;
+            break;
+        default:
+            sound_byte = 0;
+            break;
+    }
+
+    if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
+        const uint8_t message_old[] = {
+            0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x01, sound_byte
+        };
+        if (sound_byte) {
+            pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
+        }
+    } else {
+        // Revisit: Figure out other sounds for second generation Duplo Hub.
+        const uint8_t message_new[] = {
+            9, 0, 129, 52, 17, 0x51, 1, 7, 1
+        };
+        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
+    }
+
+    return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_duplo_train_sound_obj, 1, pb_type_duplo_train_sound);
+
+static mp_obj_t pb_type_duplo_train_speed(mp_obj_t self_in) {
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+    return mp_obj_new_int((int8_t)self->data[0]);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_duplo_train_speed_obj,  pb_type_duplo_train_speed);
+
+static uint8_t rgb_to_byte(uint8_t *data) {
+    const int32_t max = 1900;
+    return pbio_int_math_clamp(pbio_get_uint16_le(data), max) * 255 / max;
+}
+
+
+static mp_obj_t pb_type_duplo_train_color(mp_obj_t self_in) {
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+    if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
+        // The basic color ID mode does not register the newer color tags,
+        // so we use RGB mode and convert to HSV to detect them anyway. Since
+        // this is pretty niche, we won't introduce new color objects just for
+        // these tags, but just round them to the nearest available color.
+        const pbio_color_rgb_t rgb = {
+            .r = rgb_to_byte(&self->data[1]),
+            .g = rgb_to_byte(&self->data[3]),
+            .b = rgb_to_byte(&self->data[5]),
+        };
+        pbio_color_hsv_t hsv;
+        pbio_color_rgb_to_hsv(&rgb, &hsv);
+        if (hsv.v > 30 && hsv.h > 235 && hsv.h < 270 && hsv.s < 50) {
+            // purple star tag
+            return MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj);
+        }
+        if (hsv.v > 60 && hsv.h > 190 && hsv.h < 230 && hsv.s < 40) {
+            // pink home tag
+            return MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj);
+        }
+        if (hsv.h > 70 && hsv.h < 110 && hsv.s > 50) {
+            // green leaf tag
+            return MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj);
+        }
+        // Deal with unsaturated colors.
+        if (hsv.s < 50) {
+            return hsv.v > 75 ?
+                   MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj):
+                   MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
+        }
+        // What remains are pure saturated colors, so go by hue.
+        if (hsv.h > 300 || hsv.h < 20) {
+            return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
+        }
+        if (hsv.h < 85) {
+            return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
+        }
+        if (hsv.h < 180) {
+            return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
+        }
+        return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);
+    } else {
+        // The second generation hub does not appear to have any color modes.
+        // We only get tag events, so the color is restricted to the last seen
+        // tag. We can't know if we are currently still on that tag or not.
+        // There might be some logic to these tag IDs, but we've just tried
+        // all of them, resulting in these two byte IDs.
+        switch (pbio_get_uint16_le(&self->data[1])) {
+            case 1:
+                return MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj);
+            case 24:
+                return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
+            case 119:
+                // green leaf tag
+                return MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj);
+            case 321:
+                return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);
+            case 324:
+                // purple star tag
+                return MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj);
+            case 353:
+                // pink home tag
+                return MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj);
+            case 28:
+                return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
+            case 21:
+                return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
+            default:
+                return MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
+        }
+    }
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_duplo_train_color_obj,  pb_type_duplo_train_color);
+
+static bool pb_type_lwp3device_duplo_train_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
+
+    pb_type_lwp3device_obj_t *self = user;
+    if (!self) {
+        return false;
+    }
+
+    // Match both duplo train IDs.
+    bool match = data[3] == 17 /* length */
+        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
+        && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
+        && (data[26] == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK || data[26] == LWP3_HUB_KIND_DUPLO_TRAIN_BLUE);
+
+    if (match) {
+        self->hub_kind = data[26];
+
+        // New hub needs pairing. Old one does not. Dynamically set it here
+        // during discovery, so we can apply it when we connect later.
+        if (self->peripheral) {
+            self->peripheral->config.options = self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLUE ?
+                PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR :
+                PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE;
+        }
+    }
+
+    return match;
+}
+
+static mp_obj_t pb_type_duplo_train_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_NONE(name),
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_TRUE(connect)
+        );
+
+    pb_module_tools_assert_blocking();
+    pb_type_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_lwp3device_obj_t, type);
+    self->iter = NULL;
+    self->noti_num = 0;
+    self->hub_kind = 0; // Populated during advertising to allow two types.
+    self->post_connect_setup_func = pb_type_duplo_train_post_connect;
+    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+        .match_adv = pb_type_lwp3device_duplo_train_advertisement_matches,
+        .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
+        .notification_handler = pb_type_duplo_train_handle_notification,
+        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+    };
+    pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
+    pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static const mp_rom_map_elem_t pb_type_duplo_train_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_lwp3device_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_lwp3device_connect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_lwp3device_disconnect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&pb_type_duplo_train_drive_obj) },
+    { MP_ROM_QSTR(MP_QSTR_headlights), MP_ROM_PTR(&pb_type_duplo_train_headlights_obj) },
+    { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&pb_type_duplo_train_speed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&pb_type_duplo_train_color_obj) },
+    { MP_ROM_QSTR(MP_QSTR_sound), MP_ROM_PTR(&pb_type_duplo_train_sound_obj) },
+};
+static MP_DEFINE_CONST_DICT(pb_type_duplo_train_locals_dict, pb_type_duplo_train_locals_dict_table);
+
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_duplo_train,
+    MP_QSTR_DuploTrain,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_duplo_train_make_new,
+    locals_dict, &pb_type_duplo_train_locals_dict);
 
 // -----------------------------------------------------------------------------
 // pybricks.iodevices.LWP3Device (most generic LWP3).

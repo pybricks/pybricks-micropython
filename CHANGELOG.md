@@ -14,6 +14,8 @@
   inputs ([pybricks-micropython#454]).
 - Added `pybricks.pupdevices.TechnicMoveHub` to control it as a peripheral. It
   cannot be used as a standalone device since it cannot run third-party firmware.
+- Added `pybricks.pupdevices.DuploTrain` to control it as a peripheral. It
+  cannot be used as a standalone device since it cannot ne updated.
 
 ### Changed
 - Changed the default `XboxController` connection timeout from indefinite

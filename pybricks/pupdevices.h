@@ -23,6 +23,7 @@ extern const mp_obj_type_t pb_type_pupdevices_PFMotor;
 extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
 extern const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
 
+extern const mp_obj_type_t pb_type_duplo_train;
 extern const mp_obj_type_t pb_type_remote;
 extern const mp_obj_type_t pb_type_technic_move_hub;
 
