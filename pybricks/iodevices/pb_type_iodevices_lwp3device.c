@@ -107,25 +107,13 @@ typedef struct {
      */
     mp_obj_t light;
     /**
-     * Powered Up Remote Left button states, populated by notifications.
+     * Application specific data, like cached button state, populated by notifications.
      */
-    uint8_t left[3];
-    /**
-     * Powered Up Remote Right button states, populated by notifications.
-     */
-    uint8_t right[3];
-    /**
-     * Powered Up Remote Center button state, populated by notifications.
-     */
-    uint8_t center;
+    uint8_t data[8];
     /**
      * Routine to run after establishing a connection (e.g. subscribing to ports).
      */
     pbio_os_process_func_t post_connect_setup_func;
-    /**
-     * Routine to before (re-)establishing a connection (e.g. clearing stale data.)
-     */
-    mp_fun_1_t pre_connect_func;
     // Null-terminated name used to filter advertisements and responses.
     // Also used as the name of the device when setting the name, since this
     // is not updated in the driver until the next time it connects.
@@ -313,10 +301,14 @@ static void pb_type_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t c
 
     bool want_connection = mp_obj_is_true(connect_in);
 
-    // Reinitialize or clear data before connecting.
-    if (self->pre_connect_func) {
-        self->pre_connect_func(self_in);
-    }
+    // Clear data before reconnecting.
+    memset(self->data, 0, sizeof(self->data));
+
+    // Clear past notifications (for generic LWP3 class).
+    memset(self->notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * self->noti_num);
+    self->noti_idx_read = 0;
+    self->noti_idx_write = 0;
+    self->noti_data_full = false;
 
     // Attempt to re-use existing connection.
     pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &self->scan_config);
@@ -394,13 +386,13 @@ static void pb_type_remote_handle_notification(void *user, const uint8_t *value,
     }
     if (value[0] == 5 && value[2] == LWP3_MSG_TYPE_HW_NET_CMDS && value[3] == LWP3_HW_NET_CMD_CONNECTION_REQ) {
         // This message is meant for something else, but contains the center button state
-        self->center = value[4];
+        self->data[6] = value[4];
     } else if (value[0] == 7 && value[2] == LWP3_MSG_TYPE_PORT_VALUE) {
         // This assumes that the handset button ports have already been set to mode KEYSD
         if (value[3] == REMOTE_PORT_LEFT_BUTTONS) {
-            memcpy(self->left, &value[4], 3);
+            memcpy(&self->data[0], &value[4], 3);
         } else if (value[3] == REMOTE_PORT_RIGHT_BUTTONS) {
-            memcpy(self->right, &value[4], 3);
+            memcpy(&self->data[3], &value[4], 3);
         }
     }
 }
@@ -415,25 +407,25 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     mp_obj_t pressed[7];
     size_t num = 0;
 
-    if (self->left[0]) {
+    if (self->data[0]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_LEFT_PLUS);
     }
-    if (self->left[1]) {
+    if (self->data[1]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_LEFT);
     }
-    if (self->left[2]) {
+    if (self->data[2]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_LEFT_MINUS);
     }
-    if (self->right[0]) {
+    if (self->data[3]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT_PLUS);
     }
-    if (self->right[1]) {
+    if (self->data[4]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT);
     }
-    if (self->right[2]) {
+    if (self->data[5]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT_MINUS);
     }
-    if (self->center) {
+    if (self->data[6]) {
         pressed[num++] = pb_type_button_new(MP_QSTR_CENTER);
     }
 
@@ -564,15 +556,6 @@ static pbio_error_t pb_type_remote_post_connect(pbio_os_state_t *state, mp_obj_t
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static mp_obj_t pb_type_remote_clear(mp_obj_t self_in) {
-    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // Ensure that no buttons are "pressed" after reconnecting
-    memset(&self->left, 0, sizeof(self->left));
-    memset(&self->right, 0, sizeof(self->right));
-    self->center = 0;
-    return mp_const_none;
-}
-
 static mp_obj_t pb_type_remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_NONE(name),
@@ -589,7 +572,6 @@ static mp_obj_t pb_type_remote_make_new(const mp_obj_type_t *type, size_t n_args
     self->hub_kind = LWP3_HUB_KIND_HANDSET;
 
     self->post_connect_setup_func = pb_type_remote_post_connect;
-    self->pre_connect_func = pb_type_remote_clear;
 
     self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
@@ -645,6 +627,16 @@ static void pb_type_technic_move_hub_handle_notification(void *user, const uint8
     // Not processing any notifications. We could monitor the hub's internal sensors.
 }
 
+/**
+ * Stored format for the common data field in the lwp3 object.
+ */
+typedef struct {
+    uint8_t speed_now;
+    uint8_t steering_now;
+    uint8_t speed_last;
+    uint8_t steering_last;
+} pb_type_lwp3device_technic_movehub_data_t;
+
 static pbio_error_t pb_type_technic_move_hub_write_command(mp_obj_t self_in) {
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -652,30 +644,32 @@ static pbio_error_t pb_type_technic_move_hub_write_command(mp_obj_t self_in) {
     // times in this interval.
     const uint8_t max_repeat = 2;
     const uint32_t max_repeat_timeout = 500;
-    
+
+    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
+
     // Reusing the remote button buffer to store drive state.
-    bool identical = self->right[0] == self->left[0] && self->right[1] == self->left[1];
+    bool identical = data->speed_last == data->speed_now && data->steering_last == data->steering_now;
 
     // Count identical messages sent in short time span, using center for counter.
     if (!identical || pbio_os_timer_is_expired(&self->timer)) {
-        self->center = 0;
+        self->data[4] = 0;
     }
 
     // If we sent the same thing several times within timeout, it probably arrived.
-    if (self->center == max_repeat) {
+    if (self->data[4] == max_repeat) {
         return PBIO_SUCCESS;
     }
 
     // Send command and keep track of the time.
     uint8_t light_mode = 0;
-    self->right[0] = self->left[0];
-    self->right[1] = self->left[1];
+    data->speed_last = data->speed_now;
+    data->steering_last = data->steering_now;
 
-    self->center = pbio_int_math_min(self->center + 1, max_repeat);
+    self->data[4] = pbio_int_math_min(self->data[4] + 1, max_repeat);
     pbio_os_timer_set(&self->timer, max_repeat_timeout);
-    
+
     const uint8_t cmd[] = {
-        0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, self->left[0], self->left[1], light_mode, 0,
+        0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, data->speed_now, data->steering_now, light_mode, 0,
     };
     return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd));
 }
@@ -728,9 +722,10 @@ static mp_obj_t pb_type_technic_move_hub_drive_power(size_t n_args, const mp_obj
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_lwp3device_obj_t, self,
         PB_ARG_REQUIRED(power));
-    
+
     mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
-    self->left[0] = pbio_int_math_clamp(pb_obj_get_int(power_in), 100);
+    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
+    data->speed_now = pbio_int_math_clamp(pb_obj_get_int(power_in), 100);
     pb_assert(pb_type_technic_move_hub_write_command(self_in));
     return wait_or_await_operation(self_in);
 }
@@ -744,7 +739,8 @@ static mp_obj_t pb_type_technic_move_hub_steer(size_t n_args, const mp_obj_t *po
 
     // Steering is a percentage of the calibrated angle. Go just under maximum
     // to avoid pushing against the mechanical constraint.
-    self->left[1] = pbio_int_math_clamp(pb_obj_get_int(percentage_in), 97);
+    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
+    data->steering_now = pbio_int_math_clamp(pb_obj_get_int(percentage_in), 97);
     pb_assert(pb_type_technic_move_hub_write_command(self_in));
     return wait_or_await_operation(self_in);
 }
@@ -765,9 +761,6 @@ static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, siz
 
     self->hub_kind = LWP3_HUB_KIND_TECHNIC_MOVE;
     self->post_connect_setup_func = pb_type_technic_move_hub_post_connect;
-
-    // Re-using the unused remote left buffer to store drive state.
-    self->pre_connect_func = pb_type_remote_clear;
 
     self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
@@ -822,17 +815,6 @@ static void pb_type_lwp3device_handle_notification_generic(void *user, const uin
     self->noti_data_full = self->noti_idx_read == self->noti_idx_write;
 }
 
-
-static mp_obj_t pb_type_iodevices_lwp3device_clear(mp_obj_t self_in) {
-    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // Clear past notifications.
-    memset(self->notification_buffer, 0, LWP3_MAX_MESSAGE_SIZE * self->noti_num);
-    self->noti_idx_read = 0;
-    self->noti_idx_write = 0;
-    self->noti_data_full = false;
-    return mp_const_none;
-}
-
 static mp_obj_t pb_type_lwp3device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(hub_kind),
@@ -859,7 +841,6 @@ static mp_obj_t pb_type_lwp3device_make_new(const mp_obj_type_t *type, size_t n_
         .notification_handler = pb_type_lwp3device_handle_notification_generic,
         .options = mp_obj_is_true(pair_in) ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
     };
-    self->pre_connect_func = pb_type_iodevices_lwp3device_clear;
     self->post_connect_setup_func = NULL;
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
 
