@@ -629,53 +629,6 @@ static void pb_type_technic_move_hub_handle_notification(void *user, const uint8
     // Not processing any notifications. We could monitor the hub's internal sensors.
 }
 
-/**
- * Stored format for the common data field in the lwp3 object.
- */
-typedef struct {
-    uint8_t speed_now;
-    uint8_t steering_now;
-    uint8_t speed_last;
-    uint8_t steering_last;
-} pb_type_lwp3device_technic_movehub_data_t;
-
-static pbio_error_t pb_type_technic_move_hub_write_command(mp_obj_t self_in) {
-    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // Don't repeat again if already sent idential values this many
-    // times in this interval.
-    const uint8_t max_repeat = 2;
-    const uint32_t max_repeat_timeout = 500;
-
-    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
-
-    // Reusing the remote button buffer to store drive state.
-    bool identical = data->speed_last == data->speed_now && data->steering_last == data->steering_now;
-
-    // Count identical messages sent in short time span, using center for counter.
-    if (!identical || pbio_os_timer_is_expired(&self->timer)) {
-        self->data[4] = 0;
-    }
-
-    // If we sent the same thing several times within timeout, it probably arrived.
-    if (self->data[4] == max_repeat) {
-        return PBIO_SUCCESS;
-    }
-
-    // Send command and keep track of the time.
-    uint8_t light_mode = 0;
-    data->speed_last = data->speed_now;
-    data->steering_last = data->steering_now;
-
-    self->data[4] = pbio_int_math_min(self->data[4] + 1, max_repeat);
-    pbio_os_timer_set(&self->timer, max_repeat_timeout);
-
-    const uint8_t cmd[] = {
-        0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, data->speed_now, data->steering_now, light_mode, 0,
-    };
-    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd));
-}
-
 static pbio_error_t pb_type_technic_move_hub_post_connect(pbio_os_state_t *state, mp_obj_t parent_obj) {
 
     pbio_os_state_t unused;
@@ -708,46 +661,53 @@ static pbio_error_t pb_type_technic_move_hub_post_connect(pbio_os_state_t *state
         return err;
     }
 
-    // Initialize at 0 speed and 0 steering.
-    err = pb_type_technic_move_hub_write_command(parent_obj);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static mp_obj_t pb_type_technic_move_hub_drive_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+static mp_obj_t pb_type_technic_move_hub_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_lwp3device_obj_t, self,
-        PB_ARG_REQUIRED(power));
-
-    mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
-    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
-    data->speed_now = pbio_int_math_clamp(pb_obj_get_int(power_in), 100);
-    pb_assert(pb_type_technic_move_hub_write_command(self_in));
-    return wait_or_await_operation(self_in);
-}
-static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_drive_power_obj, 1, pb_type_technic_move_hub_drive_power);
-
-static mp_obj_t pb_type_technic_move_hub_steer(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pb_type_lwp3device_obj_t, self,
-        PB_ARG_REQUIRED(percentage));
-    mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
+        PB_ARG_REQUIRED(speed),
+        PB_ARG_REQUIRED(steering)
+        );
 
     // Steering is a percentage of the calibrated angle. Go just under maximum
     // to avoid pushing against the mechanical constraint.
-    pb_type_lwp3device_technic_movehub_data_t *data = (void *)self->data;
-    data->steering_now = pbio_int_math_clamp(pb_obj_get_int(percentage_in), 97);
-    pb_assert(pb_type_technic_move_hub_write_command(self_in));
-    return wait_or_await_operation(self_in);
+    uint8_t steering_byte = pbio_int_math_clamp(pb_obj_get_int(steering_in), 97);
+    uint8_t speed_byte = pbio_int_math_clamp(pb_obj_get_int(speed_in), 100);
+
+    // Don't repeat again if already sent idential values this many
+    // times in this interval.
+    const uint8_t max_repeat = 2;
+    const uint32_t max_repeat_timeout = 500;
+
+    // Reusing the remote button buffer to store drive state.
+    bool identical = speed_byte == self->data[0] && steering_byte == self->data[1];
+
+    // Count identical messages sent in short time span, using center for counter.
+    if (!identical || pbio_os_timer_is_expired(&self->timer)) {
+        self->data[2] = 0;
+    }
+
+    // If we sent the same thing several times within timeout, it probably arrived.
+    if (self->data[2] == max_repeat) {
+        return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
+    }
+
+    // Send command and keep track of the time.
+    self->data[0] = speed_byte;
+    self->data[1] = steering_byte;
+    self->data[2] = pbio_int_math_min(self->data[2] + 1, max_repeat);
+    pbio_os_timer_set(&self->timer, max_repeat_timeout);
+    uint8_t light_mode = 0;
+
+    const uint8_t cmd[] = {
+        0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, speed_byte, steering_byte, light_mode, 0,
+    };
+    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd)));
+    return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
 }
-static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_steer_obj, 1, pb_type_technic_move_hub_steer);
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_drive_obj, 1, pb_type_technic_move_hub_drive);
 
 static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -757,14 +717,11 @@ static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, siz
         );
 
     pb_module_tools_assert_blocking();
-
     pb_type_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_lwp3device_obj_t, type);
     self->iter = NULL;
     self->noti_num = 0;
-
     self->hub_kind = LWP3_HUB_KIND_TECHNIC_MOVE;
     self->post_connect_setup_func = pb_type_technic_move_hub_post_connect;
-
     self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
@@ -772,7 +729,6 @@ static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, siz
         .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
     };
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
-
     pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -781,8 +737,7 @@ static const mp_rom_map_elem_t pb_type_technic_move_hub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_lwp3device_close_obj) },
     { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_lwp3device_connect_obj) },
     { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_lwp3device_disconnect_obj) },
-    { MP_ROM_QSTR(MP_QSTR_drive_power), MP_ROM_PTR(&pb_type_technic_move_hub_drive_power_obj) },
-    { MP_ROM_QSTR(MP_QSTR_steer), MP_ROM_PTR(&pb_type_technic_move_hub_steer_obj) },
+    { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&pb_type_technic_move_hub_drive_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_technic_move_hub_locals_dict, pb_type_technic_move_hub_locals_dict_table);
 
