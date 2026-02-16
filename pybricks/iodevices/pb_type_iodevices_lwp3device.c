@@ -760,7 +760,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
 #define DUPLO_NEW_PORT_COLOR (0x33)
 #define DUPLO_NEW_PORT_COLOR_MODE_TAG (0x00)
 #define DUPLO_NEW_PORT_SPEED (0x36)
-#define DUPLO_NEW_PORT_SPEED_MODE_SPEED (0)
+#define DUPLO_NEW_PORT_SPEED_MODE_SPEED (2)
 
 static const uint8_t pb_type_duplo_train_old_activate_speaker[] = {
     0x0a, 0x00, 0x41, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x01,
@@ -784,19 +784,19 @@ static void pb_type_duplo_train_handle_notification(void *user, const uint8_t *v
 
     uint8_t port = value[3];
 
-    // Store speed byte as data 0.
-    if ((size == 6 && port == DUPLO_OLD_PORT_SPEED) || (size == 5 && port == DUPLO_NEW_PORT_SPEED)) {
-        self->data[0] = value[4];
+    // Get speed as two-byte value for either train.
+    if (size == 6 && (port == DUPLO_NEW_PORT_SPEED || port == DUPLO_OLD_PORT_SPEED)) {
+        memcpy(&self->data[0], &value[4], 2);
     }
 
     // Store tag id bytes for new trains.
     if (size == 6 && port == DUPLO_NEW_PORT_COLOR) {
-        memcpy(&self->data[1], &value[4], 2);
+        memcpy(&self->data[2], &value[4], 2);
     }
 
     // Store rgb bytes for old trains.
     if (size == 10 && port == DUPLO_OLD_PORT_COLOR) {
-        memcpy(&self->data[1], &value[4], 6);
+        memcpy(&self->data[2], &value[4], 6);
     }
 }
 
@@ -983,7 +983,7 @@ static mp_obj_t pb_type_duplo_train_speed(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    return mp_obj_new_int((int8_t)self->data[0]);
+    return mp_obj_new_int((int16_t)pbio_get_uint16_le(&self->data[0]));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_duplo_train_speed_obj,  pb_type_duplo_train_speed);
 
@@ -1004,9 +1004,9 @@ static mp_obj_t pb_type_duplo_train_color(mp_obj_t self_in) {
         // this is pretty niche, we won't introduce new color objects just for
         // these tags, but just round them to the nearest available color.
         const pbio_color_rgb_t rgb = {
-            .r = rgb_to_byte(&self->data[1]),
-            .g = rgb_to_byte(&self->data[3]),
-            .b = rgb_to_byte(&self->data[5]),
+            .r = rgb_to_byte(&self->data[2]),
+            .g = rgb_to_byte(&self->data[4]),
+            .b = rgb_to_byte(&self->data[6]),
         };
         pbio_color_hsv_t hsv;
         pbio_color_rgb_to_hsv(&rgb, &hsv);
@@ -1045,7 +1045,7 @@ static mp_obj_t pb_type_duplo_train_color(mp_obj_t self_in) {
         // tag. We can't know if we are currently still on that tag or not.
         // There might be some logic to these tag IDs, but we've just tried
         // all of them, resulting in these two byte IDs.
-        switch (pbio_get_uint16_le(&self->data[1])) {
+        switch (pbio_get_uint16_le(&self->data[2])) {
             case 1:
                 return MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj);
             case 24:
