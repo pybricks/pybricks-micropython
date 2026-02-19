@@ -24,18 +24,20 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+      - run: pipx install poetry
+      - run: poetry install --only=build
       - name: Build firmware
         run: |
           export MICROPY_GIT_TAG=ci-release-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
           export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
-          make $MAKEOPTS -C micropython/mpy-cross
-          make $MAKEOPTS -C bricks/movehub
-          make $MAKEOPTS -C bricks/cityhub
-          make $MAKEOPTS -C bricks/technichub
-          make $MAKEOPTS -C bricks/primehub
-          make $MAKEOPTS -C bricks/essentialhub
-          make $MAKEOPTS -C bricks/nxt
-          make $MAKEOPTS -C bricks/ev3
+          poetry run make $MAKEOPTS -C micropython/mpy-cross
+          poetry run make $MAKEOPTS -C bricks/movehub
+          poetry run make $MAKEOPTS -C bricks/cityhub
+          poetry run make $MAKEOPTS -C bricks/technichub
+          poetry run make $MAKEOPTS -C bricks/primehub
+          poetry run make $MAKEOPTS -C bricks/essentialhub
+          poetry run make $MAKEOPTS -C bricks/nxt
+          poetry run make $MAKEOPTS -C bricks/ev3
       - name: Get tag
         run: echo "GITHUB_TAG=${GITHUB_REF#*refs/tags/}" >> $GITHUB_ENV
       - name: Create Release and Upload Assets
