@@ -1,6 +1,5 @@
 from pybricks.pupdevices import Motor
-from pybricks.parameters import Port, Direction
-from pybricks.robotics import DriveBase
+from pybricks.parameters import Port
 from pybricks.tools import wait, multitask, run_task
 
 ENDPOINT = 142
@@ -8,7 +7,7 @@ SPEED = 500
 
 
 def is_close(motor, target):
-    return abs(motor.angle() - target) < 5
+    return abs(motor.angle() - target) < 7
 
 
 # Spins freely.

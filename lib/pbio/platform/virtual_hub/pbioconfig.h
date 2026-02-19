@@ -22,7 +22,7 @@
 #define PBIO_CONFIG_PORT_LUMP_NUM_DEV       (0)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
-#define PBIO_CONFIG_SERVO_EV3_NXT           (1)
+#define PBIO_CONFIG_SERVO_EV3_NXT           (0)
 #define PBIO_CONFIG_SERVO_PUP               (1)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (1)
 #define PBIO_CONFIG_TACHO                   (1)

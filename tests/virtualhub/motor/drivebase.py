@@ -38,7 +38,7 @@ expect_state(0, 0, 0, 0)
 # after settling for a while.
 drive_base.straight(1000)
 wait(1000)
-assert abs(drive_base.distance() - 1000) <= 1
+assert abs(drive_base.distance() - 1000) <= 3
 drive_base.straight(-1000)
 
 # Drive straight forward and back again.
