@@ -1,12 +1,17 @@
+## 7.29.0 - 2026-02-19
+
+### Changed
+- Updated firmware to v4.0.0b6.
+
 ## 7.28.0 - 2026-01-30
 
 ### Changed
-- Updated firmware to v4.0.0b4.
+- Updated firmware to v4.0.0b5.
 
 ## 7.27.0 - 2026-01-22
 
 ### Changed
-- Updated firmware to v4.0.0b3.
+- Updated firmware to v4.0.0b4.
 
 ## 7.26.0 - 2025-12-05
 
