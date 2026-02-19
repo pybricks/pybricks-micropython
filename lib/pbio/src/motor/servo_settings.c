@@ -186,23 +186,23 @@ static const pbio_observer_model_t model_ev3_l = {
 };
 
 static const pbio_observer_model_t model_ev3_m = {
-    .d_angle_d_speed = 90029,
-    .d_speed_d_speed = 959,
-    .d_current_d_speed = -185122,
-    .d_angle_d_current = 2377978,
-    .d_speed_d_current = 21415,
-    .d_current_d_current = -4432336,
-    .d_angle_d_voltage = 1996477,
-    .d_speed_d_voltage = 8917,
-    .d_current_d_voltage = 202362,
-    .d_angle_d_torque = -401501,
-    .d_speed_d_torque = -2047,
-    .d_current_d_torque = 467397,
-    .d_voltage_d_torque = 47722,
-    .d_torque_d_voltage = 8051,
+    .d_angle_d_speed = 89465,
+    .d_speed_d_speed = 950,
+    .d_current_d_speed = -197440,
+    .d_angle_d_current = 1568301,
+    .d_speed_d_current = 12886,
+    .d_current_d_current = -5095199,
+    .d_angle_d_voltage = 2220112,
+    .d_speed_d_voltage = 9410,
+    .d_current_d_voltage = 209263,
+    .d_angle_d_torque = -399652,
+    .d_speed_d_torque = -2034,
+    .d_current_d_torque = 546357,
+    .d_voltage_d_torque = 49219,
+    .d_torque_d_voltage = 7806,
     .d_torque_d_speed = 7365,
     .d_torque_d_acceleration = 9355,
-    .torque_friction = 18317,
+    .torque_friction = 24593,
 };
 
 static const pbio_observer_model_t model_nxt = {
@@ -241,9 +241,9 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .id = LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR,
         .model = &model_ev3_l,
         .rated_max_speed = 800,
-        .feedback_gain_low = 45,
+        .feedback_gain_low = 30,
         .precision_profile = 10,
-        .pid_kp_low_speed_threshold = 0,
+        .pid_kp_low_speed_threshold = 100,
     },
     {
         .id = LEGO_DEVICE_TYPE_ID_NXT_MOTOR,
@@ -251,7 +251,7 @@ static const pbio_servo_settings_reduced_t servo_settings_reduced[] = {
         .rated_max_speed = 800,
         .feedback_gain_low = 90,
         .precision_profile = 5,
-        .pid_kp_low_speed_threshold = 0,
+        .pid_kp_low_speed_threshold = 100,
     },
     #endif // PBIO_CONFIG_SERVO_EV3_NXT
     #if PBIO_CONFIG_SERVO_PUP_MOVE_HUB
@@ -354,6 +354,31 @@ const pbio_servo_settings_reduced_t *pbio_servo_get_reduced_settings(lego_device
 
     // No settings found.
     return NULL;
+}
+
+/**
+ * Overrides device specific settings.
+ *
+ * The reduced settings work well enough for a range of devices, simplifing
+ * tuning and reducing code size. This function provides a hook for devices
+ * that still need some specific tuning.
+ *
+ * @param [in]   settings   Base settings, unpacked from minimal settings.
+ * @param [in]   id         Type identifier for which to look up the settings.
+ */
+
+void pbio_servo_override_settings(pbio_control_settings_t *settings, lego_device_type_id_t id) {
+    #if PBIO_CONFIG_SERVO_EV3_NXT
+    if (id == LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR) {
+        settings->pid_kp /= 3;
+        settings->pid_ki /= 2;
+        settings->pid_kd /= 10;
+    } else if (id == LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR || id == LEGO_DEVICE_TYPE_ID_NXT_MOTOR) {
+        settings->pid_kp = settings->pid_kp * 2 / 3;
+        settings->pid_ki = settings->pid_ki * 2 / 3;
+        settings->pid_kd /= 6;
+    }
+    #endif
 }
 
 #endif // PBIO_CONFIG_SERVO
