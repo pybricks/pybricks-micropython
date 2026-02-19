@@ -40,40 +40,68 @@
 #endif
 
 struct _pbdrv_counter_dev_t {
-    int32_t count;
+    /**
+     * Position of the motor in degrees.
+     */
+    int32_t position;
+    /**
+     * Quadrature int pin.
+     */
     pbdrv_gpio_t gpio_int;
+    /**
+     * Quadrature dir pin.
+     */
     pbdrv_gpio_t gpio_dir;
+    /**
+     * Additional GPIO for device detection (not used).
+     */
     pbdrv_gpio_t gpio_det;
+    /**
+     * ADC channel for device detection.
+     */
     uint8_t adc_channel;
+    /**
+     * Last instantaneous ADC device detection.
+     */
     lego_device_type_id_t last_type_id;
+    /**
+     * Stable device detection.
+     */
     lego_device_type_id_t stable_type_id;
+    /**
+     * How many times the same type ID was found sequentially.
+     */
     uint32_t type_id_count;
+    /**
+     * The position at which the type ID detection was started.
+     */
+    int32_t type_id_position;
 };
 
 static pbdrv_counter_dev_t counters[] = {
     {
-        .count = 0,
+        .position = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 19, 16, 5, 11),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(1, 15, 12, 0, 4),
         .gpio_det = PBDRV_GPIO_EV3_PIN(12, 15, 12, 5, 4),
         .adc_channel = 1,
     },
     {
-        .count = 0,
+        .position = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 31, 28, 5, 8),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(5, 27, 24, 2, 9),
         .gpio_det = PBDRV_GPIO_EV3_PIN(6, 11, 8, 2, 5),
         .adc_channel = 0,
     },
     {
-        .count = 0,
+        .position = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(11, 11, 8, 5, 13),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(7, 7, 4, 3, 14),
         .gpio_det = PBDRV_GPIO_EV3_PIN(7, 31, 28, 3, 8),
         .adc_channel = 13,
     },
     {
-        .count = 0,
+        .position = 0,
         .gpio_int = PBDRV_GPIO_EV3_PIN(13, 27, 24, 6, 9),
         .gpio_dir = PBDRV_GPIO_EV3_PIN(5, 31, 28, 2, 8),
         .gpio_det = PBDRV_GPIO_EV3_PIN(11, 3, 0, 5, 15),
@@ -113,9 +141,6 @@ static bool adc_is_close(uint32_t adc, uint32_t reference) {
  * The original firmware uses a dynamic process to distinguish other non-motor
  * devices. This is not implemented here. It does not appear necessary for
  * motors.
- *
- * If we find that we occasionally get "in-between" values, we can have the
- * adc process poll us to maintain a minium count of unchanged states.
  */
 static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
 
@@ -128,7 +153,10 @@ static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
     }
 
     if (adc_is_close(adc, ADC_EV3_LARGE_0) || adc_is_close(adc, ADC_EV3_LARGE_1) || adc_is_close(adc, ADC_NXT_LARGE_1)) {
-        return LEGO_DEVICE_TYPE_ID_NXT_MOTOR;
+        // We can only detect the difference between NXT and EV3 motors 50% of
+        // the time, depending on the optical encoder state. So always return
+        // the same type for consistency. Their parameters are relatively close.
+        return LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR;
     }
 
     return LEGO_DEVICE_TYPE_ID_NONE;
@@ -140,29 +168,26 @@ static lego_device_type_id_t pbdrv_counter_ev3_get_type(uint16_t adc) {
 /**
  * Updates the type of all EV3 motors based on the current ADC values.
  */
-static void pbdrv_counter_ev3_update_type(void) {
+static void pbdrv_counter_ev3_update_type(pbdrv_counter_dev_t *dev) {
 
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
+    // Get type detected now.
+    uint16_t adc = 0;
+    pbdrv_adc_get_ch(dev->adc_channel, &adc);
+    lego_device_type_id_t type_id = pbdrv_counter_ev3_get_type(adc);
 
-        // Get type detected now.
-        pbdrv_counter_dev_t *dev = &counters[i];
-        uint16_t adc = 0;
-        pbdrv_adc_get_ch(dev->adc_channel, &adc);
-        lego_device_type_id_t type_id = pbdrv_counter_ev3_get_type(adc);
+    // Update number of consecutive identical detections.
+    if (dev->last_type_id == type_id && dev->position == dev->type_id_position) {
+        dev->type_id_count++;
+    } else {
+        dev->last_type_id = type_id;
+        dev->type_id_count = 1;
+        dev->type_id_position = dev->position;
+    }
 
-        // Update number of consecutive identical detections.
-        if (dev->last_type_id == type_id) {
-            dev->type_id_count++;
-        } else {
-            dev->last_type_id = type_id;
-            dev->type_id_count = 1;
-        }
-
-        // Update stable type if we have seen enough identical detections,
-        // including none detections.
-        if (dev->type_id_count >= PBDRV_COUNTER_EV3_TYPE_MIN_STABLE_COUNT) {
-            dev->stable_type_id = type_id;
-        }
+    // Update stable type if we have seen enough identical detections,
+    // including none detections.
+    if (dev->type_id_count >= PBDRV_COUNTER_EV3_TYPE_MIN_STABLE_COUNT) {
+        dev->stable_type_id = type_id;
     }
 }
 
@@ -178,7 +203,9 @@ static pbio_error_t pbdrv_counter_device_detect_process_thread(pbio_os_state_t *
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        pbdrv_counter_ev3_update_type();
+        for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
+            pbdrv_counter_ev3_update_type(&counters[i]);
+        }
         PBIO_OS_AWAIT_MS(state, &timer, PBDRV_COUNTER_EV3_TYPE_LOOP_TIME);
     }
 
@@ -210,8 +237,8 @@ pbio_error_t pbdrv_counter_get_angle(pbdrv_counter_dev_t *dev, int32_t *rotation
         return err;
     }
 
-    *millidegrees = (dev->count % 360) * 1000;
-    *rotations = dev->count / 360;
+    *millidegrees = (dev->position % 360) * 1000;
+    *rotations = dev->position / 360;
     return PBIO_SUCCESS;
 }
 
@@ -234,12 +261,12 @@ static void pbdrv_counter_ev3_irq_handler(uint32_t bank_id, uint32_t bank_int_id
             continue;
         }
 
-        // Clear the interrupt and update the count.
+        // Clear the interrupt and update the position.
         HWREG(SOC_GPIO_0_REGS + GPIO_INTSTAT((bank_id / 2))) = mask;
         if (pbdrv_gpio_input(&dev->gpio_int) ^ pbdrv_gpio_input(&dev->gpio_dir)) {
-            dev->count++;
+            dev->position++;
         } else {
-            dev->count--;
+            dev->position--;
         }
     }
 

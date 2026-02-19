@@ -23,8 +23,12 @@
 - Devices like the `Remote`, `LWP3Device`, and the `XboxController` now stay
   connected when the program ends ([support#1382]).
 
+### Fixed
+- Fixed EV3 motor detection not working correctly while moving ([support#2536]).
+
 [support#1382]: https://github.com/pybricks/support/issues/1382
 [support#1800]: https://github.com/pybricks/support/issues/1800
+[support#2536]: https://github.com/pybricks/support/issues/2536
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 
 ## [4.0.0b5] - 2026-01-30
