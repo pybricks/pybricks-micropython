@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [4.0.0b6] - 2026-02-19
+
 ### Added
 - Added `connect=True` parameter to the `Remote`, `LWP3Device`
   and `XboxController` classes, along with a `connect()` method to optionally
@@ -16,6 +18,7 @@
   cannot be used as a standalone device since it cannot run third-party firmware.
 - Added `pybricks.pupdevices.DuploTrain` to control it as a peripheral. It
   cannot be used as a standalone device since it cannot ne updated.
+- Added basic user interface for EV3 brick.
 
 ### Changed
 - Changed the default `XboxController` connection timeout from indefinite
@@ -1281,7 +1284,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b6...HEAD
+[4.0.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...v4.0.0b6
 [4.0.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...v4.0.0b5
 [4.0.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...v4.0.0b4
 [4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
