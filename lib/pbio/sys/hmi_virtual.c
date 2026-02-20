@@ -104,6 +104,9 @@ void pbsys_hmi_virtual_reload_programs(void) {
 
     original_slot = pbsys_status_get_selected_slot();
 
+    pbsys_hmi_num_programs = 0;
+    pbsys_status_set_selected_slot(0);
+
     // Parse given programs.
     for (int i = 1; i < main_argc; i++) {
 
