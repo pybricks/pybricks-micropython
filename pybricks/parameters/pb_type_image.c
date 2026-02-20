@@ -23,6 +23,15 @@
 
 #include <pbdrv/display.h>
 
+typedef enum {
+    /** Image is not a display. */
+    PB_TYPE_IMAGE_DISPLAY_NONE,
+    /** Image is a display but it is not being used or in a system state. */
+    PB_TYPE_IMAGE_DISPLAY_UNUSED,
+    /** Image is a display and ready for use. */
+    PB_TYPE_IMAGE_DISPLAY_READY,
+} pb_type_Image_display_t;
+
 #if PYBRICKS_PY_PARAMETERS_IMAGE_FILE
 #include "pbio_image_media.h"
 #endif // PYBRICKS_PY_PARAMETERS_IMAGE_FILE
@@ -36,7 +45,7 @@ typedef struct _pb_type_Image_obj_t {
     // that owns the memory.
     mp_obj_t owner;
     pbio_image_t image;
-    bool is_display;
+    pb_type_Image_display_t display_type;
 } pb_type_Image_obj_t;
 
 static int get_color(mp_obj_t obj) {
@@ -54,7 +63,7 @@ static int get_color(mp_obj_t obj) {
 mp_obj_t pb_type_Image_display_obj_new(void) {
     pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
     self->owner = MP_OBJ_NULL;
-    self->is_display = true;
+    self->display_type = PB_TYPE_IMAGE_DISPLAY_READY;
     self->image = *pbdrv_display_get_image();
 
     return MP_OBJ_FROM_PTR(self);
@@ -86,7 +95,7 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
 
         self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
         self->owner = MP_OBJ_NULL;
-        self->is_display = false;
+        self->display_type = PB_TYPE_IMAGE_DISPLAY_NONE;
         pbio_image_init(&self->image, buf, width, height, width);
         self->image.print_font = source->image.print_font;
         self->image.print_value = source->image.print_value;
@@ -99,7 +108,7 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
         mp_int_t y2 = y2_in == mp_const_none ? source->image.height - 1 : pb_obj_get_int(y2_in);
         self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
         self->owner = source_in;
-        self->is_display = false;
+        self->display_type = PB_TYPE_IMAGE_DISPLAY_NONE;
         int width = x2 - x1 + 1;
         int height = y2 - y1 + 1;
         pbio_image_init_sub(&self->image, &source->image, x1, y1, width, height);
@@ -111,7 +120,7 @@ static mp_obj_t pb_type_Image_make_new(const mp_obj_type_t *type,
 static mp_obj_t pb_type_Image_close(mp_obj_t self_in) {
     pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // If we own the memory, free it.
-    if (self->owner == MP_OBJ_NULL && !self->is_display && self->image.pixels) {
+    if (self->owner == MP_OBJ_NULL && self->display_type == PB_TYPE_IMAGE_DISPLAY_NONE && self->image.pixels) {
         umm_free(self->image.pixels);
         self->image.pixels = NULL;
     }
@@ -140,7 +149,7 @@ static mp_obj_t pb_type_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_
 
     pb_type_Image_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_Image_obj_t, &pb_type_Image);
     self->owner = MP_OBJ_NULL;
-    self->is_display = false;
+    self->display_type = PB_TYPE_IMAGE_DISPLAY_NONE;
     pbio_image_init(&self->image, buf, width, height, width);
     self->image.print_font = display->print_font;
     self->image.print_value = display->print_value;
@@ -168,14 +177,21 @@ static void pb_type_Image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     dest[1] = MP_OBJ_SENTINEL;
 }
 
+/**
+ * If this image is the display, request a frame update.
+ */
+static void pb_type_Image_handle_display_update(pb_type_Image_obj_t *self) {
+    if (self->display_type == PB_TYPE_IMAGE_DISPLAY_READY) {
+        pbdrv_display_update();
+    }
+}
+
 static mp_obj_t pb_type_Image_clear(mp_obj_t self_in) {
     pb_type_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pbio_image_fill(&self->image, 0);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -195,9 +211,7 @@ static mp_obj_t pb_type_Image_load_image(size_t n_args, const mp_obj_t *pos_args
     pbio_image_fill(&self->image, 0);
     pbio_image_draw_image(&self->image, &source->image, x, y);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -224,9 +238,7 @@ static mp_obj_t pb_type_Image_draw_image(size_t n_args, const mp_obj_t *pos_args
         pbio_image_draw_image_transparent(&self->image, &source->image, x, y, transparent_value);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -245,9 +257,7 @@ static mp_obj_t pb_type_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args
 
     pbio_image_draw_pixel(&self->image, x, y, color);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -272,9 +282,7 @@ static mp_obj_t pb_type_Image_draw_line(size_t n_args, const mp_obj_t *pos_args,
 
     pbio_image_draw_thick_line(&self->image, x1, y1, x2, y2, width, color);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -307,9 +315,7 @@ static mp_obj_t pb_type_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, 
         pbio_image_draw_rounded_rect(&self->image, x1, y1, width, height, r, color);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -336,9 +342,7 @@ static mp_obj_t pb_type_Image_draw_circle(size_t n_args, const mp_obj_t *pos_arg
         pbio_image_draw_circle(&self->image, x, y, r, color);
     }
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -372,9 +376,7 @@ static mp_obj_t pb_type_Image_draw_text(size_t n_args, const mp_obj_t *pos_args,
 
     pbio_image_draw_text(&self->image, font, x, y + font->top_max, text, text_len, text_color);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -411,9 +413,7 @@ static mp_obj_t pb_type_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_
 
     vstr_clear(&vstr);
 
-    if (self->is_display) {
-        pbdrv_display_update();
-    }
+    pb_type_Image_handle_display_update(self);
 
     return mp_const_none;
 }
@@ -474,7 +474,7 @@ static void pb_type_image_file_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 
     // This is a standalone image.
     self->owner = MP_OBJ_NULL;
-    self->is_display = false;
+    self->display_type = PB_TYPE_IMAGE_DISPLAY_NONE;
 
     // Default to same colors as display.
     pbio_image_t *display = pbdrv_display_get_image();
