@@ -28,3 +28,4 @@
 #define PBSYS_CONFIG_TELEMETRY                      (1)
 #define PBSYS_CONFIG_USER_PROGRAM                   (0)
 #define PBSYS_CONFIG_PROGRAM_STOP                   (1)
+#define PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE (2 + 20 * 23)

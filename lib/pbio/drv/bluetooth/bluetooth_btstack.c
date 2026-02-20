@@ -3,6 +3,7 @@
 
 // Bluetooth driver using BlueKitchen BTStack.
 
+#include <btstack_config.h>
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK
@@ -21,9 +22,10 @@
 #include <classic/sdp_client.h>
 #include <classic/sdp_server.h>
 #include <classic/spp_server.h>
+#include <gap.h>
+#include <lwrb/lwrb.h>
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
-#include <lwrb/lwrb.h>
 
 #if HAVE_UMM_MALLOC
 #include <umm_malloc.h>
@@ -61,7 +63,7 @@
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
 
-#define DEBUG 0
+#define DEBUG 2
 
 #if DEBUG
 #include <pbio/debug.h>
@@ -1847,6 +1849,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     // ready when the bluetooth system is initialized, but it will be ready by
     // the time we try to make any rfcomm connections.
     link_db_settings_load_once();
+    gap_discoverable_control(1);
 
     sock = pbdrv_bluetooth_classic_rfcomm_socket_alloc();
     if (!sock) {
@@ -1884,11 +1887,12 @@ pbio_error_t pbdrv_bluetooth_rfcomm_listen(
     }
 
     DEBUG_PRINT("[btc:rfcomm_listen] Connected\n");
+    gap_discoverable_control(0);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 
-cleanup:
-    ;
+cleanup:;
+    gap_discoverable_control(0);
     pbio_error_t err = sock->err;
     pbdrv_bluetooth_classic_rfcomm_socket_reset(sock);
     return err;
