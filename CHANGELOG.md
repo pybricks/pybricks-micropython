@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed EV3 screen animation not closing on user display actions ([support#2585]).
+
+[support#1382]: https://github.com/pybricks/support/issues/2585
+
 ## [4.0.0b6] - 2026-02-19
 
 ### Added

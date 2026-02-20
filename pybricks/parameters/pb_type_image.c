@@ -20,6 +20,7 @@
 
 #include <pbio/image.h>
 #include <pbio/int_math.h>
+#include <pbio/light_animation.h>
 
 #include <pbdrv/display.h>
 
@@ -63,7 +64,7 @@ static int get_color(mp_obj_t obj) {
 mp_obj_t pb_type_Image_display_obj_new(void) {
     pb_type_Image_obj_t *self = mp_obj_malloc(pb_type_Image_obj_t, &pb_type_Image);
     self->owner = MP_OBJ_NULL;
-    self->display_type = PB_TYPE_IMAGE_DISPLAY_READY;
+    self->display_type = PB_TYPE_IMAGE_DISPLAY_UNUSED;
     self->image = *pbdrv_display_get_image();
 
     return MP_OBJ_FROM_PTR(self);
@@ -171,6 +172,18 @@ static void pb_type_Image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         if (attr == MP_QSTR_height) {
             dest[0] = mp_obj_new_int(self->image.height);
             return;
+        }
+
+        // If this is the first time the user accesses any screen methods,
+        // give control to the user and stop system animations.
+        if (self->display_type == PB_TYPE_IMAGE_DISPLAY_UNUSED) {
+            // At the moment, platforms with a display have at most one
+            // animation so we can use the generic stop all method. In the
+            // future, we could tie animations to a screen or image instance.
+            pbio_light_animation_stop_all();
+            pbio_image_fill(&self->image, get_color(MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj)));
+            pbdrv_display_update();
+            self->display_type = PB_TYPE_IMAGE_DISPLAY_READY;
         }
     }
     // Attribute not found, continue lookup in locals dict.
