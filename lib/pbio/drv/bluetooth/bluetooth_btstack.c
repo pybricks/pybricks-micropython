@@ -150,6 +150,8 @@ static pbio_error_t att_error_to_pbio_error(uint8_t status) {
     switch (status) {
         case ATT_ERROR_SUCCESS:
             return PBIO_SUCCESS;
+        case ATT_ERROR_INSUFFICIENT_AUTHENTICATION:
+            return PBIO_ERROR_INVALID_OP;
         case ATT_ERROR_HCI_DISCONNECT_RECEIVED:
             return PBIO_ERROR_NO_DEV;
         case ATT_ERROR_TIMEOUT:
@@ -993,6 +995,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     // Result of enabling notifications.
     btstack_error = gatt_event_query_complete_get_att_status(event_packet);
     if (btstack_error != ERROR_CODE_SUCCESS) {
+        // ATT_ERROR_INSUFFICIENT_AUTHENTICATION
         return att_error_to_pbio_error(btstack_error);
     }
 
