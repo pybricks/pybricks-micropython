@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed EV3 light animation stopping when screen is used ([support#2599]).
+
+[support#2599]: https://github.com/pybricks/support/issues/2599
+
 ## [4.0.0b7] - 2026-02-19
 
 ### Added

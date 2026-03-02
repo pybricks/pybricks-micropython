@@ -22,6 +22,8 @@
 #include <pbio/int_math.h>
 #include <pbio/light_animation.h>
 
+#include <pbsys/hmi.h>
+
 #include <pbdrv/display.h>
 
 typedef enum {
@@ -177,10 +179,7 @@ static void pb_type_Image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         // If this is the first time the user accesses any screen methods,
         // give control to the user and stop system animations.
         if (self->display_type == PB_TYPE_IMAGE_DISPLAY_UNUSED) {
-            // At the moment, platforms with a display have at most one
-            // animation so we can use the generic stop all method. In the
-            // future, we could tie animations to a screen or image instance.
-            pbio_light_animation_stop_all();
+            pbsys_hmi_stop_animation();
             pbio_image_fill(&self->image, get_color(MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj)));
             pbdrv_display_update();
             self->display_type = PB_TYPE_IMAGE_DISPLAY_READY;
