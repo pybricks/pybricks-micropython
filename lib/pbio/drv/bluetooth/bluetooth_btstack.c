@@ -767,6 +767,7 @@ start_scan:
     // Copy name for later use.
     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
         memcpy(peri->name, &data[2], sizeof(peri->name));
+        DEBUG_PRINT("Connected to %.16s\n", peri->name);
     }
     // Copy response data to allow virtual re-connect in a new user program.
     peri->config.match_adv_rsp_data_len = data_len;
