@@ -31,7 +31,7 @@ plotly = "^5.14.1"
 pygithub = "^1.58.1"
 freetype-py = "^2.5.1"
 cairosvg = "^2.8.2"
-pillow = "^12.1.0"
+pillow = "^12.1.1"
 
 
 [tool.poetry.group.lint.dependencies]
