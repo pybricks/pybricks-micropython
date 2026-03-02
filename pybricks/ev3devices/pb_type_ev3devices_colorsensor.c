@@ -47,7 +47,8 @@ static mp_obj_t get_color(mp_obj_t self_in) {
         case 7:
             return MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj);
         default:
-            return mp_const_none;
+            // Used to be None in Pybricks 2.0.
+            return MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
     }
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__COLOR, get_color);

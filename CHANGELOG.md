@@ -4,10 +4,16 @@
 
 ## [Unreleased]
 
+
+### Changed
+- The EV3 Color Sensor now returns `Color.NONE` instead of `None` when no color
+  is detected, for consistency with other Color Sensors ([support#2603]).
+
 ### Fixed
 - Fixed EV3 light animation stopping when screen is used ([support#2599]).
 
 [support#2599]: https://github.com/pybricks/support/issues/2599
+[support#2603]: https://github.com/pybricks/support/issues/2603
 
 ## [4.0.0b7] - 2026-02-19
 
