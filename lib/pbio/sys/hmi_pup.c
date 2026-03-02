@@ -20,13 +20,13 @@
 #include <pbio/busy_count.h>
 #include <pbio/light_matrix.h>
 #include <pbio/os.h>
+
+#include <pbsys/hmi.h>
 #include <pbsys/host.h>
 #include <pbsys/light.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/storage_settings.h>
-
-#include "hmi.h"
 
 #define DEBUG 0
 
@@ -400,6 +400,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state) {
     #endif
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbsys_hmi_stop_animation(void) {
+    // Stopping this is currently controlled in the pbio module.
 }
 
 /**

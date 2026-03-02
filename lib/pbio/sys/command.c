@@ -6,12 +6,13 @@
 
 #include <pbdrv/reset.h>
 #include <pbio/protocol.h>
+
 #include <pbsys/command.h>
 #include <pbsys/config.h>
+#include <pbsys/hmi.h>
 #include <pbsys/host.h>
 #include <pbsys/storage.h>
 
-#include "./hmi.h"
 #include "./storage.h"
 #include "./program_stop.h"
 

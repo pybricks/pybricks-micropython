@@ -15,13 +15,14 @@
 #include <pbio/button.h>
 #include <pbio/image.h>
 #include <pbio/os.h>
+
 #include <pbsys/command.h>
+#include <pbsys/hmi.h>
 #include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 
 #include "storage.h"
-#include "hmi.h"
 #include "hmi_ev3_ui.h"
 
 #include <errno.h>
@@ -144,6 +145,10 @@ void pbsys_hmi_deinit(void) {
     static pbio_os_process_t shutdown_animation_process;
     pbio_busy_count_up();
     pbio_os_process_start(&shutdown_animation_process, pbsys_hmi_ev3_ui_closing_credits, NULL);
+}
+
+void pbsys_hmi_stop_animation(void) {
+    pbsys_hmi_ev3_ui_run_animation_stop();
 }
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {

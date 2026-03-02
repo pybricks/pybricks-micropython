@@ -11,10 +11,10 @@
 
 #include <pbio/os.h>
 
+#include <pbsys/hmi.h>
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
-#include "hmi.h"
 #include "light.h"
 #include "storage.h"
 

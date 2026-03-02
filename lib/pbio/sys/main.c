@@ -15,15 +15,16 @@
 #include <pbio/port_interface.h>
 #include <pbio/protocol.h>
 #include <pbsys/core.h>
+
+#include <pbsys/hmi.h>
+#include <pbsys/host.h>
+#include <pbsys/light.h>
 #include <pbsys/main.h>
+#include <pbsys/program_stop.h>
 #include <pbsys/status.h>
 
-#include "hmi.h"
 #include "program_stop.h"
 #include "storage.h"
-#include <pbsys/program_stop.h>
-#include <pbsys/light.h>
-#include <pbsys/host.h>
 
 // Singleton with information about the currently (or soon) active program.
 static pbsys_main_program_t program;

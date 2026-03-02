@@ -17,11 +17,11 @@
 #include <pbio/main.h>
 #include <pbio/protocol.h>
 #include <pbio/version.h>
-#include <pbsys/main.h>
-#include <pbsys/storage.h>
-#include <pbsys/status.h>
 
-#include "hmi.h"
+#include <pbsys/hmi.h>
+#include <pbsys/main.h>
+#include <pbsys/status.h>
+#include <pbsys/storage.h>
 
 /**
  * State of incoming program data.

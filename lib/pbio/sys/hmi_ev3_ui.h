@@ -36,6 +36,8 @@ void pbsys_hmi_ev3_ui_draw(void);
 
 void pbsys_hmi_ev3_ui_run_animation_start(void);
 
+void pbsys_hmi_ev3_ui_run_animation_stop(void);
+
 pbio_error_t pbsys_hmi_ev3_ui_closing_credits(pbio_os_state_t *state, void *context);
 
 #endif // _PBSYS_SYS_HMI_EV3_UI_H_

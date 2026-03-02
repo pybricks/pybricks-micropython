@@ -682,4 +682,8 @@ void pbsys_hmi_ev3_ui_run_animation_start(void) {
     // Not updating display here. First animation frame will do that.
 }
 
+void pbsys_hmi_ev3_ui_run_animation_stop(void) {
+    pbio_light_animation_stop(&animation);
+}
+
 #endif // PBSYS_CONFIG_HMI_EV3_UI

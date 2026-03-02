@@ -17,14 +17,13 @@
 #include <pbdrv/usb.h>
 
 #include <pbio/button.h>
-#include <pbio/os.h>
-#include <pbsys/host.h>
 #include <pbio/image.h>
+#include <pbio/os.h>
+#include <pbsys/hmi.h>
+#include <pbsys/host.h>
 #include <pbsys/light.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
-
-#include "hmi.h"
 
 #define DEBUG 0
 
@@ -131,6 +130,10 @@ void pbsys_hmi_deinit(void) {
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_fill(display, 0);
     pbdrv_display_update();
+}
+
+void pbsys_hmi_stop_animation(void) {
+    // No animations on this platform.
 }
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {

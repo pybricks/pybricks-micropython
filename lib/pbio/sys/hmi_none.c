@@ -23,6 +23,9 @@ void pbsys_hmi_init(void) {
 void pbsys_hmi_deinit(void) {
 }
 
+void pbsys_hmi_stop_animation(void) {
+}
+
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     do {
