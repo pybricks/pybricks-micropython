@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+###
+- Added `pybricks.pupdevices.MarioHub` to control it as a peripheral. It
+  cannot be used as a standalone device since it cannot ne updated.
 
 ### Changed
 - The EV3 Color Sensor now returns `Color.NONE` instead of `None` when no color

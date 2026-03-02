@@ -26,7 +26,7 @@ static const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_DuploTrain),          MP_ROM_PTR(&pb_type_duplo_train)                   },
     #endif
     #if PYBRICKS_PY_PUPDEVICES_MARIO
-    { MP_ROM_QSTR(MP_QSTR_Mario),               MP_ROM_PTR(&pb_type_remote)                        },
+    { MP_ROM_QSTR(MP_QSTR_MarioHub),            MP_ROM_PTR(&pb_type_mario_hub)                     },
     #endif
     #if PYBRICKS_PY_PUPDEVICES_REMOTE
     { MP_ROM_QSTR(MP_QSTR_Remote),              MP_ROM_PTR(&pb_type_remote)                        },

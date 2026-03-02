@@ -25,6 +25,7 @@
 #include <pybricks/tools/pb_type_async.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
 
 #include "py/mphal.h"
@@ -747,6 +748,154 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
     make_new, pb_type_technic_move_hub_make_new,
     locals_dict, &pb_type_technic_move_hub_locals_dict);
 
+// -----------------------------------------------------------------------------
+// pybricks.pupdevices.MarioHub (special case of LWP3).
+// -----------------------------------------------------------------------------
+
+#define MARIO_PORT_COLOR (0x01)
+#define MARIO_PORT_COLOR_MODE_RGB (0x01)
+
+static const uint8_t pb_type_mario_hub_setup1[] = {
+    0x0a, 0x00, 0x41, MARIO_PORT_COLOR, MARIO_PORT_COLOR_MODE_RGB, 0x01, 0x00, 0x00, 0x00, 0x01,
+};
+
+static bool pb_type_mario_hub_advertisement_matches(void *user, const uint8_t *data, uint8_t length) {
+    pb_type_lwp3device_obj_t *self = user;
+    if (!self) {
+        return false;
+    }
+
+    // Same test as LWP3 advertisement, but allow 3 hub types
+    return
+        data[3] == 17 /* length */
+        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
+        && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
+        && (data[26] == LWP3_HUB_KIND_MARIO || data[26] == LWP3_HUB_KIND_LUIGI || data[26] == LWP3_HUB_KIND_PEACH);
+}
+
+static void pb_type_mario_hub_handle_notification(void *user, const uint8_t *value, uint32_t size) {
+
+    pb_type_lwp3device_obj_t *self = user;
+
+    // Want only port value messages.
+    if (!user || size < 4 || value[2] != 0x45) {
+        return;
+    }
+
+    // Get RGB values, one byte each.
+    if (size == 7 && value[3] == MARIO_PORT_COLOR) {
+        memcpy(&self->data[0], &value[4], 3);
+    }
+}
+
+static pbio_error_t pb_type_mario_hub_post_connect(pbio_os_state_t *state, mp_obj_t parent_obj) {
+
+    pbio_os_state_t unused;
+    pbio_error_t err;
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Subscribe to RGB color info.
+    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+        self->lwp3_char_handle, pb_type_mario_hub_setup1, sizeof(pb_type_mario_hub_setup1));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+static void pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_t *self, pbio_color_hsv_t *hsv) {
+    pbio_color_rgb_t rgb = {
+        .r = self->data[0],
+        .g = self->data[1],
+        .b = self->data[2],
+    };
+    pb_color_map_rgb_to_hsv(&rgb, hsv);
+}
+
+static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+    pbio_color_hsv_t hsv;
+    pb_type_mario_hub_color_get_hsv_data(self, &hsv);
+    return pb_color_map_get_color(&self->buttons, &hsv);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_color_obj, pb_type_mario_hub_color);
+
+static mp_obj_t pb_type_mario_hub_hsv(mp_obj_t self_in) {
+    pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+    pb_type_mario_hub_color_get_hsv_data(self, &color->hsv);
+    return MP_OBJ_FROM_PTR(color);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_hsv_obj, pb_type_mario_hub_hsv);
+
+static mp_obj_t pb_type_mario_hub_detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_type_lwp3device_obj_t, self,
+        PB_ARG_DEFAULT_NONE(colors));
+    return pb_color_map_detectable_colors_method(&self->buttons, colors_in);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_mario_hub_detectable_colors_obj, 1, pb_type_mario_hub_detectable_colors);
+
+static mp_obj_t pb_type_mario_hub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_NONE(name),
+        PB_ARG_DEFAULT_INT(timeout, 10000),
+        PB_ARG_DEFAULT_TRUE(connect)
+        );
+
+    pb_module_tools_assert_blocking();
+    pb_type_lwp3device_obj_t *self = mp_obj_malloc_with_finaliser(pb_type_lwp3device_obj_t, type);
+    self->iter = NULL;
+    self->noti_num = 0;
+    self->hub_kind = 0; // Not used, checks for 3 mario types instead.
+    self->post_connect_setup_func = pb_type_mario_hub_post_connect;
+    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+        .match_adv = pb_type_mario_hub_advertisement_matches,
+        .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
+        .notification_handler = pb_type_mario_hub_handle_notification,
+        // Newer Mario firmware versions require pairing. Older firmware
+        // versions seem to accept it even if it wasn't required, so always
+        // attempt it just in case.
+        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+    };
+    pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
+    pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
+
+    // Reusing the buttons object which is not used on Mario to hold the
+    // detectable color mapping.
+    pb_color_map_save_default(&self->buttons);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static const mp_rom_map_elem_t pb_type_mario_hub_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&pb_type_lwp3device_close_obj) },
+    { MP_ROM_QSTR(MP_QSTR_connect), MP_ROM_PTR(&pb_type_lwp3device_connect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disconnect), MP_ROM_PTR(&pb_type_lwp3device_disconnect_obj) },
+    { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&pb_type_mario_hub_color_obj) },
+    { MP_ROM_QSTR(MP_QSTR_hsv), MP_ROM_PTR(&pb_type_mario_hub_hsv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_detectable_colors), MP_ROM_PTR(&pb_type_mario_hub_detectable_colors_obj) },
+};
+static MP_DEFINE_CONST_DICT(pb_type_mario_hub_locals_dict, pb_type_mario_hub_locals_dict_table);
+
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_mario_hub,
+    MP_QSTR_MarioHub,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_mario_hub_make_new,
+    locals_dict, &pb_type_mario_hub_locals_dict);
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.DuploTrain (special case of LWP3).
