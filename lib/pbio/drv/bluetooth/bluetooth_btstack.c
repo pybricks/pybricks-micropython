@@ -3,10 +3,11 @@
 
 // Bluetooth driver using BlueKitchen BTStack.
 
-#include <btstack_config.h>
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK
+
+#include <btstack_config.h>
 
 #include <assert.h>
 #include <inttypes.h>
