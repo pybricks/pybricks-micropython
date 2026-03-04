@@ -155,10 +155,7 @@ typedef struct {
 static const mp_obj_type_t pb_type_messaging_rfcomm_socket;
 
 // Constructor for RFCOMMSocket
-static mp_obj_t
-pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type,
-    size_t n_args, size_t n_kw,
-    const mp_obj_t *args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     pb_type_messaging_rfcomm_socket_obj_t *self = mp_obj_malloc(
         pb_type_messaging_rfcomm_socket_obj_t, &pb_type_messaging_rfcomm_socket);
@@ -176,9 +173,7 @@ pb_type_messaging_rfcomm_socket_make_new(const mp_obj_type_t *type,
     return MP_OBJ_FROM_PTR(self);
 }
 
-static pbio_error_t
-pb_type_messaging_rfcomm_socket_write_iter_once(pbio_os_state_t *state,
-    mp_obj_t self_in) {
+static pbio_error_t pb_type_messaging_rfcomm_socket_write_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GET_STR_DATA_LEN(self->write_obj, data, data_len);
 
@@ -199,16 +194,13 @@ pb_type_messaging_rfcomm_socket_write_iter_once(pbio_os_state_t *state,
     return PBIO_SUCCESS;
 }
 
-static mp_obj_t
-pb_type_messaging_rfcomm_socket_write_return_map(mp_obj_t self_in) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_write_return_map(mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->write_obj = MP_OBJ_NULL;
     return mp_const_none;
 }
 
-static mp_obj_t pb_type_messaging_rfcomm_socket_write(size_t n_args,
-    const mp_obj_t *pos_args,
-    mp_map_t *kw_args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_messaging_rfcomm_socket_obj_t, self,
@@ -241,9 +233,7 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_waiting(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_waiting_obj,
     pb_type_messaging_rfcomm_socket_waiting);
 
-static pbio_error_t
-pb_type_messaging_rfcomm_socket_read_iter_once(pbio_os_state_t *state,
-    mp_obj_t self_in) {
+static pbio_error_t pb_type_messaging_rfcomm_socket_read_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     size_t len = 0;
     pb_assert(pbdrv_bluetooth_rfcomm_recv(
@@ -267,8 +257,7 @@ pb_type_messaging_rfcomm_socket_read_iter_once(pbio_os_state_t *state,
     return PBIO_SUCCESS;
 }
 
-static mp_obj_t
-pb_type_messaging_rfcomm_socket_read_return_map(mp_obj_t self_in) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_read_return_map(mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_str_t *result = self->read_obj;
     self->read_obj = NULL;
@@ -277,9 +266,7 @@ pb_type_messaging_rfcomm_socket_read_return_map(mp_obj_t self_in) {
     return pb_obj_new_bytes_finish(result);
 }
 
-static mp_obj_t pb_type_messaging_rfcomm_socket_read(size_t n_args,
-    const mp_obj_t *pos_args,
-    mp_map_t *kw_args) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_messaging_rfcomm_socket_obj_t, self,
@@ -346,9 +333,7 @@ static mp_obj_t pb_type_messaging_rfcomm_socket_clear(mp_obj_t self_in) {
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_messaging_rfcomm_socket_clear_obj,
     pb_type_messaging_rfcomm_socket_clear);
 
-static pbio_error_t
-pb_type_messaging_rfcomm_socket_wait_until_iter_once(pbio_os_state_t *state,
-    mp_obj_t self_in) {
+static pbio_error_t pb_type_messaging_rfcomm_socket_wait_until_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
 
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -376,17 +361,14 @@ retry:;
     return PBIO_SUCCESS;
 }
 
-static mp_obj_t
-pb_type_messaging_rfcomm_socket_wait_until_return_map(mp_obj_t self_in) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_wait_until_return_map(mp_obj_t self_in) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->wait_len = 0;
     self->wait_data = NULL;
     return mp_const_none;
 }
 
-static mp_obj_t
-pb_type_messaging_rfcomm_socket_wait_until(mp_obj_t self_in,
-    mp_obj_t pattern_in) {
+static mp_obj_t pb_type_messaging_rfcomm_socket_wait_until(mp_obj_t self_in, mp_obj_t pattern_in) {
 
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -554,9 +536,7 @@ static const mp_rom_map_elem_t
 };
 static MP_DEFINE_CONST_DICT(pb_type_messaging_rfcomm_socket_locals_dict, pb_type_messaging_rfcomm_socket_locals_dict_table);
 
-static void pb_type_messaging_rfcomm_socket_print(const mp_print_t *print,
-    mp_obj_t self_in,
-    mp_print_kind_t kind) {
+static void pb_type_messaging_rfcomm_socket_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pb_type_messaging_rfcomm_socket_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "RFCOMMSocket(conn_id=%d)", self->conn.conn_id);
 }

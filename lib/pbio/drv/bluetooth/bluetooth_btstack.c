@@ -1780,8 +1780,7 @@ bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr) {
 
 // Returns whether this socket is in a state where we should abandon
 // our connection attempt, either listening or connecting.
-static bool
-should_abandon_connection(pbdrv_bluetooth_classic_rfcomm_socket_t *sock) {
+static bool should_abandon_connection(pbdrv_bluetooth_classic_rfcomm_socket_t *sock) {
     if (!sock) {
         return false;
     }
@@ -1800,11 +1799,7 @@ should_abandon_connection(pbdrv_bluetooth_classic_rfcomm_socket_t *sock) {
     return false;
 }
 
-pbio_error_t
-pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr,
-    int32_t timeout,
-    pbdrv_bluetooth_rfcomm_conn_t *conn) {
-
+pbio_error_t pbdrv_bluetooth_rfcomm_connect(pbio_os_state_t *state, bdaddr_t bdaddr, int32_t timeout, pbdrv_bluetooth_rfcomm_conn_t *conn) {
     // Each time we resume this function, we need to load the socket pointer.
     // On the first time through, initialize the conn_id to some non-matching
     // value to prevent finding a socket owned by someone else.
@@ -1907,10 +1902,7 @@ cleanup:
     return err;
 }
 
-pbio_error_t pbdrv_bluetooth_rfcomm_listen(
-    pbio_os_state_t *state,
-    int32_t timeout,
-    pbdrv_bluetooth_rfcomm_conn_t *conn) {
+pbio_error_t pbdrv_bluetooth_rfcomm_listen(pbio_os_state_t *state, int32_t timeout, pbdrv_bluetooth_rfcomm_conn_t *conn) {
     if (*state == 0) {
         conn->conn_id = -1;
     }
@@ -1975,8 +1967,7 @@ cleanup:;
     return err;
 }
 
-pbio_error_t pbdrv_bluetooth_rfcomm_close(
-    pbdrv_bluetooth_rfcomm_conn_t *conn) {
+pbio_error_t pbdrv_bluetooth_rfcomm_close(pbdrv_bluetooth_rfcomm_conn_t *conn) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
     if (!sock) {
         DEBUG_PRINT("[btc:rfcomm_close] Invalid CID: %d\n", conn->conn_id);
@@ -1989,11 +1980,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_close(
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_bluetooth_rfcomm_send(
-    const pbdrv_bluetooth_rfcomm_conn_t *conn,
-    const uint8_t *data,
-    size_t length,
-    size_t *bytes_sent) {
+pbio_error_t pbdrv_bluetooth_rfcomm_send(const pbdrv_bluetooth_rfcomm_conn_t *conn, const uint8_t *data, size_t length, size_t *bytes_sent) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
     if (!sock || !sock->is_connected) {
         DEBUG_PRINT("[btc:rfcomm_send] Socket is not connected or does not exist.\n");
@@ -2016,11 +2003,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_send(
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_bluetooth_rfcomm_recv(
-    const pbdrv_bluetooth_rfcomm_conn_t *conn,
-    uint8_t *buffer,
-    size_t buffer_size,
-    size_t *bytes_received) {
+pbio_error_t pbdrv_bluetooth_rfcomm_recv(const pbdrv_bluetooth_rfcomm_conn_t *conn, uint8_t *buffer, size_t buffer_size, size_t *bytes_received) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock = pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
 
     if (!sock || !sock->is_connected) {
@@ -2041,9 +2024,7 @@ pbio_error_t pbdrv_bluetooth_rfcomm_recv(
     return PBIO_SUCCESS;
 }
 
-pbio_error_t
-pbdrv_bluetooth_rfcomm_in_waiting(const pbdrv_bluetooth_rfcomm_conn_t *conn,
-    size_t *waiting) {
+pbio_error_t pbdrv_bluetooth_rfcomm_in_waiting(const pbdrv_bluetooth_rfcomm_conn_t *conn, size_t *waiting) {
     pbdrv_bluetooth_classic_rfcomm_socket_t *sock =
         pbdrv_bluetooth_classic_rfcomm_socket_find_by_conn(conn);
 
