@@ -1196,6 +1196,7 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+#ifdef PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE
 static int link_db_entry_size() {
     return sizeof(bd_addr_t) + sizeof(link_key_t) + sizeof(link_key_type_t);
 }
@@ -1313,6 +1314,8 @@ static void link_db_settings_load_once(void) {
     }
     DEBUG_PRINT("Loaded %u link keys from settings\n", count);
 }
+
+#endif
 
 // Returns true if the given address is already paired in our link database.
 bool is_already_paired(bd_addr_t addr) {
