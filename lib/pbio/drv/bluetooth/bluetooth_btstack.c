@@ -28,7 +28,7 @@
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
 
-#if HAVE_UMM_MALLOC
+#if MAX_NR_RFCOMM_CHANNELS > 0
 #include <umm_malloc.h>
 #endif
 
@@ -1197,7 +1197,8 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-#ifdef PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE
+#if MAX_NR_RFCOMM_CHANNELS > 0
+
 static int link_db_entry_size() {
     return sizeof(bd_addr_t) + sizeof(link_key_t) + sizeof(link_key_type_t);
 }
@@ -1316,18 +1317,12 @@ static void link_db_settings_load_once(void) {
     DEBUG_PRINT("Loaded %u link keys from settings\n", count);
 }
 
-#endif
-
 // Returns true if the given address is already paired in our link database.
 bool is_already_paired(bd_addr_t addr) {
     link_key_t key;
     link_key_type_t type;
     return gap_get_link_key_for_bd_addr(addr, key, &type);
 }
-
-#ifndef MAX_NR_RFCOMM_CHANNELS
-#define MAX_NR_RFCOMM_CHANNELS 0
-#endif
 
 #define RFCOMM_SOCKET_COUNT (MAX_NR_RFCOMM_CHANNELS > 0 ? MAX_NR_RFCOMM_CHANNELS - 1 : 0)
 #if HAVE_UMM_MALLOC
@@ -1769,18 +1764,6 @@ void pbdrv_bluetooth_classic_init() {
     rfcomm_register_service_with_initial_credits(&user_rfcomm_packet_handler, 1, 1024, 0);
 }
 
-void pbdrv_bluetooth_local_address(bdaddr_t addr) {
-    gap_local_bd_addr(addr);
-}
-
-const char *pbdrv_bluetooth_bdaddr_to_str(const bdaddr_t addr) {
-    return bd_addr_to_str(addr);
-}
-
-bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr) {
-    return sscanf_bd_addr(str, addr) == 1;
-}
-
 // Returns whether this socket is in a state where we should abandon
 // our connection attempt, either listening or connecting.
 static bool should_abandon_connection(pbdrv_bluetooth_rfcomm_socket_t *sock) {
@@ -2079,6 +2062,34 @@ void pbdrv_bluetooth_rfcomm_disconnect_all() {
         }
     }
     pending_listen_socket = NULL;
+}
+
+#else
+
+void pbdrv_bluetooth_classic_init() {
+}
+
+static inline void maybe_handle_classic_security_packet(uint8_t *packet, uint16_t size) {
+}
+
+static inline void link_db_settings_load_once(void) {
+}
+
+void pbdrv_bluetooth_rfcomm_disconnect_all() {
+}
+
+#endif  // BLUETOOTH_CLASSIC
+
+void pbdrv_bluetooth_local_address(bdaddr_t addr) {
+    gap_local_bd_addr(addr);
+}
+
+const char *pbdrv_bluetooth_bdaddr_to_str(const bdaddr_t addr) {
+    return bd_addr_to_str(addr);
+}
+
+bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr) {
+    return sscanf_bd_addr(str, addr) == 1;
 }
 
 static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
