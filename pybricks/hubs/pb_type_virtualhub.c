@@ -35,6 +35,31 @@ typedef struct _hubs_VirtualHub_obj_t {
     #endif
 } hubs_VirtualHub_obj_t;
 
+static mp_obj_t button_pressed(mp_obj_t parent_obj) {
+    pbio_button_flags_t flags = pbdrv_button_get_pressed();
+    mp_obj_t pressed[5];
+    size_t num = 0;
+    if (flags & PBIO_BUTTON_LEFT) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT);
+    }
+    if (flags & PBIO_BUTTON_RIGHT) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_RIGHT);
+    }
+    if (flags & PBIO_BUTTON_CENTER) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_CENTER);
+    }
+    if (flags & PBIO_BUTTON_UP) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_UP);
+    }
+    if (flags & PBIO_BUTTON_DOWN) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_DOWN);
+    }
+    if (flags & PBIO_BUTTON_LEFT_UP) {
+        pressed[num++] = pb_type_button_new(MP_QSTR_LEFT_UP);
+    }
+    return mp_obj_new_set(num, pressed);
+}
+
 static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_OBJ(top_side, pb_type_Axis_Z_obj),
@@ -57,7 +82,7 @@ static mp_obj_t hubs_VirtualHub_make_new(const mp_obj_type_t *type, size_t n_arg
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
 
-    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_button_pressed_hub_single_button);
+    self->buttons = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), button_pressed);
     // FIXME: Implement lights.
     // self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->screen = pb_type_Image_display_obj_new();
