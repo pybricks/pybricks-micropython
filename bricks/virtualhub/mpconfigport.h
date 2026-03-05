@@ -8,6 +8,7 @@
 
 #define PYBRICKS_HUB_NAME                       "virtualhub"
 #define PYBRICKS_HUB_VIRTUALHUB                 (1)
+#define PYBRICKS_HUB_CLASS_NAME_ALIAS           (MP_QSTR_EV3Brick)
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
