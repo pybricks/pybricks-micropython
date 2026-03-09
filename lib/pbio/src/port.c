@@ -186,7 +186,7 @@ pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
  */
 pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
     if (port->lump_dev) {
-        return pbio_port_lump_get_angle(port->lump_dev, angle, false);
+        return pbio_port_lump_get_angle(port->lump_dev, angle, true);
     }
 
     if (port->counter) {
