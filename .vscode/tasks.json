@@ -75,6 +75,16 @@
                 "reveal": "always"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "build ev3",
+            "type": "shell",
+            "command": "poetry run make ev3",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }
