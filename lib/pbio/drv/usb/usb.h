@@ -51,7 +51,7 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 /**
  * Sends and awaits event message from hub to host via the Pybricks USB interface OUT endpoint.
  *
- * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
+ * Driver-specific implementation. Must support being canceled via @p cancel.
  *
  * The USB process ensures that only one call is made at once.
  *
@@ -60,31 +60,33 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
  * @param [in] state    Protothread state.
  * @param [in] data     Data to send.
  * @param [in] size     Data size.
+ * @param [in] cancel   If true, stop waiting for completion and return error.
  * @return              ::PBIO_SUCCESS on completion.
  *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
  *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
- *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
+ *                      ::PBIO_ERROR_CANCELED if the operation was canceled.
  */
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size, bool cancel);
 
 /**
  * Sends and awaits response to an earlier incoming message.
  *
- * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
+ * Driver-specific implementation. Must support being canceled via @p cancel.
  *
  * The USB process ensures that only one call is made at once.
  *
  * @param [in] state    Protothread state.
  * @param [in] code     Error code to send.
+ * @param [in] cancel   If true, stop waiting for completion and return error.
  * @return              ::PBIO_SUCCESS on completion.
  *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
- *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
+ *                      ::PBIO_ERROR_CANCELED if the operation was canceled.
  */
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code);
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code, bool cancel);
 
 /**
  * Resets the driver transmission state.
