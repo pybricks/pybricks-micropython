@@ -140,6 +140,7 @@ GATT_FILES := $(addprefix $(PBIO_DIR)/drv/bluetooth/,\
 
 GATT_H_FILES := $(addprefix $(BUILD_DIR)/genhdr/, $(notdir $(GATT_FILES:.gatt=.h)))
 
+$(BUILD_PREFIX)/$(PBIO_DIR)/drv/bluetooth/bluetooth_btstack.d: $(GATT_H_FILES)
 $(BUILD_PREFIX)/$(PBIO_DIR)/drv/bluetooth/bluetooth_btstack.o: $(GATT_H_FILES)
 
 $(BUILD_DIR)/genhdr/%.h: $(PBIO_DIR)/drv/bluetooth/%.gatt
