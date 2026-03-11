@@ -187,12 +187,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+    - name: Setup poetry
+      run: |
+        pipx install poetry
+        poetry install --only=build
     - name: Build
       run: |
-        make $MAKEOPTS -C lib/pbio/test
+        poetry run make $MAKEOPTS -C lib/pbio/test
     - name: Build docs
       run: |
         make $MAKEOPTS -C lib/pbio/doc
     - name: Build coverage
       run: |
-        make $MAKEOPTS -C lib/pbio/test build-coverage/lcov.info
+        poetry run make $MAKEOPTS -C lib/pbio/test build-coverage/lcov.info
