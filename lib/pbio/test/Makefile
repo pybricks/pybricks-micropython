@@ -124,10 +124,13 @@ PBIO_SRC = $(PBIO_DIR)/platform/test/platform.c \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
 	$(shell find $(PBIO_DIR)/sys -name "*.c") \
 	$(shell find $(PBIO_DIR)/src/motor -name "*.c") \
+	$(BUILD_PREFIX)/font_liberationsans_regular_14.c \
+	$(BUILD_PREFIX)/font_terminus_normal_16.c \
+	$(BUILD_PREFIX)/font_mono_8x5_8.c
 
 # tests
 TEST_INC = -I. -I$(PBIO_DIR)/platform/test
-TEST_SRC = $(shell find . -name "*.c")
+TEST_SRC = $(shell find . -path "./build*" -prune -or -name "*.c" -print)
 
 # generated files
 
@@ -143,6 +146,24 @@ $(BUILD_DIR)/genhdr/%.h: $(PBIO_DIR)/drv/bluetooth/%.gatt
 	$(Q)mkdir -p $(dir $@)
 	$(Q)python3 $(BTSTACK_DIR)/tool/compile_gatt.py $< $@
 
+include $(PBIO_DIR)/src/image/fonts/fonts.mk
+
+FONT_CONVERT = $(PBIO_DIR)/src/image/fontconvert.py
+
+$(BUILD_PREFIX)/font_liberationsans_regular_14.c: $(PBIO_DIR)/src/image/fonts/$(FONT_LIBERATION_SANS_REGULAR) $(FONT_CONVERT)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)python3 $(FONT_CONVERT) $< 14 \
+		--license $(FONT_LIBERATION_LICENSE) $(FONT_LIBERATION_COPYRIGHT) > $@
+
+$(BUILD_PREFIX)/font_terminus_normal_16.c: $(PBIO_DIR)/src/image/fonts/$(FONT_TERMINUS_NORMAL) $(FONT_CONVERT)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)python3 $(FONT_CONVERT) $< 16 \
+		--license $(FONT_TERMINUS_LICENSE) $(FONT_TERMINUS_COPYRIGHT) > $@
+
+$(BUILD_PREFIX)/font_mono_8x5_8.c: $(PBIO_DIR)/src/image/fonts/$(FONT_NXOS) $(FONT_CONVERT)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)python3 $(FONT_CONVERT) --image $< 8 \
+		--license $(FONT_NXOS_LICENSE) $(FONT_NXOS_COPYRIGHT) > $@
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
 CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
@@ -190,3 +211,5 @@ build-coverage/lcov.info: Makefile $(SRC)
 
 coverage-html: build-coverage/lcov.info
 	$(Q)genhtml $^ --output-directory build-coverage/html
+
+.DELETE_ON_ERROR:
