@@ -36,7 +36,9 @@ void pb_type_async_schedule_stop_iteration(pb_type_async_t *iter) {
 
 mp_obj_t pb_type_async_close(mp_obj_t iter_in) {
     pb_type_async_t *iter = MP_OBJ_TO_PTR(iter_in);
-    if (iter->close && iter->parent_obj != MP_OBJ_NULL) {
+    // Close only if there is a close function and we aren't already closing
+    // or scheduled it to close next time.
+    if (iter->close && iter->parent_obj != MP_OBJ_NULL && iter->parent_obj != MP_OBJ_SENTINEL) {
         iter->close(iter->parent_obj);
     }
     // Closing is stronger than cancellation. In case of close, we expect that

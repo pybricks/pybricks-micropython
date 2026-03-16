@@ -15,10 +15,14 @@
 ### Fixed
 - Fixed EV3 light animation stopping when screen is used ([support#2599]).
 - Fixed Powered Up motors not resetting to the absolute value ([support#2620]).
+- Fixed segfault when user or block code generator forgets `await` in one or
+  more tasks that use the same resource (like a `DriveBase`) along
+  with `race=True` ([support#2621]).
 
 [support#2599]: https://github.com/pybricks/support/issues/2599
 [support#2603]: https://github.com/pybricks/support/issues/2603
 [support#2620]: https://github.com/pybricks/support/issues/2620
+[support#2621]: https://github.com/pybricks/support/issues/2621
 
 ## [4.0.0b7] - 2026-02-19
 

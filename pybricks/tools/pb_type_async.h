@@ -49,7 +49,7 @@ typedef struct {
      *
      * Special values:
      *      MP_OBJ_NULL: This iterable has been fully exhausted and can be reused.
-     *      MP_OBJ_SENTINEL: This iterable is will raise StopIteration when it is iterated again.
+     *      MP_OBJ_SENTINEL: This iterable will raise StopIteration when it is iterated again.
      */
     mp_obj_t parent_obj;
     /**
