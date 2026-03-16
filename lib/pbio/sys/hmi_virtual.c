@@ -142,9 +142,9 @@ void pbsys_hmi_init(void) {
 }
 
 void pbsys_hmi_deinit(void) {
-    static pbio_os_process_t shutdown_animation_process;
-    pbio_busy_count_up();
-    pbio_os_process_start(&shutdown_animation_process, pbsys_hmi_ev3_ui_closing_credits, NULL);
+    // For most virtual hub tests, we don't want to wait on the closing
+    // credits, so we leave this empty. The EV3 variant of this function can be
+    // called here if the animation needs debugging.
 }
 
 void pbsys_hmi_stop_animation(void) {
