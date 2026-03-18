@@ -69,6 +69,10 @@ typedef enum {
      * data persistently on the hub.
      */
     PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION = 130,
+    /**
+     * Program to control EV3 motors with the buttons.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_CONTROL = 133,
 } pbio_pybricks_user_program_id_t;
 
 /**
