@@ -134,7 +134,7 @@ static mp_obj_t ev3devices_InfraredSensor_buttons_map(mp_obj_t self_in) {
             break;
     }
 
-    return mp_obj_new_list(len, pressed);
+    return mp_obj_new_set(len, pressed);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(ev3devices_InfraredSensor_buttons_mapped_obj, LEGO_DEVICE_MODE_EV3_INFRARED_SENSOR__REMOTE, ev3devices_InfraredSensor_buttons_map);
 
