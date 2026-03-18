@@ -91,6 +91,8 @@ static pbio_error_t pbsys_hmi_await_program_selection_one_off(void) {
         PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT :
         PBIO_PYBRICKS_USER_PROGRAM_ID_REPL;
 
+    pbsys_hmi_ev3_ui_run_animation_start();
+
     return pbsys_main_program_request_start(id, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }
 
