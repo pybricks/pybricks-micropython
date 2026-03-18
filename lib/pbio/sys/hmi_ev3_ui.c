@@ -355,16 +355,16 @@ static void pbsys_hmi_ev3_ui_draw_overlay(pbsys_hmi_ev3_ui_overlay_type_t overla
     switch (overlay) {
         case PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES:
         case PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_NO:
-            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_off20, 79, bar_y - 32, BLACK);
+            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__off20, 79, bar_y - 32, BLACK);
             bool accept_active = overlay == PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES;
-            const pbio_image_monochrome_t *accept = accept_active ? &pbio_image_media_accept24_fill : &pbio_image_media_accept24;
-            const pbio_image_monochrome_t *reject = accept_active ? &pbio_image_media_reject24 : &pbio_image_media_reject24_fill;
+            const pbio_image_monochrome_t *accept = accept_active ? &pbio_image_media__accept24_fill : &pbio_image_media__accept24;
+            const pbio_image_monochrome_t *reject = accept_active ? &pbio_image_media__reject24 : &pbio_image_media__reject24_fill;
             pbio_image_draw_image_transparent_from_monochrome(display, reject, 56, bar_y + 3, BLACK);
             pbio_image_draw_image_transparent_from_monochrome(display, accept, 96, bar_y + 3, BLACK);
             break;
         case PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM:
         case PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON:
-            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_accept24_fill, 76, bar_y + 3, BLACK);
+            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__accept24_fill, 76, bar_y + 3, BLACK);
             const char *text = overlay == PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM ? "No program!" : "Coming soon!";
             pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, text, 0, bar_y - 16);
         default:
@@ -434,7 +434,7 @@ void pbsys_hmi_ev3_ui_draw(void) {
     pbio_image_draw_rounded_rect(display, x + shift, y + shift, width, width, 1, BLACK);
 
     // Settings icon.
-    pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_wrench17, 101, 16, BLACK);
+    pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__wrench17, 101, 16, BLACK);
 
     // Draw upper status bar.
     pbio_image_draw_hline(display, 0, 10, 178, BLACK);
@@ -451,7 +451,7 @@ void pbsys_hmi_ev3_ui_draw(void) {
 
     // USB if connected.
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
-        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_usb_host, 130, 2, BLACK);
+        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__usb_host, 130, 2, BLACK);
     }
 
     // Draw the overlay on top of everything else.
@@ -627,7 +627,7 @@ pbio_error_t pbsys_hmi_ev3_ui_closing_credits(pbio_os_state_t *state, void *cont
 
     // Display animated Pybricks thanks message.
     pbio_image_fill(display, WHITE);
-    pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media_pybricks_join, 31, 6, BLACK);
+    pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__pybricks_join, 31, 6, BLACK);
     pbdrv_display_update();
     PBIO_OS_AWAIT_MS(state, &timer, 1500);
     PBIO_OS_AWAIT_WHILE(state, pbdrv_button_get_pressed() & PBIO_BUTTON_CENTER);
