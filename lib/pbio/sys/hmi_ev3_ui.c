@@ -84,8 +84,6 @@ static pbsys_hmi_ev3_ui_t state;
  * Available apps on app tab.
  */
 static const char *apps[] = {
-    " Motor Control",
-    " IR Control",
 };
 
 /**
@@ -280,7 +278,7 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
             *payload = state.selection[PBSYS_HMI_EV3_UI_TAB_PROGRAMS];
             return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
         } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_APPS) {
-            // Apps not yet implemented.
+            // Other apps not yet implemented.
             state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON;
             return PBSYS_HMI_EV3_UI_ACTION_NONE;
         } else {

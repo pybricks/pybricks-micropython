@@ -305,6 +305,8 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
             case PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION:
                 return PBIO_SUCCESS;
             #endif
+            #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_EV3_APPS
+            #endif
             default:
                 return PBIO_ERROR_NOT_SUPPORTED;
         }
@@ -393,6 +395,9 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         case PBIO_PYBRICKS_USER_PROGRAM_ID_IMU_CALIBRATION:
             // Todo
             break;
+        #endif
+
+        #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_EV3_APPS
         #endif
 
         default:
