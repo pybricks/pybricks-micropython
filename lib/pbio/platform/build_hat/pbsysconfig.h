@@ -11,6 +11,7 @@
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (0) // does not exist but pbsys_main() requires this to be defined
 #define PBSYS_CONFIG_HMI_NONE                       (1)
+#define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (64)
 #define PBSYS_CONFIG_MAIN                           (1)
