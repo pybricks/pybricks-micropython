@@ -306,7 +306,7 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
                 return PBIO_SUCCESS;
             #endif
             #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_EV3_APPS
-            case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_CONTROL:
+            case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL:
                 return PBIO_SUCCESS;
             #endif
             default:
@@ -400,9 +400,9 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         #endif
 
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_EV3_APPS
-        case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_CONTROL:
+        case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL:
             pb_package_pybricks_init(false);
-            pyexec_frozen_module("_ev3_motor_control.py", false);
+            pyexec_frozen_module("_ev3_motor_button_control.py", false);
             break;
         #endif
 

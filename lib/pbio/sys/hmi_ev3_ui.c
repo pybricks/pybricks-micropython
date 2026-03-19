@@ -84,7 +84,7 @@ static pbsys_hmi_ev3_ui_t state;
  * Available apps on app tab.
  */
 static const char *apps[] = {
-    " Motor Control",
+    " Motor Button Control",
 };
 
 /**
@@ -279,13 +279,15 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
             *payload = state.selection[PBSYS_HMI_EV3_UI_TAB_PROGRAMS];
             return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
         } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_APPS) {
-            if (state.selection[PBSYS_HMI_EV3_UI_TAB_APPS] == 0) {
-                *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_CONTROL;
-                return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
+            switch (state.selection[PBSYS_HMI_EV3_UI_TAB_APPS]) {
+                case 0:
+                    *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL;
+                    return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
+                default:
+                    // Other apps not yet implemented.
+                    state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON;
+                    return PBSYS_HMI_EV3_UI_ACTION_NONE;
             }
-            // Other apps not yet implemented.
-            state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON;
-            return PBSYS_HMI_EV3_UI_ACTION_NONE;
         } else {
             // Settings don't currently do anything, just displays info.
             return PBSYS_HMI_EV3_UI_ACTION_NONE;
