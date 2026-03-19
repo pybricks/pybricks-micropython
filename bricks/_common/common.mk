@@ -163,6 +163,7 @@ PYDFU = $(TOP)/tools/pydfu.py
 PYBRICKSDEV = pybricksdev
 METADATA = $(PBTOP)/tools/metadata.py
 MEDIA_CONVERT = $(PBTOP)/lib/pbio/src/image/media.py
+FONT_CONVERT = $(PBTOP)/lib/pbio/src/image/fontconvert.py
 CREDITS_CONVERT = $(PBTOP)/bricks/ev3/make_credits.py
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
@@ -557,6 +558,12 @@ PBIO_SRC_C += $(BUILD)/pbio_image_media.c
 PBIO_SRC_C += $(BUILD)/hmi_ev3_ui_credits.c
 endif
 
+ifeq ($(PB_FONTS),1)
+PBIO_SRC_C += $(BUILD)/font_liberationsans_regular_14.c
+PBIO_SRC_C += $(BUILD)/font_terminus_normal_16.c
+PBIO_SRC_C += $(BUILD)/font_mono_8x5_8.c
+endif
+
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PY_EXTRA_SRC_C:.c=.o))
@@ -676,6 +683,18 @@ $(BUILD)/pbio_image_media.c $(BUILD)/pb_type_image_attributes.c: $(MEDIA_CONVERT
 	$(ECHO) "Generating image media files"
 	$(Q)$(PYTHON) $(MEDIA_CONVERT) $(BUILD)
 
+$(BUILD)/font_liberationsans_regular_14.c: $(PBTOP)/lib/pbio/src/image/fonts/LiberationSans-Regular.ttf $(FONT_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(FONT_CONVERT) $< 14 > $@
+
+$(BUILD)/font_terminus_normal_16.c: $(PBTOP)/lib/pbio/src/image/fonts/terminus-normal.otb $(FONT_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(FONT_CONVERT) $< 16 > $@
+
+$(BUILD)/font_mono_8x5_8.c: $(PBTOP)/lib/pbio/src/image/fonts/mono_8x5.png $(FONT_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)$(PYTHON) $(FONT_CONVERT) --image $< 8 > $@
+
 $(BUILD)/hmi_ev3_ui_credits.c: $(CREDITS_CONVERT)
 	$(ECHO) "Generating EV3 credits file"
 	$(Q)$(PYTHON) $(CREDITS_CONVERT) $(BUILD)
@@ -754,5 +773,7 @@ deploy: $(BUILD)/firmware.zip
 deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
 	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
+
+.DELETE_ON_ERROR:
 
 include $(TOP)/py/mkrules.mk

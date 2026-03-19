@@ -20,10 +20,6 @@ Q = 6
 template = """\
 // This is a generated file, edit with care.
 //
-// Original font license:
-//
-// SPDX-License-Identifier: {self.license}{copyright}
-//
 // {self.name}, {self.size}px
 
 #include <pbio/font.h>
@@ -84,16 +80,12 @@ class Font:
         size: int,
         first: int,
         last: int,
-        license: str,
-        copyright: list[str],
     ):
         self.name = name
         self.ident = ident
         self.size = size
         self.first = first
         self.last = last
-        self.license = license
-        self.copyright = copyright
         self.glyphs: list[Glyph] = []
 
     def load_face(self, font: str, face_index: int) -> None:
@@ -224,7 +216,6 @@ class Font:
             )
         glyphs_table = "\n".join(glyphs)
         ident = "pbio_font_" + self.ident
-        copyright = "\n// ".join([""] + self.copyright)
         return template.format_map(vars())
 
 
@@ -235,10 +226,6 @@ p.add_argument("--image", action="store_true", help="Convert from image")
 p.add_argument("--face-index", type=int, default=0, help="Face index inside font file")
 p.add_argument("-f", "--first", type=int, default=32, help="First glyph")
 p.add_argument("-l", "--last", type=int, default=127, help="Last glyph")
-p.add_argument("--license", required=True, help="SPDX License identifier")
-p.add_argument(
-    "--copyright", action="append", required=True, help="Font copyright text"
-)
 
 options = p.parse_args()
 
@@ -252,8 +239,6 @@ font = Font(
     options.size,
     options.first,
     options.last,
-    options.license,
-    options.copyright,
 )
 if not options.image:
     font.load_face(options.font, options.face_index)
