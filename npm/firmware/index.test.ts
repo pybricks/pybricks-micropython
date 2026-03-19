@@ -33,7 +33,7 @@ test('missing firmware-base.bin', async () => {
         path.resolve(__dirname, '__tests__', 'movehub-no-firmware-base.zip')
     );
     try {
-        await FirmwareReader.load(file);
+        await FirmwareReader.load(file.buffer);
         fail('FirmwareReader.load() should have failed');
     } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
@@ -46,7 +46,7 @@ test('missing firmware.metadata.json', async () => {
         path.resolve(__dirname, '__tests__', 'movehub-no-metadata.zip')
     );
     try {
-        await FirmwareReader.load(file);
+        await FirmwareReader.load(file.buffer);
         fail('FirmwareReader.load() should have failed');
     } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
@@ -58,7 +58,7 @@ test('missing main.py', async () => {
     var file = await readFile(
         path.resolve(__dirname, '__tests__', 'movehub-no-main-py.zip')
     );
-    const reader = await FirmwareReader.load(file);
+    const reader = await FirmwareReader.load(file.buffer);
     expect(await reader.readFirmwareBase()).toMatchSnapshot();
     expect(await reader.readMetadata()).toMatchSnapshot();
     expect(await reader.readMainPy()).toMatchSnapshot();
@@ -70,7 +70,7 @@ test('missing ReadMe_OSS.txt', async () => {
         path.resolve(__dirname, '__tests__', 'movehub-no-readme-oss.zip')
     );
     try {
-        await FirmwareReader.load(file);
+        await FirmwareReader.load(file.buffer);
         fail('FirmwareReader.load() should have failed');
     } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
@@ -82,7 +82,7 @@ test('reading data works', async () => {
     var file = await readFile(
         path.resolve(__dirname, '__tests__', 'movehub.zip')
     );
-    var reader = await FirmwareReader.load(file);
+    var reader = await FirmwareReader.load(file.buffer);
     expect(await reader.readFirmwareBase()).toMatchSnapshot();
     expect(await reader.readMetadata()).toMatchSnapshot();
     expect(await reader.readMainPy()).toMatchSnapshot();
@@ -137,6 +137,6 @@ describe.each([
     });
 
     test('old firmware throws', () => {
-        expect(() => encodeHubName('', {} as FirmwareMetadata)).toThrowError();
+        expect(() => encodeHubName('', {} as FirmwareMetadata)).toThrow();
     });
 });
