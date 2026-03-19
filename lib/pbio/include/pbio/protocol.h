@@ -73,6 +73,10 @@ typedef enum {
      * Program to control EV3 motors with the buttons.
      */
     PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL = 133,
+    /**
+     * Program to control EV3 motors with infrared remote.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_IR_CONTROL = 134,
 } pbio_pybricks_user_program_id_t;
 
 /**

@@ -1,3 +1,4 @@
 include("../_common/manifest.py")
 freeze_as_mpy("../ev3/modules", "_ev3_motor_button_control.py")
 freeze_as_mpy("../ev3/modules", "_ev3_motor_dc.py")
+freeze_as_mpy("../ev3/modules", "_ev3_motor_ir_control.py")
