@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [4.0.0b8] - 2026-03-19
+
 ### Added
 - Added `pybricks.pupdevices.MarioHub` to control it as a peripheral. It
   cannot be used as a standalone device since it cannot ne updated.
@@ -1326,7 +1328,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b7...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b8...HEAD
+[4.0.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b7...v4.0.0b8
 [4.0.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b6...v4.0.0b7
 [4.0.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...v4.0.0b6
 [4.0.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...v4.0.0b5
