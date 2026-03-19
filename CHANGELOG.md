@@ -9,6 +9,8 @@
   cannot be used as a standalone device since it cannot ne updated.
 - Added `DriveBase.hold()` method ([support#2621]).
 - Added `Motor Button Control` and `Motor IR Control` on EV3 apps tab.
+- Enabled USB coding support for SPIKE Prime, SPIKE Essential, and MINDSTORMS
+  Robot Inventor.
 
 ### Changed
 - The EV3 Color Sensor now returns `Color.NONE` instead of `None` when no color
