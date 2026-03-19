@@ -32,7 +32,7 @@
 [support#2620]: https://github.com/pybricks/support/issues/2620
 [support#2621]: https://github.com/pybricks/support/issues/2621
 
-## [4.0.0b7] - 2026-02-19
+## [4.0.0b7] - 2026-02-26
 
 ### Added
 - Added supporters to EV3 closing credits.
