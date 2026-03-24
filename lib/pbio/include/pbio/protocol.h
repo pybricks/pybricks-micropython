@@ -77,6 +77,10 @@ typedef enum {
      * Program to control EV3 motors with infrared remote.
      */
     PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_IR_CONTROL = 134,
+    /**
+     * Application to view sensor values.
+     */
+    PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_PORT_VIEW = 135,
 } pbio_pybricks_user_program_id_t;
 
 /**

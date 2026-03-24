@@ -84,6 +84,7 @@ static pbsys_hmi_ev3_ui_t state;
  * Available apps on app tab.
  */
 static const char *apps[] = {
+    " Port View",
     " Motor Button Control",
     " Motor IR Control",
 };
@@ -282,9 +283,12 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
         } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_APPS) {
             switch (state.selection[PBSYS_HMI_EV3_UI_TAB_APPS]) {
                 case 0:
-                    *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL;
+                    *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_PORT_VIEW;
                     return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
                 case 1:
+                    *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL;
+                    return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
+                case 2:
                     *payload = PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_IR_CONTROL;
                     return PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM;
                 default:
