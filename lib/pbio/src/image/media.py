@@ -1,37 +1,40 @@
 #!/usr/bin/env python3
 import argparse
+import sys
+import io
 from pathlib import Path
 from PIL import Image
 import cairosvg
 
-# Take build directory as argument to save generated C files and PNG files.
 parser = argparse.ArgumentParser(description="Convert image files to C structs.")
-parser.add_argument("dest", help="Destination build folder for PNG files.")
+parser.add_argument("-o", "--output", type=Path, help="Output file name for C structs.")
+parser.add_argument(
+    "--decls", type=Path, help="Output file name for struct declarations."
+)
+parser.add_argument(
+    "--decls-include",
+    help="Struct declaration include file name, generated from output file if given.",
+)
+parser.add_argument("--attrs", type=Path, help="Output file name for attribute list.")
+parser.add_argument("images", type=Path, nargs="+", help="Input file name(s).")
 args = parser.parse_args()
 
-build_dir = Path(args.dest)
-build_dir.mkdir(parents=True, exist_ok=True)
-media_dir = Path(__file__).parent / "media"
+if args.attrs:
+    if args.decls_include is not None:
+        decls_include = args.decls_include
+    elif args.decls is not None:
+        decls_include = args.decls.name
+    else:
+        parser.error("Need struct declaration include file name.")
 
-# Convert all SVG files in media_dir to PNG and save in build_dir if not already present.
-svg_files = media_dir.rglob("*.svg")
-for svg in svg_files:
-    png = svg.with_suffix(".png").name
-    png_path = build_dir / png
-    if png_path.exists() and png_path.stat().st_mtime >= svg.stat().st_mtime:
-        continue
-    with open(svg, "rb") as svg_file:
-        png_bytes = cairosvg.svg2png(file_obj=svg_file)
-        with open(png_path, "wb") as out_png:
-            out_png.write(png_bytes)
 
-# Collect all image files in media_dir (png, bmp, jpg) and build_dir (png), including subfolders.
-media_images = (
-    list(media_dir.rglob("*.png"))
-    + list(media_dir.rglob("*.bmp"))
-    + list(media_dir.rglob("*.jpg"))
-    + list(build_dir.rglob("*.png"))
-)
+def load_image(path):
+    if path.suffix == ".svg":
+        with open(path, "rb") as f:
+            png_bytes = cairosvg.svg2png(file_obj=f)
+        return Image.open(io.BytesIO(png_bytes))
+    else:
+        return Image.open(path)
 
 
 # Convert rgba to monochrome, treating fully transparent pixels as white.
@@ -61,11 +64,14 @@ def image_to_8bit_map(img):
 
 # Process each image.
 results = {}
-for img_path in media_images:
-    with Image.open(img_path) as img:
-        name = Path(img_path.name).stem
-        width, height, bin_data = image_to_8bit_map(img)
-        results[name] = (width, height, bin_data)
+for img_path in args.images:
+    name = img_path.stem
+    if args.output:
+        with load_image(img_path) as img:
+            width, height, bin_data = image_to_8bit_map(img)
+            results[name] = (width, height, bin_data)
+    else:
+        results[name] = (0, 0, None)
 
 
 externs = ""
@@ -75,57 +81,60 @@ qstrtab = ""
 for name in sorted(results):
     width, height, bin_data = results[name]
 
-    # Parse bytes for printing.
-    bytes_per_line = 12
-    lines = []
-    for i in range(0, len(bin_data), bytes_per_line):
-        chunk = bin_data[i : i + bytes_per_line]
-        line = "    " + ", ".join(f"0x{val:02x}" for val in chunk)
-        lines.append(line)
-    data_literal = ",\n".join(lines) + ","
+    if args.output:
+        # Parse bytes for printing.
+        bytes_per_line = 12
+        lines = []
+        for i in range(0, len(bin_data), bytes_per_line):
+            chunk = bin_data[i : i + bytes_per_line]
+            line = "    " + ", ".join(f"0x{val:02x}" for val in chunk)
+            lines.append(line)
+        data_literal = ",\n".join(lines) + ","
 
-    # Printed C structs.
-    structs += f"static const uint8_t {name}_data[] = {{\n{data_literal}\n}};\n\n"
-    structs += (
-        f"const pbio_image_monochrome_t pbio_image_media_{name} = {{\n"
-        f"    .width = {width},\n"
-        f"    .height = {height},\n"
-        f"    .data = {name}_data,\n"
-        f"}};\n"
-    )
+        # Printed C structs.
+        structs += f"static const uint8_t {name}_data[] = {{\n{data_literal}\n}};\n\n"
+        structs += (
+            f"const pbio_image_monochrome_t pbio_image_media_{name} = {{\n"
+            f"    .width = {width},\n"
+            f"    .height = {height},\n"
+            f"    .data = {name}_data,\n"
+            f"}};\n"
+        )
 
     # Printed header and QSTR table entries.
     externs += f"extern const pbio_image_monochrome_t pbio_image_media_{name};\n\n"
     qstrtab += f"    {{ MP_ROM_QSTR(MP_QSTR_{name.upper()}), MP_ROM_PTR(&pbio_image_media_{name}) }},\n"
 
 
-HEADER = """// SPDX-License-Identifier: MIT
-//Copyright (c) 2025 The Pybricks Authors
+HEADER = """// Generated file, edit with care.
 
 #include <pbio/image.h>
 """
 
-with open(build_dir / "pbio_image_media.c", "w") as f:
-    f.write(HEADER)
-    f.write('#include "pbio_image_media.h"\n\n')
-    f.write(structs)
+if args.output:
+    with open(args.output, "w") as f:
+        f.write(HEADER)
+        f.write(structs)
 
-with open(build_dir / "pbio_image_media.h", "w") as f:
-    f.write(HEADER)
-    f.write("#ifndef _PBIO_IMAGE_MEDIA_H_\n")
-    f.write("#define _PBIO_IMAGE_MEDIA_H_\n\n")
-    f.write(externs)
-    f.write("#endif // _PBIO_IMAGE_MEDIA_H_\n")
+if args.decls:
+    guard = args.decls.name.upper().replace(".", "_")
+    with open(args.decls, "w") as f:
+        f.write(HEADER)
+        f.write(f"#ifndef _{guard}_\n")
+        f.write(f"#define _{guard}_\n\n")
+        f.write(externs)
+        f.write(f"#endif // _{guard}_\n")
 
-with open(build_dir / "pb_type_image_attributes.c", "w") as f:
-    f.write(HEADER)
-    f.write('#include "pbio_image_media.h"\n\n')
-    f.write("#include <py/obj.h>\n\n")
-    f.write(
-        "static const mp_rom_map_elem_t pb_type_image_attributes_dict_table[] = {\n"
-    )
-    f.write(qstrtab)
-    f.write("};\n")
-    f.write(
-        "MP_DEFINE_CONST_DICT(pb_type_image_attributes_dict, pb_type_image_attributes_dict_table);"
-    )
+if args.attrs:
+    with open(args.attrs, "w") as f:
+        f.write(HEADER)
+        f.write(f'#include "{decls_include}"\n\n')
+        f.write("#include <py/obj.h>\n\n")
+        f.write(
+            "static const mp_rom_map_elem_t pb_type_image_attributes_dict_table[] = {\n"
+        )
+        f.write(qstrtab)
+        f.write("};\n")
+        f.write(
+            "MP_DEFINE_CONST_DICT(pb_type_image_attributes_dict, pb_type_image_attributes_dict_table);"
+        )

@@ -552,9 +552,31 @@ ifneq ($(PB_MCU_FAMILY),TIAM1808)
 SRC_S += lib/pbio/platform/$(PBIO_PLATFORM)/startup.s
 endif
 
+vpath %.bmp $(PBTOP)
+vpath %.jpg $(PBTOP)
+vpath %.png $(PBTOP)
+vpath %.svg $(PBTOP)
+MEDIA_SRC = $(sort $(addprefix lib/pbio/src/image/media/,\
+	lms2012/_app_ir_control_12.bmp \
+	lms2012/_app_ir_control_34.bmp \
+	lms2012/_app_motor_control_ad.bmp \
+	lms2012/_app_motor_control_bc.bmp \
+	ui/_accept24_fill.svg \
+	ui/_accept24.svg \
+	ui/_off20.svg \
+	ui/_pybricks_join.png \
+	ui/_reject24_fill.svg \
+	ui/_reject24.svg \
+	ui/_rotate_ccw18.svg \
+	ui/_rotate_cw18.svg \
+	ui/_usb_host.svg \
+	ui/_wrench17.svg \
+	))
+MEDIA_GEN_C = $(patsubst lib/pbio/src/image/media/%, $(BUILD)/media/%.c, $(basename $(MEDIA_SRC)))
+
 ifeq ($(PB_MEDIA),1)
 PYBRICKS_PYBRICKS_SRC_C += $(BUILD)/pb_type_image_attributes.c
-PBIO_SRC_C += $(BUILD)/pbio_image_media.c
+PBIO_SRC_C += $(MEDIA_GEN_C)
 PBIO_SRC_C += $(BUILD)/hmi_ev3_ui_credits.c
 endif
 
@@ -679,9 +701,38 @@ else
 FW_SECTIONS :=
 endif
 
-$(BUILD)/pbio_image_media.c $(BUILD)/pb_type_image_attributes.c: $(MEDIA_CONVERT)
+# Force media list regeneration if list of media sources changed.
+-include $(BUILD)/media_src_gen.mk
+MEDIA_REGEN := $(if $(strip $(filter-out $(MEDIA_SRC),$(MEDIA_SRC_GEN)) $(filter-out $(MEDIA_SRC_GEN),$(MEDIA_SRC))),media-regen)
+media-regen:
+.PHONY: media-regen
+.SECONDARY: $(MEDIA_GEN_C)
+
+$(BUILD)/media/%.c: lib/pbio/src/image/media/%.bmp $(MEDIA_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) -o $@ $<
+
+$(BUILD)/media/%.c: lib/pbio/src/image/media/%.jpg $(MEDIA_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) -o $@ $<
+
+$(BUILD)/media/%.c: lib/pbio/src/image/media/%.png $(MEDIA_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) -o $@ $<
+
+$(BUILD)/media/%.c: lib/pbio/src/image/media/%.svg $(MEDIA_CONVERT)
+	$(ECHO) "GEN $@"
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) -o $@ $<
+
+$(BUILD)/pbio_image_media.h $(BUILD)/pb_type_image_attributes.c &: $(MEDIA_CONVERT) $(MEDIA_REGEN)
 	$(ECHO) "Generating image media files"
-	$(Q)$(PYTHON) $(MEDIA_CONVERT) $(BUILD)
+	$(Q)mkdir -p $(BUILD)
+	$(Q)$(PYTHON) $(MEDIA_CONVERT) --decls $(BUILD)/pbio_image_media.h --attrs $(BUILD)/pb_type_image_attributes.c $(MEDIA_SRC)
+	$(ECHO) "MEDIA_SRC_GEN = $(MEDIA_SRC)" > $(BUILD)/media_src_gen.mk
 
 $(BUILD)/font_liberationsans_regular_14.c: $(PBTOP)/lib/pbio/src/image/fonts/LiberationSans-Regular.ttf $(FONT_CONVERT)
 	$(ECHO) "GEN $@"
