@@ -18,7 +18,7 @@ svg_files = media_dir.rglob("*.svg")
 for svg in svg_files:
     png = svg.with_suffix(".png").name
     png_path = build_dir / png
-    if png_path.exists():
+    if png_path.exists() and png_path.stat().st_mtime >= svg.stat().st_mtime:
         continue
     with open(svg, "rb") as svg_file:
         png_bytes = cairosvg.svg2png(file_obj=svg_file)
