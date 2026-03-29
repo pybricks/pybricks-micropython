@@ -4,7 +4,7 @@
 # Wrapper makefile that builds all primehub variants and combines them into a
 # single multi-variant firmware.zip.
 
-VARIANTS = primehub_f4
+VARIANTS = primehub_f4 primehub_h5
 
 BUILD = build
 PYTHON ?= python

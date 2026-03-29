@@ -17,7 +17,7 @@ ifeq ($(PB_MCU_FAMILY),STM32)
 ifeq ($(PB_MCU_SERIES),)
 $(error "PB_MCU_SERIES is not specified - add it in <hub>/Makefile)
 else
-PB_MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(PB_MCU_SERIES)))
+PB_MCU_SERIES_LCASE = $(subst H,h,$(subst F,f,$(subst L,l,$(PB_MCU_SERIES))))
 endif
 ifeq ($(PB_CMSIS_MCU),)
 $(error "PB_CMSIS_MCU is not specified - add it in <hub>/Makefile")
@@ -190,6 +190,7 @@ ifeq ($(PB_MCU_FAMILY),STM32)
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0 -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS_MCU_H5 = -mthumb -mtune=cortex-m33 -mcpu=cortex-m33 -mfpu=fpv5-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU = $(CFLAGS_MCU_$(PB_MCU_SERIES))
 else
 ifeq ($(PB_MCU_FAMILY),AT91SAM7)
@@ -206,6 +207,9 @@ endif
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
 CFLAGS += $(INC) -std=c11 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
+
+# assembler flags
+AFLAGS += $(filter -mcpu=%,$(CFLAGS_MCU))
 
 # linker scripts
 LD_FILES = $(PBTOP)/lib/pbio/platform/$(PBIO_PLATFORM)/platform.ld
@@ -262,6 +266,11 @@ CFLAGS += -D$(PB_CMSIS_MCU)
 # Required by pbio drivers
 CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
+ifeq ($(PB_MCU_SERIES),$(filter $(PB_MCU_SERIES),F4 H5))
+CFLAGS += -DSTM32_HAL_PCD_EX_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd_ex.h>'
+CFLAGS += -DSTM32_LL_RCC_H='<stm32$(PB_MCU_SERIES_LCASE)xx_ll_rcc.h>'
+CFLAGS += -DSTM32_LL_USART_H='<stm32$(PB_MCU_SERIES_LCASE)xx_ll_usart.h>'
+endif
 endif
 
 LIBS += "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
@@ -455,12 +464,14 @@ STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Sr
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_flash.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_fmpi2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_icache.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
@@ -472,6 +483,7 @@ STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Sr
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_xspi.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_lpuart.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_rcc.c \
@@ -488,6 +500,11 @@ STM32_HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(STM32_HAL_SRC_C))
 endif
 ifneq ($(PB_MCU_SERIES),F4)
 STM32_HAL_SRC_C := $(filter-out %xx_hal_fmpi2c.c, $(STM32_HAL_SRC_C))
+endif
+ifneq ($(PB_MCU_SERIES),H5)
+STM32_HAL_SRC_C := $(filter-out %xx_hal_dma_ex.c, $(STM32_HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_icache.c, $(STM32_HAL_SRC_C))
+STM32_HAL_SRC_C := $(filter-out %xx_hal_xspi.c, $(STM32_HAL_SRC_C))
 endif
 ifneq ($(PB_MCU_SERIES),L4)
 STM32_HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(STM32_HAL_SRC_C))
@@ -812,7 +829,9 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
 # Safety requirement for SPIKE Prime
 ifneq ($(findstring prime_hub,$(PBIO_PLATFORM)),)
 	$(Q)od -An -t u1 -j 0x264 -N 1 $< | awk '{if ($$1 >= 15) { print "Error: byte at 0x264 must be < 0xf"; exit 1 } }'
+ifeq ($(PBIO_PLATFORM),prime_hub_f4)
 	$(Q)od -An -t u1 -j 0x1f0 -N 1 $< | awk '{if ($$1 >= 15) { print "Error: byte at 0x1f0 must be < 0xf"; exit 1 } }'
+endif
 endif
 	$(Q)cp $< $@
 endif

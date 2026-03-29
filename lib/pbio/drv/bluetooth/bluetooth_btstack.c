@@ -1157,6 +1157,8 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+#ifdef ENABLE_CLASSIC
+
 static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
 
     gap_event_inquiry_result_get_bd_addr(event_packet, result->bdaddr);
@@ -1214,6 +1216,8 @@ pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *con
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
+
+#endif // ENABLE_CLASSIC
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;

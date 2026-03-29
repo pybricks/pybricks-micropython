@@ -7,7 +7,7 @@
 {
     "configurations": [
         {
-            "name": "primehub f4",
+            "name": "primehub_f4",
             "includePath": [
                 "${workspaceFolder}/micropython/lib/cmsis/inc",
                 "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F4xx/Include",
@@ -34,6 +34,9 @@
                 "STM32F413xx",
                 "STM32_H=<stm32f4xx.h>",
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
+                "STM32_HAL_PCD_EX_H=<stm32f4xx_hal_pcd_ex.h>",
+                "STM32_LL_RCC_H=<stm32f4xx_ll_rcc.h>",
+                "STM32_LL_USART_H=<stm32f4xx_ll_usart.h>",
                 "USE_FULL_LL_DRIVER"
             ],
             "compilerArgs": [
@@ -53,6 +56,58 @@
             ],
             "cStandard": "c11",
             "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "primehub_h5",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32H5xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32H5xx_HAL_Driver/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Class/CDC/Inc",
+                "${workspaceFolder}/lib/btstack/chipset/cc256x",
+                "${workspaceFolder}/lib/btstack/src",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/lsm6ds3tr_c_STdC/driver",
+                "${workspaceFolder}/lib/pbio/drv/usb/stm32_usbd",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/prime_hub_h5",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/primehub_h5",
+                "${workspaceFolder}/bricks/primehub_h5/build",
+                "${workspaceFolder}/micropython"
+            ],
+            "defines": [
+                "MICROPY_MODULE_FROZEN_MPY",
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=16000000",
+                "STM32H562xx",
+                "STM32_H=<stm32h5xx.h>",
+                "STM32_HAL_H=<stm32h5xx_hal.h>",
+                "STM32_HAL_PCD_EX_H=<stm32h5xx_hal_pcd_ex.h>",
+                "STM32_LL_RCC_H=<stm32h5xx_ll_rcc.h>",
+                "STM32_LL_USART_H=<stm32h5xx_ll_usart.h>",
+                "USE_FULL_LL_DRIVER"
+            ],
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-Wextra",
+                "-Wno-unused-parameter",
+                "-Wdouble-promotion",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m33",
+                "-mcpu=cortex-m33",
+                "-mfpu=fpv5-sp-d16",
+                "-mfloat-abi=hard",
+                "-fsingle-precision-constant"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm",
+            "compilerPath": "arm-none-eabi-gcc"
         },
         {
             "name": "ev3",

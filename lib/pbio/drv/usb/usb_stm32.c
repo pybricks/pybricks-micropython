@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022-2025 The Pybricks Authors
+// Copyright (c) 2022-2026 The Pybricks Authors
 
 // Main file for STM32F4 USB driver.
 
@@ -10,8 +10,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include <stm32f4xx_hal.h>
-#include <stm32f4xx_hal_pcd_ex.h>
+#include STM32_HAL_H
+#include STM32_HAL_PCD_EX_H
 #include <usbd_core.h>
 #include <usbd_desc.h>
 #include <usbd_pybricks.h>
@@ -52,7 +52,11 @@ static pbdrv_usb_bcd_t pbdrv_usb_bcd;
  */
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     static pbio_os_timer_t timer;
+    #if defined(STM32H5)
+    USB_DRD_TypeDef *USBx = hpcd.Instance;
+    #else
     USB_OTG_GlobalTypeDef *USBx = hpcd.Instance;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -64,6 +68,69 @@ pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     // Disable all other USB functions.
     HAL_PCDEx_ActivateBCD(&hpcd);
 
+    #if defined(STM32H5)
+    static bool dppu_was_enabled;
+
+    // HAL_PCDEx_BCD_ActivateBCD() has already set USB_OTG_GCCFG_BCDEN.
+
+    // BCD should run with USB pull-up disabled. Since USB device mode may
+    // already be initialized in our stack, temporarily clear DPPU while
+    // running detection and restore it afterwards.
+    dppu_was_enabled = (USBx->BCDR & USB_BCDR_DPPU) != 0;
+    if (dppu_was_enabled) {
+        USBx->BCDR &= ~USB_BCDR_DPPU;
+        PBIO_OS_AWAIT_MS(state, &timer, 20);
+    }
+
+    // Wait Detect flag or a timeout.
+    pbio_os_timer_set(&timer, 1000);
+    PBIO_OS_AWAIT_UNTIL(state, (USBx->BCDR & USB_BCDR_DCDET) || pbio_os_timer_is_expired(&timer));
+    if (pbio_os_timer_is_expired(&timer)) {
+        if (dppu_was_enabled) {
+            USBx->BCDR |= USB_BCDR_DPPU;
+        }
+        HAL_PCDEx_DeActivateBCD(&hpcd);
+        pbdrv_usb_bcd = PBDRV_USB_BCD_NONSTANDARD;
+
+        return PBIO_SUCCESS;
+    }
+
+    /* Wait for Min DCD Timeout */
+    PBIO_OS_AWAIT_MS(state, &timer, 300);
+
+    /* Primary detection: checks if connected to Standard Downstream Port
+    (without charging capability) */
+    USBx->BCDR &= ~USB_BCDR_DCDEN;
+    PBIO_OS_AWAIT_MS(state, &timer, 50);
+    USBx->BCDR |= USB_BCDR_PDEN;
+    PBIO_OS_AWAIT_MS(state, &timer, 50);
+
+    /* If Charger detect ? */
+    if ((USBx->BCDR & USB_BCDR_PDET) == USB_BCDR_PDET) {
+        /* Start secondary detection to check connection to Charging Downstream
+        Port or Dedicated Charging Port */
+        USBx->BCDR &= ~USB_BCDR_PDEN;
+        PBIO_OS_AWAIT_MS(state, &timer, 50);
+        USBx->BCDR |= USB_BCDR_SDEN;
+        PBIO_OS_AWAIT_MS(state, &timer, 50);
+
+        /* If CDP ? */
+        if ((USBx->BCDR & USB_BCDR_SDET) == USB_BCDR_SDET) {
+            /* Dedicated Downstream Port DCP */
+            pbdrv_usb_bcd = PBDRV_USB_BCD_DEDICATED_CHARGING;
+        } else {
+            /* Charging Downstream Port CDP */
+            pbdrv_usb_bcd = PBDRV_USB_BCD_CHARGING_DOWNSTREAM;
+        }
+    } else { /* NO */
+        /* Standard Downstream Port */
+        pbdrv_usb_bcd = PBDRV_USB_BCD_STANDARD_DOWNSTREAM;
+    }
+
+    if (dppu_was_enabled) {
+        USBx->BCDR |= USB_BCDR_DPPU;
+    }
+    #else
     // Enable Data Contact Detect.
     USBx->GCCFG |= USB_OTG_GCCFG_DCDEN;
 
@@ -109,6 +176,7 @@ pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
 
         USBx->GCCFG &= ~USB_OTG_GCCFG_SDEN;
     }
+    #endif
 
     // enable all other USB functions
     HAL_PCDEx_DeActivateBCD(&hpcd);

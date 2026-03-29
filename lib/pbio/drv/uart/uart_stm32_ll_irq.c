@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 // UART driver for STM32F4x using IRQ.
 
@@ -11,8 +11,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <stm32f4xx_ll_rcc.h>
-#include <stm32f4xx_ll_usart.h>
+#include STM32_LL_RCC_H
+#include STM32_LL_USART_H
 
 #include <pbdrv/uart.h>
 
@@ -139,6 +139,7 @@ pbio_error_t pbdrv_uart_write(pbio_os_state_t *state, pbdrv_uart_dev_t *uart, co
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+#if defined(STM32F4)
 void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
 
     USART_TypeDef *USARTx = uart->pdata->uart;
@@ -164,6 +165,72 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
 
     LL_USART_SetBaudRate(USARTx, periphclk, LL_USART_OVERSAMPLING_16, baud);
 }
+#elif defined(STM32H5)
+void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
+    USART_TypeDef *USARTx = uart->pdata->uart;
+    uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
+
+    if (USARTx == USART1) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART1_CLKSOURCE);
+    } else if (USARTx == USART2) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART2_CLKSOURCE);
+    } else if (USARTx == USART3) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART3_CLKSOURCE);
+    }
+    #if defined(UART4)
+    else if (USARTx == UART4) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART4_CLKSOURCE);
+    }
+    #endif /* UART4 */
+    #if defined(UART5)
+    else if (USARTx == UART5) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART5_CLKSOURCE);
+    }
+    #endif /* UART5 */
+    #if defined(USART6)
+    else if (USARTx == USART6) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART6_CLKSOURCE);
+    }
+    #endif /* USART6 */
+    #if defined(UART7)
+    else if (USARTx == UART7) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART7_CLKSOURCE);
+    }
+    #endif /* UART7 */
+    #if defined(UART8)
+    else if (USARTx == UART8) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART8_CLKSOURCE);
+    }
+    #endif /* UART8 */
+    #if defined(UART9)
+    else if (USARTx == UART9) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART9_CLKSOURCE);
+    }
+    #endif /* UART9 */
+    #if defined(USART10)
+    else if (USARTx == USART10) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART10_CLKSOURCE);
+    }
+    #endif /* USART10 */
+    #if defined(USART11)
+    else if (USARTx == USART11) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART11_CLKSOURCE);
+    }
+    #endif /* USART11 */
+    #if defined(UART12)
+    else if (USARTx == UART12) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART12_CLKSOURCE);
+    }
+    #endif /* UART12 */
+
+    // TODO: confirm that we don't need different prescalar.
+    // i.e. assert_param(IS_LL_USART_BRR_MIN(USARTx->BRR))
+    LL_USART_SetBaudRate(USARTx, periphclk, LL_USART_PRESCALER_DIV1, LL_USART_OVERSAMPLING_16, baud);
+    LL_USART_SetPrescaler(USARTx, LL_USART_PRESCALER_DIV1);
+}
+#else
+#error "unsupported MCU for btstack_stm32_hal_set_baudrate()"
+#endif
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     // If a process was exited while an operation was in progress this is
@@ -182,9 +249,17 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
 void pbdrv_uart_stm32_ll_irq_handle_irq(uint8_t id) {
     pbdrv_uart_dev_t *uart = &uart_devs[id];
     USART_TypeDef *USARTx = uart->pdata->uart;
+    #if defined(STM32H5)
+    uint32_t sr = USARTx->ISR;
+    #else
     uint32_t sr = USARTx->SR;
+    #endif
 
+    #if defined(STM32H5)
+    if (sr & USART_ISR_RXNE) {
+    #else
     if (sr & USART_SR_RXNE) {
+        #endif
         uint8_t c = LL_USART_ReceiveData8(USARTx);
         lwrb_write(&uart->rx_buf, &c, 1);
         // Poll parent process for each received byte, since the IRQ handler
@@ -193,12 +268,20 @@ void pbdrv_uart_stm32_ll_irq_handle_irq(uint8_t id) {
 
     }
 
+    #if defined(STM32H5)
+    if (sr & USART_ISR_ORE) {
+    #else
     if (sr & USART_SR_ORE) {
+        #endif
         // clears interrupt
         LL_USART_ReceiveData8(USARTx);
     }
 
+    #if defined(STM32H5)
+    if (USARTx->CR1 & USART_CR1_TXEIE && sr & USART_ISR_TXE && uart->write_buf) {
+    #else
     if (USARTx->CR1 & USART_CR1_TXEIE && sr & USART_SR_TXE && uart->write_buf) {
+        #endif
         LL_USART_TransmitData8(USARTx, uart->write_buf[uart->write_pos++]);
         // When all bytes have been written, wait for the Tx complete interrupt.
         if (uart->write_pos == uart->write_length) {
@@ -210,7 +293,11 @@ void pbdrv_uart_stm32_ll_irq_handle_irq(uint8_t id) {
         // event below will trigger the poll parent process.
     }
 
+    #if defined(STM32H5)
+    if (USARTx->CR1 & USART_CR1_TCIE && sr & USART_ISR_TC) {
+    #else
     if (USARTx->CR1 & USART_CR1_TCIE && sr & USART_SR_TC) {
+        #endif
         LL_USART_DisableIT_TC(USARTx);
         // Poll parent process to indicate the write operation is complete.
         pbio_os_request_poll();

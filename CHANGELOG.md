@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+- Added a version of SPIKE Prime with slightly updated electronics. Everything
+  should work the same as the original.
+
 ### Fixed
 - Fixed SPIKE Prime `speaker.beep` playing at double the intended frequency.
 - Fixed sensors not raising `ENODEV` if the sensor was used after being unplugged.

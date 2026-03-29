@@ -73,6 +73,7 @@ PLATFORM_INFO = {
     "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
     "prime_hub": {"device-id": 0x81, "checksum-type": "crc32"},
     "prime_hub_f4": {"device-id": 0x81, "checksum-type": "none"},
+    "prime_hub_h5": {"device-id": 0x81, "checksum-type": "none"},
     "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
     "rcx": {"device-id": 0xE0, "checksum-type": "none"},
     "nxt": {"device-id": 0xE1, "checksum-type": "none"},

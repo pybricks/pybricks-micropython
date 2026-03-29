@@ -43,9 +43,10 @@
   ******************************************************************************
   */
 
-#include "stm32f4xx_hal.h"
+#include STM32_HAL_H
+#include STM32_HAL_PCD_EX_H
 #include "usbd_core.h"
-
+#include "usbd_pybricks.h"
 /*******************************************************************************
                        LL Driver Callbacks (PCD -> USB Device Library)
 *******************************************************************************/
@@ -166,9 +167,12 @@ void HAL_PCD_DisconnectCallback(PCD_HandleTypeDef *hpcd) {
 USBD_StatusTypeDef  USBD_LL_Init(USBD_HandleTypeDef *pdev) {
     PCD_HandleTypeDef *hpcd = pdev->pData;
     /*Set LL Driver parameters */
+    #if defined(STM32H5)
+    hpcd->Instance = USB_DRD_FS;
+    #else
     hpcd->Instance = USB_OTG_FS;
+    #endif
     hpcd->Init.dev_endpoints = 4;
-    hpcd->Init.use_dedicated_ep1 = 0;
     hpcd->Init.dma_enable = 0;
     hpcd->Init.low_power_enable = 0;
     hpcd->Init.phy_itface = PCD_PHY_EMBEDDED;
@@ -179,9 +183,34 @@ USBD_StatusTypeDef  USBD_LL_Init(USBD_HandleTypeDef *pdev) {
     /*Initialize LL Driver */
     HAL_PCD_Init(hpcd);
 
+    #if defined(STM32H5)
+    // The USB_DRD_FS core uses a packet memory area (PMA) instead of the OTG
+    // core's FIFOs. Each endpoint needs an explicit PMA buffer address;
+    // without this every endpoint aliases to PMA offset 0, corrupting even
+    // the EP0 control transfers so the device never enumerates.
+    //
+    // The first bytes of the PMA hold the buffer description table, so reserve
+    // space for it before laying out the endpoint buffers. Each single buffer
+    // is USBD_PYBRICKS_MAX_PACKET_SIZE (64) bytes.
+    #define USBD_PMA_RESERVE (64U)
+    uint32_t pma_offset = USBD_PMA_RESERVE;
+    // EP0 OUT/IN (control)
+    HAL_PCDEx_PMAConfig(hpcd, 0x00U, PCD_SNG_BUF, pma_offset);
+    pma_offset += USBD_PYBRICKS_MAX_PACKET_SIZE;
+    HAL_PCDEx_PMAConfig(hpcd, 0x80U, PCD_SNG_BUF, pma_offset);
+    pma_offset += USBD_PYBRICKS_MAX_PACKET_SIZE;
+    // EP1 OUT/IN (bulk data)
+    HAL_PCDEx_PMAConfig(hpcd, USBD_PYBRICKS_OUT_EP, PCD_SNG_BUF, pma_offset);
+    pma_offset += USBD_PYBRICKS_MAX_PACKET_SIZE;
+    HAL_PCDEx_PMAConfig(hpcd, USBD_PYBRICKS_IN_EP, PCD_SNG_BUF, pma_offset);
+    pma_offset += USBD_PYBRICKS_MAX_PACKET_SIZE;
+    // EP2 IN (CDC notification)
+    HAL_PCDEx_PMAConfig(hpcd, USBD_PYBRICKS_CMD_EP, PCD_SNG_BUF, pma_offset);
+    #else
     HAL_PCDEx_SetRxFiFo(hpcd, 0x80);
     HAL_PCDEx_SetTxFiFo(hpcd, 0, 0x40);
     HAL_PCDEx_SetTxFiFo(hpcd, 1, 0x80);
+    #endif
 
     return USBD_OK;
 }
