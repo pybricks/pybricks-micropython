@@ -16,6 +16,7 @@
 #include "pwm_lp50xx_stm32.h"
 #include "pwm_tlc5955_stm32.h"
 #include "pwm_ev3.h"
+#include "pwm_pico.h"
 #include "pwm.h"
 
 
@@ -28,6 +29,7 @@ void pbdrv_pwm_init(void) {
     pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev);
     pbdrv_pwm_test_init(pbdrv_pwm_dev);
     pbdrv_pwm_lp50xx_stm32_init(pbdrv_pwm_dev);
+    pbdrv_pwm_pico_init(pbdrv_pwm_dev);
     pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev);
     pbdrv_pwm_tiam1808_init(pbdrv_pwm_dev);
 }
