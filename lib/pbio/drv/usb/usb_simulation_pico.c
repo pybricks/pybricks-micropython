@@ -38,7 +38,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -54,7 +54,10 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
             pbdrv_usb_simulation_tx_ready = false;
             // Enable TX interrupt to be notified when ready.
             hw_set_bits(&uart_get_hw(uart_default)->imsc, 1 << UART_UARTIMSC_TXIM_LSB);
-            PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_simulation_tx_ready);
+            PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_simulation_tx_ready || cancel);
+            if (!pbdrv_usb_simulation_tx_ready && cancel) {
+                return PBIO_ERROR_CANCELED;
+            }
         }
 
         uart_get_hw(uart_default)->dr = data[i];
@@ -63,7 +66,7 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 

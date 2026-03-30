@@ -1022,9 +1022,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size, bool cancel) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1033,28 +1031,20 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
     }
 
     transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
 
     // Transmit event.
     pbdrv_cache_prepare_before_dma(data, size);
     usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, (uint8_t *)data, size);
 
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
-
-    if (pbio_os_timer_is_expired(&timer)) {
-        // Transmission has taken too long, so reset the state to allow
-        // new transmissions. This can happen if the host stops reading
-        // data for some reason. This need some time to complete, so delegate
-        // the reset back to the process.
-        return PBIO_ERROR_TIMEDOUT;
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || cancel);
+    if (transmitting && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
+pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code, bool cancel) {
 
     static uint8_t ep1_tx_response_buf[1 + sizeof(uint32_t)] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
 
@@ -1065,7 +1055,6 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
     }
 
     transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
 
     // Response is just the error code.
     pbio_set_uint32_le(&ep1_tx_response_buf[1], code);
@@ -1075,9 +1064,9 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
     usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
 
     // Wait until complete or trigger reset on timeout.
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    PBIO_OS_AWAIT_UNTIL(state, !transmitting || cancel);
+    if (transmitting && cancel) {
+        return PBIO_ERROR_CANCELED;
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
