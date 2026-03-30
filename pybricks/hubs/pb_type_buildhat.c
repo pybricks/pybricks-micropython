@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025 The Pybricks Authors
+// Copyright (c) 2025-2026 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_BUILDHAT
+
+#include <pbsys/light.h>
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
@@ -13,16 +15,19 @@
 
 typedef struct _hubs_BuildHat_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
     mp_obj_t system;
 } hubs_BuildHat_obj_t;
 
 static mp_obj_t hubs_BuildHat_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_BuildHat_obj_t *self = mp_obj_malloc(hubs_BuildHat_obj_t, type);
+    self->light = common_ColorLight_internal_obj_new(pbsys_status_light_main);
     self->system = MP_OBJ_FROM_PTR(&pb_type_System);
     return MP_OBJ_FROM_PTR(self);
 }
 
 static const pb_attr_dict_entry_t hubs_BuildHat_attr_dict[] = {
+    PB_DEFINE_CONST_ATTR_RO(MP_QSTR_light, hubs_BuildHat_obj_t, light),
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_system, hubs_BuildHat_obj_t, system),
     PB_ATTR_DICT_SENTINEL
 };

@@ -20,14 +20,18 @@
 #define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
 // TODO: Implement IOPORT driver for Build HAT
 
-#define PBDRV_CONFIG_LED                            (0)
-// TODO: Implement LED driver for Build HAT (should be similar to EV3)
+#define PBDRV_CONFIG_LED                            (1)
+#define PBDRV_CONFIG_LED_NUM_DEV                    (1)
+#define PBDRV_CONFIG_LED_PWM                        (1)
+#define PBDRV_CONFIG_LED_PWM_NUM_DEV                (1)
 
 #define PBDRV_CONFIG_MOTOR_DRIVER                   (0)
 // TODO: Implement motor driver for Build HAT
 
-#define PBDRV_CONFIG_PWM                            (0)
-// TODO: Implement PWM driver for Build HAT
+#define PBDRV_CONFIG_PWM                            (1)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (1)
+#define PBDRV_CONFIG_PWM_PICO                       (1)
+#define PBDRV_CONFIG_PWM_PICO_NUM_CHANNELS          (2)
 
 #define PBDRV_CONFIG_RANDOM                         (0)
 // TODO: Implement RANDOM driver for Build HAT

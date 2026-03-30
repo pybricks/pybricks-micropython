@@ -359,7 +359,8 @@
                 "-fsingle-precision-constant"
             ],
             "cStandard": "c11",
-            "intelliSenseMode": "gcc-arm"
+            "intelliSenseMode": "gcc-arm",
+            "compilerPath": "arm-none-eabi-gcc"
         },
         {
             "name": "pbio/test",

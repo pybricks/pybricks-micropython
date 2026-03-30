@@ -18,7 +18,7 @@
 #define PBSYS_CONFIG_STORAGE                        (0) // TODO ?
 #define PBSYS_CONFIG_STORAGE_NUM_SLOTS              (1)
 #define PBSYS_CONFIG_STORAGE_USER_DATA_SIZE         (128)
-#define PBSYS_CONFIG_STATUS_LIGHT                   (0) // TODO
+#define PBSYS_CONFIG_STATUS_LIGHT                   (1)
 #define PBSYS_CONFIG_STATUS_LIGHT_BATTERY           (0)
 #define PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH         (0)
 #define PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS  (1)
