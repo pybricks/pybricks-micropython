@@ -46,6 +46,14 @@
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
 
+#define DEBUG 0
+#if DEBUG
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
+#else
+#define DEBUG_PRINT(...)
+#endif
+
 // Maximum packet sizes for the USB pipes
 #define EP0_BUF_SZ              64
 #define PYBRICKS_EP_PKT_SZ_FS   64
@@ -1007,6 +1015,8 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    DEBUG_PRINT("Resetting USB TX state\n");
+
     transmitting = false;
 
     // Flush _all_ TX packets
@@ -1029,6 +1039,7 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (transmitting) {
+        DEBUG_PRINT("Cannot transmit USB event, busy.\n");
         return PBIO_ERROR_BUSY;
     }
 
@@ -1046,9 +1057,15 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
         // new transmissions. This can happen if the host stops reading
         // data for some reason. This need some time to complete, so delegate
         // the reset back to the process.
-        return PBIO_ERROR_TIMEDOUT;
+        DEBUG_PRINT("USB event timed out\n");
+        return PBIO_SUCCESS;
     }
-
+    #if DEBUG
+    uint32_t elapsed_ms = pbdrv_clock_get_ms() - timer.start;
+    if (elapsed_ms > 5) {
+        DEBUG_PRINT("Slow tx (ms) %u\n", elapsed_ms);
+    }
+    #endif
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -1061,6 +1078,7 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (transmitting) {
+        DEBUG_PRINT("Cannot transmit USB response, busy.\n");
         return PBIO_ERROR_BUSY;
     }
 
@@ -1077,6 +1095,7 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
     // Wait until complete or trigger reset on timeout.
     PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
     if (pbio_os_timer_is_expired(&timer)) {
+        DEBUG_PRINT("USB response timed out\n");
         return PBIO_ERROR_TIMEDOUT;
     }
 
