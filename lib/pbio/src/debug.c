@@ -16,8 +16,11 @@ void pbio_debug_va(const char *format, va_list args) {
 
     char buf[256];
     size_t len = vsnprintf(buf, sizeof(buf), format, args);
-    pbdrv_usb_debug_print(buf, len);
+    #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
     pbdrv_uart_debug_print(buf, len);
+    #else
+    pbdrv_usb_debug_print(buf, len);
+    #endif
 }
 
 void pbio_debug(const char *format, ...) {
