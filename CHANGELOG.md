@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+- Added `Port View` on EV3 apps tab.
+
+### Fixed
+- Fixed USB connection resetting on app losing focus or high print volume.
+
 ## [4.0.0b8] - 2026-03-19
 
 ### Added

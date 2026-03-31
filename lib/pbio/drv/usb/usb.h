@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-#define PBDRV_USB_TRANSMIT_TIMEOUT (50)
+#define PBDRV_USB_TRANSMIT_TIMEOUT (500)
 
 /**
  * Initializes the USB driver on boot.
