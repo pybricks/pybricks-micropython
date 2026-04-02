@@ -53,8 +53,9 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_INT(baudrate, 115200),
-        PB_ARG_DEFAULT_NONE(timeout));
-
+        PB_ARG_DEFAULT_NONE(timeout),
+        PB_ARG_DEFAULT_INT(power_pin, 0)
+        );
     // Get device, which inits UART port
     pb_type_uart_device_obj_t *self = mp_obj_malloc(pb_type_uart_device_obj_t, type);
 
@@ -74,6 +75,14 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pb_assert(pbio_port_get_port(port_id, &self->port));
     pbio_port_set_mode(self->port, PBIO_PORT_MODE_UART);
+
+    if (mp_obj_get_int(power_pin_in) == 1) {
+       pbio_port_p1p2_set_power(self->port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
+    } else if (mp_obj_get_int(power_pin_in) == 2) {
+       pbio_port_p1p2_set_power(self->port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS);
+    } else
+       pbio_port_p1p2_set_power(self->port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
+
     pb_assert(pbio_port_get_uart_dev(self->port, &self->uart_dev));
     pb_type_uart_device_set_baudrate(MP_OBJ_FROM_PTR(self), baudrate_in);
     pbdrv_uart_flush(self->uart_dev);
