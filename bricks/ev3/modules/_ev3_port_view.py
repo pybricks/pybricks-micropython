@@ -8,8 +8,8 @@ from pybricks.ev3devices import (
     InfraredSensor,
 )
 from pybricks.nxtdevices import (
-    ColorSensor as NXTColorSensor, 
-    LightSensor, 
+    ColorSensor as NXTColorSensor,
+    LightSensor,
     SoundSensor,
     UltrasonicSensor as NXTUltrasonicSensor,
 )
