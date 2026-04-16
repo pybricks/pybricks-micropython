@@ -561,12 +561,40 @@ MEDIA_SRC = $(sort $(addprefix lib/pbio/src/image/media/,\
 	lms2012/_app_ir_control_34.bmp \
 	lms2012/_app_motor_control_ad.bmp \
 	lms2012/_app_motor_control_bc.bmp \
-	ui/_accept24_fill.svg \
+	lms2012/_port_view_empty.bmp \
+	lms2012/_port_view_ev3_color_ambient.bmp \
+	lms2012/_port_view_ev3_color_color.bmp \
+	lms2012/_port_view_ev3_color_reflection.bmp \
+	lms2012/_port_view_ev3_gyro.bmp \
+	lms2012/_port_view_ev3_ir_beacon.bmp \
+	lms2012/_port_view_ev3_ir_button.bmp \
+	lms2012/_port_view_ev3_ir_proximity.bmp \
+	lms2012/_port_view_ev3_motor_large.bmp \
+	lms2012/_port_view_ev3_motor_medium.bmp \
+	lms2012/_port_view_ev3_touch.bmp \
+	lms2012/_port_view_ev3_ultrasonic.bmp \
+	lms2012/_port_view_p0_bottom.bmp \
+	lms2012/_port_view_p0_top.bmp \
+	lms2012/_port_view_p1.bmp \
+	lms2012/_port_view_p2.bmp \
+	lms2012/_port_view_p3.bmp \
+	lms2012/_port_view_p4.bmp \
+	lms2012/_port_view_pa.bmp \
+	lms2012/_port_view_pb.bmp \
+	lms2012/_port_view_pc.bmp \
+	lms2012/_port_view_pd.bmp \
 	ui/_accept24.svg \
+	ui/_accept24_fill.svg \
 	ui/_off20.svg \
+	ui/_port_view_nxt_color_ambient.svg \
+	ui/_port_view_nxt_color_color.svg \
+	ui/_port_view_nxt_color_reflection.svg \
+	ui/_port_view_nxt_light_ambient.svg \
+	ui/_port_view_nxt_light_reflection.svg \
+	ui/_port_view_nxt_sound.svg \
 	ui/_pybricks_join.png \
-	ui/_reject24_fill.svg \
 	ui/_reject24.svg \
+	ui/_reject24_fill.svg \
 	ui/_rotate_ccw18.svg \
 	ui/_rotate_cw18.svg \
 	ui/_usb_host.svg \
