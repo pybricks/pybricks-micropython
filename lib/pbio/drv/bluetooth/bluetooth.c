@@ -579,6 +579,17 @@ pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *co
 
     return task->err;
 }
+#else
+
+pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+
 #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 
 static bool pbdrv_bluetooth_shutting_down;
@@ -728,6 +739,10 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
     }
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
+    pbdrv_bluetooth_rfcomm_disconnect_all();
+    #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 
     for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
         peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);

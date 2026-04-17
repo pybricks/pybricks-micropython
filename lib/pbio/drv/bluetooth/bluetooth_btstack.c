@@ -7,6 +7,8 @@
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
+#include <btstack_config.h>
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -16,9 +18,13 @@
 #include <btstack.h>
 #include <btstack_run_loop.h>
 
+#include <gap.h>
+#include <lwrb/lwrb.h>
+
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
 
+#include <pbio/int_math.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 #include <pbio/version.h>
@@ -46,7 +52,7 @@
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
 #define PERIPHERAL_TIMEOUT_MS_PAIRING       (5000)
 
-#define DEBUG 0
+#define DEBUG 2
 
 #if DEBUG
 #include <pbio/debug.h>
@@ -338,11 +344,20 @@ static bool pbdrv_bluetooth_btstack_ble_supported(void) {
     return chipset_info && chipset_info->supports_ble;
 }
 
+void pbdrv_bluetooth_classic_init(void);
+void pbdrv_bluetooth_btstack_handle_classic_security_packet(uint8_t *packet, uint16_t size);
+
 // currently, this function just handles the Powered Up handset control.
 static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 
     // Platform-specific platform handler has priority.
     pbdrv_bluetooth_btstack_platform_packet_handler(packet_type, channel, packet, size);
+
+    if (packet_type == HCI_EVENT_PACKET) {
+        // We have a separate handler for classic security packets,
+        // which we don't mix in here for clarity's sake.
+        pbdrv_bluetooth_btstack_handle_classic_security_packet(packet, size);
+    }
 
     switch (hci_event_packet_get_type(packet)) {
         case HCI_EVENT_COMMAND_COMPLETE: {
@@ -1172,6 +1187,18 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+void pbdrv_bluetooth_local_address(bdaddr_t addr) {
+    gap_local_bd_addr(addr);
+}
+
+const char *pbdrv_bluetooth_bdaddr_to_str(const bdaddr_t addr) {
+    return bd_addr_to_str(addr);
+}
+
+bool pbdrv_bluetooth_str_to_bdaddr(const char *str, bdaddr_t addr) {
+    return sscanf_bd_addr(str, addr) == 1;
+}
+
 static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_inquiry_result_t *result) {
 
     gap_event_inquiry_result_get_bd_addr(event_packet, result->bdaddr);
@@ -1426,6 +1453,7 @@ void pbdrv_bluetooth_init_hci(void) {
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, true);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, true);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, true);
+    hci_dump_enable_packet_log(false);
     #endif
 
     static btstack_packet_callback_registration_t hci_event_callback_registration;
@@ -1471,6 +1499,8 @@ void pbdrv_bluetooth_init_hci(void) {
     // GATT Client setup
     gatt_client_init();
 
+    pbdrv_bluetooth_classic_init();
+
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
     // setup ATT server
     att_server_init(profile_data, att_read_callback, NULL);
@@ -1488,7 +1518,7 @@ void pbdrv_bluetooth_init_hci(void) {
     (void)pybricks_configured;
     (void)nordic_spp_packet_handler;
     (void)sm_packet_handler;
-    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+    #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;
