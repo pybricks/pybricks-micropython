@@ -155,6 +155,12 @@ static mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
     mp_obj_t *mode_items;
     mp_obj_get_array(modes_in, &num_modes, &mode_items);
 
+    // Sort by mode number. Tuples compare lexicographically, so this sorts by the first element.
+    pb_assert_type(modes_in, &mp_type_list);
+    mp_obj_t sorted = mp_obj_new_list(num_modes, mode_items);
+    mp_obj_list_sort(1, &sorted, (mp_map_t *)&mp_const_empty_map);
+    mp_obj_get_array(sorted, &num_modes, &mode_items);
+
     // Prepare mode setup command.
     vstr_t mode_vstr;
     vstr_init_len(&mode_vstr, 1 + num_modes);
@@ -178,6 +184,13 @@ static mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
         mode_info->mode = mp_obj_get_int(pair_items[0]);
         mode_info->offset = alloc_size;
         mode_info->size = mp_obj_get_int(pair_items[1]);
+
+        // Mode must be unique
+        for (size_t j = 0; j < i; j++) {
+            if (mode_info->mode == modes[j].mode) {
+                mp_raise_ValueError(MP_ERROR_TEXT("mode numbers must be unique"));
+            }
+        }
 
         // Mode command is just a concatenation of mode numbers.
         mode_vstr.buf[i + 1] = mode_info->mode;
