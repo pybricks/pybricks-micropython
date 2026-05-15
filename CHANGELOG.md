@@ -4,6 +4,21 @@
 
 ## [Unreleased]
 
+## [4.0.0b10] - 2026-05-15
+
+### Added
+- Enabled `pybricks.tools.AppData` on Move Hub.
+
+### Changed
+- Changed initialization of `AppData` to allow multiple modes instead of a
+  single format. `ustruct.unpack` is no longer automatically called. Now it
+  works seemlessly with the camera sensors in Pybricks Code.
+
+### Fixed
+- Fixed EV3 apps not loading images  ([pybricks-micropython#470]).
+
+[pybricks-micropython#470]: https://github.com/pybricks/pybricks-micropython/pull/470
+
 ## [4.0.0b9] - 2026-04-16
 
 ### Added
@@ -1336,7 +1351,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b9...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b10...HEAD
+[4.0.0b10]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b9...v4.0.0b10
 [4.0.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b8...v4.0.0b9
 [4.0.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b7...v4.0.0b8
 [4.0.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b6...v4.0.0b7
