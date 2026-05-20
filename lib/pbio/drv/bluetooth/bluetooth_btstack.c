@@ -653,9 +653,10 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 
     // Wait for all notifications to be sent. BTstack handles sending
     // asynchronously. This loop completes when the slowest one is done.
+    // Stop waiting if we get disconnected in the middle of it.
     for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
         host = &host_connections[i];
-        PBIO_OS_AWAIT_UNTIL(state, host->notification_done);
+        PBIO_OS_AWAIT_UNTIL(state, host->notification_done || host->con_handle == HCI_CON_HANDLE_INVALID);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

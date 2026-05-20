@@ -9,6 +9,8 @@
   case of an unhandled Bluetooth issue. This fixes the forced shutdown guard.
   This would otherwise prevent shutdown and reboot in some cases if the hub
   was being shutdown while still connected to Bluetooth.
+- Fixed SPIKE Prime waiting indefinitely on sending a Bluetooth message if the
+  hub became disconnected. On shutdown, this would then lead to the issue above.
 
 ## [4.0.0b10] - 2026-05-15
 
