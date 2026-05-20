@@ -700,9 +700,10 @@ init:
 
 shutdown:
 
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
-
+    // Invalidate goto shutdown, so we remain past the checkpoint set in this await.
     pbdrv_bluetooth_shutting_down = false;
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
     pbio_busy_count_down();
 
     #if DEBUG
