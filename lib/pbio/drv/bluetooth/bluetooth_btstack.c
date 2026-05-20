@@ -1309,6 +1309,8 @@ pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    DEBUG_PRINT("Disconnecting all peripheral connections.\n");
+
     // Disconnect gracefully if connected to peripherals.
     #if PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS
     for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
@@ -1318,6 +1320,8 @@ pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
         PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_peripheral_disconnect_func(&sub, peri));
     }
     #endif
+
+    DEBUG_PRINT("Disconnecting all host connections.\n");
 
     // Disconnect gracefully if connected to hosts.
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
