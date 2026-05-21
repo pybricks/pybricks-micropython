@@ -11,6 +11,9 @@
   was being shutdown while still connected to Bluetooth.
 - Fixed SPIKE Prime waiting indefinitely on sending a Bluetooth message if the
   hub became disconnected. On shutdown, this would then lead to the issue above.
+- Increased number of data messages that may be missed in the LUMP protocol before
+  falling out of sync. We were more lenient about this in `v3.6.1` and third
+  party devices have come to rely on this, so we keep it ([support#2698]).
 
 ## [4.0.0b10] - 2026-05-15
 
@@ -26,6 +29,7 @@
 - Fixed EV3 apps not loading images  ([pybricks-micropython#470]).
 
 [pybricks-micropython#470]: https://github.com/pybricks/pybricks-micropython/pull/470
+[support#2698]: https://github.com/pybricks/support/issues/2698
 
 ## [4.0.0b9] - 2026-04-16
 
