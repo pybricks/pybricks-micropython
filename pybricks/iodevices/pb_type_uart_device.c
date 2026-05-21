@@ -13,6 +13,7 @@
 #include <pbio/port_interface.h>
 
 #include <pybricks/common.h>
+#include <pybricks/iodevices/iodevices.h>
 #include <pybricks/parameters.h>
 #include <pybricks/tools/pb_type_async.h>
 
@@ -53,7 +54,8 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_INT(baudrate, 115200),
-        PB_ARG_DEFAULT_NONE(timeout));
+        PB_ARG_DEFAULT_NONE(timeout),
+        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE));
 
     // Get device, which inits UART port
     pb_type_uart_device_obj_t *self = mp_obj_malloc(pb_type_uart_device_obj_t, type);
@@ -82,6 +84,8 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     self->write_iter = NULL;
     self->read_iter = NULL;
     self->wait_len = 0;
+
+    pbio_port_p1p2_set_power(self->port, pb_module_iodevices_get_requested_power_pin(power_pin_in));
 
     return MP_OBJ_FROM_PTR(self);
 }
