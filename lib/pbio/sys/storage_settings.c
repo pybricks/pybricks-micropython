@@ -27,6 +27,7 @@
 void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     settings->flags = 0;
     pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED, true);
+    pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED, false);
 
     #if PBIO_CONFIG_IMU
     pbio_imu_set_default_settings(&settings->imu_settings);

@@ -5,8 +5,35 @@
 
 #if PYBRICKS_PY_IODEVICES
 
+#include "py/mphal.h"
+
 #include <pybricks/common.h>
 #include "iodevices.h"
+
+#include <pbsys/storage_settings.h>
+
+/**
+ * Interactive test for getting user permission to enable power for custom sensors.
+ *
+ * @returns  True if the user accepted now or previously, otherwise false.
+ */
+bool pb_module_iodevices_has_power_permission(void) {
+    // Permission persists.
+    if (pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED)) {
+        return true;
+    }
+
+    mp_printf(&mp_plat_print, "Custom electronics may damage your LEGO hub. Proceed at your own risk.\nPress Y to proceed. Press N to cancel.\n");
+    int chr = mp_hal_stdin_rx_chr();
+    if (chr == 'y' || chr == 'Y') {
+        mp_printf(&mp_plat_print, "%c. Port power enabled.\n", chr);
+        pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED, true);
+    } else {
+        mp_printf(&mp_plat_print, "Cancelled. Power not enabled.\n", chr);
+    }
+
+    return pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED);
+}
 
 static const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)                },

@@ -53,6 +53,8 @@ void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8
 
 #endif
 
+bool pb_module_iodevices_has_power_permission(void);
+
 #endif // PYBRICKS_PY_IODEVICES
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_IODEVICES_H

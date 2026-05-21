@@ -29,6 +29,11 @@ typedef enum {
      * Bluetooth is enabled by the user (defaults to true).
      */
     PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED = (1 << 0),
+    /**
+     * User has accepted the safety prompt the first time they used custom
+     * electronics (defaults to false).
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED = (1 << 1),
 } pbsys_storage_settings_flags_t;
 
 /**

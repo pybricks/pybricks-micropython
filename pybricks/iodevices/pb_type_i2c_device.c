@@ -111,7 +111,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         port_in,
         mp_obj_get_int(address_in),
         mp_obj_is_true(custom_in),
-        mp_obj_is_true(powered_in),
+        mp_obj_is_true(powered_in) && pb_module_iodevices_has_power_permission(),
         mp_obj_is_true(nxt_quirk_in)
         );
 }
