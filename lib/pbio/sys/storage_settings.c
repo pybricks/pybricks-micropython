@@ -25,12 +25,15 @@
  * @param [in]  settings  Settings to populate.
  */
 void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
-    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-    settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
-    #endif
+    settings->flags = 0;
+    pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED, true);
+
     #if PBIO_CONFIG_IMU
     pbio_imu_set_default_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
+
+    // Always request save for this one off default setter.
+    pbsys_storage_request_write();
 }
 
 /**
@@ -44,33 +47,47 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
     #endif // PBIO_CONFIG_IMU
 }
 
-bool pbsys_storage_settings_bluetooth_enabled_get(void) {
-    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
+/**
+ * Gets the value of a flag in the settings.
+ *
+ * NB: Always returns false if this is called before storage is initalized.
+ *
+ * @param [in]  flag    The flag to get.
+ * @returns             The value of the flag, or false if settings are not available.
+ */
+bool pbsys_storage_settings_get_flag(pbsys_storage_settings_flags_t flag) {
     pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
     if (!settings) {
         return false;
     }
-    return settings->flags & PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
-    #else
-    return true;
-    #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
+    return settings->flags & flag;
 }
-void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
-    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
-    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
 
-    bool current_value = pbsys_storage_settings_bluetooth_enabled_get();
-    if (enable == current_value) {
+/**
+ * Sets the value of a flag in the settings, and requests saving on poweroff if changed.
+ *
+ * NB: Does nothing if this is called before storage is initalized.
+ *
+ * @param [in]  flag    The flag to set.
+ * @param [in]  value   The value to set.
+ */
+void pbsys_storage_settings_set_flag(pbsys_storage_settings_flags_t flag, bool value) {
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+    if (!settings) {
         return;
     }
 
-    if (enable) {
-        settings->flags |= PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
+    bool current_value = settings->flags & flag;
+    if (value == current_value) {
+        return;
+    }
+
+    if (value) {
+        settings->flags |= flag;
     } else {
-        settings->flags &= ~PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED;
+        settings->flags &= ~flag;
     }
     pbsys_storage_request_write();
-    #endif
 }
 
 #endif // PBSYS_CONFIG_STORAGE

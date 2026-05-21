@@ -136,14 +136,11 @@ void pbsys_storage_reset_storage(void) {
     // may be calling this while a program using this data is running.
     memset(map, 0, sizeof(pbsys_storage_data_map_t));
 
-    // Apply default settings.
+    // Apply default settings. This will request write on poweroff.
     pbsys_storage_settings_set_defaults(&map->settings);
 
     // Set firmware version used to create current storage map.
     strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
-
-    // Ensure new firmware version and default settings are written on poweroff.
-    pbsys_storage_request_write();
 }
 
 /**

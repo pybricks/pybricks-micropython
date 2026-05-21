@@ -224,6 +224,14 @@ static pbio_error_t start_advertising(pbio_os_state_t *state, bool advertise) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+static bool bluetooth_is_enabled(void) {
+    #if PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
+    return pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED);
+    #else
+    return true;
+    #endif // PBSYS_CONFIG_HMI_PUP_BLUETOOTH_BUTTON
+}
+
 /**
  * The HMI is a loop running the following steps:
  *
@@ -302,7 +310,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state) {
         // connection, otherwise disable.
         if (pbsys_hmi_handle_connection_change) {
             pbsys_hmi_handle_connection_change = false;
-            should_advertise = pbsys_storage_settings_bluetooth_enabled_get() && !pbsys_host_is_connected();
+            should_advertise = bluetooth_is_enabled() && !pbsys_host_is_connected();
             PBIO_OS_AWAIT(state, &sub, start_advertising(&sub, should_advertise));
             continue;
         }
@@ -328,14 +336,14 @@ static pbio_error_t run_ui(pbio_os_state_t *state) {
 
                 // We could be connected to USB and BLE might have been
                 // configured off previously. So turn back on.
-                if (!pbsys_storage_settings_bluetooth_enabled_get()) {
-                    pbsys_storage_settings_bluetooth_enabled_set(true);
+                if (!bluetooth_is_enabled()) {
+                    pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED, true);
                 }
             } else {
                 // When disconnected, pressing the button toggles Bluetooth enable
                 // state, and Bluetooth advertising is updated to match.
-                pbsys_storage_settings_bluetooth_enabled_set(!pbsys_storage_settings_bluetooth_enabled_get());
-                should_advertise = pbsys_storage_settings_bluetooth_enabled_get();
+                pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED, !bluetooth_is_enabled());
+                should_advertise = bluetooth_is_enabled();
             }
 
             // Set requested state.
