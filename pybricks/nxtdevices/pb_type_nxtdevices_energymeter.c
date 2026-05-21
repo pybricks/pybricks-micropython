@@ -31,7 +31,7 @@ static mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     nxtdevices_EnergyMeter_obj_t *self = mp_obj_malloc(nxtdevices_EnergyMeter_obj_t, type);
-    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x02, true, false, false);
+    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x02, true, PBIO_PORT_POWER_REQUIREMENTS_NONE, false);
 
     return MP_OBJ_FROM_PTR(self);
 }

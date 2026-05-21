@@ -8,6 +8,8 @@
 #include "py/mphal.h"
 
 #include <pybricks/common.h>
+#include <pybricks/util_pb/pb_error.h>
+
 #include "iodevices.h"
 
 #include <pbsys/storage_settings.h>
@@ -17,7 +19,7 @@
  *
  * @returns  True if the user accepted now or previously, otherwise false.
  */
-bool pb_module_iodevices_has_power_permission(void) {
+static bool pb_module_iodevices_has_power_permission(void) {
     // Permission persists.
     if (pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED)) {
         return true;
@@ -26,13 +28,41 @@ bool pb_module_iodevices_has_power_permission(void) {
     mp_printf(&mp_plat_print, "Custom electronics may damage your LEGO hub. Proceed at your own risk.\nPress Y to proceed. Press N to cancel.\n");
     int chr = mp_hal_stdin_rx_chr();
     if (chr == 'y' || chr == 'Y') {
-        mp_printf(&mp_plat_print, "%c. Port power enabled.\n", chr);
+        mp_printf(&mp_plat_print, "%c. Port power may be enabled.\n", chr);
         pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED, true);
     } else {
         mp_printf(&mp_plat_print, "Cancelled. Power not enabled.\n", chr);
     }
 
     return pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED);
+}
+
+/**
+ * Gets power requirement flag from user argument and asks for permission if needed.
+ *
+ * @param [in]  power_pin_in  User argument for power pin requirement.
+ * @returns                   Power requirement flag to use for requested I/O operation if valid and permitted.
+ */
+pbio_port_power_requirements_t pb_module_iodevices_get_requested_power_pin(mp_obj_t power_pin_in) {
+
+    pbio_port_power_requirements_t pin = mp_obj_get_int(power_pin_in);
+
+    // No power always passes.
+    if (pin == PBIO_PORT_POWER_REQUIREMENTS_NONE) {
+        return pin;
+    }
+
+    // Allow only valid values.
+    if (pin != PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS && pin != PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P2_POS) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Using pins requires permission.
+    if (!pb_module_iodevices_has_power_permission()) {
+        pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+    }
+
+    return pin;
 }
 
 static const mp_rom_map_elem_t iodevices_globals_table[] = {

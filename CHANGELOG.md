@@ -15,6 +15,10 @@
   falling out of sync. We were more lenient about this in `v3.6.1` and third
   party devices have come to rely on this, so we keep it ([support#2698]).
 
+### Changed
+- Changed `powered` (bool) to `power_pin` (int) on `I2CDevice()` to make it
+  generic enough for all `iodevices` like `UARTDevice`. Added permission request.
+
 ## [4.0.0b10] - 2026-05-15
 
 ### Added

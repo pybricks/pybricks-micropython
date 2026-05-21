@@ -30,7 +30,7 @@ static mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
         PB_ARG_REQUIRED(port));
 
     nxtdevices_TemperatureSensor_obj_t *self = mp_obj_malloc(nxtdevices_TemperatureSensor_obj_t, type);
-    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x4C, true, false, false);
+    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x4C, true, PBIO_PORT_POWER_REQUIREMENTS_NONE, false);
 
     // Set resolution to 0.125 degrees as a fair balance between speed and accuracy.
     const uint8_t write_data[] = { 0x01, (1 << 6) | (0 << 5) };

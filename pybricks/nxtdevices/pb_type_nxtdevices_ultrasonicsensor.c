@@ -30,7 +30,7 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x01, false, true, true);
+    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, 0x01, false, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS, true);
 
     // NXT Ultrasonic Sensor appears to need some time after initializing I2C pins before it can receive data.
     mp_hal_delay_ms(100);

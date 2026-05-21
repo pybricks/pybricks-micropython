@@ -60,7 +60,7 @@ typedef struct {
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, bool powered, bool nxt_quirk) {
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, pbio_port_power_requirements_t power_pin, bool nxt_quirk) {
 
     pb_module_tools_assert_blocking();
 
@@ -89,9 +89,7 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint
     device->nxt_quirk = nxt_quirk;
     device->sensor_obj = sensor_obj;
     device->iter = NULL;
-    if (powered) {
-        pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS);
-    }
+    pbio_port_p1p2_set_power(port, power_pin);
 
     return MP_OBJ_FROM_PTR(device);
 }
@@ -102,7 +100,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address),
         PB_ARG_DEFAULT_FALSE(custom),
-        PB_ARG_DEFAULT_FALSE(powered),
+        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
         PB_ARG_DEFAULT_FALSE(nxt_quirk)
         );
 
@@ -111,7 +109,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         port_in,
         mp_obj_get_int(address_in),
         mp_obj_is_true(custom_in),
-        mp_obj_is_true(powered_in) && pb_module_iodevices_has_power_permission(),
+        pb_module_iodevices_get_requested_power_pin(power_pin_in),
         mp_obj_is_true(nxt_quirk_in)
         );
 }
