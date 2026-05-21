@@ -829,7 +829,7 @@ sync:
         // read the message header
         PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
-            debug_pr("UART Rx end error during info header\n");
+            debug_pr("UART Rx error during info header\n");
             return err;
         }
 
@@ -847,7 +847,7 @@ sync:
         if (lump_dev->rx_msg_size > 1) {
             PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
             if (err != PBIO_SUCCESS) {
-                debug_pr("UART Rx end error during info\n");
+                debug_pr("UART Rx error during info\n");
                 return err;
             }
         }
@@ -1020,9 +1020,14 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
     PBIO_OS_ASYNC_BEGIN(state);
 
     while (true) {
-        PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1,
+            // This is essentially the timeout for receiving the next data
+            // message, so we should allow at least as much timeout as allowed
+            // by missing messages rather than use a generic IO timeout.
+            EV3_UART_DATA_KEEP_ALIVE_TIMEOUT * (EV3_UART_DATA_KEEP_ALIVE_MAX_MISSED + 1)
+            ));
         if (err != PBIO_SUCCESS) {
-            debug_pr("UART Rx data header end error\n");
+            debug_pr("Did not receive UART Rx data header byte\n");
             return err;
         }
 
@@ -1042,7 +1047,7 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
 
         PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
-            debug_pr("UART Rx data end error\n");
+            debug_pr("UART Rx data error\n");
             return err;
         }
 
