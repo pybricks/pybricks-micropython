@@ -31,6 +31,8 @@
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (LUMP_MAX_MSG_SIZE + 3)
 
+#define EV3_UART_BAD_HEADER_STREAK_MAX  8
+
 #define EV3_UART_TYPE_MIN           29      // EV3 color sensor
 #define EV3_UART_TYPE_MAX           101
 #define EV3_UART_SPEED_MIN          2400
@@ -174,6 +176,8 @@ struct _pbio_port_lump_dev_t {
     uint32_t rx_msg_size;
     /** Total number of errors that have occurred. Re-used in different stages of synchronization and data reading. */
     uint32_t err_count;
+    /** Consecutive bad/missing header count for RX desync recovery. Reset on a good packet. */
+    uint8_t rx_bad_header_streak;
     /** Flag that indicates that good DATA lump_dev->msg has been received since last watchdog timeout. */
     bool data_rec;
     /** Angle reported by the device. */
@@ -213,6 +217,7 @@ pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index) {
     lump_dev->rx_msg = &bufs[device_index][BUF_RX_MSG][0];
     lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
     lump_dev->err_count = 0;
+    lump_dev->rx_bad_header_streak = 0;
     lump_dev->data_set = &data_set_bufs[device_index];
     lump_dev->bin_data = data_read_bufs[device_index];
     return lump_dev;
@@ -1013,9 +1018,8 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
 
     pbio_error_t err;
 
-    // REVISIT: This is not the greatest. We can easily get a buffer overrun and
-    // loose data. For now, the retry after bad message size helps get back into
-    // sync with the data stream.
+    // REVISIT: We can easily get a buffer overrun and lose data.
+    // The flush-on-bad-streak below helps reacquire sync with the data stream.
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1033,6 +1037,14 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size < 3 || lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
+            // Bad header byte — the parser is mid-packet or the UART dropped bytes.
+            // Accumulate: a short burst is normal after a corrupt packet; a sustained
+            // streak means the stream is desynchronized and a flush is needed to
+            // realign the byte boundaries before more data is discarded.
+            if (++lump_dev->rx_bad_header_streak >= EV3_UART_BAD_HEADER_STREAK_MAX) {
+                pbdrv_uart_flush(uart_dev);
+                lump_dev->rx_bad_header_streak = 0;
+            }
             debug_pr("Bad data message size\n");
             continue;
         }
@@ -1041,15 +1053,28 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
         uint8_t cmd = lump_dev->rx_msg[0] & LUMP_MSG_CMD_MASK;
         if (msg_type != LUMP_MSG_TYPE_DATA && (msg_type != LUMP_MSG_TYPE_CMD ||
                                                (cmd != LUMP_CMD_WRITE && cmd != LUMP_CMD_EXT_MODE))) {
+            if (++lump_dev->rx_bad_header_streak >= EV3_UART_BAD_HEADER_STREAK_MAX) {
+                pbdrv_uart_flush(uart_dev);
+                lump_dev->rx_bad_header_streak = 0;
+            }
             debug_pr("Bad msg type\n");
             continue;
         }
 
         PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
-            debug_pr("UART Rx data error\n");
+            if (err == PBIO_ERROR_TIMEDOUT) {
+                // Header arrived but payload timed out: we are mid-packet.
+                // Flush to realign; the next header read starts fresh.
+                pbdrv_uart_flush(uart_dev);
+                lump_dev->rx_bad_header_streak = 0;
+                continue;
+            }
+            debug_pr("UART Rx data end error\n");
             return err;
         }
+
+        lump_dev->rx_bad_header_streak = 0;
 
         // at this point, we have a full lump_dev->msg that can be parsed
         pbio_port_lump_lump_parse_msg(lump_dev);
