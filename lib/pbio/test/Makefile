@@ -116,6 +116,16 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
 	hci_dump_posix_stdout.c \
 	)
 
+BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/classic/,\
+	btstack_link_key_db_memory.c \
+	rfcomm.c \
+	sdp_client.c \
+	sdp_client_rfcomm.c \
+	sdp_server.c \
+	sdp_util.c \
+	spp_server.c \
+	)
+
 # pbio library
 PBIO_DIR = ..
 PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
@@ -165,6 +175,7 @@ CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
 CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
+CFLAGS += -fPIC
 
 ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
@@ -179,6 +190,9 @@ clean:
 ifneq ($(COVERAGE),1)
 	$(Q)$(MAKE) COVERAGE=1 clean
 endif
+
+# %rfcomm.d: CFLAGS := $(filter-out -Werror,$(CFLAGS)) -Wno-error=format
+%rfcomm.o: CFLAGS := $(filter-out -Werror,$(CFLAGS)) -Wno-error=format
 
 $(BUILD_PREFIX)/%.d: %.c
 	$(Q)mkdir -p $(dir $@)

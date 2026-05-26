@@ -57,6 +57,9 @@ void pb_assert(pbio_error_t error) {
         case PBIO_ERROR_CANCELED:
             os_err = MP_ECANCELED;
             break;
+        case PBIO_ERROR_RESOURCE_EXHAUSTED:
+            os_err = MP_ENOMEM;
+            break;
     }
 
     mp_raise_OSError(os_err);
@@ -134,6 +137,10 @@ void pb_assert(pbio_error_t error) {
             break;
         case PBIO_ERROR_CANCELED:
             args[0] = MP_OBJ_NEW_SMALL_INT(MP_ECANCELED);
+            args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+            break;
+        case PBIO_ERROR_RESOURCE_EXHAUSTED:
+            args[0] = MP_OBJ_NEW_SMALL_INT(MP_ENOMEM);
             args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
             break;
     }

@@ -73,4 +73,10 @@ void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
     #endif
 }
 
+#if PBSYS_CONFIG_BLUETOOTH_CLASSIC_LINK_KEY_DB_SIZE > 0
+uint8_t *pbsys_storage_settings_get_link_key_db(void) {
+    return pbsys_storage_settings_get_settings()->bluetooth_classic_link_db;
+}
+#endif
+
 #endif // PBSYS_CONFIG_STORAGE
