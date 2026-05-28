@@ -11,7 +11,7 @@ LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
-	common/pb_type_ble.c \
+	common/pb_type_ble_radio.c \
 	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \

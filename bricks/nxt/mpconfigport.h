@@ -14,7 +14,6 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
-#define PYBRICKS_PY_COMMON_BLE                  (0)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
 #define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)
@@ -40,6 +39,9 @@
 #define PYBRICKS_PY_IODEVICES_PUP_DEVICE        (0)
 #define PYBRICKS_PY_IODEVICES_UART_DEVICE       (0)
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
+#define PYBRICKS_PY_MESSAGING                   (0)
+#define PYBRICKS_PY_MESSAGING_RFCOMM            (0)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO         (0)
 #define PYBRICKS_PY_NXTDEVICES                  (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)

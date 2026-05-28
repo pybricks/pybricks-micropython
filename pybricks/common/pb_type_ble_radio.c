@@ -4,7 +4,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON_BLE
+#if PYBRICKS_PY_MESSAGING_BLE_RADIO
 
 #include <assert.h>
 #include <string.h>
@@ -523,22 +523,15 @@ static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
 };
 static MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
 
-static MP_DEFINE_CONST_OBJ_TYPE(pb_type_BLE,
-    MP_QSTR_BLE,
-    MP_TYPE_FLAG_NONE,
-    locals_dict, &common_BLE_locals_dict);
-
 /**
  * Creates a new instance of the BLE class.
- *
- * Do not call this function more than once unless pb_type_ble_start_cleanup() is called first.
  *
  * @param [in]  broadcast_channel_in    (int) The channel number to use for broadcasting or None for no broadcasting.
  * @param [in]  observe_channels_in     (list[int]) A list of channels numbers to observe.
  * @returns                             A newly allocated object.
  * @throws ValueError                   If either parameter contains an out of range channel number.
  */
-mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
+static mp_obj_t pb_type_ble_radio_init(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
 
     // Validate channel arguments.
     if (broadcast_channel_in != mp_const_none && (mp_obj_get_int(broadcast_channel_in) < 0 || mp_obj_get_int(broadcast_channel_in) > UINT8_MAX)) {
@@ -549,7 +542,7 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
         mp_raise_ValueError(MP_ERROR_TEXT("Too many observe channels"));
     }
 
-    pb_obj_BLE_t *self = mp_obj_malloc_var_with_finaliser(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_BLE);
+    pb_obj_BLE_t *self = mp_obj_malloc_var_with_finaliser(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_ble_radio);
     self->broadcast_channel = broadcast_channel_in;
 
     for (mp_int_t i = 0; i < num_observe_channels; i++) {
@@ -581,4 +574,26 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
     return MP_OBJ_FROM_PTR(self);
 }
 
-#endif // PYBRICKS_PY_COMMON_BLE
+static mp_obj_t pb_type_ble_radio_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_NONE(broadcast_channel),
+        PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj));
+    return pb_type_ble_radio_init(broadcast_channel_in, observe_channels_in);
+}
+
+#if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
+mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
+    if (broadcast_channel_in != mp_const_none || observe_channels_in != MP_OBJ_FROM_PTR(&mp_const_empty_tuple_obj)) {
+        mp_printf(&mp_plat_print, "Hub messaging has been moved. You should use:\n\nfrom pybricks.messaging import BLERadio\nradio = BLERadio(broadcast_channel, observe_channels)\n\n");
+    }
+    return pb_type_ble_radio_init(broadcast_channel_in, observe_channels_in);
+}
+#endif // PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
+
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_ble_radio,
+    MP_QSTR_BLERadio,
+    MP_TYPE_FLAG_NONE,
+    make_new, pb_type_ble_radio_make_new,
+    locals_dict, &common_BLE_locals_dict);
+
+#endif // PYBRICKS_PY_MESSAGING_BLE_RADIO

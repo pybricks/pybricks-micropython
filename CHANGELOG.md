@@ -10,6 +10,8 @@
 ### Changed
 - Changed `powered` (bool) to `power_pin` (int) on `I2CDevice()` to make it
   generic enough for all `iodevices` like `UARTDevice`. Added permission request.
+- Moved BLE broadcasting and observing to `pybricks.messaging.BLERadio` instead
+  of an object on each hub ([support#2274]).
 
 ### Fixed
 - Fixed SPIKE Prime and possibly other hubs with Bluetooth stuck on shutdown in
@@ -23,6 +25,7 @@
   party devices have come to rely on this, so we keep it ([support#2698]).
 
 [support#2698]: https://github.com/pybricks/support/issues/2698
+[support#2274]: https://github.com/pybricks/support/issues/2274
 [pybricks-micropython#468]: https://github.com/pybricks/pybricks-micropython/pull/468
 
 ## [4.0.0b10] - 2026-05-15

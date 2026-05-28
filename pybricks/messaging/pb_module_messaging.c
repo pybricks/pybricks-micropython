@@ -19,6 +19,7 @@
 #include <pbio/int_math.h>
 #include <pbio/util.h>
 
+#include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -134,6 +135,9 @@ static const mp_rom_map_elem_t messaging_globals_table[] = {
     #if PYBRICKS_PY_MESSAGING_RFCOMM
     { MP_ROM_QSTR(MP_QSTR_bluetooth_scan), MP_ROM_PTR(&pb_messaging_bluetooth_scan_obj) },
     #endif // PYBRICKS_PY_MESSAGING_RFCOMM
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO
+    { MP_ROM_QSTR(MP_QSTR_BLERadio), MP_ROM_PTR(&pb_type_ble_radio) },
+    #endif // PYBRICKS_PY_MESSAGING_BLE_RADIO
 };
 static MP_DEFINE_CONST_DICT(pb_module_messaging_globals, messaging_globals_table);
 

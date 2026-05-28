@@ -1,11 +1,11 @@
-from pybricks.hubs import VirtualHub
+from pybricks.messaging import BLERadio
 
-hub = VirtualHub(observe_channels=[123])
+radio = BLERadio(observe_channels=[123])
 
 data = ()
 
 while data != b"STOP":
-    new = hub.ble.observe(123)
+    new = radio.observe(123)
     if new == data:
         continue
 

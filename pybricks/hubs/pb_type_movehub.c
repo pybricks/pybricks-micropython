@@ -304,7 +304,7 @@ static mp_obj_t hubs_MoveHub_IMU_make_new(mp_obj_t top_side_in, mp_obj_t front_s
 typedef struct _hubs_MoveHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     mp_obj_t ble;
     #endif
     mp_obj_t button;
@@ -318,7 +318,7 @@ static mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_INT(top_side, pb_type_Axis_Z_int_enum),
         PB_ARG_DEFAULT_INT(front_side, pb_type_Axis_X_int_enum)
-        #if PYBRICKS_PY_COMMON_BLE
+        #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
         , PB_ARG_DEFAULT_NONE(broadcast_channel)
         , PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj)
         #endif
@@ -326,7 +326,7 @@ static mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     hubs_MoveHub_obj_t *self = mp_obj_malloc(hubs_MoveHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
     self->button = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_button_pressed_hub_single_button);
@@ -338,7 +338,7 @@ static mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
 static const pb_attr_dict_entry_t hubs_MoveHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_MoveHub_obj_t, battery),
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_MoveHub_obj_t, ble),
     #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_MoveHub_obj_t, button),

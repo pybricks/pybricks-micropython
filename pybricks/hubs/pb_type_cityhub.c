@@ -17,7 +17,7 @@
 typedef struct _hubs_CityHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t battery;
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     mp_obj_t ble;
     #endif
     mp_obj_t button;
@@ -26,7 +26,7 @@ typedef struct _hubs_CityHub_obj_t {
 } hubs_CityHub_obj_t;
 
 static mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_DEFAULT_NONE(broadcast_channel),
         PB_ARG_DEFAULT_OBJ(observe_channels, mp_const_empty_tuple_obj));
@@ -34,7 +34,7 @@ static mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
     hubs_CityHub_obj_t *self = mp_obj_malloc(hubs_CityHub_obj_t, type);
     self->battery = MP_OBJ_FROM_PTR(&pb_module_battery);
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     self->ble = pb_type_BLE_new(broadcast_channel_in, observe_channels_in);
     #endif
     self->button = pb_type_Keypad_obj_new(MP_OBJ_FROM_PTR(self), pb_type_button_pressed_hub_single_button);
@@ -45,7 +45,7 @@ static mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
 static const pb_attr_dict_entry_t hubs_CityHub_attr_dict[] = {
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_battery, hubs_CityHub_obj_t, battery),
-    #if PYBRICKS_PY_COMMON_BLE
+    #if PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_ble, hubs_CityHub_obj_t, ble),
     #endif
     PB_DEFINE_CONST_ATTR_RO(MP_QSTR_buttons, hubs_CityHub_obj_t, button),
