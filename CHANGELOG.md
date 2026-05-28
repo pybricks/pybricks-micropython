@@ -12,6 +12,7 @@
   generic enough for all `iodevices` like `UARTDevice`. Added permission request.
 - Moved BLE broadcasting and observing to `pybricks.messaging.BLERadio` instead
   of an object on each hub ([support#2274]).
+- Moved `pybricks.tools.AppData` to `pybricks.messaging.AppData` ([support#2274]).
 
 ### Fixed
 - Fixed SPIKE Prime and possibly other hubs with Bluetooth stuck on shutdown in

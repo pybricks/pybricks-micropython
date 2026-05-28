@@ -24,6 +24,7 @@
 
 #include <pybricks/parameters.h>
 #include <pybricks/common.h>
+#include <pybricks/messaging/messaging.h>
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_async.h>
 #include <pybricks/tools/pb_type_matrix.h>
@@ -299,9 +300,10 @@ static const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
     { MP_ROM_QSTR(MP_QSTR_read_input_byte), MP_ROM_PTR(&pb_module_tools_read_input_byte_obj) },
-    #if PYBRICKS_PY_TOOLS_APP_DATA
-    { MP_ROM_QSTR(MP_QSTR_AppData),  MP_ROM_PTR(&pb_type_app_data)               },
-    #endif // PYBRICKS_PY_TOOLS_APP_DATA
+    #if PYBRICKS_PY_MESSAGING_APP_DATA
+    // Backwards compatibility with Pybricks 3.x, now moved to pybricks.messaging
+    { MP_ROM_QSTR(MP_QSTR_AppData),  MP_ROM_PTR(&pb_type_app_data) },
+    #endif // PYBRICKS_PY_MESSAGING_APP_DATA
     #if PYBRICKS_PY_TOOLS_HUB_MENU
     { MP_ROM_QSTR(MP_QSTR_hub_menu),    MP_ROM_PTR(&pb_module_tools_hub_menu_obj)     },
     #endif // PYBRICKS_PY_TOOLS_HUB_MENU

@@ -10,6 +10,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pybricks/messaging/messaging.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>

@@ -20,10 +20,11 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include <pybricks/common.h>
+#include <pybricks/messaging/messaging.h>
 #include <pybricks/tools.h>
 #include <pybricks/tools/pb_type_async.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
 // The code currently passes integers and floats directly as bytes so requires

@@ -11,7 +11,6 @@ LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
-	common/pb_type_ble_radio.c \
 	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
@@ -52,6 +51,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_iodevices_xbox_controller.c \
 	iodevices/pb_type_uart_device.c \
 	messaging/pb_module_messaging.c \
+	messaging/pb_type_app_data.c \
+	messaging/pb_type_ble_radio.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
 	nxtdevices/pb_type_nxtdevices_energymeter.c \
@@ -88,7 +89,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_spikebase.c \
 	tools/pb_module_tools.c \
-	tools/pb_type_app_data.c \
 	tools/pb_type_async.c \
 	tools/pb_type_matrix.c \
 	tools/pb_type_stopwatch.c \

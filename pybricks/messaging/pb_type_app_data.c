@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_TOOLS_APP_DATA
+#if PYBRICKS_PY_MESSAGING_APP_DATA
 
 #include <string.h>
 
@@ -240,4 +240,4 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_app_data,
     make_new, pb_type_app_data_make_new,
     locals_dict, &pb_type_app_data_locals_dict);
 
-#endif // PYBRICKS_PY_TOOLS_APP_DATA
+#endif // PYBRICKS_PY_MESSAGING_APP_DATA

@@ -19,7 +19,7 @@
 #include <pbio/int_math.h>
 #include <pbio/util.h>
 
-#include <pybricks/common.h>
+#include <pybricks/messaging/messaging.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
@@ -132,6 +132,9 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(pb_messaging_bluetooth_scan_obj, 0, pb_messagi
 
 static const mp_rom_map_elem_t messaging_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_messaging) },
+    #if PYBRICKS_PY_MESSAGING_APP_DATA
+    { MP_ROM_QSTR(MP_QSTR_AppData),  MP_ROM_PTR(&pb_type_app_data) },
+    #endif // PYBRICKS_PY_MESSAGING_APP_DATA
     #if PYBRICKS_PY_MESSAGING_RFCOMM
     { MP_ROM_QSTR(MP_QSTR_bluetooth_scan), MP_ROM_PTR(&pb_messaging_bluetooth_scan_obj) },
     #endif // PYBRICKS_PY_MESSAGING_RFCOMM

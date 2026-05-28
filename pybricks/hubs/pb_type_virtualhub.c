@@ -21,6 +21,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pybricks/messaging/messaging.h>
 #include <pybricks/parameters.h>
 
 typedef struct _hubs_VirtualHub_obj_t {

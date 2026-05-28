@@ -34,7 +34,8 @@
 #define PYBRICKS_PY_IODEVICES_PUP_DEVICE        (0) // TODO
 #define PYBRICKS_PY_IODEVICES_UART_DEVICE       (0) // TODO
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
-#define PYBRICKS_PY_MESSAGING                   (0)
+#define PYBRICKS_PY_MESSAGING                   (1)
+#define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
 #define PYBRICKS_PY_MESSAGING_RFCOMM            (0)
 #define PYBRICKS_PY_MESSAGING_BLE_RADIO         (0)
 #define PYBRICKS_PY_NXTDEVICES                  (0)
@@ -49,7 +50,6 @@
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE    (0)
 #define PYBRICKS_PY_TOOLS                       (1)
 #define PYBRICKS_PY_TOOLS_HUB_MENU              (0)
-#define PYBRICKS_PY_TOOLS_APP_DATA              (1)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)

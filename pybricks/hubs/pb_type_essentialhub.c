@@ -21,8 +21,9 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include <pybricks/common.h>
-#include <pybricks/tools/pb_type_matrix.h>
 #include <pybricks/hubs.h>
+#include <pybricks/messaging/messaging.h>
+#include <pybricks/tools/pb_type_matrix.h>
 
 typedef struct _hubs_EssentialHub_obj_t {
     mp_obj_base_t base;
