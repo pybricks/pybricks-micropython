@@ -4,7 +4,9 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b10...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...HEAD
+
+## [4.0.0b11] - 2026-05-30
 
 ### Added
 - Added `power_pin` (int) on `UARTDevice()` 
@@ -30,6 +32,7 @@
 [support#2698]: https://github.com/pybricks/support/issues/2698
 [support#2274]: https://github.com/pybricks/support/issues/2274
 [pybricks-micropython#468]: https://github.com/pybricks/pybricks-micropython/pull/468
+[4.0.0b11]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b10...v4.0.0b11
 
 ## [4.0.0b10] - 2026-05-15
 
