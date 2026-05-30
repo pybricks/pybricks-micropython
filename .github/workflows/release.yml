@@ -70,7 +70,12 @@ jobs:
             mv "./bricks/$HUB/build/firmware.zip" "$NEW_FILENAME"
             ASSETS="$ASSETS $NEW_FILENAME"
           done
-          RELEASE_NOTES=$(awk "/^## \[${tag#v}\]/{found=1} found && /^## \[/ && printed{exit} found{printed=1; print}" CHANGELOG.md)
+          VERSION="${tag#v}"
+          if [[ -z "$PRERELEASE_FLAG" ]]; then
+            RELEASE_NOTES=$(awk -v ver="$VERSION" '/^## \[/{if ($0 ~ "^## \\[" ver "\\]") found=1; else if (found && $0 !~ /[0-9][abc][0-9]/) exit} found{print}' CHANGELOG.md)
+          else
+            RELEASE_NOTES=$(awk -v ver="$VERSION" '/^## \[/{if ($0 ~ "^## \\[" ver "\\]") found=1; else if (found && printed) exit} found{printed=1; print}' CHANGELOG.md)
+          fi
           gh release create "$tag" \
               --repo="$GITHUB_REPOSITORY" \
               --title="${tag#v}" \
