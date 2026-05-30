@@ -70,10 +70,11 @@ jobs:
             mv "./bricks/$HUB/build/firmware.zip" "$NEW_FILENAME"
             ASSETS="$ASSETS $NEW_FILENAME"
           done
+          RELEASE_NOTES=$(awk "/^## \[${tag#v}\]/{found=1} found && /^## \[/ && printed{exit} found{printed=1; print}" CHANGELOG.md)
           gh release create "$tag" \
               --repo="$GITHUB_REPOSITORY" \
               --title="${tag#v}" \
-              -F CHANGELOG.md \
+              --notes "$RELEASE_NOTES" \
               $PRERELEASE_FLAG \
               $ASSETS
       - name: Set up Node.js
