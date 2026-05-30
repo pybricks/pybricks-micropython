@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b10...HEAD
+
 ### Added
 - Added `power_pin` (int) on `UARTDevice()` 
 
@@ -43,6 +45,7 @@
 - Fixed EV3 apps not loading images  ([pybricks-micropython#470]).
 
 [pybricks-micropython#470]: https://github.com/pybricks/pybricks-micropython/pull/470
+[4.0.0b10]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b9...v4.0.0b10
 
 ## [4.0.0b9] - 2026-04-16
 
@@ -51,6 +54,8 @@
 
 ### Fixed
 - Fixed USB connection resetting on app losing focus or high print volume.
+
+[4.0.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b8...v4.0.0b9
 
 ## [4.0.0b8] - 2026-03-19
 
@@ -79,6 +84,7 @@
 [support#2603]: https://github.com/pybricks/support/issues/2603
 [support#2620]: https://github.com/pybricks/support/issues/2620
 [support#2621]: https://github.com/pybricks/support/issues/2621
+[4.0.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b7...v4.0.0b8
 
 ## [4.0.0b7] - 2026-02-26
 
@@ -95,6 +101,7 @@
 [support#2585]: https://github.com/pybricks/support/issues/2585
 [support#2589]: https://github.com/pybricks/support/issues/2589
 [support#2592]: https://github.com/pybricks/support/issues/2592
+[4.0.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b6...v4.0.0b7
 
 ## [4.0.0b6] - 2026-02-19
 
@@ -125,6 +132,7 @@
 [support#1800]: https://github.com/pybricks/support/issues/1800
 [support#2536]: https://github.com/pybricks/support/issues/2536
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
+[4.0.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...v4.0.0b6
 
 ## [4.0.0b5] - 2026-01-30
 
@@ -145,6 +153,7 @@
 [pybricks-micropython#454]: https://github.com/pybricks/pybricks-micropython/pull/454
 [pybricks-micropython#456]: https://github.com/pybricks/pybricks-micropython/pull/456
 [pybricks-micropython#458]: https://github.com/pybricks/pybricks-micropython/pull/458
+[4.0.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...v4.0.0b5
 
 ## [4.0.0b4] - 2026-01-22
 
@@ -181,6 +190,7 @@
 [support#2522]: https://github.com/pybricks/support/issues/2522
 [support#2538]: https://github.com/pybricks/support/issues/2538
 [support#2550]: https://github.com/pybricks/support/issues/2550
+[4.0.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...v4.0.0b4
 
 ## [4.0.0b3] - 2025-12-05
 ### Added
@@ -205,11 +215,14 @@
 [pybricks-micropython#405]: https://github.com/pybricks/pybricks-micropython/pull/405
 [pybricks-micropython#421]: https://github.com/pybricks/pybricks-micropython/pull/421
 [pybricks-micropython#425]: https://github.com/pybricks/pybricks-micropython/pull/425
+[4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
 
 ## [4.0.0b2] - 2025-11-25
 
 ### Fixed
 - Enable CI releases for v4.x.
+
+[4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
 
 ## [4.0.0b1] - 2025-11-25
 
@@ -305,6 +318,7 @@
 [pybricks-micropython#208]: https://github.com/pybricks/pybricks-micropython/pull/208
 [pybricks-micropython#264]: https://github.com/pybricks/pybricks-micropython/pull/264
 [pybricks-micropython#312]: https://github.com/pybricks/pybricks-micropython/pull/312
+[4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
 
 ## [3.6.1] - 2025-03-11
 
@@ -317,11 +331,14 @@
 
 [pybricks-micropython#294]: https://github.com/pybricks/pybricks-micropython/pull/294
 [pybricks-micropython#295]: https://github.com/pybricks/pybricks-micropython/pull/295
+[3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
 
 ## [3.6.0] - 2025-03-02
 
 ### Changed
 - Bump version from beta to 3.6.0 without additional changes.
+
+[3.6.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b5...v3.6.0
 
 ## [3.6.0b5] - 2025-02-26
 
@@ -334,6 +351,8 @@
   `calibrated` keyword argument instead of separate `use_gyro` options. This
   had not been released yet so is not a breaking change.
 
+[3.6.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b4...v3.6.0b5
+
 ## [3.6.0b4] - 2025-02-14
 
 ### Fixed
@@ -342,6 +361,8 @@
 - Fixed light indidicator always briefly showing green when just plugged in
   or after rebooting ([pybricks-micropython#292]) even if battery is not
   actually full.
+
+[3.6.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...v3.6.0b4
 
 ## [3.6.0b3] - 2025-02-14
 
@@ -397,6 +418,7 @@
 [support#1975]: https://github.com/pybricks/support/issues/1975
 [support#1996]: https://github.com/pybricks/support/issues/1996
 [support#2055]: https://github.com/pybricks/support/issues/2055
+[3.6.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...v3.6.0b3
 
 ## [3.6.0b2] - 2024-10-15
 
@@ -437,6 +459,7 @@
 [support#1846]: https://github.com/pybricks/support/issues/1846
 [support#1858]: https://github.com/pybricks/support/issues/1858
 [support#1863]: https://github.com/pybricks/support/issues/1863
+[3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
 
 ## [3.6.0b1] - 2024-09-24
 
@@ -508,11 +531,14 @@
 [support#1716]: https://github.com/pybricks/support/issues/1716
 [support#1818]: https://github.com/pybricks/support/issues/1818
 [support#1840]: https://github.com/pybricks/support/issues/1840
+[3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
 
 ## [3.5.0] - 2024-04-11
 
 ### Changed
 - Bump version from release candidate to 3.5.0 without additional changes.
+
+[3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
 
 ## [3.5.0b2] - 2024-04-05
 
@@ -536,6 +562,7 @@
 [support#1419]: https://github.com/pybricks/support/issues/1419
 [support#1564]: https://github.com/pybricks/support/issues/1564
 [support#1574]: https://github.com/pybricks/support/issues/1574
+[3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
 
 ## [3.5.0b1] - 2024-03-21
 
@@ -551,6 +578,7 @@
 [support#1024]: https://github.com/pybricks/support/issues/1024
 [support#1537]: https://github.com/orgs/pybricks/discussions/1537
 [support#1547]: https://github.com/pybricks/support/issues/1547
+[3.5.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...v3.5.0b1
 
 ## [3.4.0] - 2024-03-11
 
@@ -558,6 +586,7 @@
 - Additional error checking in `pybricks.robotics.Car` setup ([support#1502]).
 
 [support#1502]: https://github.com/pybricks/support/issues/1502
+[3.4.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b3...v3.4.0
 
 ## [3.4.0b3] - 2024-03-05
 
@@ -588,6 +617,7 @@
 [support#1490]: https://github.com/pybricks/support/issues/1490
 [support#1499]: https://github.com/pybricks/support/issues/1499
 [support#1502]: https://github.com/pybricks/support/issues/1502
+[3.4.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...v3.4.0b3
 
 ## [3.4.0b2] - 2024-02-10
 
@@ -606,6 +636,7 @@
 [support#191]: https://github.com/pybricks/support/issues/191
 [support#1024]: https://github.com/pybricks/support/issues/1024
 [support#1438]: https://github.com/pybricks/support/issues/1438
+[3.4.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...v3.4.0b2
 
 ## [3.4.0b1] - 2024-01-30
 
@@ -643,11 +674,14 @@
 [support#1357]: https://github.com/pybricks/support/issues/1357
 [support#1408]: https://github.com/pybricks/support/issues/1408
 [pybricks-micropython#222]: https://github.com/pybricks/pybricks-micropython/pull/222
+[3.4.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...v3.4.0b1
 
 ## [3.3.0] - 2023-11-24
 
 ### Changed
 - Bump version from release candidate to 3.3.0.
+
+[3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
 
 ## [3.3.0c1] - 2023-11-20
 
@@ -671,6 +705,7 @@
 [support#1096]: https://github.com/pybricks/support/issues/1096
 [support#1269]: https://github.com/pybricks/support/issues/1269
 [support#1278]: https://github.com/pybricks/support/issues/1278
+[3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
 
 ## [3.3.0b9] - 2023-10-26
 
@@ -707,6 +742,7 @@
 [support#1213]:  https://github.com/pybricks/support/issues/1213
 [support#1232]: https://github.com/pybricks/support/issues/1232
 [support#1254]: https://github.com/pybricks/support/issues/1254
+[3.3.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...v3.3.0b9
 
 ## [3.3.0b8] - 2023-07-07
 
@@ -729,6 +765,7 @@
 [support#1105]: https://github.com/pybricks/support/issues/1105
 [support#1131]: https://github.com/pybricks/support/issues/1131
 [support#1137]: https://github.com/pybricks/support/issues/1137
+[3.3.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...v3.3.0b8
 
 
 ## [3.3.0b7] - 2023-06-30
@@ -750,6 +787,7 @@
 [support#1095]: https://github.com/pybricks/support/issues/1095
 [support#1098]: https://github.com/pybricks/support/issues/1098
 [support#1102]: https://github.com/pybricks/support/issues/1102
+[3.3.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...v3.3.0b7
 
 ## [3.3.0b6] - 2023-06-02
 
@@ -770,6 +808,7 @@
 [support#402]: https://github.com/pybricks/support/issues/402
 [support#747]: https://github.com/pybricks/support/issues/747
 [support#1086]: https://github.com/pybricks/support/issues/1086
+[3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...v3.3.0b6
 
 ## [3.3.0b5] - 2023-05-16
 
@@ -787,6 +826,7 @@
 [pybricks-micropython#158]: https://github.com/pybricks/pybricks-micropython/pull/158
 [support#1035]: https://github.com/pybricks/support/issues/1035
 [support#1052]: https://github.com/pybricks/support/issues/1052
+[3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
 
 ## [3.3.0b4] - 2023-04-21
 
@@ -828,6 +868,7 @@
 [support#1022]: https://github.com/pybricks/support/issues/1022
 [support#1026]: https://github.com/pybricks/support/issues/1026
 [support#1032]: https://github.com/pybricks/support/issues/1032
+[3.3.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
 
 ## [3.3.0b3] - 2023-03-28
 
@@ -872,6 +913,7 @@
 [support#989]: https://github.com/pybricks/support/issues/989
 [support#996]: https://github.com/pybricks/support/issues/996
 [support#1011]: https://github.com/pybricks/support/issues/1011
+[3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
 
 ## [3.3.0b2] - 2023-03-08
 
@@ -897,6 +939,7 @@
 [support#941]: https://github.com/pybricks/support/issues/941
 [support#955]: https://github.com/pybricks/support/issues/955
 [support#956]: https://github.com/pybricks/support/issues/956
+[3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
 
 ## [3.3.0b1] - 2023-02-17
 
@@ -925,6 +968,7 @@
 [support#904]: https://github.com/pybricks/support/issues/904
 [support#913]: https://github.com/pybricks/support/issues/913
 [support#950]: https://github.com/pybricks/support/issues/950
+[3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
 
 ## [3.2.2] - 2023-01-06
 
@@ -934,6 +978,7 @@
 
 [support#876]: https://github.com/pybricks/support/issues/876
 [support#903]: https://github.com/pybricks/support/issues/903
+[3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
 
 ## [3.2.1] - 2022-12-26
 
@@ -941,6 +986,7 @@
 - Fixed `imu.angular_velocity` returning the values of `imu.acceleration`.
 
 [support#885]: https://github.com/pybricks/support/issues/885
+[3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
 
 ## [3.2.0] - 2022-12-20
 
@@ -959,6 +1005,7 @@
 [support#821]: https://github.com/pybricks/support/issues/821
 [support#849]: https://github.com/pybricks/support/issues/849
 [support#863]: https://github.com/pybricks/support/issues/863
+[3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
 
 ## [3.2.0c1] - 2022-12-09
 
@@ -986,6 +1033,7 @@
 [support#836]: https://github.com/pybricks/support/issues/836
 [support#837]: https://github.com/pybricks/support/issues/837
 [support#848]: https://github.com/pybricks/support/issues/848
+[3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
 
 
 ## [3.2.0b6] - 2022-12-02
@@ -1017,6 +1065,7 @@
 [support#409]: https://github.com/pybricks/support/issues/409
 [support#793]: https://github.com/pybricks/support/issues/793
 [support#822]: https://github.com/pybricks/support/issues/822
+[3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
 
 ## [3.2.0b5] - 2022-11-11
 
@@ -1037,6 +1086,7 @@
 [support#738]: https://github.com/pybricks/support/issues/738
 [support#767]: https://github.com/pybricks/support/issues/767
 [support#786]: https://github.com/pybricks/support/issues/786
+[3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
 
 ## [3.2.0b4] - 2022-10-21
 
@@ -1095,6 +1145,7 @@
 [support#699]: https://github.com/pybricks/support/issues/699
 [support#729]: https://github.com/pybricks/support/issues/729
 [support#741]: https://github.com/pybricks/support/issues/741
+[3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
 
 ## [3.2.0b3] - 2022-07-20
 
@@ -1106,6 +1157,8 @@
 - `Motor.run_time` no longer raises an exception for negative time values.
   Negative times are now treated as zero, thus producing a stationary
   trajectory.
+
+[3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
 
 ## [3.2.0b2] - 2022-07-06
 
@@ -1138,6 +1191,7 @@
 [support#662]: https://github.com/pybricks/support/issues/662
 [support#665]: https://github.com/pybricks/support/issues/665
 [support#674]: https://github.com/pybricks/support/issues/674
+[3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
 
 ## [3.2.0b1] - 2022-06-03
 
@@ -1179,6 +1233,7 @@
 [pybricks-micropython#88]: https://github.com/pybricks/pybricks-micropython/issues/88
 [support#424]: https://github.com/pybricks/support/issues/424
 [support#619]: https://github.com/pybricks/support/issues/619
+[3.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...v3.2.0b1
 
 ## [3.1.0] - 2021-12-16
 
@@ -1192,6 +1247,7 @@
 
 [support#535]: https://github.com/pybricks/support/issues/535
 [support#536]: https://github.com/pybricks/support/issues/536
+[3.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.1.0
 
 ## [3.1.0c1] - 2021-11-19
 
@@ -1222,6 +1278,7 @@
 [support#397]: https://github.com/pybricks/support/issues/397
 [support#500]: https://github.com/pybricks/support/issues/500
 [support#501]: https://github.com/pybricks/support/issues/501
+[3.1.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0c1
 
 ## [3.1.0b1] - 2021-09-21
 
@@ -1246,6 +1303,7 @@
 [support#440]: https://github.com/pybricks/support/issues/440
 [support#456]: https://github.com/pybricks/support/issues/456
 [support#489]: https://github.com/pybricks/support/issues/489
+[3.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0b1
 
 ## [3.1.0a4] - 2021-08-30
 
@@ -1275,6 +1333,7 @@
 [pybricks-micropython#60]: https://github.com/pybricks/pybricks-micropython/pull/60
 [pybricks-micropython#68]: https://github.com/pybricks/pybricks-micropython/pull/68
 [support#408]: https://github.com/pybricks/support/issues/408
+[3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
 
 ## [3.1.0a3] - 2021-07-19
 
@@ -1294,6 +1353,7 @@
 [support#385]: https://github.com/pybricks/support/issues/385
 [support#386]: https://github.com/pybricks/support/issues/386
 [support#389]: https://github.com/pybricks/support/issues/389
+[3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
 
 ## [3.1.0a2] - 2021-07-06
 
@@ -1323,6 +1383,7 @@
 [pybricks-micropython#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [support#58]: https://github.com/pybricks/pybricks-micropython/issues/58
 [support#379]: https://github.com/pybricks/support/issues/379
+[3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
 
 ## [3.1.0a1] - 2021-06-23
 
@@ -1345,6 +1406,7 @@
 [pybricks-micropython#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
+[3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
 
 ## [3.0.0] - 2021-06-08
 
@@ -1367,66 +1429,10 @@
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352
 [support#361]: https://github.com/pybricks/support/issues/361
+[3.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.0.0
 
 ## Prerelease
 
 Prerelease changes are documented at [support#48].
 
 [support#48]: https://github.com/pybricks/support/issues/48
-
-
-<!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b10...HEAD
-[4.0.0b10]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b9...v4.0.0b10
-[4.0.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b8...v4.0.0b9
-[4.0.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b7...v4.0.0b8
-[4.0.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b6...v4.0.0b7
-[4.0.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b5...v4.0.0b6
-[4.0.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b4...v4.0.0b5
-[4.0.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b3...v4.0.0b4
-[4.0.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b2...v4.0.0b3
-[4.0.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b1...v4.0.0b2
-[4.0.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.1...v4.0.0b1
-[3.6.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0...v3.6.1
-[3.6.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b5...v3.6.0
-[3.6.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b4...v3.6.0b5
-[3.6.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b3...v3.6.0b4
-[3.6.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b2...v3.6.0b3
-[3.6.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.6.0b1...v3.6.0b2
-[3.6.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0...v3.6.0b1
-[3.5.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b2...v3.5.0
-[3.5.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.5.0b1...v3.5.0b2
-[3.5.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0...v3.5.0b1
-[3.4.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b3...v3.4.0
-[3.4.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b2...v3.4.0b3
-[3.4.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.4.0b1...v3.4.0b2
-[3.4.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0...v3.4.0b1
-[3.3.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0c1...v3.3.0
-[3.3.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b9...v3.3.0c1
-[3.3.0b9]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b8...v3.3.0b9
-[3.3.0b8]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b7...v3.3.0b8
-[3.3.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b6...v3.3.0b7
-[3.3.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b5...v3.3.0b6
-[3.3.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b4...v3.3.0b5
-[3.3.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b3...v3.3.0b4
-[3.3.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b2...v3.3.0b3
-[3.3.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.3.0b1...v3.3.0b2
-[3.3.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.2...v3.3.0b1
-[3.2.2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.1...v3.2.2
-[3.2.1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0...v3.2.1
-[3.2.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0c1...v3.2.0
-[3.2.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b6...v3.2.0c1
-[3.2.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b5...v3.2.0b6
-[3.2.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b4...v3.2.0b5
-[3.2.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b3...v3.2.0b4
-[3.2.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b2...v3.2.0b3
-[3.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v3.2.0b1...v3.2.0b2
-[3.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...v3.2.0b1
-[3.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.1.0
-[3.1.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0c1
-[3.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0b1
-[3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
-[3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
-[3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
-[3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
-[3.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.0.0
