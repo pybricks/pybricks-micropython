@@ -6,6 +6,10 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...HEAD
 
+### Changed
+- Temporarily disable unfinished USB support for SPIKE so it doesn't block the
+  stable release. It will remain enabled in beta releases.
+
 ### Fixed
 - Fixed button `LEFT_DOWN` returning `LEFT_UP` in the method
   `ev3devices.InfraredSensor.keypad()` ([support#2724]).
