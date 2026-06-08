@@ -167,7 +167,7 @@ static mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
         pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
     }
     if (keypad_data & 0x20) {
-        pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_UP);
+        pressed[len++] = pb_type_button_new(MP_QSTR_LEFT_DOWN);
     }
     if (keypad_data & 0x40) {
         pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_UP);

@@ -6,6 +6,10 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...HEAD
 
+### Fixed
+- Fixed button `LEFT_DOWN` returning `LEFT_UP` in the method
+  `ev3devices.InfraredSensor.keypad()` ([support#2724]).
+
 ## [4.0.0b11] - 2026-05-30
 
 ### Added
