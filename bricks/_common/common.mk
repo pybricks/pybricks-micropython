@@ -795,22 +795,10 @@ $(BUILD)/firmware-obj.bin: $(BUILD)/firmware.elf
 
 ifeq ($(PB_MCU_FAMILY),TIAM1808)
 
-# REVISIT: downloading things doesn't belong in a Makefile.
-$(BUILD)/u-boot.bin:
-	$(ECHO) "Downloading u-boot.bin"
-	$(Q)mkdir -p $(dir $@)
-	$(Q)curl -sL -o $@ https://github.com/pybricks/u-boot/releases/download/pybricks/v2.0.1/u-boot.bin
-	$(Q)echo "86ddad84f64d8aea85b4315fc1414bdec0bb0d46c92dbd3db45ed599e3a994cb  $@" | sha256sum -c --strict
-$(BUILD)/pru_ledpwm.bin:
-	$(ECHO) "Downloading pru_ledpwm.bin"
-	$(Q)mkdir -p $(dir $@)
-	$(Q)curl -sL -o $@ https://github.com/pybricks/pybricks-pru/releases/download/v1.0.0/pru_ledpwm.bin
-	$(Q)echo "b4f1225e277bb22efa5394ce782cc19a3e2fdd54367e40b9d09e9ca99c6ef6d0  $@" | sha256sum -c --strict
-
 MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 
 # For EV3, merge firmware blob with u-boot to create a bootable image.
-$(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(BUILD)/u-boot.bin $(BUILD)/firmware.stripped.elf
+$(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(PBTOP)/lib/pbio/platform/ev3/u-boot.bin $(BUILD)/firmware.stripped.elf
 	$(Q)$^ $@
 
 else
@@ -837,7 +825,7 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 $(BUILD)/pru_suart.bin.o: $(PBTOP)/lib/pbio/drv/uart/uart_ev3_pru_lib/pru_suart.bin
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
 		--rename-section .data=.pru0,alloc,load,readonly,data,contents $^ $@
-$(BUILD)/pru_ledpwm.bin.o: $(BUILD)/pru_ledpwm.bin
+$(BUILD)/pru_ledpwm.bin.o: $(PBTOP)/lib/pbio/platform/ev3/pru_ledpwm.bin
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
 		--rename-section .data=.pru1,alloc,load,readonly,data,contents $^ $@
 
