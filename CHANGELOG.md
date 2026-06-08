@@ -9,6 +9,10 @@
 ### Fixed
 - Fixed button `LEFT_DOWN` returning `LEFT_UP` in the method
   `ev3devices.InfraredSensor.keypad()` ([support#2724]).
+- Fixed `pybricks.pupdevices.Remote.name` not setting name ([support#2720]).
+
+[support#2720]: https://github.com/pybricks/support/issues/2720
+[support#2724]: https://github.com/pybricks/support/issues/2724
 
 ## [4.0.0b11] - 2026-05-30
 

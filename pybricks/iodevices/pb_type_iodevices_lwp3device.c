@@ -354,6 +354,7 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
             char payload[LWP3_MAX_HUB_PROPERTY_NAME_SIZE];
         } __attribute__((packed)) msg;
 
+        msg.length = sizeof(msg) - sizeof(msg.payload) + len;
         msg.hub = 0;
         msg.type = LWP3_MSG_TYPE_HUB_PROPERTIES;
         msg.property = LWP3_HUB_PROPERTY_NAME;
@@ -366,7 +367,7 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 
         pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(
             self->peripheral, self->lwp3_char_handle,
-            (const uint8_t *)&msg, sizeof(msg) - sizeof(msg.payload) + len));
+            (const uint8_t *)&msg, msg.length));
         return wait_or_await_operation(self_in);
     }
 
