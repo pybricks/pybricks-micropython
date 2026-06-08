@@ -6,6 +6,8 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...HEAD
 
+## [4.0.0] - 2026-06-08
+
 ### Changed
 - Temporarily disable unfinished USB support for SPIKE so it doesn't block the
   stable release. It will remain enabled in beta releases.
@@ -17,6 +19,7 @@
 
 [support#2720]: https://github.com/pybricks/support/issues/2720
 [support#2724]: https://github.com/pybricks/support/issues/2724
+[4.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...v4.0.0
 
 ## [4.0.0b11] - 2026-05-30
 
