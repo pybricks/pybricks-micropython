@@ -15,9 +15,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <pbio/error.h>
+#include <pbdrv/bluetooth.h>
 
 #include <pbio/config.h>
+#include <pbio/error.h>
 #include <pbio/imu.h>
 #include <pbsys/config.h>
 
@@ -44,6 +45,9 @@ typedef struct _pbsys_storage_settings_t {
     uint32_t flags;
     #if PBIO_CONFIG_IMU
     pbio_imu_persistent_settings_t imu_settings;
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_LINK_KEYS
+    pbio_bluetooth_classic_link_key_t bluetooth_link_keys[PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_LINK_KEYS];
     #endif
 } pbsys_storage_settings_t;
 

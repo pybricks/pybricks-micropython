@@ -199,6 +199,50 @@ typedef struct {
     uint32_t class_of_device;
 } pbio_bluetooth_inquiry_result_t;
 
+/**
+ * Type of Classic Bluetooth device a bonding record belongs to.
+ */
+typedef enum {
+    /** Slot is empty. */
+    PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_NONE = 0,
+    /** HID gamepad (e.g. PlayStation DualSense/DualShock). */
+    PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD,
+    /** Host computer (e.g. RFCOMM connection; PC running Pybricks Code). */
+    PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HOST_COMPUTER,
+    /** Another Pybricks hub. */
+    PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_PYBRICKS_HUB,
+} pbio_bluetooth_classic_device_type_t;
+
+/**
+ * A Classic Bluetooth bonding record (link key) for one remote device.
+ *
+ * This is stack-agnostic: all fields use plain stdint types. The link key is
+ * the 16-byte symmetric secret negotiated during pairing. The link_key_type
+ * encodes what security properties the key carries (authenticated vs.
+ * unauthenticated, P-192 vs. P-256 Secure Connections), which determines
+ * which security levels the key satisfies on reconnect without re-pairing.
+ *
+ * A device_type of PBIO_BLUETOOTH_CLASSIC_DEVICE_NONE means the slot is empty.
+ */
+typedef struct {
+    /** Bluetooth device address of the remote device. */
+    uint8_t bdaddr[6];
+    /** 16-byte link key negotiated during pairing. */
+    uint8_t link_key[16];
+    /**
+     * Link key type as defined in the Bluetooth Core Specification,
+     * Vol 4, Part E, §7.7.24 (HCI Link Key Notification event, Key_Type):
+     *   0 = Combination Key (legacy pairing)
+     *   4 = Unauthenticated Combination Key from P-192 (SSP Just Works)
+     *   5 = Authenticated Combination Key from P-192 (SSP with confirm/passkey)
+     *   7 = Unauthenticated Combination Key from P-256 (Secure Connections Just Works)
+     *   8 = Authenticated Combination Key from P-256 (Secure Connections with confirm/passkey)
+     */
+    uint16_t link_key_type;
+    /** Type of device this record belongs to. NONE means slot is empty. */
+    pbio_bluetooth_classic_device_type_t device_type;
+} pbio_bluetooth_classic_link_key_t;
+
 #if PBIO_CONFIG_BLUETOOTH
 
 //
