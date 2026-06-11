@@ -5,8 +5,9 @@
 #define PBDRV_CONFIG_BATTERY_TEST                           (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                           (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (50 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (1 * 1024 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_VIRTUAL                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_VIRTUAL_SIZE              (1 * 1024 * 1024 * 3 / 4)
 
 // Use Bluetooth simulation locally.
 #ifndef PBDRV_CONFIG_RUN_ON_CI
