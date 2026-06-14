@@ -40,6 +40,7 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          ((256 + 16) * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32      (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SPI  (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q256 (1)
 // Carve out 256K from the reserved 1M area at the start of the flash.
 // This avoids touching the file system, the area read by the LEGO
