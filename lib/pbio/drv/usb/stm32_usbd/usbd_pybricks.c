@@ -36,14 +36,10 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include <pbio/protocol.h>
-#include <pbio/version.h>
-
 #include "usbd_ctlreq.h"
 #include "usbd_pybricks.h"
 
 #include "../usb_ch9.h"
-#include "../usb_common_desc.h"
 
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
@@ -116,7 +112,14 @@ USBD_ClassTypeDef USBD_Pybricks_ClassDriver =
 /* USB Pybricks device Configuration Descriptor */
 typedef struct PBDRV_PACKED {
     pbdrv_usb_conf_desc_t conf_desc;
-    pbdrv_usb_iface_desc_t iface_desc;
+    pbdrv_usb_iad_desc_t iad;
+    pbdrv_usb_iface_desc_t comm_iface;
+    pbdrv_usb_cdc_header_desc_t cdc_header;
+    pbdrv_usb_cdc_call_mgmt_desc_t cdc_call_mgmt;
+    pbdrv_usb_cdc_acm_desc_t cdc_acm;
+    pbdrv_usb_cdc_union_desc_t cdc_union;
+    pbdrv_usb_ep_desc_t cmd_ep;
+    pbdrv_usb_iface_desc_t data_iface;
     pbdrv_usb_ep_desc_t ep_out;
     pbdrv_usb_ep_desc_t ep_in;
 } pbdrv_usb_stm32_conf_t;
@@ -128,21 +131,80 @@ static pbdrv_usb_stm32_conf_union_t USBD_Pybricks_CfgDesc = {
             .bLength = sizeof(pbdrv_usb_conf_desc_t),
             .bDescriptorType = DESC_TYPE_CONFIGURATION,
             .wTotalLength = sizeof(pbdrv_usb_stm32_conf_t),
-            .bNumInterfaces = 1,
+            .bNumInterfaces = 2,
             .bConfigurationValue = 1,
             .iConfiguration = 0,
             .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET,
             .bMaxPower = 250,   /* 500mA (number of 2mA units) */
         },
-        .iface_desc = {
+        /* Interface Association: groups the comm and data interfaces into one
+         * CDC ACM function. */
+        .iad = {
+            .bLength = sizeof(pbdrv_usb_iad_desc_t),
+            .bDescriptorType = DESC_TYPE_INTERFACE_ASSOCIATION,
+            .bFirstInterface = 0,
+            .bInterfaceCount = 2,
+            .bFunctionClass = USB_CLASS_CDC,
+            .bFunctionSubClass = USB_CDC_SUBCLASS_ACM,
+            .bFunctionProtocol = USB_CDC_PROTOCOL_AT,
+            .iFunction = 0,
+        },
+        /* Communication interface */
+        .comm_iface = {
             .bLength = sizeof(pbdrv_usb_iface_desc_t),
             .bDescriptorType = DESC_TYPE_INTERFACE,
             .bInterfaceNumber = 0,
             .bAlternateSetting = 0,
+            .bNumEndpoints = 1,
+            .bInterfaceClass = USB_CLASS_CDC,
+            .bInterfaceSubClass = USB_CDC_SUBCLASS_ACM,
+            .bInterfaceProtocol = USB_CDC_PROTOCOL_AT,
+            .iInterface = 0,
+        },
+        .cdc_header = {
+            .bFunctionLength = sizeof(pbdrv_usb_cdc_header_desc_t),
+            .bDescriptorType = USB_CDC_CS_INTERFACE,
+            .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_HEADER,
+            .bcdCDC = 0x0110,
+        },
+        .cdc_call_mgmt = {
+            .bFunctionLength = sizeof(pbdrv_usb_cdc_call_mgmt_desc_t),
+            .bDescriptorType = USB_CDC_CS_INTERFACE,
+            .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_CALL_MGMT,
+            .bmCapabilities = 0x00,
+            .bDataInterface = 1,
+        },
+        .cdc_acm = {
+            .bFunctionLength = sizeof(pbdrv_usb_cdc_acm_desc_t),
+            .bDescriptorType = USB_CDC_CS_INTERFACE,
+            .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_ACM,
+            .bmCapabilities = 0x02,
+        },
+        .cdc_union = {
+            .bFunctionLength = sizeof(pbdrv_usb_cdc_union_desc_t),
+            .bDescriptorType = USB_CDC_CS_INTERFACE,
+            .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_UNION,
+            .bControlInterface = 0,
+            .bSubordinateInterface0 = 1,
+        },
+        .cmd_ep = {
+            .bLength = sizeof(pbdrv_usb_ep_desc_t),
+            .bDescriptorType = DESC_TYPE_ENDPOINT,
+            .bEndpointAddress = USBD_PYBRICKS_CMD_EP,
+            .bmAttributes = PBDRV_USB_EP_TYPE_INTR,
+            .wMaxPacketSize = USBD_PYBRICKS_CMD_PACKET_SIZE,
+            .bInterval = 16,
+        },
+        /* Data interface */
+        .data_iface = {
+            .bLength = sizeof(pbdrv_usb_iface_desc_t),
+            .bDescriptorType = DESC_TYPE_INTERFACE,
+            .bInterfaceNumber = 1,
+            .bAlternateSetting = 0,
             .bNumEndpoints = 2,
-            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+            .bInterfaceClass = USB_CLASS_CDC_DATA,
+            .bInterfaceSubClass = 0,
+            .bInterfaceProtocol = 0,
             .iInterface = 0,
         },
         .ep_out = {
@@ -185,11 +247,27 @@ static USBD_StatusTypeDef USBD_Pybricks_Init(USBD_HandleTypeDef *pdev, uint8_t c
 
     pdev->pClassData = &hPybricks;
 
+    /* Default line coding reported to the host: 115200 baud, 1 stop bit, no
+     * parity, 8 data bits. This is inert: USB does not transfer data at this
+     * rate (it is not a real UART). CDC ACM just requires valid line coding to
+     * be stored and echoed back on GET_LINE_CODING. */
+    hPybricks.LineCoding[0] = 0x00;
+    hPybricks.LineCoding[1] = 0xC2;
+    hPybricks.LineCoding[2] = 0x01;
+    hPybricks.LineCoding[3] = 0x00;
+    hPybricks.LineCoding[4] = 0x00;
+    hPybricks.LineCoding[5] = 0x00;
+    hPybricks.LineCoding[6] = 0x08;
+    hPybricks.CmdOpCode = 0xFFU;
+
     (void)USBD_LL_OpenEP(pdev, USBD_PYBRICKS_IN_EP, USBD_EP_TYPE_BULK, USBD_PYBRICKS_MAX_PACKET_SIZE);
     pdev->ep_in[USBD_PYBRICKS_IN_EP & 0xFU].is_used = 1U;
 
     (void)USBD_LL_OpenEP(pdev, USBD_PYBRICKS_OUT_EP, USBD_EP_TYPE_BULK, USBD_PYBRICKS_MAX_PACKET_SIZE);
     pdev->ep_out[USBD_PYBRICKS_OUT_EP & 0xFU].is_used = 1U;
+
+    (void)USBD_LL_OpenEP(pdev, USBD_PYBRICKS_CMD_EP, USBD_EP_TYPE_INTR, USBD_PYBRICKS_CMD_PACKET_SIZE);
+    pdev->ep_in[USBD_PYBRICKS_CMD_EP & 0xFU].is_used = 1U;
 
     /* Init  physical Interface components */
     ((USBD_Pybricks_ItfTypeDef *)pdev->pUserData[pdev->classId])->Init();
@@ -217,6 +295,10 @@ static USBD_StatusTypeDef USBD_Pybricks_DeInit(USBD_HandleTypeDef *pdev, uint8_t
     (void)USBD_LL_CloseEP(pdev, USBD_PYBRICKS_OUT_EP);
     pdev->ep_out[USBD_PYBRICKS_OUT_EP & 0xFU].is_used = 0U;
 
+    /* Close command EP */
+    (void)USBD_LL_CloseEP(pdev, USBD_PYBRICKS_CMD_EP);
+    pdev->ep_in[USBD_PYBRICKS_CMD_EP & 0xFU].is_used = 0U;
+
     /* DeInit  physical Interface components */
     if (pdev->pClassData != NULL) {
         ((USBD_Pybricks_ItfTypeDef *)pdev->pUserData[pdev->classId])->DeInit();
@@ -235,6 +317,7 @@ static USBD_StatusTypeDef USBD_Pybricks_DeInit(USBD_HandleTypeDef *pdev, uint8_t
   */
 static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
     USBD_SetupReqTypedef *req) {
+    USBD_Pybricks_HandleTypeDef *hPybricks = pdev->pClassData;
     uint8_t ifalt = 0U;
     uint16_t status_info = 0U;
     USBD_StatusTypeDef ret = USBD_OK;
@@ -242,24 +325,37 @@ static USBD_StatusTypeDef USBD_Pybricks_Setup(USBD_HandleTypeDef *pdev,
     switch (req->bmRequest & USB_REQ_TYPE_MASK)
     {
         case USB_REQ_TYPE_CLASS:
-            ret = ((USBD_Pybricks_ItfTypeDef *)pdev->pUserData[pdev->classId])->ReadCharacteristic(pdev, req);
-            break;
-
-        case USB_REQ_TYPE_VENDOR:
+            if (hPybricks == NULL) {
+                USBD_CtlError(pdev, req);
+                ret = USBD_FAIL;
+                break;
+            }
             switch (req->bRequest)
             {
-                case PBDRV_USB_VENDOR_REQ_MS_20:
-                    (void)USBD_CtlSendData(pdev,
-                        (uint8_t *)&pbdrv_usb_ms_20_desc_set,
-                        MIN(sizeof(pbdrv_usb_ms_20_desc_set.s), req->wLength));
+                case USB_CDC_REQ_SET_LINE_CODING:
+                    /* Receive the line coding into the handle. The value is
+                     * accepted but not acted on (the link is not a real UART). */
+                    if (req->wLength == USB_CDC_LINE_CODING_SIZE) {
+                        hPybricks->CmdOpCode = (uint8_t)req->bRequest;
+                        hPybricks->CmdLength = USB_CDC_LINE_CODING_SIZE;
+                        (void)USBD_CtlPrepareRx(pdev, hPybricks->LineCoding, USB_CDC_LINE_CODING_SIZE);
+                    } else {
+                        USBD_CtlError(pdev, req);
+                        ret = USBD_FAIL;
+                    }
                     break;
 
-                case PBDRV_USB_VENDOR_REQ_WEBUSB:
-                    if ((req->wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) && (req->wIndex == WEBUSB_REQ_GET_URL)) {
-                        (void)USBD_CtlSendData(pdev,
-                            (uint8_t *)&pbdrv_usb_webusb_landing_page,
-                            MIN(pbdrv_usb_webusb_landing_page.s.bLength, req->wLength));
-                    }
+                case USB_CDC_REQ_GET_LINE_CODING:
+                    (void)USBD_CtlSendData(pdev, hPybricks->LineCoding,
+                        MIN(USB_CDC_LINE_CODING_SIZE, req->wLength));
+                    break;
+
+                case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
+                    /* The DTR bit indicates whether a host application has
+                     * opened the port. This is the USB analog of a BLE host
+                     * subscribing to notifications. */
+                    ((USBD_Pybricks_ItfTypeDef *)pdev->pUserData[pdev->classId])->SetControlLineState(
+                        (req->wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0U);
                     break;
 
                 default:
@@ -388,6 +484,14 @@ static USBD_StatusTypeDef USBD_Pybricks_DataOut(USBD_HandleTypeDef *pdev, uint8_
   * @retval status
   */
 static USBD_StatusTypeDef USBD_Pybricks_EP0_RxReady(USBD_HandleTypeDef *pdev) {
+    USBD_Pybricks_HandleTypeDef *hPybricks = pdev->pClassData;
+
+    if (hPybricks != NULL && hPybricks->CmdOpCode != 0xFFU) {
+        /* SET_LINE_CODING data has been received into hPybricks->LineCoding.
+         * Nothing to do; the value is stored for GET_LINE_CODING. */
+        hPybricks->CmdOpCode = 0xFFU;
+    }
+
     return USBD_OK;
 }
 

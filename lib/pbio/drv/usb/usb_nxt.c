@@ -5,6 +5,11 @@
  * See lib/pbio/platform/nxt/nxos/AUTHORS for a full list of the developers.
  */
 
+// NXT / Atmel AT91SAM7S256 UDP driver implementing a USB CDC-ACM (virtual
+// serial port) device. The byte stream is framed (COBS) by the common USB
+// driver in usb.c, and the host's serial port open/close (DTR) is used to
+// detect connection state, just like the STM32 and EV3 drivers.
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_USB_NXT
@@ -13,18 +18,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
 
-#include <pbio/protocol.h>
-#include <pbio/version.h>
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbio/os.h>
+#include <pbio/util.h>
 
 #include <at91sam7s256.h>
 
 #include "nxos/interrupts.h"
-#include "nxos/assert.h"
 #include "nxos/drivers/systick.h"
 #include "nxos/drivers/aic.h"
 #include "nxos/util.h"
@@ -39,58 +40,19 @@
 /* The USB controller supports up to 4 endpoints. */
 #define PBDRV_USB_NXT_N_ENDPOINTS 4
 
-/* Maximum data packet sizes. Endpoint 0 is a special case (control
- * endpoint).
- *
- * TODO: Discuss the need/use for separating recv/send.
- */
+/* Physical endpoint numbers used by this driver. */
+#define EP_CONTROL  0   /* Control endpoint. */
+#define EP_BULK_OUT 1   /* CDC data, host to hub. */
+#define EP_BULK_IN  2   /* CDC data, hub to host. */
+#define EP_NOTIF    3   /* CDC notification (interrupt IN), never used. */
+
+/* Maximum data packet sizes. Endpoint 0 is a special case (control endpoint). */
 #define MAX_EP0_SIZE 8
 #define MAX_RCV_SIZE 64
 #define MAX_SND_SIZE 64
-
-/* Various constants for the setup packets.
- *
- * TODO: clean up these. Most are unused.
- */
-#define USB_BMREQUEST_DIR             0x80
-#define   USB_BMREQUEST_H_TO_D          0x00
-#define   USB_BMREQUEST_D_TO_H          0x80
-#define USB_BMREQUEST_TYPE            0x60
-#define   USB_BMREQUEST_TYPE_STD        0x00
-#define   USB_BMREQUEST_TYPE_CLASS      0x20
-#define   USB_BMREQUEST_TYPE_VENDOR     0x40
-#define USB_BMREQUEST_RCPT            0x1F
-#define   USB_BMREQUEST_RCPT_DEV        0x00 /* device */
-#define   USB_BMREQUEST_RCPT_INT        0x01 /* interface */
-#define   USB_BMREQUEST_RCPT_EPT        0x02 /* endpoint */
-#define   USB_BMREQUEST_RCPT_OTH        0x03 /* other */
-
-// Standard requests
-#define USB_BREQUEST_GET_STATUS      0x0
-#define USB_BREQUEST_CLEAR_FEATURE   0x1
-#define USB_BREQUEST_SET_FEATURE     0x3
-#define USB_BREQUEST_SET_ADDRESS     0x5
-#define USB_BREQUEST_GET_DESCRIPTOR  0x6
-#define USB_BREQUEST_SET_DESCRIPTOR  0x7
-#define USB_BREQUEST_GET_CONFIG      0x8
-#define USB_BREQUEST_SET_CONFIG      0x9
-#define USB_BREQUEST_GET_INTERFACE   0xA
-#define USB_BREQUEST_SET_INTERFACE   0xB
-
-#define USB_WVALUE_TYPE        (0xFF << 8)
-#define USB_DESC_TYPE_DEVICE           1
-#define USB_DESC_TYPE_CONFIG           2
-#define USB_DESC_TYPE_STR              3
-#define USB_DESC_TYPE_INT              4
-#define USB_DESC_TYPE_ENDPT            5
-#define USB_DESC_TYPE_DEVICE_QUALIFIER 6
-#define USB_DESC_TYPE_BOS              15
-
-// BOS descriptor related defines
-#define USB_DEVICE_CAPABILITY_TYPE    0x10
-#define USB_DEV_CAP_TYPE_PLATFORM     5
-
-#define USB_WVALUE_INDEX       0xFF
+/* Packet size of the CDC notification (interrupt IN) endpoint. We never send
+ * notifications, so this only needs to be large enough to be valid. */
+#define NOTIF_EP_PKT_SZ 8
 
 /**
  * Indices for string descriptors
@@ -102,30 +64,20 @@ enum {
     STRING_DESC_SERIAL,
 };
 
-/* The following definitions are 'raw' USB setup packets. They are all
- * standard responses to various setup requests by the USB host. These
- * packets are all constant, and mostly boilerplate. Don't be too
- * bothered if you skip over these to real code.
- *
- * If you want to understand the full meaning of every bit of these
- * packets, you should refer to the USB 2.0 specifications.
- *
- * One point of interest: the USB device space is partitionned by
- * vendor and product ID. As we are lacking money and real need, we
- * don't have a vendor ID to use. Therefore, we are currently
- * piggybacking on Lego's device space, using an unused product ID.
- */
+// Device descriptor. The device class uses the Interface Association
+// Descriptor so that the CDC comm and data interfaces are grouped into one
+// function.
 static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
     .bLength = sizeof(pbdrv_usb_dev_desc_t),
     .bDescriptorType = DESC_TYPE_DEVICE,
-    .bcdUSB = 0x0210,       /* This packet is USB 2.1 (needed for BOS descriptors). */
-    .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-    .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-    .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+    .bcdUSB = 0x0200,
+    .bDeviceClass = USB_CLASS_MISC,
+    .bDeviceSubClass = USB_MISC_SUBCLASS_COMMON,
+    .bDeviceProtocol = USB_MISC_PROTOCOL_IAD,
     .bMaxPacketSize0 = MAX_EP0_SIZE,
-    .idVendor = 0x0694,     /* Vendor ID : LEGO */
-    .idProduct = 0x0002,    /* Product ID : NXT */
-    .bcdDevice = 0x0200,    /* Product revision: 2.0.0. */
+    .idVendor = PBDRV_CONFIG_USB_VID,
+    .idProduct = PBDRV_CONFIG_USB_PID,
+    .bcdDevice = 0x0200,
     .iManufacturer = STRING_DESC_MFG,
     .iProduct = STRING_DESC_PRODUCT,
     .iSerialNumber = STRING_DESC_SERIAL,
@@ -134,7 +86,14 @@ static const pbdrv_usb_dev_desc_t pbdrv_usb_nxt_device_descriptor = {
 
 typedef struct PBDRV_PACKED {
     pbdrv_usb_conf_desc_t conf_desc;
-    pbdrv_usb_iface_desc_t iface_desc;
+    pbdrv_usb_iad_desc_t iad;
+    pbdrv_usb_iface_desc_t comm_iface;
+    pbdrv_usb_cdc_header_desc_t cdc_header;
+    pbdrv_usb_cdc_call_mgmt_desc_t cdc_call_mgmt;
+    pbdrv_usb_cdc_acm_desc_t cdc_acm;
+    pbdrv_usb_cdc_union_desc_t cdc_union;
+    pbdrv_usb_ep_desc_t notif_ep;
+    pbdrv_usb_iface_desc_t data_iface;
     pbdrv_usb_ep_desc_t ep_out;
     pbdrv_usb_ep_desc_t ep_in;
 } pbdrv_usb_nxt_conf_t;
@@ -144,7 +103,7 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
         .bLength = sizeof(pbdrv_usb_conf_desc_t),
         .bDescriptorType = DESC_TYPE_CONFIGURATION,
         .wTotalLength = sizeof(pbdrv_usb_nxt_conf_t),
-        .bNumInterfaces = 1,
+        .bNumInterfaces = 2,
         .bConfigurationValue = 1,
         .iConfiguration = 0,
         /* Configuration attributes bitmap. Bit 7 (MSB) must be 1, bit 6 is
@@ -154,35 +113,93 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
         .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
         .bMaxPower = 0,
     },
-    .iface_desc = {
+    /* Interface Association: groups the comm and data interfaces into one
+     * CDC ACM function. */
+    .iad = {
+        .bLength = sizeof(pbdrv_usb_iad_desc_t),
+        .bDescriptorType = DESC_TYPE_INTERFACE_ASSOCIATION,
+        .bFirstInterface = 0,
+        .bInterfaceCount = 2,
+        .bFunctionClass = USB_CLASS_CDC,
+        .bFunctionSubClass = USB_CDC_SUBCLASS_ACM,
+        .bFunctionProtocol = USB_CDC_PROTOCOL_AT,
+        .iFunction = 0,
+    },
+    /* Communication interface. */
+    .comm_iface = {
         .bLength = sizeof(pbdrv_usb_iface_desc_t),
         .bDescriptorType = DESC_TYPE_INTERFACE,
         .bInterfaceNumber = 0,
         .bAlternateSetting = 0,
-        .bNumEndpoints = 2,
-        .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-        .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-        .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bNumEndpoints = 1,
+        .bInterfaceClass = USB_CLASS_CDC,
+        .bInterfaceSubClass = USB_CDC_SUBCLASS_ACM,
+        .bInterfaceProtocol = USB_CDC_PROTOCOL_AT,
         .iInterface = 0,
     },
-    /*
-     * Descriptor for EP1.
-     */
+    .cdc_header = {
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_header_desc_t),
+        .bDescriptorType = USB_CDC_CS_INTERFACE,
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_HEADER,
+        .bcdCDC = 0x0110,
+    },
+    .cdc_call_mgmt = {
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_call_mgmt_desc_t),
+        .bDescriptorType = USB_CDC_CS_INTERFACE,
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_CALL_MGMT,
+        .bmCapabilities = 0x00,
+        .bDataInterface = 1,
+    },
+    .cdc_acm = {
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_acm_desc_t),
+        .bDescriptorType = USB_CDC_CS_INTERFACE,
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_ACM,
+        .bmCapabilities = 0x02,
+    },
+    .cdc_union = {
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_union_desc_t),
+        .bDescriptorType = USB_CDC_CS_INTERFACE,
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_UNION,
+        .bControlInterface = 0,
+        .bSubordinateInterface0 = 1,
+    },
+    /* Notification endpoint (EP3, interrupt IN). The host (e.g. Linux cdc_acm)
+     * requires this endpoint to exist to bind the driver, but we never send
+     * notifications, so it just NAKs forever. */
+    .notif_ep = {
+        .bLength = sizeof(pbdrv_usb_ep_desc_t),
+        .bDescriptorType = DESC_TYPE_ENDPOINT,
+        .bEndpointAddress = 0x80 | EP_NOTIF,
+        .bmAttributes = PBDRV_USB_EP_TYPE_INTR,
+        .wMaxPacketSize = NOTIF_EP_PKT_SZ,
+        .bInterval = 16,
+    },
+    /* Data interface. */
+    .data_iface = {
+        .bLength = sizeof(pbdrv_usb_iface_desc_t),
+        .bDescriptorType = DESC_TYPE_INTERFACE,
+        .bInterfaceNumber = 1,
+        .bAlternateSetting = 0,
+        .bNumEndpoints = 2,
+        .bInterfaceClass = USB_CLASS_CDC_DATA,
+        .bInterfaceSubClass = 0,
+        .bInterfaceProtocol = 0,
+        .iInterface = 0,
+    },
+    /* Bulk OUT endpoint (EP1, host to hub). */
     .ep_out = {
         .bLength = sizeof(pbdrv_usb_ep_desc_t),
         .bDescriptorType = DESC_TYPE_ENDPOINT,
-        .bEndpointAddress = 0x01,   /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
+        .bEndpointAddress = EP_BULK_OUT,
         .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
         .wMaxPacketSize = MAX_RCV_SIZE,
         .bInterval = 0,
     },
-    /*
-     * Descriptor for EP2.
-     */
+    /* Bulk IN endpoint (EP2, hub to host). */
     .ep_in = {
         .bLength = sizeof(pbdrv_usb_ep_desc_t),
         .bDescriptorType = DESC_TYPE_ENDPOINT,
-        .bEndpointAddress = 0x82,   /* Endpoint number. MSB is one, meaning this is an IN EP. */
+        .bEndpointAddress = 0x80 | EP_BULK_IN,
         .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
         .wMaxPacketSize = MAX_SND_SIZE,
         .bInterval = 0,
@@ -198,42 +215,40 @@ typedef struct PBDRV_PACKED {
 
 static pbdrv_usb_serial_number_desc_t pbdrv_usb_str_desc_serial;
 
-typedef enum {
-    USB_UNINITIALIZED,
-    USB_READY,
-    USB_BUSY,
-    USB_SUSPENDED,
-} pbdrv_usb_nxt_status_t;
+// CDC line coding (baud rate, stop bits, parity, data bits). The host can set
+// and get it, but we ignore the actual values since this is a virtual port.
+// Defaults to 115200 8N1.
+static uint8_t pbdrv_usb_nxt_line_coding[USB_CDC_LINE_CODING_SIZE] = {
+    0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08,
+};
 
-/*
- * The USB device state. Contains the current USB state (selected
- * configuration, etc.) and transitory state for data transfers.
+// Set while EP0 is waiting for the host to send the SET_LINE_CODING data stage.
+static bool pbdrv_usb_nxt_expect_line_coding;
+
+/* True once the host has selected a configuration (SET_CONFIGURATION). This is
+ * the USB analog of being enumerated and ready for data transfers. */
+static volatile bool pbdrv_usb_nxt_configured;
+
+/* True while a transmission on the data IN endpoint (EP2) is in progress. */
+static volatile bool pbdrv_usb_nxt_transmitting;
+
+/* When the host gives us an address, we must send a null ACK packet back
+ * before actually changing addresses. This field stores the address that
+ * should be set once the ACK is sent. */
+static uint32_t pbdrv_usb_nxt_new_device_address;
+
+/* The currently selected USB configuration. */
+static uint8_t pbdrv_usb_nxt_current_config;
+
+/* Holds the state of split (multi-packet) transmissions, indexed by the
+ * physical endpoint number (the same numbering used for the CSR/FDR
+ * registers). Only EP0 (control) and EP2 (bulk IN) ever transmit, so only
+ * those slots are used, but sizing the arrays to the full endpoint count keeps
+ * the indexing uniform with the hardware registers and avoids the previous
+ * endpoint/2 aliasing.
  */
-static volatile struct {
-    /* The current state of the device. */
-    pbdrv_usb_nxt_status_t status;
-
-    /* Holds the status the bus was in before entering suspend. */
-    pbdrv_usb_nxt_status_t pre_suspend_status;
-
-    /* When the host gives us an address, we must send a null ACK packet
-     * back before actually changing addresses. This field stores the
-     * address that should be set once the ACK is sent.
-     */
-    uint32_t new_device_address;
-
-    /* The currently selected USB configuration. */
-    uint8_t current_config;
-
-    /* Holds the state of the data transmissions on both EP0 and
-     * EP2. This only gets used if the transmission needed to be split
-     * into several USB packets.
-     *  0 = EP0
-     *  1 = EP2
-     */
-    uint8_t *tx_data[2];
-    uint32_t tx_len[2];
-} pbdrv_usb_nxt_state;
+static uint8_t *pbdrv_usb_nxt_tx_data[PBDRV_USB_NXT_N_ENDPOINTS];
+static uint32_t pbdrv_usb_nxt_tx_len[PBDRV_USB_NXT_N_ENDPOINTS];
 
 /* The flags in the UDP_CSR register are a little strange: writing to
  * them does not instantly change their value. Their value will change
@@ -265,18 +280,12 @@ static void pbdrv_usb_nxt_csr_set_flag(uint8_t endpoint, uint32_t flags) {
 static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t length) {
     const uint8_t *ptr = ptr_;
     uint32_t packet_size;
-    int tx;
 
-    if (endpoint != 0 && endpoint != 2) {
+    if (endpoint != EP_CONTROL && endpoint != EP_BULK_IN) {
         return;
     }
 
-    tx = endpoint / 2;
-
-    /* The bus is now busy. */
-    pbdrv_usb_nxt_state.status = USB_BUSY;
-
-    if (endpoint == 0) {
+    if (endpoint == EP_CONTROL) {
         packet_size = MIN(MAX_EP0_SIZE, length);
     } else {
         packet_size = MIN(MAX_SND_SIZE, length);
@@ -287,18 +296,19 @@ static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t le
      */
     if (length > packet_size) {
         length -= packet_size;
-        pbdrv_usb_nxt_state.tx_data[tx] = (uint8_t *)(ptr + packet_size);
-        pbdrv_usb_nxt_state.tx_len[tx] = length;
+        pbdrv_usb_nxt_tx_data[endpoint] = (uint8_t *)(ptr + packet_size);
+        pbdrv_usb_nxt_tx_len[endpoint] = length;
     } else {
-        if (length == packet_size && endpoint == 0) {
-            // If we are sending data to the control pipe, we must terminate the data
-            // with a ZLP. In order to do so, we set the data pointer to non-NULL
-            // but the length to 0. We do not want to send ZLPs on the Pybricks bulk pipe.
-            pbdrv_usb_nxt_state.tx_data[tx] = (uint8_t *)(ptr);
+        if (length == packet_size && endpoint == EP_CONTROL) {
+            // If we are sending data to the control pipe, we must terminate the
+            // data with a ZLP. In order to do so, we set the data pointer to
+            // non-NULL but the length to 0. We do not want to send ZLPs on the
+            // CDC data pipe.
+            pbdrv_usb_nxt_tx_data[endpoint] = (uint8_t *)(ptr);
         } else {
-            pbdrv_usb_nxt_state.tx_data[tx] = NULL;
+            pbdrv_usb_nxt_tx_data[endpoint] = NULL;
         }
-        pbdrv_usb_nxt_state.tx_len[tx] = 0;
+        pbdrv_usb_nxt_tx_len[endpoint] = 0;
     }
 
     /* Push a packet into the USB FIFO, and tell the controller to send. */
@@ -319,9 +329,10 @@ static volatile uint32_t pbdrv_usb_rx_len;
  */
 static void pbdrv_usb_rx_update(int endpoint) {
 
-    // Given our configuration, we should only get packets on endpoint 1.
-    // Ignore data on any other endpoint. Data from EP0 is handled separately.
-    if (endpoint != 1) {
+    // Given our configuration, we should only get packets on the bulk OUT
+    // endpoint. Ignore data on any other endpoint. Data from EP0 is handled
+    // separately.
+    if (endpoint != EP_BULK_OUT) {
         pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
         return;
     }
@@ -330,7 +341,7 @@ static void pbdrv_usb_rx_update(int endpoint) {
 
     // Read all available bytes.
     for (uint16_t i = 0; i < pbdrv_usb_rx_len; i++) {
-        pbdrv_usb_rx_buf[i] = AT91C_UDP_FDR[1];
+        pbdrv_usb_rx_buf[i] = AT91C_UDP_FDR[EP_BULK_OUT];
     }
 
     // REVISIT: We could switch between RX banks to keep receiving data while
@@ -345,7 +356,6 @@ static void pbdrv_usb_rx_update(int endpoint) {
  * On the other endpoint : Indicates to the host that the endpoint is halted
  */
 static void pbdrv_usb_nxt_send_stall(int endpoint) {
-    pbdrv_usb_nxt_state.status = USB_UNINITIALIZED;
     pbdrv_usb_nxt_csr_set_flag(endpoint, AT91C_UDP_FORCESTALL);
 }
 
@@ -354,21 +364,12 @@ static void pbdrv_usb_nxt_send_null(void) {
     pbdrv_usb_nxt_write_data(0, NULL, 0);
 }
 
-typedef struct {
-    uint8_t request_attrs;  /* Request characteristics. */
-    uint8_t request;        /* Request type. */
-    uint16_t value;         /* Request-specific value. */
-    uint16_t index;         /* Request-specific index. */
-    uint16_t length;        /* The number of bytes transferred in the (optional)
-                             * second phase of the control transfer. */
-} pbdrv_usb_nxt_setup_packet_t;
-
-static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
+static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
     uint32_t size;
     uint8_t index;
 
-    switch (packet->request) {
-        case USB_BREQUEST_GET_STATUS: {
+    switch (packet->bRequest) {
+        case GET_STATUS: {
             /* The host wants to know our status.
             *
             * If it wants the device status, just reply that the NXT is still
@@ -379,19 +380,19 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
             */
             uint16_t response;
 
-            if ((packet->request_attrs & USB_BMREQUEST_RCPT) == USB_BMREQUEST_RCPT_DEV) {
+            if ((packet->bmRequestType & BM_REQ_RECIP_MASK) == BM_REQ_RECIP_DEV) {
                 response = 1;
             } else {
                 response = 0;
             }
 
-            pbdrv_usb_nxt_write_data(0, &response, 2);
+            pbdrv_usb_nxt_write_data(EP_CONTROL, &response, 2);
         }
         break;
 
-        case USB_BREQUEST_CLEAR_FEATURE:
-        case USB_BREQUEST_SET_INTERFACE:
-        case USB_BREQUEST_SET_FEATURE:
+        case CLEAR_FEATURE:
+        case SET_INTERFACE:
+        case SET_FEATURE:
             /* TODO: Refer back to the specs and send the right
              * replies. This is wrong, even though it happens to not break
              * on linux.
@@ -399,43 +400,43 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
             pbdrv_usb_nxt_send_null();
             break;
 
-        case USB_BREQUEST_SET_ADDRESS:
+        case SET_ADDRESS:
             /* The host has given the NXT a new USB address. This address
              * must be set AFTER sending the ack packet. Therefore, we just
              * remember the new address, and the interrupt handler will set
              * it when the transmission completes.
              */
-            pbdrv_usb_nxt_state.new_device_address = packet->value;
+            pbdrv_usb_nxt_new_device_address = packet->wValue;
             pbdrv_usb_nxt_send_null();
 
             /* If the address change is to 0, do it immediately.
              *
              * TODO: Why? And when does this happen?
              */
-            if (pbdrv_usb_nxt_state.new_device_address == 0) {
+            if (pbdrv_usb_nxt_new_device_address == 0) {
                 *AT91C_UDP_FADDR = AT91C_UDP_FEN;
                 *AT91C_UDP_GLBSTATE = 0;
             }
             break;
 
-        case USB_BREQUEST_GET_DESCRIPTOR:
+        case GET_DESCRIPTOR:
             /* The host requested a descriptor. */
 
-            index = (packet->value & USB_WVALUE_INDEX);
-            switch ((packet->value & USB_WVALUE_TYPE) >> 8) {
-                case USB_DESC_TYPE_DEVICE: /* Device descriptor */
+            index = (packet->wValue & 0xFF);
+            switch (packet->wValue >> 8) {
+                case DESC_TYPE_DEVICE: /* Device descriptor */
                     size = sizeof(pbdrv_usb_nxt_device_descriptor);
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_device_descriptor,
-                        MIN(size, packet->length));
+                    pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_device_descriptor,
+                        MIN(size, packet->wLength));
                     break;
 
-                case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
+                case DESC_TYPE_CONFIGURATION: /* Configuration descriptor */
                     size = sizeof(pbdrv_usb_nxt_full_config);
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_nxt_full_config,
-                        MIN(size, packet->length));
+                    pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_full_config,
+                        MIN(size, packet->wLength));
                     break;
 
-                case USB_DESC_TYPE_STR: /* String or language info. */
+                case DESC_TYPE_STRING: /* String or language info. */
                 {
                     const void *desc = 0;
                     switch (index) {
@@ -458,174 +459,124 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_nxt_setup_packet_t *packet) {
                     }
 
                     if (desc) {
-                        pbdrv_usb_nxt_write_data(0, desc, MIN(size, packet->length));
+                        pbdrv_usb_nxt_write_data(EP_CONTROL, desc, MIN(size, packet->wLength));
                     } else {
-                        pbdrv_usb_nxt_send_stall(0);
+                        pbdrv_usb_nxt_send_stall(EP_CONTROL);
                     }
                 }
                 break;
 
-                case USB_DESC_TYPE_BOS: /* BOS descriptor */
-                    size = sizeof(pbdrv_usb_bos_desc_set.s);
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_bos_desc_set, MIN(size, packet->length));
-                    break;
-
                 default: /* Unknown descriptor, tell the host by stalling. */
-                    pbdrv_usb_nxt_send_stall(0);
+                    pbdrv_usb_nxt_send_stall(EP_CONTROL);
             }
             break;
 
-        case USB_BREQUEST_GET_CONFIG:
+        case GET_CONFIGURATION:
             /* The host wants to know the ID of the current configuration. */
-            pbdrv_usb_nxt_write_data(0, (uint8_t *)&(pbdrv_usb_nxt_state.current_config), 1);
+            pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_current_config, 1);
             break;
 
-        case USB_BREQUEST_SET_CONFIG:
+        case SET_CONFIGURATION:
             /* The host selected a new configuration. */
-            pbdrv_usb_nxt_state.current_config = packet->value;
+            pbdrv_usb_nxt_current_config = packet->wValue;
 
             /* we ack */
             pbdrv_usb_nxt_send_null();
 
             /* we set the register in configured mode */
-            *AT91C_UDP_GLBSTATE = packet->value > 0 ?
+            *AT91C_UDP_GLBSTATE = packet->wValue > 0 ?
                 (AT91C_UDP_CONFG | AT91C_UDP_FADDEN) :AT91C_UDP_FADDEN;
 
-            /* TODO: Make this a little nicer. Not quite sure how. */
-
-            AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-            while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
+            /* Enable the CDC data and notification endpoints. */
+            AT91C_UDP_CSR[EP_BULK_OUT] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+            while (AT91C_UDP_CSR[EP_BULK_OUT] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
                 ;
             }
 
-            AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-            while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN)) {
-                ;
-            }
-            AT91C_UDP_CSR[3] = 0;
-            while (AT91C_UDP_CSR[3] != 0) {
+            AT91C_UDP_CSR[EP_BULK_IN] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
+            while (AT91C_UDP_CSR[EP_BULK_IN] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN)) {
                 ;
             }
 
-            pbdrv_usb_nxt_state.status = USB_READY;
+            AT91C_UDP_CSR[EP_NOTIF] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_INT_IN;
+            while (AT91C_UDP_CSR[EP_NOTIF] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_INT_IN)) {
+                ;
+            }
+
+            pbdrv_usb_nxt_configured = packet->wValue > 0;
             break;
 
-        case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
-        case USB_BREQUEST_SET_DESCRIPTOR:
+        case GET_INTERFACE: /* TODO: This should respond, not stall. */
+        case SET_DESCRIPTOR:
         default:
-            pbdrv_usb_nxt_send_stall(0);
+            pbdrv_usb_nxt_send_stall(EP_CONTROL);
             break;
     }
 }
 
-static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_nxt_setup_packet_t *packet) {
-    switch (packet->request_attrs & USB_BMREQUEST_RCPT) {
-        case USB_BMREQUEST_RCPT_INT:
-            // Ignoring wIndex for now as we only have one interface.
-            switch (packet->request) {
-                case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
-                    // Standard GATT characteristic
-                    switch (packet->value) {
-                        case 0x2A00: { // device name
-                            const char *name = pbdrv_bluetooth_get_hub_name();
-                            pbdrv_usb_nxt_write_data(0, name,
-                                MIN(strlen(name), packet->length));
-                            break;
-                        }
-                        case 0x2A26: { // firmware revision
-                            const char *fw = PBIO_VERSION_STR;
-                            pbdrv_usb_nxt_write_data(0, fw,
-                                MIN(strlen(fw), packet->length));
-                            break;
-                        }
-                        case 0x2A28: { // software revision
-                            const char *sw = PBIO_PROTOCOL_VERSION_STR;
-                            pbdrv_usb_nxt_write_data(0, sw,
-                                MIN(strlen(sw), packet->length));
-                            break;
-                        }
-                        default:
-                            pbdrv_usb_nxt_send_stall(0);
-                            break;
-                    }
-                    break;
-                case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
-                    // Pybricks characteristic
-                    switch (packet->value) {
-                        case 0x0003: { // hub capabilities
-                            uint8_t caps[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-                            pbio_pybricks_hub_capabilities(caps,
-                                MAX_RCV_SIZE - 1,
-                                PBSYS_CONFIG_APP_FEATURE_FLAGS,
-                                pbsys_storage_get_maximum_program_size(),
-                                PBSYS_CONFIG_HMI_NUM_SLOTS);
-                            pbdrv_usb_nxt_write_data(0, caps, MIN(sizeof(caps), packet->length));
-                            break;
-                        }
-                        default:
-                            pbdrv_usb_nxt_send_stall(0);
-                            break;
-                    }
-                    break;
-                default:
-                    pbdrv_usb_nxt_send_stall(0);
-                    break;
-            }
+static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_setup_packet_t *packet) {
+    // CDC class requests are directed at the comm interface.
+    if ((packet->bmRequestType & BM_REQ_RECIP_MASK) != BM_REQ_RECIP_IF) {
+        pbdrv_usb_nxt_send_stall(EP_CONTROL);
+        return;
+    }
+
+    switch (packet->bRequest) {
+        case USB_CDC_REQ_SET_LINE_CODING:
+            // The 7-byte line coding follows in an OUT data stage, which we
+            // read on the next EP0 RX_DATA interrupt. Do not ack yet.
+            pbdrv_usb_nxt_expect_line_coding = true;
             break;
+
+        case USB_CDC_REQ_GET_LINE_CODING:
+            pbdrv_usb_nxt_write_data(EP_CONTROL, pbdrv_usb_nxt_line_coding,
+                MIN(sizeof(pbdrv_usb_nxt_line_coding), packet->wLength));
+            break;
+
+        case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
+            // DTR asserted means a host app opened the serial port. This is
+            // the USB analog of a BLE host subscribing to notifications, and
+            // is how we detect connect/disconnect.
+            pbdrv_usb_on_dtr_changed(
+                (packet->wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
+            pbdrv_usb_nxt_send_null();
+            break;
+
         default:
-            pbdrv_usb_nxt_send_stall(0);
+            pbdrv_usb_nxt_send_stall(EP_CONTROL);
             break;
     }
 }
 
 /* Handle receiving and responding to setup packets on EP0. */
-static uint32_t pbdrv_usb_nxt_manage_setup_packet(void) {
+static void pbdrv_usb_nxt_manage_setup_packet(void) {
     /* The structure of a USB setup packet. */
-    pbdrv_usb_nxt_setup_packet_t packet;
+    pbdrv_usb_setup_packet_t packet;
 
     /* Read the packet from the FIFO into the above packet struct. */
-    packet.request_attrs = AT91C_UDP_FDR[0];
-    packet.request = AT91C_UDP_FDR[0];
-    packet.value = (AT91C_UDP_FDR[0] & 0xFF) | (AT91C_UDP_FDR[0] << 8);
-    packet.index = (AT91C_UDP_FDR[0] & 0xFF) | (AT91C_UDP_FDR[0] << 8);
-    packet.length = (AT91C_UDP_FDR[0] & 0xFF) | (AT91C_UDP_FDR[0] << 8);
+    packet.bmRequestType = AT91C_UDP_FDR[EP_CONTROL];
+    packet.bRequest = AT91C_UDP_FDR[EP_CONTROL];
+    packet.wValue = (AT91C_UDP_FDR[EP_CONTROL] & 0xFF) | (AT91C_UDP_FDR[EP_CONTROL] << 8);
+    packet.wIndex = (AT91C_UDP_FDR[EP_CONTROL] & 0xFF) | (AT91C_UDP_FDR[EP_CONTROL] << 8);
+    packet.wLength = (AT91C_UDP_FDR[EP_CONTROL] & 0xFF) | (AT91C_UDP_FDR[EP_CONTROL] << 8);
 
-    if ((packet.request_attrs & USB_BMREQUEST_DIR) == USB_BMREQUEST_D_TO_H) {
-        pbdrv_usb_nxt_csr_set_flag(0, AT91C_UDP_DIR); /* TODO: contradicts atmel doc p475 */
+    if ((packet.bmRequestType & BM_REQ_DIR_MASK) == BM_REQ_DIR_D2H) {
+        pbdrv_usb_nxt_csr_set_flag(EP_CONTROL, AT91C_UDP_DIR); /* TODO: contradicts atmel doc p475 */
     }
 
-    pbdrv_usb_nxt_csr_clear_flag(0, AT91C_UDP_RXSETUP);
+    pbdrv_usb_nxt_csr_clear_flag(EP_CONTROL, AT91C_UDP_RXSETUP);
 
-    switch (packet.request_attrs & USB_BMREQUEST_TYPE) {
-        case USB_BMREQUEST_TYPE_STD:
+    switch (packet.bmRequestType & BM_REQ_TYPE_MASK) {
+        case BM_REQ_TYPE_STANDARD:
             pbdrv_usb_handle_std_request(&packet);
             break;
-        case USB_BMREQUEST_TYPE_CLASS:
+        case BM_REQ_TYPE_CLASS:
             pbdrv_usb_nxt_handle_class_request(&packet);
             break;
-        case USB_BMREQUEST_TYPE_VENDOR:
-            switch (packet.request) {
-                case PBDRV_USB_VENDOR_REQ_WEBUSB:
-                    // Since there is only one WebUSB descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_webusb_landing_page,
-                        MIN(pbdrv_usb_webusb_landing_page.s.bLength, packet.length));
-                    break;
-                case PBDRV_USB_VENDOR_REQ_MS_20:
-                    // Since there is only one MS descriptor, we ignore the index.
-                    pbdrv_usb_nxt_write_data(0, &pbdrv_usb_ms_20_desc_set,
-                        MIN(sizeof(pbdrv_usb_ms_20_desc_set.s), packet.length));
-                    break;
-                default:
-                    pbdrv_usb_nxt_send_stall(0);
-                    break;
-            }
-            break;
         default:
-            pbdrv_usb_nxt_send_stall(0);
+            pbdrv_usb_nxt_send_stall(EP_CONTROL);
             break;
     }
-
-    return packet.request;
 }
 
 /* The main USB interrupt handler. */
@@ -642,7 +593,7 @@ static void pbdrv_usb_nxt_isr(void) {
 
     /* End of bus reset. Starting the device setup procedure. */
     if (isr & AT91C_UDP_ENDBUSRES) {
-        pbdrv_usb_nxt_state.status = USB_UNINITIALIZED;
+        pbdrv_usb_nxt_configured = false;
 
         /* Disable and clear all interruptions, reverting to the base
          * state.
@@ -655,7 +606,7 @@ static void pbdrv_usb_nxt_isr(void) {
         *AT91C_UDP_RSTEP = 0;
 
         /* Reset internal state. */
-        pbdrv_usb_nxt_state.current_config = 0;
+        pbdrv_usb_nxt_current_config = 0;
 
         /* Reset EP0 to a basic control endpoint. */
         /* TODO: The while is ugly. Fix it. */
@@ -693,14 +644,11 @@ static void pbdrv_usb_nxt_isr(void) {
     if (isr & AT91C_UDP_RXSUSP) {
         *AT91C_UDP_ICR = AT91C_UDP_RXSUSP;
         isr &= ~AT91C_UDP_RXSUSP;
-        pbdrv_usb_nxt_state.pre_suspend_status = pbdrv_usb_nxt_state.status;
-        pbdrv_usb_nxt_state.status = USB_SUSPENDED;
     }
 
     if (isr & AT91C_UDP_RXRSM) {
         *AT91C_UDP_ICR = AT91C_UDP_RXRSM;
         isr &= ~AT91C_UDP_RXRSM;
-        pbdrv_usb_nxt_state.status = pbdrv_usb_nxt_state.pre_suspend_status;
     }
 
     for (endpoint = 0; endpoint < PBDRV_USB_NXT_N_ENDPOINTS; endpoint++) {
@@ -712,7 +660,33 @@ static void pbdrv_usb_nxt_isr(void) {
     if (endpoint == 0) {
 
         if (AT91C_UDP_CSR[0] & AT91C_UDP_RXSETUP) {
-            csr = pbdrv_usb_nxt_manage_setup_packet();
+            pbdrv_usb_nxt_manage_setup_packet();
+            return;
+        }
+
+        if (AT91C_UDP_CSR[0] & (AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1)) {
+            /* OUT data on the control endpoint. This is either the data stage
+             * of a host-to-device control write (only SET_LINE_CODING for us)
+             * or the zero-length OUT status stage that terminates a control
+             * read (e.g. GET_DESCRIPTOR).
+             */
+            if (pbdrv_usb_nxt_expect_line_coding) {
+                uint32_t count = (AT91C_UDP_CSR[0] & AT91C_UDP_RXBYTECNT) >> 16;
+                for (uint32_t i = 0; i < count && i < sizeof(pbdrv_usb_nxt_line_coding); i++) {
+                    pbdrv_usb_nxt_line_coding[i] = AT91C_UDP_FDR[0];
+                }
+                pbdrv_usb_nxt_expect_line_coding = false;
+                pbdrv_usb_nxt_csr_clear_flag(0, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
+                /* Acknowledge the SET_LINE_CODING data stage with a ZLP. */
+                pbdrv_usb_nxt_send_null();
+            } else {
+                /* OUT status stage of a control read. The hardware ACKs it when
+                 * we clear the RX flag; we must NOT send anything back here, or
+                 * we would leave a stray IN packet armed on EP0 and corrupt the
+                 * next control transfer.
+                 */
+                pbdrv_usb_nxt_csr_clear_flag(0, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
+            }
             return;
         }
     }
@@ -723,9 +697,9 @@ static void pbdrv_usb_nxt_isr(void) {
         if (csr & AT91C_UDP_RX_DATA_BK0
             || csr & AT91C_UDP_RX_DATA_BK1) {
 
-            if (endpoint == 1) {
-                AT91C_UDP_CSR[1] &= ~AT91C_UDP_EPEDS;
-                while (AT91C_UDP_CSR[1] & AT91C_UDP_EPEDS) {
+            if (endpoint == EP_BULK_OUT) {
+                AT91C_UDP_CSR[EP_BULK_OUT] &= ~AT91C_UDP_EPEDS;
+                while (AT91C_UDP_CSR[EP_BULK_OUT] & AT91C_UDP_EPEDS) {
                     ;
                 }
             }
@@ -741,25 +715,27 @@ static void pbdrv_usb_nxt_isr(void) {
             /* so first we will reset this flag */
             pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_TXCOMP);
 
-            if (pbdrv_usb_nxt_state.new_device_address > 0) {
+            if (pbdrv_usb_nxt_new_device_address > 0) {
                 /* the previous message received was SET_ADDR */
                 /* now that the computer ACK our send_null(), we can
                  * set this address for real */
 
                 /* we set the specified usb address in the controller */
-                *AT91C_UDP_FADDR = AT91C_UDP_FEN | pbdrv_usb_nxt_state.new_device_address;
+                *AT91C_UDP_FADDR = AT91C_UDP_FEN | pbdrv_usb_nxt_new_device_address;
                 /* and we tell the controller that we are in addressed mode now */
                 *AT91C_UDP_GLBSTATE = AT91C_UDP_FADDEN;
-                pbdrv_usb_nxt_state.new_device_address = 0;
+                pbdrv_usb_nxt_new_device_address = 0;
             }
 
             /* and we will send the following data */
-            if (pbdrv_usb_nxt_state.tx_data[endpoint] != NULL) {
-                pbdrv_usb_nxt_write_data(endpoint, pbdrv_usb_nxt_state.tx_data[endpoint],
-                    pbdrv_usb_nxt_state.tx_len[endpoint]);
+            if (pbdrv_usb_nxt_tx_data[endpoint] != NULL) {
+                pbdrv_usb_nxt_write_data(endpoint, pbdrv_usb_nxt_tx_data[endpoint],
+                    pbdrv_usb_nxt_tx_len[endpoint]);
             } else {
                 /* then it means that we sent all the data and the host has acknowledged it */
-                pbdrv_usb_nxt_state.status = USB_READY;
+                if (endpoint == EP_BULK_IN) {
+                    pbdrv_usb_nxt_transmitting = false;
+                }
                 pbio_os_request_poll();
             }
             return;
@@ -789,11 +765,21 @@ void pbdrv_usb_init_device(void) {
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString); i++) {
         pbdrv_usb_str_desc_serial.wString[i] = bluetooth_address_string[i];
     }
-    pbdrv_usb_str_desc_serial.bLength = PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString) * 2;
-    pbdrv_usb_str_desc_serial.bDescriptorType = USB_DESC_TYPE_STR,
+    pbdrv_usb_str_desc_serial.bLength = sizeof(pbdrv_usb_str_desc_serial);
+    pbdrv_usb_str_desc_serial.bDescriptorType = DESC_TYPE_STRING;
 
     pbdrv_usb_nxt_deinit();
-    memset((void *)&pbdrv_usb_nxt_state, 0, sizeof(pbdrv_usb_nxt_state));
+
+    pbdrv_usb_nxt_configured = false;
+    pbdrv_usb_nxt_transmitting = false;
+    pbdrv_usb_nxt_expect_line_coding = false;
+    pbdrv_usb_nxt_new_device_address = 0;
+    pbdrv_usb_nxt_current_config = 0;
+    for (int i = 0; i < PBDRV_USB_NXT_N_ENDPOINTS; i++) {
+        pbdrv_usb_nxt_tx_data[i] = NULL;
+        pbdrv_usb_nxt_tx_len[i] = 0;
+    }
+    pbdrv_usb_rx_len = 0;
 
     uint32_t state = nx_interrupts_disable();
 
@@ -838,61 +824,35 @@ void pbdrv_usb_deinit_device(void) {
 }
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    return pbdrv_usb_nxt_configured ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 bool pbdrv_usb_is_ready(void) {
-    return pbdrv_usb_nxt_state.status != USB_UNINITIALIZED;
+    return pbdrv_usb_nxt_configured;
 }
 
 pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // REVISIT: Won't work if we include this check.
-    // if (pbdrv_usb_nxt_state.status != USB_READY) {
-    //     return PBIO_ERROR_BUSY;
-    // }
-
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
-    pbdrv_usb_nxt_write_data(2, data, size);
-
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
+    if (pbdrv_usb_nxt_transmitting) {
+        return PBIO_ERROR_BUSY;
     }
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
-
-    static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // REVISIT: Won't work if we include this check.
-    // if (pbdrv_usb_nxt_state.status != USB_READY) {
-    //     return PBIO_ERROR_BUSY;
-    // }
-
+    pbdrv_usb_nxt_transmitting = true;
     pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
-    pbio_set_uint32_le(&usb_response_buf[1], code);
-    pbdrv_usb_nxt_write_data(2, usb_response_buf, sizeof(usb_response_buf));
 
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_nxt_state.status == USB_READY || pbio_os_timer_is_expired(&timer));
+    // Transmit the raw bytes. Framing is handled by the common driver.
+    pbdrv_usb_nxt_write_data(EP_BULK_IN, data, size);
+
+    PBIO_OS_AWAIT_UNTIL(state, !pbdrv_usb_nxt_transmitting || pbio_os_timer_is_expired(&timer));
+
     if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
@@ -901,8 +861,9 @@ pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t
 }
 
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
-    // REVISIT: Make async.
-    pbdrv_usb_init_device();
+    pbdrv_usb_nxt_tx_data[EP_BULK_IN] = NULL;
+    pbdrv_usb_nxt_tx_len[EP_BULK_IN] = 0;
+    pbdrv_usb_nxt_transmitting = false;
     return PBIO_SUCCESS;
 }
 
@@ -918,9 +879,8 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
     pbdrv_usb_rx_len = 0;
 
     // Get ready to receive the next message.
-    if (pbdrv_usb_nxt_state.status > USB_UNINITIALIZED
-        && pbdrv_usb_nxt_state.status != USB_SUSPENDED) {
-        AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+    if (pbdrv_usb_nxt_configured) {
+        AT91C_UDP_CSR[EP_BULK_OUT] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
     }
 
     return result;

@@ -82,10 +82,10 @@ pbdrv_usb_dev_desc_union_t USBD_DeviceDesc = {
     .s = {
         .bLength = sizeof(pbdrv_usb_dev_desc_t),
         .bDescriptorType = DESC_TYPE_DEVICE,
-        .bcdUSB = 0x0210,       /* 2.1.0 (for BOS support) */
-        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bcdUSB = 0x0200,       /* 2.0.0 */
+        .bDeviceClass = USB_CLASS_MISC,
+        .bDeviceSubClass = USB_MISC_SUBCLASS_COMMON,
+        .bDeviceProtocol = USB_MISC_PROTOCOL_IAD,
         .bMaxPacketSize0 = USB_MAX_EP0_SIZE,
         .idVendor = PBDRV_CONFIG_USB_VID,
         .idProduct = PBDRV_CONFIG_USB_PID,
@@ -221,21 +221,13 @@ static uint8_t *USBD_Pybricks_SerialStrDescriptor(USBD_SpeedTypeDef speed, uint1
     return (uint8_t *)USBD_StringSerial;
 }
 
-static uint8_t *USBD_Pybricks_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-    /* Prevent unused argument(s) compilation warning */
-    UNUSED(speed);
-
-    *length = sizeof(pbdrv_usb_bos_desc_set.s);
-    return (uint8_t *)&pbdrv_usb_bos_desc_set;
-}
-
 USBD_DescriptorsTypeDef USBD_Pybricks_Desc = {
     .GetDeviceDescriptor = USBD_Pybricks_DeviceDescriptor,
     .GetLangIDStrDescriptor = USBD_Pybricks_LangIDStrDescriptor,
     .GetManufacturerStrDescriptor = USBD_Pybricks_ManufacturerStrDescriptor,
     .GetProductStrDescriptor = USBD_Pybricks_ProductStrDescriptor,
     .GetSerialStrDescriptor = USBD_Pybricks_SerialStrDescriptor,
-    .GetBOSDescriptor = USBD_Pybricks_BOSDescriptor,
+    .GetBOSDescriptor = NULL,
 };
 
 void USBD_Pybricks_Desc_Init(void) {

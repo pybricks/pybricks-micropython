@@ -472,14 +472,13 @@ extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
 
-/** USB bDeviceClass for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_CLASS 0xFF
-/** USB bDeviceSubClass for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_SUBCLASS 0xC5
-/** USB bDeviceProtocol for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_PROTOCOL 0xF5
-
-/** USB bRequest for Pybricks class-specific requests */
+/**
+ * Characteristic namespace for ::PBIO_PYBRICKS_OUT_EP_MSG_READ requests.
+ *
+ * Selects which group the 16-bit characteristic id in a read request belongs
+ * to, mirroring how a BLE host distinguishes standard GATT characteristics
+ * from Pybricks-specific ones.
+ */
 enum {
     /** Retrieve GATT characteristics */
     PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT = 0x01,
@@ -487,35 +486,66 @@ enum {
     PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
 };
 
-// NOTE: These enums values are sent over the wire, so cannot be changed. Also,
-// 0 is skipped to avoid a zeroed buffer from being misinterpreted as a message.
-
-/** Hub to host messages via the Pybricks interface IN endpoint. */
-typedef enum {
-    /**
-     * Analog of BLE status response. Emitted in response to every OUT message
-     * received.
-     */
-    PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
-    /**Analog to BLE notification. Only emitted if subscribed. */
-    PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
-} pbio_pybricks_usb_in_ep_msg_t;
-
-/** Host to hub messages via the Pybricks USB interface OUT endpoint. */
-typedef enum {
-    /** Analog of BLE Client Characteristic Configuration Descriptor (CCCD). */
-    PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
-    /** Analog of BLE Client Characteristic Write with response. */
-    PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
-} pbio_pybricks_usb_out_ep_msg_t;
+// The Pybricks USB interface uses a CDC ACM data pipe (Web Serial on the host),
+// which is a raw, bidirectional byte stream with no inherent message
+// boundaries. Each direction therefore frames its messages with Consistent
+// Overhead Byte Stuffing (COBS): every message is COBS-encoded and terminated
+// with a single zero byte (0x00) delimiter. COBS guarantees the encoded payload
+// never contains a zero, so the delimiter unambiguously marks the end of a
+// frame. This framing is self synchronizing; a receiver that joins mid-stream
+// or sees a corrupt frame simply resumes at the next delimiter.
+//
+// The byte stream is independent of the USB hardware packet size: a single
+// frame may span several USB packets, and several small frames may share one
+// packet. Only after a frame has been reassembled and decoded is its first
+// byte interpreted as the message type below.
 
 /**
- * Size of USB messages for Pybricks USB interface.
+ * Hub to host message types.
  *
- * USB has one extra byte header for a message type discriminator
- * compared to BLE messages.
+ * The hub to host direction is a single byte stream that multiplexes command
+ * responses, events and read replies, so the first byte of each message
+ * discriminates between them.
  */
-#define PBIO_PYBRICKS_USB_MESSAGE_SIZE(n) (1 + n)
+typedef enum {
+    /**
+     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_COMMAND. The payload is the command
+     * error code, analogous to a BLE write response.
+     */
+    PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
+    /** Analog to BLE notification. Emitted while a host is connected. */
+    PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
+    /**
+     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_READ. The payload is
+     * `[service, char_id_lo, char_id_hi, value...]`, echoing the selector from
+     * the request followed by the characteristic value. An empty value
+     * indicates an unknown characteristic.
+     */
+    PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY = 3,
+} pbio_pybricks_usb_in_ep_msg_t;
+
+/**
+ * Host to hub message types.
+ *
+ * The host to hub direction is a single byte stream, so the first byte of each
+ * message discriminates between a command and a characteristic read request.
+ */
+typedef enum {
+    /**
+     * A characteristic read request. The payload is
+     * `[service, char_id_lo, char_id_hi]`, where service is one of the
+     * ::PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT values. The hub
+     * replies with a ::PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY. This is the serial
+     * analog of a BLE host reading a characteristic by UUID.
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_READ = 1,
+    /**
+     * A Pybricks command (see ::pbio_pybricks_command_t), carried in the
+     * remaining payload bytes. The hub replies with a
+     * ::PBIO_PYBRICKS_IN_EP_MSG_RESPONSE.
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
+} pbio_pybricks_usb_out_ep_msg_t;
 
 #endif // _PBIO_PROTOCOL_H_
 

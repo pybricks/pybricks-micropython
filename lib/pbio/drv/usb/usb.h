@@ -18,6 +18,52 @@
 
 #define PBDRV_USB_TRANSMIT_TIMEOUT (500)
 
+/** Frame delimiter byte. */
+#define PBDRV_USB_COBS_DELIMITER 0x00
+
+/**
+ * Maximum size of a host notification, and of any other host-facing message.
+ *
+ * This is deliberately decoupled from the USB hardware packet size: it bounds
+ * how large a single message can be, independent of how the transport splits
+ * the resulting byte stream into hardware packets.
+ *
+ * REVISIT: this is a system-level concept that should eventually live in pbsys
+ * config and be shared with the BLE transport.
+ */
+#define PBSYS_CONFIG_HOST_NOTIFICATION_SIZE (62)
+
+/** Maximum size of a decoded message (message type byte plus payload). */
+#define PBDRV_USB_MAX_DECODED_MESSAGE_SIZE PBSYS_CONFIG_HOST_NOTIFICATION_SIZE
+
+/** Maximum size of a COBS-encoded frame including the trailing delimiter. */
+#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE (PBDRV_USB_MAX_DECODED_MESSAGE_SIZE + PBDRV_USB_MAX_DECODED_MESSAGE_SIZE / 254 + 2)
+
+/**
+ * Largest single USB packet any platform delivers on the data OUT endpoint
+ * (EV3 high-speed bulk). The common driver provides a receive scratch buffer of
+ * this size; the framing layer then reassembles messages from the raw byte
+ * stream, which may pack several small frames into one hardware packet.
+ */
+#define PBDRV_USB_RX_PACKET_MAX_SIZE (512)
+
+/**
+ * COBS-encodes @p len bytes from @p src into @p dst and appends the frame
+ * delimiter. @p dst must have room for at least ::PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE bytes
+ * when @p len is at most ::PBDRV_USB_MAX_DECODED_MESSAGE_SIZE.
+ *
+ * @return  Number of bytes written to @p dst, including the trailing delimiter.
+ */
+uint32_t pbdrv_usb_cobs_encode(const uint8_t *src, uint32_t len, uint8_t *dst);
+
+/**
+ * COBS-decodes @p len bytes from @p src (a single frame with the delimiter
+ * already stripped) into @p dst.
+ *
+ * @return  Number of decoded bytes, or 0 if the frame was empty or malformed.
+ */
+uint32_t pbdrv_usb_cobs_decode(const uint8_t *src, uint32_t len, uint8_t *dst, uint32_t dst_max);
+
 /**
  * Initializes the USB driver on boot.
  */
@@ -39,52 +85,48 @@ void pbdrv_usb_deinit(void);
 void pbdrv_usb_deinit_device(void);
 
 /**
- * Gets most recent incoming message and copies it to provided buffer.
+ * Gets bytes most recently received on the data OUT endpoint and copies them
+ * to the provided buffer.
  *
- * The message is then cleared and the driver prepares to read a new message.
+ * The driver's receive buffer is then cleared and prepared to receive again.
  *
- * @param [in] data     Buffer to copy the message to.
+ * The host to hub direction is a raw byte stream (the message framing is
+ * handled by the common driver), so the returned bytes are an arbitrary slice
+ * of that stream, not necessarily a whole message.
+ *
+ * @param [in] data     Buffer to copy the bytes to. Must be at least
+ *                      ::PBDRV_USB_RX_PACKET_MAX_SIZE bytes.
  * @return              Number of bytes copied. Zero means nothing was available.
  */
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 
 /**
- * Sends and awaits event message from hub to host via the Pybricks USB interface OUT endpoint.
+ * Sends and awaits a raw chunk of bytes on the data IN endpoint.
  *
  * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
  *
  * The USB process ensures that only one call is made at once.
- *
- * Data must include the endpoint type and event code, so size is at least 2.
  *
  * @param [in] state    Protothread state.
  * @param [in] data     Data to send.
  * @param [in] size     Data size.
  * @return              ::PBIO_SUCCESS on completion.
- *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
- *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
  *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
  */
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
 
 /**
- * Sends and awaits response to an earlier incoming message.
+ * Notifies the common driver that the host's serial control line state (DTR)
+ * changed. Called by the platform driver, typically from interrupt context.
  *
- * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
+ * DTR asserted means a host application has opened the serial port and is the
+ * USB analog of a BLE host subscribing to notifications.
  *
- * The USB process ensures that only one call is made at once.
- *
- * @param [in] state    Protothread state.
- * @param [in] code     Error code to send.
- * @return              ::PBIO_SUCCESS on completion.
- *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
- *                      ::PBIO_ERROR_AGAIN while awaiting.
- *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
- *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
+ * @param [in] dtr      True if DTR is asserted (port open), otherwise false.
  */
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code);
+void pbdrv_usb_on_dtr_changed(bool dtr);
 
 /**
  * Resets the driver transmission state.

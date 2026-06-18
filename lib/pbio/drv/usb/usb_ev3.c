@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 The Pybricks Authors
 
-// EV3 / TI AM1808 / Mentor Graphics MUSBMHDRC driver
-// implementing a bespoke USB stack for Pybricks USB protocol
+// EV3 / TI AM1808 / Mentor Graphics MUSBMHDRC driver implementing a bespoke
+// USB stack for a USB CDC-ACM (virtual serial port) device.
 
 #include <pbdrv/config.h>
 
@@ -12,22 +12,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/usb.h>
 #include <pbio/os.h>
-#include <pbio/protocol.h>
-#include <pbio/util.h>
-#include <pbio/version.h>
-#include <pbsys/command.h>
-#include <pbsys/config.h>
-#include <pbsys/status.h>
-#include <pbsys/storage.h>
 
 #include "usb.h"
-
-#include <lego/usb.h>
 
 #include <tiam1808/armv5/am1808/interrupt.h>
 #include <tiam1808/cppi41dma.h>
@@ -58,13 +48,10 @@
 #define EP0_BUF_SZ              64
 #define PYBRICKS_EP_PKT_SZ_FS   64
 #define PYBRICKS_EP_PKT_SZ_HS   512
+// Packet size of the CDC notification (interrupt IN) endpoint. We never send
+// notifications, so this only needs to be large enough to be valid.
+#define NOTIF_EP_PKT_SZ         8
 
-// All buffers must allow the highest possible packet size. When writing
-// to them, pbdrv_usb_max_package_size() gets the actual limit based on
-// active speed mode.
-#if PBDRV_CONFIG_USB_MAX_PACKET_SIZE != PYBRICKS_EP_PKT_SZ_HS
-#error Inconsistent USB packet size
-#endif
 
 /**
  * Indices for string descriptors
@@ -82,12 +69,12 @@ static const pbdrv_usb_dev_desc_union_t dev_desc = {
     .s = {
         .bLength = sizeof(pbdrv_usb_dev_desc_t),
         .bDescriptorType = DESC_TYPE_DEVICE,
-        // A BOS descriptor is needed for Windows driver auto-installation,
-        // so this must be at least 2.1
-        .bcdUSB = 0x0210,
-        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bcdUSB = 0x0200,
+        // Use the Interface Association Descriptor device class so that the
+        // CDC comm and data interfaces are grouped into one function.
+        .bDeviceClass = USB_CLASS_MISC,
+        .bDeviceSubClass = USB_MISC_SUBCLASS_COMMON,
+        .bDeviceProtocol = USB_MISC_PROTOCOL_IAD,
         .bMaxPacketSize0 = EP0_BUF_SZ,
         .idVendor = PBDRV_CONFIG_USB_VID,
         .idProduct = PBDRV_CONFIG_USB_PID,
@@ -102,10 +89,10 @@ static const pbdrv_usb_dev_qualifier_desc_union_t dev_qualifier_desc = {
     .s = {
         .bLength = sizeof(pbdrv_usb_dev_qualifier_desc_t),
         .bDescriptorType = DESC_TYPE_DEVICE_QUALIFIER,
-        .bcdUSB = 0x0210,
-        .bDeviceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-        .bDeviceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-        .bDeviceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
+        .bcdUSB = 0x0200,
+        .bDeviceClass = USB_CLASS_MISC,
+        .bDeviceSubClass = USB_MISC_SUBCLASS_COMMON,
+        .bDeviceProtocol = USB_MISC_PROTOCOL_IAD,
         .bMaxPacketSize0 = EP0_BUF_SZ,
         .bNumConfigurations = 1,
         .bReserved = 0,
@@ -114,105 +101,151 @@ static const pbdrv_usb_dev_qualifier_desc_union_t dev_qualifier_desc = {
 
 typedef struct PBDRV_PACKED {
     pbdrv_usb_conf_desc_t conf_desc;
-    pbdrv_usb_iface_desc_t iface_desc;
+    pbdrv_usb_iad_desc_t iad;
+    pbdrv_usb_iface_desc_t comm_iface;
+    pbdrv_usb_cdc_header_desc_t cdc_header;
+    pbdrv_usb_cdc_call_mgmt_desc_t cdc_call_mgmt;
+    pbdrv_usb_cdc_acm_desc_t cdc_acm;
+    pbdrv_usb_cdc_union_desc_t cdc_union;
+    pbdrv_usb_ep_desc_t notif_ep;
+    pbdrv_usb_iface_desc_t data_iface;
     pbdrv_usb_ep_desc_t ep_1_out;
     pbdrv_usb_ep_desc_t ep_1_in;
 } pbdrv_usb_ev3_conf_1_t;
 PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_conf_1);
 
+// The high-speed and full-speed configuration descriptors are identical apart
+// from the bulk endpoint max packet size, so a macro fills in the common parts.
+#define PBDRV_USB_EV3_CONF_1_COMMON(bulk_pkt_size) \
+    .conf_desc = { \
+        .bLength = sizeof(pbdrv_usb_conf_desc_t), \
+        .bDescriptorType = DESC_TYPE_CONFIGURATION, \
+        .wTotalLength = sizeof(pbdrv_usb_ev3_conf_1_t), \
+        .bNumInterfaces = 2, \
+        .bConfigurationValue = 1, \
+        .iConfiguration = 0, \
+        .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED, \
+        .bMaxPower = 0, \
+    }, \
+    /* Interface Association: groups the comm and data interfaces into one \
+     * CDC ACM function. */ \
+    .iad = { \
+        .bLength = sizeof(pbdrv_usb_iad_desc_t), \
+        .bDescriptorType = DESC_TYPE_INTERFACE_ASSOCIATION, \
+        .bFirstInterface = 0, \
+        .bInterfaceCount = 2, \
+        .bFunctionClass = USB_CLASS_CDC, \
+        .bFunctionSubClass = USB_CDC_SUBCLASS_ACM, \
+        .bFunctionProtocol = USB_CDC_PROTOCOL_AT, \
+        .iFunction = 0, \
+    }, \
+    /* Communication interface */ \
+    .comm_iface = { \
+        .bLength = sizeof(pbdrv_usb_iface_desc_t), \
+        .bDescriptorType = DESC_TYPE_INTERFACE, \
+        .bInterfaceNumber = 0, \
+        .bAlternateSetting = 0, \
+        .bNumEndpoints = 1, \
+        .bInterfaceClass = USB_CLASS_CDC, \
+        .bInterfaceSubClass = USB_CDC_SUBCLASS_ACM, \
+        .bInterfaceProtocol = USB_CDC_PROTOCOL_AT, \
+        .iInterface = 0, \
+    }, \
+    .cdc_header = { \
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_header_desc_t), \
+        .bDescriptorType = USB_CDC_CS_INTERFACE, \
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_HEADER, \
+        .bcdCDC = 0x0110, \
+    }, \
+    .cdc_call_mgmt = { \
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_call_mgmt_desc_t), \
+        .bDescriptorType = USB_CDC_CS_INTERFACE, \
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_CALL_MGMT, \
+        .bmCapabilities = 0x00, \
+        .bDataInterface = 1, \
+    }, \
+    .cdc_acm = { \
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_acm_desc_t), \
+        .bDescriptorType = USB_CDC_CS_INTERFACE, \
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_ACM, \
+        .bmCapabilities = 0x02, \
+    }, \
+    .cdc_union = { \
+        .bFunctionLength = sizeof(pbdrv_usb_cdc_union_desc_t), \
+        .bDescriptorType = USB_CDC_CS_INTERFACE, \
+        .bDescriptorSubtype = USB_CDC_FUNC_SUBTYPE_UNION, \
+        .bControlInterface = 0, \
+        .bSubordinateInterface0 = 1, \
+    }, \
+    .notif_ep = { \
+        .bLength = sizeof(pbdrv_usb_ep_desc_t), \
+        .bDescriptorType = DESC_TYPE_ENDPOINT, \
+        .bEndpointAddress = 0x82, \
+        .bmAttributes = PBDRV_USB_EP_TYPE_INTR, \
+        .wMaxPacketSize = NOTIF_EP_PKT_SZ, \
+        .bInterval = 16, \
+    }, \
+    /* Data interface */ \
+    .data_iface = { \
+        .bLength = sizeof(pbdrv_usb_iface_desc_t), \
+        .bDescriptorType = DESC_TYPE_INTERFACE, \
+        .bInterfaceNumber = 1, \
+        .bAlternateSetting = 0, \
+        .bNumEndpoints = 2, \
+        .bInterfaceClass = USB_CLASS_CDC_DATA, \
+        .bInterfaceSubClass = 0, \
+        .bInterfaceProtocol = 0, \
+        .iInterface = 0, \
+    }, \
+    .ep_1_out = { \
+        .bLength = sizeof(pbdrv_usb_ep_desc_t), \
+        .bDescriptorType = DESC_TYPE_ENDPOINT, \
+        .bEndpointAddress = 0x01, \
+        .bmAttributes = PBDRV_USB_EP_TYPE_BULK, \
+        .wMaxPacketSize = (bulk_pkt_size), \
+        .bInterval = 0, \
+    }, \
+    .ep_1_in = { \
+        .bLength = sizeof(pbdrv_usb_ep_desc_t), \
+        .bDescriptorType = DESC_TYPE_ENDPOINT, \
+        .bEndpointAddress = 0x81, \
+        .bmAttributes = PBDRV_USB_EP_TYPE_BULK, \
+        .wMaxPacketSize = (bulk_pkt_size), \
+        .bInterval = 0, \
+    }
+
 static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_hs = {
     .s = {
-        .conf_desc = {
-            .bLength = sizeof(pbdrv_usb_conf_desc_t),
-            .bDescriptorType = DESC_TYPE_CONFIGURATION,
-            .wTotalLength = sizeof(pbdrv_usb_ev3_conf_1_t),
-            .bNumInterfaces = 1,
-            .bConfigurationValue = 1,
-            .iConfiguration = 0,
-            .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
-            .bMaxPower = 0,
-        },
-        .iface_desc = {
-            .bLength = sizeof(pbdrv_usb_iface_desc_t),
-            .bDescriptorType = DESC_TYPE_INTERFACE,
-            .bInterfaceNumber = 0,
-            .bAlternateSetting = 0,
-            .bNumEndpoints = 2,
-            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
-            .iInterface = 0,
-        },
-        .ep_1_out = {
-            .bLength = sizeof(pbdrv_usb_ep_desc_t),
-            .bDescriptorType = DESC_TYPE_ENDPOINT,
-            .bEndpointAddress = 0x01,
-            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
-            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_HS,
-            .bInterval = 0,
-        },
-        .ep_1_in = {
-            .bLength = sizeof(pbdrv_usb_ep_desc_t),
-            .bDescriptorType = DESC_TYPE_ENDPOINT,
-            .bEndpointAddress = 0x81,
-            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
-            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_HS,
-            .bInterval = 0,
-        },
+        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_HS),
     }
 };
 
 static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
     .s = {
-        .conf_desc = {
-            .bLength = sizeof(pbdrv_usb_conf_desc_t),
-            .bDescriptorType = DESC_TYPE_CONFIGURATION,
-            .wTotalLength = sizeof(pbdrv_usb_ev3_conf_1_t),
-            .bNumInterfaces = 1,
-            .bConfigurationValue = 1,
-            .iConfiguration = 0,
-            .bmAttributes = USB_CONF_DESC_BM_ATTR_MUST_BE_SET | USB_CONF_DESC_BM_ATTR_SELF_POWERED,
-            .bMaxPower = 0,
-        },
-        .iface_desc = {
-            .bLength = sizeof(pbdrv_usb_iface_desc_t),
-            .bDescriptorType = DESC_TYPE_INTERFACE,
-            .bInterfaceNumber = 0,
-            .bAlternateSetting = 0,
-            .bNumEndpoints = 2,
-            .bInterfaceClass = PBIO_PYBRICKS_USB_DEVICE_CLASS,
-            .bInterfaceSubClass = PBIO_PYBRICKS_USB_DEVICE_SUBCLASS,
-            .bInterfaceProtocol = PBIO_PYBRICKS_USB_DEVICE_PROTOCOL,
-            .iInterface = 0,
-        },
-        .ep_1_out = {
-            .bLength = sizeof(pbdrv_usb_ep_desc_t),
-            .bDescriptorType = DESC_TYPE_ENDPOINT,
-            .bEndpointAddress = 0x01,
-            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
-            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_FS,
-            .bInterval = 0,
-        },
-        .ep_1_in = {
-            .bLength = sizeof(pbdrv_usb_ep_desc_t),
-            .bDescriptorType = DESC_TYPE_ENDPOINT,
-            .bEndpointAddress = 0x81,
-            .bmAttributes = PBDRV_USB_EP_TYPE_BULK,
-            .wMaxPacketSize = PYBRICKS_EP_PKT_SZ_FS,
-            .bInterval = 0,
-        },
+        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_FS),
     }
 };
 
 // This dynamic buffer is needed in order to have an aligned,
 // global-lifetime buffer for sending dynamic data in response
-// to control transfers. This is used for the serial number string
-// and for Pybricks protocol requests.
+// to control transfers. This is used for the serial number string.
 static union {
     uint8_t b[EP0_BUF_SZ];
     uint32_t u[EP0_BUF_SZ / sizeof(uint32_t)];
 } pbdrv_usb_ev3_ep0_buffer;
-_Static_assert(PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE <= EP0_BUF_SZ);
+
+// CDC line coding (baud rate, stop bits, parity, data bits). The host can set
+// and get it, but we ignore the actual values since this is a virtual port.
+// Defaults to 115200 8N1.
+static union {
+    uint8_t b[USB_CDC_LINE_CODING_SIZE];
+    uint32_t u[(USB_CDC_LINE_CODING_SIZE + sizeof(uint32_t) - 1) / sizeof(uint32_t)];
+} pbdrv_usb_ev3_line_coding = {
+    .b = { 0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08 },
+};
+
+// Set while EP0 is waiting for the host to send the SET_LINE_CODING data stage.
+static bool pbdrv_usb_ep0_expect_line_coding;
 
 // Defined in pbio/platform/ev3/platform.c
 extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
@@ -269,8 +302,7 @@ _Static_assert(sizeof(usb_cppi_hpd_t) <= CPPI_DESCRIPTOR_ALIGN);
 // rather than dynamically allocating them as needed
 enum {
     CPPI_DESC_RX,
-    CPPI_DESC_TX_RESPONSE,
-    CPPI_DESC_TX_PYBRICKS_EVENT,
+    CPPI_DESC_TX,
     // the minimum number of descriptors we can allocate is 32,
     // even though we do not use nearly all of them
     CPPI_DESC_COUNT = 32,
@@ -315,8 +347,8 @@ static void usb_setup_rx_dma_desc(void) {
 
 
 // Fill in the CPPI DMA descriptor to send a packet
-static void usb_setup_tx_dma_desc(int tx_type, void *buf, uint32_t buf_len) {
-    PBDRV_UNCACHED(cppi_descriptors[tx_type]) = (usb_cppi_hpd_t) {
+static void usb_setup_tx_dma_desc(void *buf, uint32_t buf_len) {
+    PBDRV_UNCACHED(cppi_descriptors[CPPI_DESC_TX]) = (usb_cppi_hpd_t) {
         .word0 = {
             .hostPktType = CPPI_HOST_PACKET_DESCRIPTOR_TYPE,
             .pktLength = buf_len,
@@ -338,7 +370,7 @@ static void usb_setup_tx_dma_desc(int tx_type, void *buf, uint32_t buf_len) {
     pbdrv_compiler_memory_barrier();
 
     HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_SUBMITQ1 * 16) =
-        (uint32_t)(&cppi_descriptors[tx_type]) | CPPI_DESCRIPTOR_SIZE_BITS;
+        (uint32_t)(&cppi_descriptors[CPPI_DESC_TX]) | CPPI_DESCRIPTOR_SIZE_BITS;
 }
 
 // Helper function to set up CPPI DMA upon USB reset
@@ -362,6 +394,20 @@ static void usb_reset_cppi_dma(void) {
     }
     HWREGH(USB0_BASE + USB_O_TXFIFOADD) = EP0_BUF_SZ / 8;
     HWREGH(USB0_BASE + USB_O_RXFIFOADD) = (EP0_BUF_SZ + PYBRICKS_EP_PKT_SZ_HS) / 8;
+
+    // Set up the CDC notification endpoint (EP2 IN, interrupt). The host
+    // (e.g. Linux cdc_acm) requires this endpoint to exist to bind the driver,
+    // but we never send notifications, so it just NAKs forever. Its FIFO is
+    // placed after the EP1 TX and RX FIFOs.
+    HWREGB(USB0_BASE + USB_O_EPIDX) = 2;
+    HWREGB(USB0_BASE + USB_O_TXFIFOSZ) = USB_TXFIFOSZ_SIZE_8;
+    HWREGH(USB0_BASE + USB_O_TXFIFOADD) =
+        (EP0_BUF_SZ + PYBRICKS_EP_PKT_SZ_HS + PYBRICKS_EP_PKT_SZ_HS) / 8;
+    HWREGH(USB0_BASE + USB_O_TXMAXP2) = NOTIF_EP_PKT_SZ;
+    // Select TX direction for the shared endpoint FIFO.
+    HWREGB(USB0_BASE + USB_O_TXCSRH2) = USB_TXCSRH2_MODE;
+    // Reset data toggle and flush the FIFO.
+    HWREGB(USB0_BASE + USB_O_TXCSRL2) = USB_TXCSRL2_CLRDT | USB_TXCSRL2_FLUSH;
 
     // Set up the TX fifo for DMA and a stall condition
     HWREGH(USB0_BASE + USB_O_TXCSRL1) = ((USB_TXCSRH1_AUTOSET | USB_TXCSRH1_MODE | USB_TXCSRH1_DMAEN | USB_TXCSRH1_DMAMOD) << 8) | USB_TXCSRL1_STALL;
@@ -491,11 +537,6 @@ static bool usb_get_descriptor(uint16_t wValue) {
                     return true;
             }
             break;
-
-        case DESC_TYPE_BOS:
-            pbdrv_usb_setup_data_to_send = pbdrv_usb_bos_desc_set.u;
-            pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_bos_desc_set.s);
-            return true;
     }
 
     return false;
@@ -545,6 +586,7 @@ static void usb_device_intr(void) {
             HWREGH(USB0_BASE + USB_O_CSRL0) = 0;
             pbdrv_usb_setup_data_to_send = 0;
             pbdrv_usb_addr_needs_setting = false;
+            pbdrv_usb_ep0_expect_line_coding = false;
         }
 
         if (peri_csr & USB_CSRL0_SETEND) {
@@ -552,6 +594,7 @@ static void usb_device_intr(void) {
             HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_SETENDC;
             pbdrv_usb_setup_data_to_send = 0;
             pbdrv_usb_addr_needs_setting = false;
+            pbdrv_usb_ep0_expect_line_coding = false;
         }
 
         // If we got here (and didn't wipe out this flag),
@@ -562,7 +605,21 @@ static void usb_device_intr(void) {
             pbdrv_usb_addr_needs_setting = false;
         }
 
-        if (peri_csr & USB_CSRL0_RXRDY) {
+        if ((peri_csr & USB_CSRL0_RXRDY) && pbdrv_usb_ep0_expect_line_coding) {
+            // OUT data stage of a CDC SET_LINE_CODING request. Read the line
+            // coding bytes out of the FIFO. The values are ignored since this
+            // is a virtual serial port, but we store them so GET_LINE_CODING
+            // returns something consistent.
+            pbdrv_usb_ep0_expect_line_coding = false;
+            uint32_t count = HWREGB(USB0_BASE + USB_O_COUNT0);
+            for (uint32_t i = 0; i < count; i++) {
+                uint8_t byte = HWREGB(USB0_BASE + USB_O_FIFO0);
+                if (i < sizeof(pbdrv_usb_ev3_line_coding.b)) {
+                    pbdrv_usb_ev3_line_coding.b[i] = byte;
+                }
+            }
+            HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC | USB_CSRL0_DATAEND;
+        } else if (peri_csr & USB_CSRL0_RXRDY) {
             // Got a new setup packet
             pbdrv_usb_setup_packet_union_t setup_pkt;
             bool handled = false;
@@ -592,6 +649,8 @@ static void usb_device_intr(void) {
                                             // Reset data toggle, clear stall, flush fifo
                                             HWREGB(USB0_BASE + USB_O_TXCSRL1) = USB_TXCSRL1_CLRDT | USB_TXCSRL1_FLUSH;
                                             HWREGB(USB0_BASE + USB_O_RXCSRL1) = USB_RXCSRL1_CLRDT | USB_RXCSRL1_FLUSH;
+                                            // Reset the notification endpoint too.
+                                            HWREGB(USB0_BASE + USB_O_TXCSRL2) = USB_TXCSRL2_CLRDT | USB_TXCSRL2_FLUSH;
                                         } else {
                                             // deconfiguring
 
@@ -690,82 +749,32 @@ static void usb_device_intr(void) {
                     }
                     break;
 
-                case BM_REQ_TYPE_VENDOR:
-                    switch (setup_pkt.s.bRequest) {
-                        case PBDRV_USB_VENDOR_REQ_WEBUSB:
-                            if (setup_pkt.s.wIndex == WEBUSB_REQ_GET_URL && setup_pkt.s.wValue == PBDRV_USB_WEBUSB_LANDING_PAGE_URL_IDX) {
-                                pbdrv_usb_setup_data_to_send = pbdrv_usb_webusb_landing_page.u;
-                                pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_webusb_landing_page.s.bLength;
-                                handled = true;
-                            }
-                            break;
-
-                        case PBDRV_USB_VENDOR_REQ_MS_20:
-                            if (setup_pkt.s.wIndex == MS_OS_20_DESCRIPTOR_INDEX) {
-                                pbdrv_usb_setup_data_to_send = pbdrv_usb_ms_20_desc_set.u;
-                                pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ms_20_desc_set.s);
-                                handled = true;
-                            }
-                            break;
-                    }
-                    break;
-
                 case BM_REQ_TYPE_CLASS:
                     if ((setup_pkt.s.bmRequestType & BM_REQ_RECIP_MASK) != BM_REQ_RECIP_IF) {
-                        // Pybricks class requests must be directed at the interface
+                        // CDC class requests are directed at the comm interface.
                         break;
                     }
 
                     switch (setup_pkt.s.bRequest) {
-                        const char *s;
-
-                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
-                            // Standard GATT characteristic
-                            switch (setup_pkt.s.wValue) {
-                                case 0x2A00:
-                                    // GATT Device Name characteristic
-                                    s = pbdrv_bluetooth_get_hub_name();
-                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
-                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
-                                    handled = true;
-                                    break;
-
-                                case 0x2A26:
-                                    // GATT Firmware Revision characteristic
-                                    s = PBIO_VERSION_STR;
-                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
-                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
-                                    handled = true;
-                                    break;
-
-                                case 0x2A28:
-                                    // GATT Software Revision characteristic
-                                    s = PBIO_PROTOCOL_VERSION_STR;
-                                    pbdrv_usb_setup_data_to_send_sz = strlen(s);
-                                    memcpy(pbdrv_usb_ev3_ep0_buffer.b, s, pbdrv_usb_setup_data_to_send_sz);
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
-                                    handled = true;
-                                    break;
-                            }
+                        case USB_CDC_REQ_SET_LINE_CODING:
+                            // The 7-byte line coding follows in an OUT data
+                            // stage, which we read on the next RXRDY interrupt.
+                            pbdrv_usb_ep0_expect_line_coding = true;
+                            handled = true;
                             break;
 
-                        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
-                            // Pybricks characteristic
-                            switch (setup_pkt.s.wValue) {
-                                case 0x0003:
-                                    pbio_pybricks_hub_capabilities(
-                                        pbdrv_usb_ev3_ep0_buffer.b,
-                                        (pbdrv_usb_is_usb_hs ? PYBRICKS_EP_PKT_SZ_HS : PYBRICKS_EP_PKT_SZ_FS) - 1,
-                                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
-                                        pbsys_storage_get_maximum_program_size(),
-                                        PBSYS_CONFIG_HMI_NUM_SLOTS);
-                                    pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
-                                    pbdrv_usb_setup_data_to_send_sz = PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
-                                    handled = true;
-                                    break;
-                            }
+                        case USB_CDC_REQ_GET_LINE_CODING:
+                            pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_line_coding.u;
+                            pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_ev3_line_coding.b);
+                            handled = true;
+                            break;
+
+                        case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
+                            // DTR asserted means a host app opened the serial
+                            // port (analogous to a BLE host subscribing).
+                            pbdrv_usb_on_dtr_changed(
+                                (setup_pkt.s.wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
+                            handled = true;
                             break;
                     }
                     break;
@@ -779,8 +788,9 @@ static void usb_device_intr(void) {
             // We implement something similar but not identical. In general, we wait until
             // we have completely processed the request and decided what we're going to do
             // before we indicate that we are ready to progress to the next phase.
-            // We do not support any requests that require receiving data from the host,
-            // only zero-data requests or those that require sending data to the host.
+            // The only request that requires receiving data from the host is the CDC
+            // SET_LINE_CODING request, which is acknowledged here and whose data stage
+            // is read on the following EP0 RXRDY interrupt.
             // For errors or zero-data requests, we set USB_CSRL0_RXRDYC and USB_CSRL0_DATAEND
             // at the same time so that we don't get spurious SETUPEND errors
             // (which we treat as a command failure). For requests that require sending data,
@@ -789,6 +799,10 @@ static void usb_device_intr(void) {
             if (!handled) {
                 // Indicate we read the packet, but also send stall
                 HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC | USB_CSRL0_STALL;
+            } else if (pbdrv_usb_ep0_expect_line_coding) {
+                // Acknowledge the SETUP only; the host to device data stage is
+                // received on the next EP0 RXRDY interrupt.
+                HWREGH(USB0_BASE + USB_O_CSRL0) = USB_CSRL0_RXRDYC;
             } else {
                 if (pbdrv_usb_setup_data_to_send) {
                     // Indicate we read the packet
@@ -867,10 +881,7 @@ static void usb_device_intr(void) {
         // Pop the descriptor from the queue
         uint32_t qctrld = HWREG(USB_0_OTGBASE + CPDMA_QUEUE_REGISTER_D + TX_COMPQ1 * 16) & ~CPDMA_QUEUE_REGISTER_DESC_SIZE_MASK;
 
-        if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_RESPONSE])) {
-            transmitting = false;
-            pbio_os_request_poll();
-        } else if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX_PYBRICKS_EVENT])) {
+        if (qctrld == (uint32_t)(&cppi_descriptors[CPPI_DESC_TX])) {
             transmitting = false;
             pbio_os_request_poll();
         }
@@ -1032,33 +1043,33 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (transmitting) {
-        DEBUG_PRINT("Cannot transmit USB event, busy.\n");
+        DEBUG_PRINT("Cannot transmit USB chunk, busy.\n");
         return PBIO_ERROR_BUSY;
     }
 
     transmitting = true;
     pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
 
-    // Transmit event.
+    // Transmit the raw bytes. Framing is handled by the common driver.
     pbdrv_cache_prepare_before_dma(data, size);
-    usb_setup_tx_dma_desc(CPPI_DESC_TX_PYBRICKS_EVENT, (uint8_t *)data, size);
+    usb_setup_tx_dma_desc((uint8_t *)data, size);
 
     PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
 
     if (pbio_os_timer_is_expired(&timer)) {
         // Transmission has taken too long, so reset the state to allow
         // new transmissions. This can happen if the host stops reading
-        // data for some reason. This need some time to complete, so delegate
+        // data for some reason. This needs some time to complete, so delegate
         // the reset back to the process.
-        DEBUG_PRINT("USB event timed out\n");
-        return PBIO_SUCCESS;
+        DEBUG_PRINT("USB chunk timed out\n");
+        return PBIO_ERROR_TIMEDOUT;
     }
     #if DEBUG
     uint32_t elapsed_ms = pbdrv_clock_get_ms() - timer.start;
@@ -1066,39 +1077,6 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
         DEBUG_PRINT("Slow tx (ms) %u\n", elapsed_ms);
     }
     #endif
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
-
-    static uint8_t ep1_tx_response_buf[1 + sizeof(uint32_t)] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    if (transmitting) {
-        DEBUG_PRINT("Cannot transmit USB response, busy.\n");
-        return PBIO_ERROR_BUSY;
-    }
-
-    transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
-
-    // Response is just the error code.
-    pbio_set_uint32_le(&ep1_tx_response_buf[1], code);
-
-    // Transmit response.
-    pbdrv_cache_prepare_before_dma(ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
-    usb_setup_tx_dma_desc(CPPI_DESC_TX_RESPONSE, ep1_tx_response_buf, sizeof(ep1_tx_response_buf));
-
-    // Wait until complete or trigger reset on timeout.
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
-    if (pbio_os_timer_is_expired(&timer)) {
-        DEBUG_PRINT("USB response timed out\n");
-        return PBIO_ERROR_TIMEDOUT;
-    }
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 

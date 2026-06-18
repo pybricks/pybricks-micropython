@@ -31,15 +31,9 @@
 #include "./usb.h"
 #include "./usb_stm32.h"
 
-
-#if USBD_PYBRICKS_MAX_PACKET_SIZE != PBDRV_CONFIG_USB_MAX_PACKET_SIZE
-#error Inconsistent USB packet size
-#endif
-
 // These buffers need to be 32-bit aligned because the USB driver moves data
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
-static uint8_t usb_response_buf[PBIO_PYBRICKS_USB_MESSAGE_SIZE(sizeof(uint32_t))] __aligned(4) = { PBIO_PYBRICKS_IN_EP_MSG_RESPONSE };
 static volatile uint32_t usb_in_sz;
 static volatile bool transmitting;
 
@@ -217,66 +211,11 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
     return USBD_OK;
 }
 
-static USBD_StatusTypeDef Pybricks_Itf_ReadCharacteristic(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req) {
-    USBD_StatusTypeDef ret = USBD_OK;
-
-    switch (req->bRequest) {
-        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
-            switch (req->wValue) {
-                case 0x2A00: {
-                    // GATT Device Name characteristic
-                    const char *name = pbdrv_bluetooth_get_hub_name();
-                    (void)USBD_CtlSendData(pdev, (uint8_t *)name, MIN(strlen(name), req->wLength));
-                }
-                break;
-
-                case 0x2A26: {
-                    // GATT Firmware Revision characteristic
-                    const char *fw_version = PBIO_VERSION_STR;
-                    (void)USBD_CtlSendData(pdev, (uint8_t *)fw_version, MIN(strlen(fw_version), req->wLength));
-                }
-                break;
-
-                case 0x2A28: {
-                    // GATT Software Revision characteristic
-                    const char *sw_version = PBIO_PROTOCOL_VERSION_STR;
-                    (void)USBD_CtlSendData(pdev, (uint8_t *)sw_version, MIN(strlen(sw_version), req->wLength));
-                }
-                break;
-
-                default:
-                    USBD_CtlError(pdev, req);
-                    ret = USBD_FAIL;
-                    break;
-            }
-            break;
-        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
-            switch (req->wValue) {
-                case 0x0003: {
-                    // Pybricks hub capabilities characteristic
-                    uint8_t caps[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-                    pbio_pybricks_hub_capabilities(caps,
-                        USBD_PYBRICKS_MAX_PACKET_SIZE - 1,
-                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
-                        pbsys_storage_get_maximum_program_size(),
-                        PBSYS_CONFIG_HMI_NUM_SLOTS);
-                    (void)USBD_CtlSendData(pdev, caps, MIN(sizeof(caps), req->wLength));
-                }
-                break;
-
-                default:
-                    USBD_CtlError(pdev, req);
-                    ret = USBD_FAIL;
-                    break;
-            }
-            break;
-        default:
-            USBD_CtlError(pdev, req);
-            ret = USBD_FAIL;
-            break;
-    }
-
-    return ret;
+static USBD_StatusTypeDef Pybricks_Itf_SetControlLineState(bool dtr) {
+    // The DTR signal indicates whether a host application has opened the serial
+    // port. This is the USB analog of a BLE host subscribing to notifications.
+    pbdrv_usb_on_dtr_changed(dtr);
+    return USBD_OK;
 }
 
 USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
@@ -284,7 +223,7 @@ USBD_Pybricks_ItfTypeDef USBD_Pybricks_fops = {
     .DeInit = Pybricks_Itf_DeInit,
     .Receive = Pybricks_Itf_Receive,
     .TransmitCplt = Pybricks_Itf_TransmitCplt,
-    .ReadCharacteristic = Pybricks_Itf_ReadCharacteristic,
+    .SetControlLineState = Pybricks_Itf_SetControlLineState,
 };
 
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
@@ -292,7 +231,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
@@ -307,31 +246,6 @@ pbio_error_t pbdrv_usb_tx_event(pbio_os_state_t *state, const uint8_t *data, uin
     USBD_Pybricks_TransmitPacket(&husbd, (uint8_t *)data, size);
     PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
 
-    if (pbio_os_timer_is_expired(&timer)) {
-        return PBIO_ERROR_TIMEDOUT;
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-pbio_error_t pbdrv_usb_tx_response(pbio_os_state_t *state, pbio_pybricks_error_t code) {
-
-    static pbio_os_timer_t timer;
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    if (transmitting) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    transmitting = true;
-    pbio_os_timer_set(&timer, PBDRV_USB_TRANSMIT_TIMEOUT);
-
-    pbio_set_uint32_le(&usb_response_buf[1], code);
-
-    USBD_Pybricks_TransmitPacket(&husbd, usb_response_buf, sizeof(usb_response_buf));
-
-    PBIO_OS_AWAIT_UNTIL(state, !transmitting || pbio_os_timer_is_expired(&timer));
     if (pbio_os_timer_is_expired(&timer)) {
         return PBIO_ERROR_TIMEDOUT;
     }
