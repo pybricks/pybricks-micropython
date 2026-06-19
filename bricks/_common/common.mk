@@ -160,7 +160,7 @@ GIT = git
 ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
-PYBRICKSDEV = pybricksdev
+PYBRICKSDEV = $(PYTHON) $(PBTOP)/tools/flash
 METADATA = $(PBTOP)/tools/metadata.py
 MEDIA_CONVERT = $(PBTOP)/lib/pbio/src/image/media.py
 FONT_CONVERT = $(PBTOP)/lib/pbio/src/image/fontconvert.py
@@ -835,7 +835,7 @@ $(BUILD)/%.dfu: $(BUILD)/%-base.bin
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 deploy: $(BUILD)/firmware.zip
-	$(Q)$(PYBRICKSDEV) flash $< $(if $(filter-out nxt ev3,$(PBIO_PLATFORM)),--name $(PBIO_PLATFORM))
+	$(Q)$(PYBRICKSDEV) $< $(if $(filter-out nxt ev3,$(PBIO_PLATFORM)),--name $(PBIO_PLATFORM))
 
 deploy-openocd: $(BUILD)/firmware-base.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"

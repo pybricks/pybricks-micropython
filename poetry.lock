@@ -22,18 +22,6 @@ typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 trio = ["trio (>=0.31.0)"]
 
 [[package]]
-name = "appdirs"
-version = "1.4.4"
-description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
-optional = false
-python-versions = "*"
-groups = ["dev"]
-files = [
-    {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
-    {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},
-]
-
-[[package]]
 name = "argcomplete"
 version = "3.6.3"
 description = "Bash tab completion for argparse"
@@ -125,31 +113,32 @@ files = [
 
 [[package]]
 name = "bleak"
-version = "1.1.1"
+version = "3.0.2"
 description = "Bluetooth Low Energy platform Agnostic Klient"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "bleak-1.1.1-py3-none-any.whl", hash = "sha256:e601371396e357d95ee3c256db65b7da624c94ef6f051d47dfce93ea8361c22e"},
-    {file = "bleak-1.1.1.tar.gz", hash = "sha256:eeef18053eb3bd569a25bff62cd4eb9ee56be4d84f5321023a7c4920943e6ccb"},
+    {file = "bleak-3.0.2-py3-none-any.whl", hash = "sha256:39092feb9e83f1df5ad2f88e837723c7211c982ce9e9cda6235104bc2ebe0d0d"},
+    {file = "bleak-3.0.2.tar.gz", hash = "sha256:c2229cb8238d5876b4bd05c74bf7a1aea1f88da39d2e51ac9dfd5cc319d5265f"},
 ]
 
 [package.dependencies]
-async-timeout = {version = ">=3.0.0", markers = "python_version < \"3.11\""}
-dbus-fast = {version = ">=1.83.0", markers = "platform_system == \"Linux\""}
-pyobjc-core = {version = ">=10.3", markers = "platform_system == \"Darwin\""}
-pyobjc-framework-CoreBluetooth = {version = ">=10.3", markers = "platform_system == \"Darwin\""}
-pyobjc-framework-libdispatch = {version = ">=10.3", markers = "platform_system == \"Darwin\""}
-typing-extensions = {version = ">=4.7.0", markers = "python_version < \"3.12\""}
-winrt-runtime = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Devices.Bluetooth" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Devices.Bluetooth.Advertisement" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Devices.Bluetooth.GenericAttributeProfile" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Devices.Enumeration" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Foundation" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Foundation.Collections" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
-"winrt-Windows.Storage.Streams" = {version = ">=3.1", markers = "platform_system == \"Windows\""}
+async-timeout = {version = ">=3.0.0", markers = "python_full_version < \"3.11.0\""}
+dbus-fast = {version = ">=1.83.0", markers = "sys_platform == \"linux\""}
+pyobjc-core = {version = ">=10.3", markers = "sys_platform == \"darwin\""}
+pyobjc-framework-corebluetooth = {version = ">=10.3", markers = "sys_platform == \"darwin\""}
+pyobjc-framework-libdispatch = {version = ">=10.3", markers = "sys_platform == \"darwin\""}
+typing-extensions = {version = ">=4.7.0", markers = "python_full_version < \"3.12.0\""}
+winrt-runtime = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-devices-bluetooth = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-devices-bluetooth-advertisement = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-devices-bluetooth-genericattributeprofile = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-devices-enumeration = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-devices-radios = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-foundation = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-foundation-collections = {version = ">=3.1", markers = "sys_platform == \"win32\""}
+winrt-windows-storage-streams = {version = ">=3.1", markers = "sys_platform == \"win32\""}
 
 [package.extras]
 pythonista = ["bleak-pythonista (>=0.1.1)"]
@@ -613,7 +602,7 @@ description = "A faster version of dbus-next"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Linux\""
+markers = "sys_platform == \"linux\""
 files = [
     {file = "dbus_fast-2.44.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c66f60b7b5aef557b2d46da8041865fb7af39bc286e52a70ce0fd62c4fcf739c"},
     {file = "dbus_fast-2.44.5-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:71f169fd10ce694d6859038687fbfde735c7b0e57970d7b78442a7ef328e22cc"},
@@ -1033,95 +1022,94 @@ files = [
 
 [[package]]
 name = "hidapi"
-version = "0.14.0.post4"
+version = "0.15.0"
 description = "A Cython interface to the hidapi from https://github.com/libusb/hidapi"
 optional = false
 python-versions = "*"
 groups = ["dev"]
 files = [
-    {file = "hidapi-0.14.0.post4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:01747e681d138ec614321ef6f069e5be3743fa210112e529a34d3e99635e4ac0"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8e20d0a1298a4bd342d7d927d928f1a5a29e5fc9dbf9a79e95dc6e2d386d5070"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f0cc21e82e95cb92ef951df8eb8acf5626ac8fa14ab5292abdab1b2349970445"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:cb1a2b5da0dcfab6837281342d1785cc373484bd3f27bd06fd2211d88075a7bd"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e11d475429a1bc943ceac4ad8da4be63b240e00da5e10863fc3cbd9a35fdb51c"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:2d1c102f754b2085b270e7c29cb8a148ffb05e10325c373d05ac16e2cbce131c"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:7d099c259aadcab2bc3f4fb5a1db579ec886c2cade7533016f62778235150746"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:80fa94668d21b12daf62b034f647d71236470a8ba9a7580e220c47e9c119d932"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-win32.whl", hash = "sha256:21ebd1420db116733536fae227f1cb30ad74bded5090269cdda4facfa73a8867"},
-    {file = "hidapi-0.14.0.post4-cp310-cp310-win_amd64.whl", hash = "sha256:a90cfdd29c10425cd4e4cff34adb12d25048561fc946f3562679e45721060a1c"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:74ae8ce339655b2568d74e49c8ef644d34a445dd0a9b4b89d1bf09447b83f5af"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:e749b79d9cafc1e9fd9d397d8039377c928ca10a36847fda6407169513802f68"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4169893fe5e368777fce7575a8bdedc1861f13d8fb9fda6b05e8155dde6eb7f1"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0d51f8102a2441ce22e080576f8f370d25cb3962161818a89f236b0401840f18"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ff021ed0962f2d5d67405ae53c85f6cb3ab8c5af3dff7db8c74672f79f7a39d1"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:d8ab5ba9fce95e342335ef48640221a46600c1afb66847432fad9823d40a2022"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:56d7538a4e156041bb80f07f47c327f8944e39da469b010041ce44e324d0657c"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:a28de4a03fc276614518d8d0997d8152d0edaf8ca9166522316ef1c455e8bc29"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-win32.whl", hash = "sha256:348e68e3a2145a6ec6bebce13ffdf3e5883d8c720752c365027f16e16764def6"},
-    {file = "hidapi-0.14.0.post4-cp311-cp311-win_amd64.whl", hash = "sha256:5a5af70dad759b45536a9946d8232ef7d90859845d3554c93bea3e790250df75"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:129d684c2760fafee9014ce63a58d8e2699cdf00cd1a11bb3d706d4715f5ff96"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:4f04de00e40db2efc0bcdd047c160274ba7ccd861100fd87c295dd63cb932f2f"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:10a01af155c51a8089fe44e627af2fbd323cfbef7bd55a86837d971aef6088b0"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:6eaff1d120c47e1a121eada8dc85eac007d1ed81f3db7fc0da5b6ed17d8edefb"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fedb9c3be6a2376de436d13fcb37a686a9b6bc988585bcc4f5ec61cad925e794"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:6270677da02e86b56b81afd5f6f313736b8315b493f3c8a431da285e3a3c5de9"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:da700db947562f8c0ac530215b74b5a27e4c669916ec99cfb5accd14ba08562c"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:707b1ebf5cb051b020e94b039e603351bf2e6620b48fc970228e0dd5d3a91fca"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-win32.whl", hash = "sha256:1487312ad50cf2c08a5ea786167b3229afd6478c4b26974157c3845a84e91231"},
-    {file = "hidapi-0.14.0.post4-cp312-cp312-win_amd64.whl", hash = "sha256:8d924bd002a1c17ca51905b3b7b3d580e80ec211a9b8fe4667b73db0ff9e9b54"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:6f96ae777e906f0a9d6f75e873313145dfec2b774f558bfcae8ba34f09792460"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:6439fc9686518d0336fac8c5e370093279f53c997540065fce131c97567118d8"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2acadb4f1ae569c4f73ddb461af8733e8f5efcb290c3d0ef1b0671ba793b0ae3"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:884fa003d899113e14908bd3b519c60b48fc3cec0410264dcbdad1c4a8fc2e8d"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8a2d466b995f8ff387d68c052d3b74ee981a4ddc4f1a99f32f2dc7022273dc11"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:e1f6409854c0a8ed4d1fdbe88d5ee4baf6f19996d1561f76889a132cb083574d"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:bca568a2b7d0d454c7921d70b1cc44f427eb6f95961b6d7b3b9b4532d0de74ef"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:9f14ac2737fd6f58d88d2e6bf8ebd03aac7b486c14d3f570b7b1d0013d61b726"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-win32.whl", hash = "sha256:b6b9c4dbf7d7e2635ff129ce6ea82174865c073b75888b8b97dda5a3d9a70493"},
-    {file = "hidapi-0.14.0.post4-cp313-cp313-win_amd64.whl", hash = "sha256:87218eeba366c871adcc273407aacbabab781d6a964919712d5583eded5ca50f"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:e9af3c9191b7a4dade9152454001622519f4ecfa674b78929b739cfbf4b35d51"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a2c4c3b3d77b759a4a118aa8428da1daf21c01b49915f44d7a3f198bcee4aa7b"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:5c14c54cbfd45553cd3e6a23014f8e8f2d12c41cd2783e84c2cb774976d4648f"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:04357092b39631d8034b17fd111c5583be2790ad7979ac1983173344d28824e7"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-musllinux_1_2_aarch64.whl", hash = "sha256:949f437f517e81bc567429f41fb1e67349046eb43e52d47b2852b5847de452ee"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-musllinux_1_2_i686.whl", hash = "sha256:f787b76288450f60250895597dabb080894f0ea09ad5df0433412fee42452435"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-musllinux_1_2_x86_64.whl", hash = "sha256:41d532d5a358a63db4d7fc1e57ea107150445c90167b39ba6f8fb84597396a48"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-win32.whl", hash = "sha256:3253d198b193065d633cde3f9a59dabeeb1608ece26f0f319a151e8c7775d7ae"},
-    {file = "hidapi-0.14.0.post4-cp36-cp36m-win_amd64.whl", hash = "sha256:1bee0f731874d78367a3bf131cb0325578bc9fee0678ed00c4ca3ded45d11c20"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:1807ff8abe3c5dcfa9d8acd71b1ab9f0aeb69cdbb039ddcbb150ed9fbbfd1ba7"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4939faf6382d1c89462e72aa08636bbfe97ecb5464a34b14997e0ca3e1f92906"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:ac3e6e794a0fd6ee4634bf1beea1c3c91ab6faf8b16f3f672a42541f9c5ea41f"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c45a493dffdfe614a9943a8c7f0df617254f836f1242478f7780fbeafb18a131"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-musllinux_1_2_aarch64.whl", hash = "sha256:142374bb39c8973c6d04a2b8b767d64891741d05b09364b32531d9389c3a15bb"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-musllinux_1_2_i686.whl", hash = "sha256:da777638f5ecf9ef6c979f6c793417f54104d56ac99a48312d6f7e47858c2dd8"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-musllinux_1_2_x86_64.whl", hash = "sha256:20a466e4cf2230687d21f55ffffb1a2384a2262fc343e507dd01d1ab981f7573"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-win32.whl", hash = "sha256:ff67139fbaa91eed55e7e916bdc1ccdaf8c909a80a9c480011caa65c4ba82a97"},
-    {file = "hidapi-0.14.0.post4-cp37-cp37m-win_amd64.whl", hash = "sha256:1304fdeb694f581c46e7b0d6aebc6adfa66219177f04cacddbec0bd906bd5b7c"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:9e4b462fc1f2b160442618448132aebadb71c06b6eb7654eae4385c490100a67"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:68d7e9ba5c48e50f322057b9f88d799c105b5d46c966981aa8e5047b6091541f"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:293b207e737df4577d27661c5135e7c16976f706d3739d7a53a169dde1aaebaa"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:a18af6ebd751eea7ddfb093ddf7d0371b05ba0f9a2f8593c7255a34e6bd753ff"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:380a74e743afe7a0241e0efce73ce9697f41d4e2e0a030be5458a44f9119427a"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:6e08884ee9e1e3963701c1cdf22edd17c7ff708728f163efc396964460b3f9b4"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:fbd2835ff193d0261e0de375fea006cb7cb18a30ae1657af48a43e381f6a0995"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:6b424ec16068d58d13fb67c7fb728824a3888f8f7fb6ffa3c82d5a54d8b74b7f"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-win32.whl", hash = "sha256:8de94caca7f2616e41466c0ccdf7a96f567914e9e85e89e0b607018777fc0755"},
-    {file = "hidapi-0.14.0.post4-cp38-cp38-win_amd64.whl", hash = "sha256:1591e98c0e6db4cc1e34e96295b4ea68eaf37d365d664570441388869e8e3618"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:58a0a0c029886de8b301ce1ee2e7fd6914ae1ca49feb37cc9930c26baa683427"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:e70eab52781e58e819730d99e3c825e92c15ec2138b6902ed078c8cd73317ce0"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:97192b7756dd854cb2ebc8a1862ffa009cdc203e0399777764462cae3c459d58"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:f27c74deda0282a97dd0f006fd79d6d08fdb16c7a3ba156d52fce85e48515b0a"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c8f722864a03c1d243a9538f0872e233d07fc3fe1d945c66c0cb632060d6d009"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:f67e60eaa287e0fa35223f2d1f9afda81dd7312c7ba07e08fbdaf1af8a923530"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:fa66391be8acb358b381c30f32be5880d591a3358e531d980832d593dfe83d5a"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:f3ce310d366335e1ac9416d8e4a27d6eef2ae896fbee0135484d39d001711bea"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-win32.whl", hash = "sha256:60115947607b8b0a719420726a541bad68728ece38b20654e81fef77c9e0bd2f"},
-    {file = "hidapi-0.14.0.post4-cp39-cp39-win_amd64.whl", hash = "sha256:21627bb8a0e2023da1dfb7cb7b970c30d6a86e6498721f1123d018b2f64b426f"},
-    {file = "hidapi-0.14.0.post4.tar.gz", hash = "sha256:48fce253e526d17b663fbf9989c71c7ef7653ced5f4be65f1437c313fb3dbdf6"},
+    {file = "hidapi-0.15.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b0e1781f7fb8b4015e318d839d66fa79e98900d53900e31d04edb336e0103846"},
+    {file = "hidapi-0.15.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:1fa3e792987d4b7ed66d785491307e23d4f09d3636f8a23665a9694c43e92409"},
+    {file = "hidapi-0.15.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:75c2d3b83a8300953653ddd7f5190d5ee6072d4a6ee5944db47e92d97344ed92"},
+    {file = "hidapi-0.15.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:91b43099b123363c8935a264acffb4c7e5c8dba3390f9b2bf19ff76597677a31"},
+    {file = "hidapi-0.15.0-cp310-cp310-manylinux_2_28_i686.whl", hash = "sha256:cea09ccc3efa5b92ab18d3ae8636836edce2c421d67ed4409761da090e230e5a"},
+    {file = "hidapi-0.15.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:b2de66142cf780ee7c797b7c35e488d67bccdf2de98178ac12a4038c490c44ea"},
+    {file = "hidapi-0.15.0-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:e283c3e9255850d66152adbf580744d38c840d399141b98d64d359cb97cbc128"},
+    {file = "hidapi-0.15.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:5b9f6d2f3bc15c718d8e2ce349d2d019a0fcc343ed1a705a91d0f1c7e792d6ea"},
+    {file = "hidapi-0.15.0-cp310-cp310-win32.whl", hash = "sha256:81de6b5fcb4fbbbfc71c6d201a2ac6914d1d86e51930ffde5f96faf50e922473"},
+    {file = "hidapi-0.15.0-cp310-cp310-win_amd64.whl", hash = "sha256:c36895abaef3a4004af6c5020ca214fcdacb2a491e4cde5576afbb1dad903548"},
+    {file = "hidapi-0.15.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:53d018e6ac639a217c019c6dcd79a1d30c2401ac7a8147eedd11f2aa29307661"},
+    {file = "hidapi-0.15.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a11ef4b5ab0a2f36e35f44af394bff41cb645b03ce36c5b2f2c00873f112661f"},
+    {file = "hidapi-0.15.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:e47d4fe13ddfc63fd1961974e10f3c7d50a57ae0bb73974e465cfe95dad5da18"},
+    {file = "hidapi-0.15.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:f39917c9e9bea895384b1a8869159d808b4a53561af9b4f7c3148bdf6bfd97a0"},
+    {file = "hidapi-0.15.0-cp311-cp311-manylinux_2_28_i686.whl", hash = "sha256:f4d294fcd2551fb5b41d5f478a08e8945382e1d86d7d40320d02594922d6b667"},
+    {file = "hidapi-0.15.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:68cb85467151a3d4aa6ab4e11ca89a87c2404a778dbccb8fb5ae51e998133bb3"},
+    {file = "hidapi-0.15.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:06fbcd7696ad768d7e9500b64e2ae742b5d90a2531b5aa8d355c0f049516a09d"},
+    {file = "hidapi-0.15.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:221e3a0c181503061bfc4a672eccd9f86b1da1167b31914be00d919edfd6e1bf"},
+    {file = "hidapi-0.15.0-cp311-cp311-win32.whl", hash = "sha256:2c35bd9cc62227ec91047e36b260f75bdbf50814f3cf3c3b28648ac3ffabd9d7"},
+    {file = "hidapi-0.15.0-cp311-cp311-win_amd64.whl", hash = "sha256:c5f7ee9ce8e3373fdb7002497f16bc652d9d4acf20c91275877f55165caf6f0c"},
+    {file = "hidapi-0.15.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:0b7eb950214191c936b5bdabaeaf1cab99c0dfc3ae3edc220e3c6d4547296053"},
+    {file = "hidapi-0.15.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:27933e7f3da7007e5e8d0b25bcf48a79a74e802555e496bba2c7d87f8a77cd61"},
+    {file = "hidapi-0.15.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:cfdbc74d5c4b5fdeef58a246d80f7dbf4ca33fe741c889505a4a350dd2eb54fb"},
+    {file = "hidapi-0.15.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:4b7b6207c1c7df3524e9d4019c7196547327636e9924010b9b0bf0c40029e329"},
+    {file = "hidapi-0.15.0-cp312-cp312-manylinux_2_28_i686.whl", hash = "sha256:908e4b8c35041aa800b51094fd9fbaa5d6161bfb71e55821f43c6433f54e2865"},
+    {file = "hidapi-0.15.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:f9356fffebf723ccfbf0f9370d3725de37b3e2f1f6bffc40c3466f854542861c"},
+    {file = "hidapi-0.15.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:fd082e13ca92bbd7a4ec65d9fbd9ef06ecd71798ce9f036b7144b3d498623a7e"},
+    {file = "hidapi-0.15.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:35eb5797d86306bd67aee80ad8973ab0a0b4e6d54018d3efb328767d0e8c9373"},
+    {file = "hidapi-0.15.0-cp312-cp312-win32.whl", hash = "sha256:ce6f99554dae15c48cd89a12d5aede77a92a8bd184b45d0b257a17c97e053cdb"},
+    {file = "hidapi-0.15.0-cp312-cp312-win_amd64.whl", hash = "sha256:9abc71a62bf8a8f1d70a6fd3613f86feb37ddb67e05ed934e734df79e27bf4f6"},
+    {file = "hidapi-0.15.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:f336dd2dc308928d54a6fdce137814a941a3633ad6722919d7a3142dd99005c2"},
+    {file = "hidapi-0.15.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:8017f2213810c3e57d9ab64c2328c593a1129b25804240108a6451fe35cde193"},
+    {file = "hidapi-0.15.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:208c7fc89f78c3448d55957c3e12893778aa91218ed7dc22697e554f091fe4fe"},
+    {file = "hidapi-0.15.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:90f8bd963ae43a44036af5d689d090fab0e3eb52861186e4d2b863dd910a2726"},
+    {file = "hidapi-0.15.0-cp313-cp313-manylinux_2_28_i686.whl", hash = "sha256:cd6edc7af885755163f4ffb29639c14f8a4ad5cca13ed641e47aa11f9646d8b6"},
+    {file = "hidapi-0.15.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:6ef0f80b2ff32ba446c9a2d4bfca6623ab5f0c05d742a0161ea1f7af2dc33b12"},
+    {file = "hidapi-0.15.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:6106d10873c1e465a2764e979fb96ec0d16bb926eedac829310830f90816cc76"},
+    {file = "hidapi-0.15.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4f7a710df215ea3b53a81029488f78e7303b83f01a2e8478db20d7c9756588dd"},
+    {file = "hidapi-0.15.0-cp313-cp313-win32.whl", hash = "sha256:e4ddb57e71e2b8aca2c685b94b8587dc7d7cfae3c529a7c4076ba0775eb28d4a"},
+    {file = "hidapi-0.15.0-cp313-cp313-win_amd64.whl", hash = "sha256:04e0c1ed6d742bc6e1d00599394bec6b2afb8ee2fc5a0a183d3c4c2d4e315c34"},
+    {file = "hidapi-0.15.0-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:0a6bb079bcd5152dd8968893aecdcbde3954b849896078f54df2254c0d1f301e"},
+    {file = "hidapi-0.15.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:d80c745d285dfc9889e856226daa8eee6f9e83025ef2cb97e5fe0b1396f7818a"},
+    {file = "hidapi-0.15.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b0f4411fd479345ca86742d9dda77200476a902749d8e47ed438f31ec98af418"},
+    {file = "hidapi-0.15.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:d93f7173dcbec61b928f4cf800bf26535f81ef3b7bd89199237207f6ca7e4f43"},
+    {file = "hidapi-0.15.0-cp314-cp314-manylinux_2_28_i686.whl", hash = "sha256:dacf0b9e5d776fde69b92d68c09ab878a09486629e1fe8e6ae851252b0f33ce5"},
+    {file = "hidapi-0.15.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:bda6ce04a77662e77a4b6b2598211935ca281e1cf663248d54bce75bd684fed8"},
+    {file = "hidapi-0.15.0-cp314-cp314-musllinux_1_2_i686.whl", hash = "sha256:74900b5c7e884e0e4316d4deb746e5dd294b5aaaf90eac056c4f9f19cf2c8097"},
+    {file = "hidapi-0.15.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:76236468509dfcb256fa0fbd5a73708c598b3819695b7d08499ae489c82116b6"},
+    {file = "hidapi-0.15.0-cp314-cp314-win32.whl", hash = "sha256:901c03817306eac7edd589f09e0e07467871b45f665949cc4caa645b54abc97b"},
+    {file = "hidapi-0.15.0-cp314-cp314-win_amd64.whl", hash = "sha256:df0dd435562654e27ad0c7d045074eb1e1e016b09167dd48a258dec1ce4b9127"},
+    {file = "hidapi-0.15.0-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:2f16e9ea8a1d24ac7a6bf316905823eafd58f78ec815a93118d4710faf95a224"},
+    {file = "hidapi-0.15.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:77f0965ca81a9be44694e84aa18e501d5cda49e372202a38a52d22acc38deadd"},
+    {file = "hidapi-0.15.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:541c85b8225ce19b38ceacd404283ca1857345ccfa7ca12f54131203ff2d7f75"},
+    {file = "hidapi-0.15.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:89f909a6783307c2f067e8e7948f38ec43386f15d04759d11e5b32e3b2fdf3d8"},
+    {file = "hidapi-0.15.0-cp314-cp314t-manylinux_2_28_i686.whl", hash = "sha256:fd32f311633fad21a52e750775cd4ea23da912199c63d1331f4d8ae00ab0874b"},
+    {file = "hidapi-0.15.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8f7ca38699557ab057333f1628a346073ae6088c09897b2cd9fbc68f4896780c"},
+    {file = "hidapi-0.15.0-cp314-cp314t-musllinux_1_2_i686.whl", hash = "sha256:1c4e707c82629637a311fa1a7adc1ae1386de7b539e84b4e37125e52e449318d"},
+    {file = "hidapi-0.15.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:cc99bb16b359023190bf857297f6492a1c8441ccacff66dac881c9e278f5c262"},
+    {file = "hidapi-0.15.0-cp314-cp314t-win32.whl", hash = "sha256:005c84c74c940a314b211674edc763a931ace0b63685ace88148496f563e25f9"},
+    {file = "hidapi-0.15.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e384430363d400c4ffb33fe65f22a61c9f288a870158dc5a9f5c9d917b7250c7"},
+    {file = "hidapi-0.15.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:2f4516343baed032c2768d1074a3534fce783a06381314e99a575e945df35dbd"},
+    {file = "hidapi-0.15.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:28e2d94d0f08e2a63ede843aa58386e0dcf1aecdc730a30f9c47535cd77d9017"},
+    {file = "hidapi-0.15.0-cp38-cp38-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:47e4e3b1fccd338be4d2429b66b52b3470c8c67c4a9f35a6c21ef41cbe3a0fa2"},
+    {file = "hidapi-0.15.0-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:8466260e6a334f7743dc0646abf39ad68afc2be7b3e76d0313d4afe1146beca8"},
+    {file = "hidapi-0.15.0-cp38-cp38-manylinux_2_28_i686.whl", hash = "sha256:51532033b67e4a8a839d747c903ee3dfd2ac7d7a5af27fd6409effe8edbb7df6"},
+    {file = "hidapi-0.15.0-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:f90042665e0a23613938bfd0f51ce9c37143b954f00ad02d40a33553397bcf73"},
+    {file = "hidapi-0.15.0-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:e4bf11067d290a7f45c0be73232093820ab62954aad4dbc77884cf6b87a11d84"},
+    {file = "hidapi-0.15.0-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:b676f6cb2c4990ea56c8de1f154582d1fb8cfc44bc9c6522a3182df080bdb128"},
+    {file = "hidapi-0.15.0-cp38-cp38-win32.whl", hash = "sha256:d358744d2a68d04df435f1838fd6d3c000cac5e2e668aba50e3e25fb2eb6ca75"},
+    {file = "hidapi-0.15.0-cp38-cp38-win_amd64.whl", hash = "sha256:cce33c262ad86a84b741d8f1c6e87eb8a98e424f6c2f9ebdf9a4a9b72b7ad214"},
+    {file = "hidapi-0.15.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:3d220314975b99a083f4ee21abfd796a9ceeb99cbf3487a41c5eb80269102a4a"},
+    {file = "hidapi-0.15.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:bc61ab7f45dddbb2df2fca93565c575c0b035337d1e13ce2868c092ff24e9c47"},
+    {file = "hidapi-0.15.0-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:aefc2afd146733e3ec8b33474bfb832c9281dd106309a216a20bade19dc0e95f"},
+    {file = "hidapi-0.15.0-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:ef3b43b1a4d4df8ea542487cda888138eaac4707db46bbca0f7bb78d97a06323"},
+    {file = "hidapi-0.15.0-cp39-cp39-manylinux_2_28_i686.whl", hash = "sha256:0608a882f06d7f37e0f1786e255e9a8b1e2386fdb8f9fb9d209b82682551f4b8"},
+    {file = "hidapi-0.15.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:788e16711a4530a2a7a8a4cd942f7250fa7f907a3be892b11d8eb51ec697739a"},
+    {file = "hidapi-0.15.0-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:48e79274384c23b250bc95016c8aa6497cf0a23b3a112d05376cbf5ace266886"},
+    {file = "hidapi-0.15.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:c49aa659ecfe46a93a7057bca42208bfd123c2fcbdfd4a28eb1f9b8189260b68"},
+    {file = "hidapi-0.15.0-cp39-cp39-win32.whl", hash = "sha256:27d288d405bd4abedd047eefb9c4ab797d232454b35e17e7b61a03edf70c64e8"},
+    {file = "hidapi-0.15.0-cp39-cp39-win_amd64.whl", hash = "sha256:cb835b81624a72830e5ebebde26b93ab5ee812de648386a47d13dfbf64b348c7"},
+    {file = "hidapi-0.15.0.tar.gz", hash = "sha256:ecbc265cbe8b7b88755f421e0ba25f084091ec550c2b90ff9e8ddd4fcd540311"},
 ]
-
-[package.dependencies]
-setuptools = ">=19.0"
 
 [[package]]
 name = "identify"
@@ -1405,46 +1393,6 @@ develop = ["codecov", "pycodestyle", "pytest (>=4.6)", "pytest-cov", "wheel"]
 docs = ["sphinx"]
 gmpy = ["gmpy2 (>=2.1.0a4) ; platform_python_implementation != \"PyPy\""]
 tests = ["pytest (>=4.6)"]
-
-[[package]]
-name = "mpy-cross-v5"
-version = "1.1.1"
-description = "Python wrapper for the mpy-cross tool from MicroPython."
-optional = false
-python-versions = "*"
-groups = ["dev"]
-files = [
-    {file = "mpy_cross_v5-1.1.1-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:e7e28be413df76e9efd904ee9d72cd559422c5d022b599d352f6b044e7450249"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:13fdfaab4b17eb63d82baf01648f51d364375d1ce4769a91b1f04ae08e1d4845"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:8c5ca31c98a1d3b59c5b205c99d9ec55ae95bfc87f0aaed71702632eee27644b"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7716134c278820e51e8b8945ead91700400e89764ab563b018742ac0f434da57"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:40b27d1bd2990d5307f6a81fd49b40d6abc513400c197c4fb2ac053bb2717af9"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:56334b2155d5684cdd599ca39123694183770bf2a906a15565f7c9d467870ea5"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-win32.whl", hash = "sha256:190bc2fed95140639e4d7497db69695fcba2e321da83c889ac96ad6607332018"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-win_amd64.whl", hash = "sha256:16a0ace5dc8beb9294ef49b99da9fda2a917c00728db25b1055e1223d1f92162"},
-    {file = "mpy_cross_v5-1.1.1-py3-none-win_arm64.whl", hash = "sha256:1bd61af3505517bbaf7237b35a1cefd4ef761bd47fdab653ad75e4b11bdf4197"},
-    {file = "mpy_cross_v5-1.1.1.tar.gz", hash = "sha256:71e7fa0fb49ca2192ba82142828ac43ac9167ed8165986788ab76ebc9c7e251d"},
-]
-
-[[package]]
-name = "mpy-cross-v6"
-version = "1.1.1"
-description = "Python wrapper for the mpy-cross tool from MicroPython."
-optional = false
-python-versions = "*"
-groups = ["dev"]
-files = [
-    {file = "mpy_cross_v6-1.1.1-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:7b906e716ee83a4dc0bcbc826b08e188504c93c21c13f785693b2e90f1f30fcb"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:de6ed5bb5c615e46d70ef377222d75ea328105cf31641d703b409257a5280cef"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b8eeba72f1660c9e104e7251ff44ed044b5c51daeacaff29f975c933ae05c1ff"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:f5ba19205b564dd50b5decafbeeb5d2eee9d33693d9a91be1f3c05c2f8337c83"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-musllinux_1_2_aarch64.whl", hash = "sha256:5f08913194656d3311a57a9fc4b4cdfee11fee27dff836e78483690882acea4c"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:5d92751be41262614b3faf12b6aa7d5e04f7091759dfbbb63d63ba588f9072be"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-win32.whl", hash = "sha256:1622087481fc283db552c55f7609c93b7b8652a40d9414f5b7f2aeb0b8f6190e"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-win_amd64.whl", hash = "sha256:31ee72d045e3e295a9a6b9b3bfc649d1b373709db757c3bd5042e2c4fbd68b00"},
-    {file = "mpy_cross_v6-1.1.1-py3-none-win_arm64.whl", hash = "sha256:12d740e48f65fbd1269509db0fe7de9e8093b1c77980f2f3a8d135f5ab18c965"},
-    {file = "mpy_cross_v6-1.1.1.tar.gz", hash = "sha256:114f672e205b3008a53dcdd17049b9ad074e6a322fcd1b85831b169f7c212b09"},
-]
 
 [[package]]
 name = "multidict"
@@ -2015,35 +1963,6 @@ files = [
 ]
 
 [[package]]
-name = "pybricksdev"
-version = "2.3.0"
-description = "Pybricks developer tools"
-optional = false
-python-versions = ">=3.10"
-groups = ["dev"]
-files = [
-    {file = "pybricksdev-2.3.0-py3-none-any.whl", hash = "sha256:5ab1c38effcffc88f2d7fe31ae8e52329a60238a2fc64446f80af1c07b0f8f41"},
-    {file = "pybricksdev-2.3.0.tar.gz", hash = "sha256:5a7eb4e3bcc9b883d573c4af2480d92507397c66a3ba27da4e13c6f063280846"},
-]
-
-[package.dependencies]
-appdirs = ">=1.4.4"
-argcomplete = ">=3.6.2"
-bleak = ">=1.1.0"
-hidapi = ">=0.14.0"
-mpy-cross-v5 = ">=1.1.1"
-mpy-cross-v6 = ">=1.1.1"
-packaging = ">=22"
-prompt-toolkit = ">=3.0.18"
-pybricks = {version = ">=3", markers = "python_version < \"4\""}
-pyusb = ">=1.0.2"
-questionary = {version = ">=2.1.1", markers = "python_version < \"4\""}
-reactivex = {version = ">=4.0.4", markers = "python_version < \"4\""}
-semver = ">=2.13.0"
-tqdm = ">=4.62.3"
-typing-extensions = ">=4.3.0"
-
-[[package]]
 name = "pycodestyle"
 version = "2.7.0"
 description = "Python style guide checker"
@@ -2290,7 +2209,7 @@ description = "Python<->ObjC Interoperability Module"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
-markers = "platform_system == \"Darwin\""
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_core-12.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:beb665937b0df76412dfd08c6518925806e41536307629a859105270e3a5e6c9"},
     {file = "pyobjc_core-12.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:dd4962aceb0f9a0ee510e11ced449323db85e42664ac9ade53ad1cc2394dc248"},
@@ -2309,7 +2228,7 @@ description = "Wrappers for the Cocoa frameworks on macOS"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Darwin\""
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_framework_cocoa-12.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:fe453a559be779fb4bc730b2f6686c5c78eb1898a7291964bc289f96506879b6"},
     {file = "pyobjc_framework_cocoa-12.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ae041b7c64a8fa93f0e06728681f7ad657ef2c92dcfdf8abc073d89fb6e3910b"},
@@ -2331,7 +2250,7 @@ description = "Wrappers for the framework CoreBluetooth on macOS"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Darwin\""
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_framework_corebluetooth-12.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9ef4e511c7cf2c25a6ae9193c57f66e78de97db3153e732252a579d24fd796d3"},
     {file = "pyobjc_framework_corebluetooth-12.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ab59e55ab6c71fcbe747359eb1119771021231fade3c5ceae6e8a5d542e32450"},
@@ -2354,7 +2273,7 @@ description = "Wrappers for libdispatch on macOS"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Darwin\""
+markers = "sys_platform == \"darwin\""
 files = [
     {file = "pyobjc_framework_libdispatch-12.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8bebd8599909f2aabbeebd5d2a9a394b636a3b887b64ec8025b4d3bcfb15703f"},
     {file = "pyobjc_framework_libdispatch-12.0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ea093cd250105726aff61df189daa893e6f7bd43f8865bb6e612deeec233d374"},
@@ -2567,21 +2486,6 @@ files = [
 prompt_toolkit = ">=2.0,<4.0"
 
 [[package]]
-name = "reactivex"
-version = "4.0.4"
-description = "ReactiveX (Rx) for Python"
-optional = false
-python-versions = ">=3.7,<4.0"
-groups = ["dev"]
-files = [
-    {file = "reactivex-4.0.4-py3-none-any.whl", hash = "sha256:0004796c420bd9e68aad8e65627d85a8e13f293de76656165dffbcb3a0e3fb6a"},
-    {file = "reactivex-4.0.4.tar.gz", hash = "sha256:e912e6591022ab9176df8348a653fe8c8fa7a301f26f9931c9d8c78a650e04e8"},
-]
-
-[package.dependencies]
-typing-extensions = ">=4.1.1,<5.0.0"
-
-[[package]]
 name = "requests"
 version = "2.32.5"
 description = "Python HTTP for Humans."
@@ -2724,27 +2628,6 @@ files = [
 ]
 
 [[package]]
-name = "setuptools"
-version = "80.9.0"
-description = "Easily download, build, install, upgrade, and uninstall Python packages"
-optional = false
-python-versions = ">=3.9"
-groups = ["dev"]
-files = [
-    {file = "setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"},
-    {file = "setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c"},
-]
-
-[package.extras]
-check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\"", "ruff (>=0.8.0) ; sys_platform != \"cygwin\""]
-core = ["importlib_metadata (>=6) ; python_version < \"3.10\"", "jaraco.functools (>=4)", "jaraco.text (>=3.7)", "more_itertools", "more_itertools (>=8.8)", "packaging (>=24.2)", "platformdirs (>=4.2.2)", "tomli (>=2.0.1) ; python_version < \"3.11\"", "wheel (>=0.43.0)"]
-cover = ["pytest-cov"]
-doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
-enabler = ["pytest-enabler (>=2.2)"]
-test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21) ; python_version >= \"3.9\" and sys_platform != \"cygwin\"", "jaraco.envs (>=2.2)", "jaraco.path (>=3.7.2)", "jaraco.test (>=5.5)", "packaging (>=24.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf ; sys_platform != \"cygwin\"", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
-type = ["importlib_metadata (>=7.0.2) ; python_version < \"3.10\"", "jaraco.develop (>=7.21) ; sys_platform != \"cygwin\"", "mypy (==1.14.*)", "pytest-mypy"]
-
-[[package]]
 name = "simple-websocket"
 version = "1.1.0"
 description = "Simple WebSocket server and client for Python"
@@ -2854,25 +2737,24 @@ test = ["pytest", "ruff"]
 
 [[package]]
 name = "tqdm"
-version = "4.67.1"
+version = "4.68.3"
 description = "Fast, Extensible Progress Meter"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2"},
-    {file = "tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2"},
+    {file = "tqdm-4.68.3-py3-none-any.whl", hash = "sha256:39832cc2def2789a6f29df83f172db7416cea70052c0907a57801c5f2fdccb03"},
+    {file = "tqdm-4.68.3.tar.gz", hash = "sha256:00dfa48452b6b6cfae3dd9885636c23d3422d1ec97c66d96818cbd5e0821d482"},
 ]
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [package.extras]
-dev = ["nbval", "pytest (>=6)", "pytest-asyncio (>=0.24)", "pytest-cov", "pytest-timeout"]
-discord = ["requests"]
+discord = ["envwrap", "requests"]
 notebook = ["ipywidgets (>=6)"]
-slack = ["slack-sdk"]
-telegram = ["requests"]
+slack = ["envwrap", "slack-sdk"]
+telegram = ["envwrap", "requests"]
 
 [[package]]
 name = "typing-extensions"
@@ -2885,6 +2767,7 @@ files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
+markers = {dev = "python_version < \"3.12\" or sys_platform == \"win32\""}
 
 [[package]]
 name = "urllib3"
@@ -2928,14 +2811,14 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 
 [[package]]
 name = "wcwidth"
-version = "0.2.14"
+version = "0.8.1"
 description = "Measures the displayed width of unicode strings in a terminal"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "wcwidth-0.2.14-py2.py3-none-any.whl", hash = "sha256:a7bb560c8aee30f9957e5f9895805edd20602f2d7f720186dfd906e82b4982e1"},
-    {file = "wcwidth-0.2.14.tar.gz", hash = "sha256:4d478375d31bc5395a3c55c40ccdf3354688364cd61c4f6adacaa9215d0b3605"},
+    {file = "wcwidth-0.8.1-py3-none-any.whl", hash = "sha256:f453740b1e4a4f3291faa37944c555d71056c4da08d59809b307ef4feba695c8"},
+    {file = "wcwidth-0.8.1.tar.gz", hash = "sha256:faf5b4a5366a72dc49cad48cdf21f52bdf63bdda995178e483ba247ff79089b9"},
 ]
 
 [[package]]
@@ -2957,7 +2840,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_runtime-3.2.1-cp310-cp310-win32.whl", hash = "sha256:25a2d1e2b45423742319f7e10fa8ca2e7063f01284b6e85e99d805c4b50bbfb3"},
     {file = "winrt_runtime-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:dc81d5fb736bf1ddecf743928622253dce4d0aac9a57faad776d7a3834e13257"},
@@ -2990,7 +2873,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_devices_bluetooth-3.2.1-cp310-cp310-win32.whl", hash = "sha256:49489351037094a088a08fbdf0f99c94e3299b574edb211f717c4c727770af78"},
     {file = "winrt_windows_devices_bluetooth-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:20f6a21029034c18ea6a6b6df399671813b071102a0d6d8355bb78cf4f547cdb"},
@@ -3026,7 +2909,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_devices_bluetooth_advertisement-3.2.1-cp310-cp310-win32.whl", hash = "sha256:a758c5f81a98cc38347fdfb024ce62720969480e8c5b98e402b89d2b09b32866"},
     {file = "winrt_windows_devices_bluetooth_advertisement-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:f982ef72e729ddd60cdb975293866e84bb838798828933012a57ee4bf12b0ea1"},
@@ -3062,7 +2945,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp310-cp310-win32.whl", hash = "sha256:af4914d7b30b49232092cd3b934e3ed6f5d3b1715ba47238541408ee595b7f46"},
     {file = "winrt_windows_devices_bluetooth_genericattributeprofile-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:0e557dd52fc80392b8bd7c237e1153a50a164b3983838b4ac674551072efc9ed"},
@@ -3098,7 +2981,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_devices_enumeration-3.2.1-cp310-cp310-win32.whl", hash = "sha256:40dac777d8f45b41449f3ff1ae70f0d457f1ede53f53962a6e2521b651533db5"},
     {file = "winrt_windows_devices_enumeration-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:a101ec3e0ad0a0783032fdcd5dc48e7cd68ee034cbde4f903a8c7b391532c71a"},
@@ -3128,13 +3011,49 @@ winrt-runtime = ">=3.2.1.0,<3.3.0.0"
 all = ["winrt-Windows.ApplicationModel.Background[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.Foundation.Collections[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.Foundation[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.Security.Credentials[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.Storage.Streams[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.UI.Popups[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.UI[all] (>=3.2.1.0,<3.3.0.0)"]
 
 [[package]]
+name = "winrt-windows-devices-radios"
+version = "3.2.1"
+description = "Python projection of Windows Runtime (WinRT) APIs"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+markers = "sys_platform == \"win32\""
+files = [
+    {file = "winrt_windows_devices_radios-3.2.1-cp310-cp310-win32.whl", hash = "sha256:f97766fd551d06c102155d51b2922f96663dee045e1f8d57177def0a2149cb78"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:104b737fa1279a3b6a88ba3c6236157afc1de03c472657c45e5176ad7a209e23"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp310-cp310-win_arm64.whl", hash = "sha256:55b02877d2de06ca6f0f6140611a9af9d0c65710e28f1afdeaac1040433b1837"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp311-cp311-win32.whl", hash = "sha256:7c02790472414b6cda00d24a8cd23bca18e4b7474ddad4f9264f4484b891807e"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp311-cp311-win_amd64.whl", hash = "sha256:f87745486d313ba1e7562ca97f25ad436ec01ad4b3b9ea349fb6b6f25cb41104"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp311-cp311-win_arm64.whl", hash = "sha256:6cee6f946ff3a3571850d1ca745edaee7c331d06ca321873e650779654effc4a"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp312-cp312-win32.whl", hash = "sha256:c3e683ce682338a5a5ed465f735e223ba7a22f16d0bbea2d070962bc7657edbb"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp312-cp312-win_amd64.whl", hash = "sha256:a116e552a3f38607b9be558fb2e7de9b4450d1f9080069944d74d80cdda1873e"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp312-cp312-win_arm64.whl", hash = "sha256:4c28822f9251c9d547324f596b5c2581f050254ded05e5b786c650a3502744c1"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp313-cp313-win32.whl", hash = "sha256:ae4a0065927fcd2d10215223f8a46be6fb89bad71cb4edd25dae3d01c137b3a8"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp313-cp313-win_amd64.whl", hash = "sha256:bf1a975f46a2aa271ffea1340be0c7e64985050d07433e701343dddc22a72290"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp313-cp313-win_arm64.whl", hash = "sha256:10b298ed154c5824cea2de174afce1694ed2aabfb58826de814074027ffef96f"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp314-cp314-win32.whl", hash = "sha256:21452e1cae50e44cd1d5e78159e1b9986ac3389b66458ad89caa196ce5eca2d6"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp314-cp314-win_amd64.whl", hash = "sha256:6a8413e586fe597c6849607885cca7e0549da33ae5699165d11f7911534c6eaf"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp314-cp314-win_arm64.whl", hash = "sha256:39129fd9d09103adb003575f59881c1a5a70a43310547850150b46c6f4020312"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp39-cp39-win32.whl", hash = "sha256:59b868d45ff22afad21b0b0d1466ec43e54543c4e4c6f1efcc2d4adc77053bd5"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp39-cp39-win_amd64.whl", hash = "sha256:dbfcbb977f60f19c852204987ace0cd6f7a432d735882a45b3074fdbfd3fdb5a"},
+    {file = "winrt_windows_devices_radios-3.2.1-cp39-cp39-win_arm64.whl", hash = "sha256:659e07e6aa5542587ccfc4d4e2cc6e1ef0869606c867a3e95fc82cc8aeaf1f81"},
+    {file = "winrt_windows_devices_radios-3.2.1.tar.gz", hash = "sha256:4dc9b9d1501846049eb79428d64ec698d6476c27a357999b78a8331072e18a0b"},
+]
+
+[package.dependencies]
+winrt-runtime = ">=3.2.1.0,<3.3.0.0"
+
+[package.extras]
+all = ["winrt-Windows.Foundation.Collections[all] (>=3.2.1.0,<3.3.0.0)", "winrt-Windows.Foundation[all] (>=3.2.1.0,<3.3.0.0)"]
+
+[[package]]
 name = "winrt-windows-foundation"
 version = "3.2.1"
 description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_foundation-3.2.1-cp310-cp310-win32.whl", hash = "sha256:677e98165dcbbf7a2367f905bc61090ef2c568b6e465f87cf7276df4734f3b0b"},
     {file = "winrt_windows_foundation-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:a8f27b4f0fdb73ccc4a3e24bc8010a6607b2bdd722fa799eafce7daa87d19d39"},
@@ -3170,7 +3089,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_foundation_collections-3.2.1-cp310-cp310-win32.whl", hash = "sha256:46948484addfc4db981dab35688d4457533ceb54d4954922af41503fddaa8389"},
     {file = "winrt_windows_foundation_collections-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:899eaa3a93c35bfb1857d649e8dd60c38b978dda7cedd9725fcdbcebba156fd6"},
@@ -3206,7 +3125,7 @@ description = "Python projection of Windows Runtime (WinRT) APIs"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
-markers = "platform_system == \"Windows\""
+markers = "sys_platform == \"win32\""
 files = [
     {file = "winrt_windows_storage_streams-3.2.1-cp310-cp310-win32.whl", hash = "sha256:89bb2d667ebed6861af36ed2710757456e12921ee56347946540320dacf6c003"},
     {file = "winrt_windows_storage_streams-3.2.1-cp310-cp310-win_amd64.whl", hash = "sha256:48a78e5dc7d3488eb77e449c278bc6d6ac28abcdda7df298462c4112d7635d00"},
@@ -3489,4 +3408,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "a7130f69ba0247a060870bc3cb21635de623bdd22866218997bcfee49dd5e8a8"
+content-hash = "756464db7ba5937cc214514628548afd88af45594813c10d32ba82e49542b625"
