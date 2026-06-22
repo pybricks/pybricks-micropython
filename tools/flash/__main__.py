@@ -39,8 +39,27 @@ def main():
         "firmware",
         metavar="<firmware-file>",
         type=argparse.FileType(mode="rb"),
-        help="the firmware .zip file",
-    ).completer = FilesCompleter(allowednames=(".zip",))
+        help="the firmware .zip file or a raw .bin file",
+    ).completer = FilesCompleter(allowednames=(".zip", ".bin"))
+
+    raw_bin_hub_types = {
+        "primehub": HubKind.TECHNIC_LARGE,
+        "essentialhub": HubKind.TECHNIC_SMALL,
+        "movehub": HubKind.BOOST,
+        "cityhub": HubKind.CITY,
+        "technic": HubKind.TECHNIC,
+        "nxt": HubKind.NXT,
+        "ev3": HubKind.EV3,
+    }
+
+    parser.add_argument(
+        "-k",
+        "--hub-kind",
+        metavar="<hub-kind>",
+        choices=list(raw_bin_hub_types),
+        help="the hub kind (only when flashing a raw .bin file); "
+        f"one of: {', '.join(raw_bin_hub_types)}",
+    )
 
     parser.add_argument(
         "-n", "--name", metavar="<name>", type=str, help="a custom name for the hub"
@@ -54,10 +73,34 @@ def main():
         level=logging.DEBUG if args.debug else logging.WARNING,
     )
 
-    print("Creating firmware...")
+    # Ask confirmation if flashing a raw .bin file.
+    if args.firmware.name.lower().endswith(".bin"):
+        if args.hub_kind is None:
+            parser.error("--hub-kind is required when flashing a raw .bin file")
 
-    hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
+        if args.name is not None:
+            parser.error("--name is not supported when flashing a raw .bin file")
 
+        hub_kind = raw_bin_hub_types[args.hub_kind]
+
+        print(
+            f"Warning: flashing a raw .bin file to a {args.hub_kind} hub. "
+            "The file will not be checked for validity."
+        )
+        answer = input("Are you sure you want to proceed? [y/N] ")
+        if answer.strip().lower() not in ("y", "yes"):
+            print("Aborted.")
+            return
+
+        firmwares = args.firmware.read()
+    else:
+        if args.hub_kind is not None:
+            parser.error("--hub-kind is only supported when flashing a raw .bin file")
+
+        print("Creating firmware...")
+        hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
+
+    # We have a firmware and intended target. Find and flash it.
     if hub_kind in (HubKind.TECHNIC_SMALL, HubKind.TECHNIC_LARGE):
         flash_dfu(firmwares, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
