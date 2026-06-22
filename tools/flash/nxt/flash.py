@@ -114,7 +114,7 @@ class FlashController(object):
             self._brick.jump(FLASH_DRIVER_ADDR)
 
 
-def flash_nxt(firmware: bytes) -> None:
+def flash_nxt(firmware: bytes | dict[str, bytes]) -> None:
     """
     Flashes firmware to NXT using the Samba bootloader.
 
@@ -122,6 +122,10 @@ def flash_nxt(firmware: bytes) -> None:
         firmware:
             A firmware blob with the NxOS header appended to the end.
     """
+
+    # There is only one firmware for the NXT.
+    if isinstance(firmware, dict):
+        firmware = firmware["nxt"]
 
     # parse the header
     info = Firmware(firmware)

@@ -7,7 +7,7 @@
 {
     "configurations": [
         {
-            "name": "primehub",
+            "name": "primehub f4",
             "includePath": [
                 "${workspaceFolder}/micropython/lib/cmsis/inc",
                 "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F4xx/Include",
@@ -21,10 +21,10 @@
                 "${workspaceFolder}/lib/lsm6ds3tr_c_STdC/driver",
                 "${workspaceFolder}/lib/pbio/drv/usb/stm32_usbd",
                 "${workspaceFolder}/lib/pbio/include",
-                "${workspaceFolder}/lib/pbio/platform/prime_hub",
+                "${workspaceFolder}/lib/pbio/platform/prime_hub_f4",
                 "${workspaceFolder}",
-                "${workspaceFolder}/bricks/primehub",
-                "${workspaceFolder}/bricks/primehub/build",
+                "${workspaceFolder}/bricks/primehub_f4",
+                "${workspaceFolder}/bricks/primehub_f4/build",
                 "${workspaceFolder}/micropython"
             ],
             "defines": [

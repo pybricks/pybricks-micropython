@@ -9,34 +9,6 @@
             "command": "make movehub -j"
         },
         {
-            "label": "build and deploy primehub",
-            "type": "shell",
-            "command": "make",
-            "args": ["-j", "deploy"],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/bricks/primehub"
-              },
-            "problemMatcher": [
-                {
-                    "owner": "cpp",
-                    "fileLocation": ["relative", "${workspaceFolder}/bricks/primehub"],
-                    "pattern": {
-                        "regexp": "^(.*?):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
-                        "file": 1,
-                        "line": 2,
-                        "column": 3,
-                        "severity": 4,
-                        "message": 5
-                    }
-                }
-            ],
-            "detail": "Build the PrimeHub project"
-        },
-        {
             "options": {
                 "cwd": "${workspaceFolder}/bricks/virtualhub"
             },

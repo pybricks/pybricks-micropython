@@ -244,8 +244,24 @@ def write_firmware(
     print("Done.")
 
 
-def flash_dfu(firmware_bin: bytes, hub_kind: HubKind) -> None:
-    """Flashes a firmware image to a connected hub over USB DFU."""
+def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
+    """
+    Flashes firmware to the hub using USB DFU.
+
+    Args:
+        firmwares: Mapping of platform name to raw firmware binary blob.
+        hub_kind: The hub type ID. Only hubs matching this ID will be discovered.
+
+    Raises:
+        ValueError: If there is no firmware for the given hub kind.
+    """
+
+    # TODO: Dynamically select based on device properties.
+    if isinstance(firmwares, dict):
+        firmware_bin = firmwares["prime_hub_f4"]
+    else:
+        firmware_bin = firmwares
+
     try:
         devices = get_dfu_devices(idVendor=LEGO_USB_VID)
         if not devices:

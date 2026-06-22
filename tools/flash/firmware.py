@@ -9,18 +9,13 @@ import io
 import json
 import os
 import struct
-import sys
 import zipfile
-from typing import BinaryIO, Literal, TypedDict
-
-if sys.version_info < (3, 10):
-    from typing_extensions import TypeGuard
-else:
-    from typing import TypeGuard
+from typing import Any, BinaryIO, Literal, TypedDict, TypeGuard
 
 import semver
 
 from checksum import crc32_checksum, sum_complement
+from lwp3.bytecodes import HubKind
 
 
 class FirmwareMetadataV100(
@@ -109,7 +104,7 @@ Type for data contained in ``firmware.metadata.json`` files of any 2.x version.
 
 AnyFirmwareMetadata = AnyFirmwareV1Metadata | AnyFirmwareV2Metadata
 """
-Type for data contained in ``firmware.metadata.json`` files of any version.
+Type for data contained in ``firmware.metadata.json`` files of any 1.x or 2.x version.
 """
 
 
@@ -222,21 +217,45 @@ def _create_firmware_v2(
     return firmware
 
 
+def _create_firmware_variant_v3(
+    variant: dict[str, Any], archive: zipfile.ZipFile, name: str | None
+) -> bytearray:
+    base = archive.open(variant["firmware"]).read()
+
+    # start with base firmware binary blob
+    firmware = bytearray(base)
+
+    # Update hub name if given and renaming is supported.
+    if name and variant["hub-name-offset"]:
+        encoded_name = name.encode() + b"\0"
+        max_size = variant["hub-name-size"]
+        if len(encoded_name) > max_size:
+            raise ValueError(
+                f"name is too big - must be < {variant['hub-name-size']} UTF-8 bytes"
+            )
+        offset = variant["hub-name-offset"]
+        firmware[offset : offset + len(encoded_name)] = encoded_name
+
+    # Get checksum for this firmware
+    if variant["checksum-type"] == "sum":
+        checksum = sum_complement(io.BytesIO(firmware), variant["checksum-size"])
+    elif variant["checksum-type"] == "crc32":
+        checksum = crc32_checksum(io.BytesIO(firmware), variant["checksum-size"])
+    elif variant["checksum-type"] == "none":
+        return firmware
+    else:
+        raise ValueError(f"unsupported checksum type: {variant['checksum-type']}")
+
+    # Append checksum to the firmware
+    firmware.extend(struct.pack("<I", checksum))
+
+    return firmware
+
+
 def create_firmware_blob(
     firmware_zip: str | os.PathLike | BinaryIO, name: str | None = None
-) -> tuple[bytes, AnyFirmwareMetadata, str]:
-    """Creates a firmware blob from base firmware and an optional custom name.
-
-    .. note:: The firmware.zip file must contain the following files::
-
-            firmware-base.bin
-            firmware.metadata.json
-            ReadMe_OSS.txt
-
-
-        v1.x also supports an optional ``main.py`` file that is appended to
-        the firmware.
-
+) -> tuple[HubKind, dict[str, bytes] | bytes]:
+    """Creates firmware blobs from base firmware and an optional custom name.
 
     Arguments:
         firmware_zip:
@@ -245,8 +264,10 @@ def create_firmware_blob(
             A custom name for the hub.
 
     Returns:
-        Tuple of composite binary blob for flashing, the metadata, and the
-        license text.
+        Tuple of the hub kind and the firmware blob(s) for flashing. For v3.x
+        archives this is a dict mapping each platform name to its composite
+        binary blob. For older v1.x and v2.x archives this is a single
+        composite binary blob.
 
     Raises:
         ValueError:
@@ -257,18 +278,23 @@ def create_firmware_blob(
 
     with zipfile.ZipFile(firmware_zip) as archive:
         with archive.open("firmware.metadata.json") as f:
-            metadata: AnyFirmwareMetadata = json.load(f)
+            metadata: dict[str, Any] = json.load(f)
 
-        with archive.open("ReadMe_OSS.txt") as f:
-            license = f.read().decode()
+        version = metadata["metadata-version"]
+        hub_kind = HubKind(metadata["device-id"])
 
         if _firmware_metadata_is_v1(metadata):
-            firmware = _create_firmware_v1(metadata, archive, name)
-        elif _firmware_metadata_is_v2(metadata):
-            firmware = _create_firmware_v2(metadata, archive, name)
-        else:
-            raise ValueError(
-                f"unsupported metadata version: {metadata['metadata-version']}"
-            )
+            return hub_kind, bytes(_create_firmware_v1(metadata, archive, name))
 
-        return firmware, metadata, license
+        if _firmware_metadata_is_v2(metadata):
+            return hub_kind, bytes(_create_firmware_v2(metadata, archive, name))
+
+        if not version.startswith("3."):
+            raise ValueError(f"unsupported metadata version: {version}")
+
+        firmwares = {
+            variant["platform"]: _create_firmware_variant_v3(variant, archive, name)
+            for variant in metadata["variants"]
+        }
+
+        return hub_kind, firmwares

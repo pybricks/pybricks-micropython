@@ -56,17 +56,16 @@ def main():
 
     print("Creating firmware...")
 
-    firmware, metadata, license = create_firmware_blob(args.firmware, args.name)
-    hub_kind = HubKind(metadata["device-id"])
+    hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
 
     if hub_kind in (HubKind.TECHNIC_SMALL, HubKind.TECHNIC_LARGE):
-        flash_dfu(firmware, hub_kind)
+        flash_dfu(firmwares, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
-        asyncio.run(flash_ble(firmware, hub_kind))
+        asyncio.run(flash_ble(firmwares, hub_kind))
     elif hub_kind == HubKind.NXT:
-        flash_nxt(firmware)
+        flash_nxt(firmwares)
     elif hub_kind == HubKind.EV3:
-        flash_ev3(firmware)
+        flash_ev3(firmwares)
     else:
         raise ValueError(f"unsupported hub kind: {hub_kind}")
 

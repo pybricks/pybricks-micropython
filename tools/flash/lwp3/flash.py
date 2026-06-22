@@ -308,16 +308,18 @@ def match_hub(hub_kind: HubKind, adv: AdvertisementData) -> bool:
     return False
 
 
-async def flash_ble(firmware: bytes, hub_kind: HubKind):
+async def flash_ble(firmwares: bytes | dict[str, bytes], hub_kind: HubKind):
     """
     Flashes firmware to the hub using Bluetooth Low Energy.
 
-    The hub has to be advertising and can be running official LEGO firmware,
-    Pybricks firmware or be in bootloader mode.
+    The hub has to be advertising and be in bootloader mode.
 
     Args:
-        firmware: The raw firmware binary blob.
+        firmwares: Mapping of platform name to raw firmware binary blob or just one raw firmware binary blob.
         hub_kind: The hub type ID. Only hubs matching this ID will be discovered.
+
+    Raises:
+        ValueError: If there is no firmware for the given hub kind.
     """
 
     print(f"Searching for {hub_kind.name} hub...")
@@ -348,6 +350,20 @@ async def flash_ble(firmware: bytes, hub_kind: HubKind):
         return
 
     print("Found:", device)
+
+    # If there are ever any other variants for these hubs, here we can pick
+    # the right one based on the device properties we just found.
+    if not isinstance(firmwares, dict):
+        firmware = firmwares
+    elif hub_kind == HubKind.TECHNIC:
+        firmware = firmwares["technic_hub"]
+    elif hub_kind == HubKind.BOOST:
+        firmware = firmwares["move_hub"]
+    elif hub_kind == HubKind.CITY:
+        firmware = firmwares["city_hub"]
+    else:
+        raise ValueError(f"unsupported hub kind: {hub_kind.name}")
+
     updater = BootloaderConnection()
     await updater.connect(device)
     print("Erasing flash and starting update")
