@@ -6,8 +6,7 @@
 # the OpenMV project (micropython/tools/pydfu.py) and is licensed under the MIT
 # license. Rewritten to skip the DFU format roundtrip.
 
-"""Flashes firmware to a LEGO hub over USB using the STM32 DFU protocol.
-"""
+"""Flashes firmware to a LEGO hub over USB using the STM32 DFU protocol."""
 
 import errno
 import platform
@@ -23,7 +22,6 @@ from tqdm.auto import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 
 from lwp3.bytecodes import HubKind
-from firmware import AnyFirmwareMetadata
 from constants import (
     LEGO_USB_VID,
     MINDSTORMS_INVENTOR_DFU_USB_PID,
@@ -77,12 +75,15 @@ class CfgDescriptor(NamedTuple):
     wTransferSize: int
     bcdDFUVersion: int
 
+
 CFG_DESCRIPTOR_FORMAT = "<BBBHHH"
+
 
 def find_dfu_cfg_descriptor(descr: bytes) -> CfgDescriptor | None:
     if len(descr) == 9 and descr[0] == 9 and descr[1] == _DFU_DESCRIPTOR_TYPE:
         return CfgDescriptor(*struct.unpack(CFG_DESCRIPTOR_FORMAT, bytearray(descr)))
     return None
+
 
 def get_dfu_devices(**kwargs) -> list[usb.core.Device]:
     """Returns the list of connected USB devices that are in DFU mode."""
@@ -210,6 +211,7 @@ class DfuDevice:
 # High-level firmware flashing
 # ---------------------------------------------------------------------------
 
+
 def _get_bootloader_size(pid: int, bcd_device: int | None) -> int:
     """Gets the bootloader size for the connected DFU device."""
     # New hardware revision of SPIKE Prime released in 2026 has a larger bootloader.
@@ -242,7 +244,7 @@ def write_firmware(
     print("Done.")
 
 
-def flash_dfu(firmware_bin: bytes, metadata: AnyFirmwareMetadata) -> None:
+def flash_dfu(firmware_bin: bytes, hub_kind: HubKind) -> None:
     """Flashes a firmware image to a connected hub over USB DFU."""
     try:
         devices = get_dfu_devices(idVendor=LEGO_USB_VID)
@@ -269,7 +271,7 @@ def flash_dfu(firmware_bin: bytes, metadata: AnyFirmwareMetadata) -> None:
             print(f"Unknown USB product ID: {product_id:04X}", file=sys.stderr)
             exit(1)
 
-        if ALL_PIDS[product_id] != metadata["device-id"]:
+        if ALL_PIDS[product_id] != hub_kind:
             print("Incorrect firmware type for this hub", file=sys.stderr)
             exit(1)
 

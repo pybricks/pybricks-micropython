@@ -60,9 +60,9 @@ def main():
     hub_kind = HubKind(metadata["device-id"])
 
     if hub_kind in (HubKind.TECHNIC_SMALL, HubKind.TECHNIC_LARGE):
-        flash_dfu(firmware, metadata)
+        flash_dfu(firmware, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
-        asyncio.run(flash_ble(hub_kind, firmware, metadata))
+        asyncio.run(flash_ble(firmware, hub_kind))
     elif hub_kind == HubKind.NXT:
         flash_nxt(firmware)
     elif hub_kind == HubKind.EV3:

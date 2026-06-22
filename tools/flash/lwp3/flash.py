@@ -179,7 +179,7 @@ class BootloaderConnection(BLERequestsConnection):
                 reply = await self.wait_for_reply(timeout)
             return request.parse_reply(reply)
 
-    async def flash(self, firmware, metadata):
+    async def flash(self, firmware, hub_kind):
         # Firmware information
         firmware_io = io.BytesIO(firmware)
         firmware_size = len(firmware)
@@ -193,11 +193,11 @@ class BootloaderConnection(BLERequestsConnection):
         hub_name, max_data_size = HUB_INFO[info.type_id]
 
         # Verify hub ID against ID in firmware package
-        if info.type_id != metadata["device-id"]:
+        if info.type_id != hub_kind:
             await self.disconnect()
             raise RuntimeError(
                 "This firmware {0}, but we are connected to {1}.".format(
-                    HUB_INFO[metadata["device-id"]][0], hub_name
+                    HUB_INFO[hub_kind][0], hub_name
                 )
             )
 
@@ -308,7 +308,7 @@ def match_hub(hub_kind: HubKind, adv: AdvertisementData) -> bool:
     return False
 
 
-async def flash_ble(hub_kind: HubKind, firmware: bytes, metadata: dict):
+async def flash_ble(firmware: bytes, hub_kind: HubKind):
     """
     Flashes firmware to the hub using Bluetooth Low Energy.
 
@@ -316,9 +316,8 @@ async def flash_ble(hub_kind: HubKind, firmware: bytes, metadata: dict):
     Pybricks firmware or be in bootloader mode.
 
     Args:
-        hub_kind: The hub type ID. Only hubs matching this ID will be discovered.
         firmware: The raw firmware binary blob.
-        metadata: The firmware metadata from the firmware.zip file.
+        hub_kind: The hub type ID. Only hubs matching this ID will be discovered.
     """
 
     print(f"Searching for {hub_kind.name} hub...")
@@ -352,4 +351,4 @@ async def flash_ble(hub_kind: HubKind, firmware: bytes, metadata: dict):
     updater = BootloaderConnection()
     await updater.connect(device)
     print("Erasing flash and starting update")
-    await updater.flash(firmware, metadata)
+    await updater.flash(firmware, hub_kind)
