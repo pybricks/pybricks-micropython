@@ -4,13 +4,16 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0b11...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.1...HEAD
+
+## [4.0.1] - 2026-06-23
 
 ### Fixed
 - Fixed `BLERadio.observe()` not working if a hub was instantiated
   after `BLERadio` ([support#2734]).
 
 [support#2734]: https://github.com/pybricks/support/issues/2734
+[4.0.1]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.0...v4.0.1
 
 ## [4.0.0] - 2026-06-08
 
