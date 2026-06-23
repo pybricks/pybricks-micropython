@@ -14,6 +14,7 @@ import struct
 import sys
 from collections.abc import Callable
 from typing import NamedTuple
+from pathlib import Path
 
 import usb.core
 import usb.util
@@ -33,6 +34,9 @@ BOOTLOADER_SIZE_32K = 32 * 1024
 BOOTLOADER_SIZE_64K = 64 * 1024
 FLASH_BASE_ADDRESS = 0x08000000
 FLASH_SIZE = 1 * 1024 * 1024
+
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+MBOOT_PATH = REPO_ROOT / "bricks" / "primehub_f4" / "mboot.bin"
 
 # Maps each known DFU USB product ID to the hub it belongs to.
 ALL_PIDS = {
@@ -150,6 +154,35 @@ class DfuDevice:
         if status != expected:
             raise SystemExit(f"DFU: {stage} failed (state {status})")
 
+    def get_string(self, index: int | None) -> str:
+        """
+        Safely reads a USB string descriptor, returning ``"<none>"`` if
+        unset or ``"<error>"`` if it cannot be read.
+        """
+        if not index:
+            return "<none>"
+        try:
+            return usb.util.get_string(self._dev, index) or "<none>"
+        except Exception:
+            return "<error>"
+
+    def get_serial(self) -> str:
+        """Gets the device serial number string descriptor."""
+        return self.get_string(self._dev.iSerialNumber)
+
+    def get_flash_layout_str(self) -> str:
+        """Gets the DFU internal flash layout descriptor string."""
+        cfg = self._dev[0]
+        intf = cfg[(0, 0)]
+        return self.get_string(intf.iInterface)
+
+    def get_alt_setting_strs(self) -> list[tuple[int, str]]:
+        """Gets the ``iInterface`` string for every alternate setting."""
+        return [
+            (intf.bAlternateSetting, self.get_string(intf.iInterface))
+            for intf in self._dev[0]
+        ]
+
     def mass_erase(self) -> None:
         """Erases the entire device."""
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, b"\x41", _TIMEOUT)
@@ -211,19 +244,54 @@ class DfuDevice:
 # High-level firmware flashing
 # ---------------------------------------------------------------------------
 
+def determine_platform(
+    flash_layout: str, serial: str, vid: int, pid: int, bcd: int
+) -> tuple[str, bool]:
+    """Determines the hub and version from the USB device properties."""
 
-def _get_bootloader_size(pid: int, bcd_device: int | None) -> int:
-    """Gets the bootloader size for the connected DFU device."""
-    # New hardware revision of SPIKE Prime released in 2026 has a larger bootloader.
-    if pid == SPIKE_PRIME_DFU_USB_PID and bcd_device == 0x0300:
-        return BOOTLOADER_SIZE_64K
-    return BOOTLOADER_SIZE_32K
+    if vid != LEGO_USB_VID:
+        sys.exit(f"This is not a LEGO hub. Unknown USB vendor ID: {vid:04X}")
+
+    # There is only one variant with this hub, and we use the stock frozen
+    # bootloader. We do not install a second-stage mboot.
+    if pid == SPIKE_ESSENTIAL_DFU_USB_PID:
+        return "essential_hub", False
+
+    # Otherwise only expect SPIKE Prime or MINDSTORMS Inventor. Either can come
+    # in various variants, which we'll distinguish below.
+    if pid != SPIKE_PRIME_DFU_USB_PID and pid != MINDSTORMS_INVENTOR_DFU_USB_PID:
+        sys.exit(
+            f"Did not detect Prime Hub, Inventor Hub, or Essential Hub. Unknown USB product ID: {pid:04X}"
+        )
+
+    # This is the frozen stock bootloader for either the Prime Hub or Inventor
+    # Hub. This is always the F4 and we do install a second-stage mboot bootloader.
+    if bcd == 0x0100:
+        return "prime_hub_f4", True
+
+    # Now we may still have an F4 with the second stage bootloader already installed
+    # or an H5 with its own frozen stock bootloader (modern mboot). Both advertise
+    # the same bcdDevice, at this specific version.
+    if bcd != 0x0300:
+        sys.exit(f"Unknown bcdDevice: {bcd:04X}")
+
+    # Since both variants have the same bcdDevice and product ID, we need to
+    # distinguish them by their flash layout. Neither need a new mboot.
+    if "064Kg" in flash_layout and "128Kg" in flash_layout:
+        return "prime_hub_f4", False
+
+    if "08Kg" in flash_layout:
+        return "prime_hub_h5", False
+
+    # No other known variants exist, so we can assume this is an unknown hub.
+    sys.exit(f"Unknown MCU: {flash_layout}")
 
 
 def write_firmware(
-    device: usb.core.Device,
+    dfu: "DfuDevice",
     data: bytes,
     address: int,
+    erase: bool,
 ) -> None:
     """Mass-erases the device and writes ``data`` to flash at ``address``.
 
@@ -231,9 +299,9 @@ def write_firmware(
     what the bytes are, it just puts them on the device. Callers are
     responsible for validating the firmware before calling this.
     """
-    dfu = DfuDevice(device)
     print("Erasing flash...")
-    dfu.mass_erase()
+    if erase:
+        dfu.mass_erase()
     print("Writing new firmware...")
     with (
         logging_redirect_tqdm(),
@@ -255,57 +323,61 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     Raises:
         ValueError: If there is no firmware for the given hub kind.
     """
-
-    # TODO: Dynamically select based on device properties.
-    if isinstance(firmwares, dict):
-        firmware_bin = firmwares["prime_hub_f4"]
-    else:
-        firmware_bin = firmwares
-
-    try:
-        devices = get_dfu_devices(idVendor=LEGO_USB_VID)
-        if not devices:
-            print(
-                "No DFU devices found.",
-                "Make sure hub is in DFU mode and connected with USB.",
-                file=sys.stderr,
-            )
-            exit(1)
-
-        if len(devices) > 1:
-            print(
-                "Multiple DFU devices found. Connect at most one.",
-                file=sys.stderr,
-            )
-            exit(1)
-
-        device = devices[0]
-        product_id = int(device.idProduct)
-        bcd_device = int(device.bcdDevice)
-
-        if product_id not in ALL_PIDS:
-            print(f"Unknown USB product ID: {product_id:04X}", file=sys.stderr)
-            exit(1)
-
-        if ALL_PIDS[product_id] != hub_kind:
-            print("Incorrect firmware type for this hub", file=sys.stderr)
-            exit(1)
-
-        bootloader_size = _get_bootloader_size(product_id, bcd_device)
-        firmware_address = FLASH_BASE_ADDRESS + bootloader_size
-
-        write_firmware(device, firmware_bin, firmware_address)
-    except USBError as e:
-        if e.errno != errno.EACCES or platform.system() != "Linux":
-            # not expecting other errors
-            raise
-
-        print(
-            "Permission to access USB device denied. Did you install udev rules?",
-            file=sys.stderr,
-        )
-        print(
-            "Run `pybricksdev udev | sudo tee /etc/udev/rules.d/99-pybricksdev.rules` then try again.",
+    devices = get_dfu_devices(idVendor=LEGO_USB_VID)
+    if not devices:
+        sys.exit(
+            "No DFU devices found. "
+            + "Make sure hub is in DFU mode and connected with USB.",
             file=sys.stderr,
         )
         exit(1)
+
+    if len(devices) > 1:
+        sys.exit(
+            "Multiple DFU devices found. Connect at most one.",
+        )
+
+    try:
+        dfu = DfuDevice(devices[0])
+    except USBError as e:
+        if e.errno == errno.EACCES and platform.system() == "Linux":
+            sys.exit(
+                "Permission to access USB device denied. Did you install udev rules?"
+            )
+        else:
+            raise  # not expecting other errors, so re-raise.
+
+    pbio_platform, needs_mboot = determine_platform(
+        flash_layout=dfu.get_flash_layout_str(),
+        serial=dfu.get_serial(),
+        vid=int(dfu._dev.idVendor),
+        pid=int(dfu._dev.idProduct),
+        bcd=int(dfu._dev.bcdDevice),
+    )
+    print(f"Detected platform: {pbio_platform}, needs mboot: {needs_mboot}")
+
+    if isinstance(firmwares, dict):
+        firmware = firmwares.get(pbio_platform)
+        if firmware is None:
+            raise sys.exit(
+                f"The provided archive does not have firmware available for platform: {pbio_platform}"
+            )
+        print("Compatible firmware found for this hub, proceeding.")
+    else:
+        print("Using a raw firmware binary blob, skipping platform check.")
+        firmware = firmwares
+
+    # Install the second-stage mboot bootloader if needed.
+    if needs_mboot:
+        with open(MBOOT_PATH, "rb") as f:
+            mboot_bin = f.read()
+        print("Installing second-stage mboot bootloader.")
+        write_firmware(
+            dfu, mboot_bin, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K, erase=True
+        )
+
+    # With F4 we now have a 32K frozen bootloader and a 32K second-stage mboot
+    # bootloader, so we can write the firmware after that. The H5 has a 64K
+    # frozen bootloader, so both cases we can write the firmware after 64K.
+    print("Installing firmware.")
+    write_firmware(dfu, firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K, erase=False)
