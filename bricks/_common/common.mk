@@ -165,9 +165,6 @@ METADATA = $(PBTOP)/tools/metadata.py
 MEDIA_CONVERT = $(PBTOP)/lib/pbio/src/image/media.py
 FONT_CONVERT = $(PBTOP)/lib/pbio/src/image/fontconvert.py
 CREDITS_CONVERT = $(PBTOP)/bricks/ev3/make_credits.py
-OPENOCD ?= openocd
-OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
-TEXT0_ADDR ?= 0x08000000
 
 ifeq ($(PB_MCU_FAMILY),native)
 UNAME_S := $(shell uname -s)
@@ -829,17 +826,8 @@ $(BUILD)/pru_ledpwm.bin.o: $(PBTOP)/lib/pbio/platform/ev3/pru_ledpwm.bin
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
 		--rename-section .data=.pru1,alloc,load,readonly,data,contents $^ $@
 
-# firmware in DFU format
-$(BUILD)/%.dfu: $(BUILD)/%-base.bin
-	$(ECHO) "DFU Create $@"
-	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
-
 deploy: $(BUILD)/firmware.zip
 	$(Q)$(FLASH) $< --name $(PBIO_PLATFORM)
-
-deploy-openocd: $(BUILD)/firmware-base.bin
-	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
-	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
 
 .DELETE_ON_ERROR:
 

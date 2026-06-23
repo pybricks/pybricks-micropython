@@ -18,7 +18,7 @@ SECTIONS
                                      firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
         . = DEFINED(FW_INFO_OFFSET) ? FW_INFO_OFFSET : .;
-        *(.fw_info) /* .fw_info section for info read during SPIKE firmware update */
+        *(.fw_info) /* .fw_info section for info read during SPIKE Essential firmware update */
         KEEP(*(.fw_info))
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */

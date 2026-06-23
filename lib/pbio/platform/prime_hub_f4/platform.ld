@@ -10,9 +10,11 @@
 MEMORY
 {
     /* Non-erasable DFU bootloader. */
-    FLASH_BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+    FROZEN_DFU_BOOTLOADER (rx) : ORIGIN = 0x08000000, LENGTH = 32K
+    /* Second stage DFU bootloader for compatibility with official firmware. */
+    SECOND_DFU_BOOTLOADER (rx) : ORIGIN = 0x08008000, LENGTH = 32K
     /* The firmware. Installed via DFU bootloader */
-    FLASH_FIRMWARE (rx)   : ORIGIN = 0x08008000, LENGTH = 992K
+    FLASH_FIRMWARE (rx)   : ORIGIN = 0x8010000, LENGTH = 960K
     /* SRAM1 (256K) and SRAM2 (64K) are treated as one continuous block */
     RAM (xrw)             : ORIGIN = 0x20000000, LENGTH = 320K
 }
