@@ -110,6 +110,15 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Fake a subscribe message so the common driver starts sending events,
+    // just as a real host would after opening the port. It is COBS-encoded
+    // like real host traffic.
+    static const uint8_t subscribe_msg[] = {
+        PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1,
+    };
+    pbdrv_usb_simulation_pico_in_size = pbdrv_usb_cobs_encode(
+        subscribe_msg, sizeof(subscribe_msg), pbdrv_usb_simulation_pico_in_buf);
+
     for (;;) {
         static size_t available;
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_simulation_pico_in_size == 0 &&
@@ -160,8 +169,8 @@ void pbdrv_usb_init_device(void) {
     static pbio_os_process_t pbdrv_usb_test_process;
     pbio_os_process_start(&pbdrv_usb_test_process, pbdrv_usb_test_process_thread, NULL);
 
-    // No physical port to detect, so report the host connection as active
-    // right away (USB analog of a BLE host subscribing).
+    // No physical port to detect, so assert DTR right away. The process thread
+    // also fakes a subscribe message, so the connection becomes active.
     pbdrv_usb_on_dtr_changed(true);
 }
 

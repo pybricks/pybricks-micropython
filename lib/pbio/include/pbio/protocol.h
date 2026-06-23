@@ -513,7 +513,7 @@ typedef enum {
      * error code, analogous to a BLE write response.
      */
     PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
-    /** Analog to BLE notification. Emitted while a host is connected. */
+    /** Analog to BLE notification. Only emitted if subscribed. */
     PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
     /**
      * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_READ. The payload is
@@ -532,19 +532,29 @@ typedef enum {
  */
 typedef enum {
     /**
-     * A characteristic read request. The payload is
-     * `[service, char_id_lo, char_id_hi]`, where service is one of the
-     * ::PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT values. The hub
-     * replies with a ::PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY. This is the serial
-     * analog of a BLE host reading a characteristic by UUID.
+     * Subscribe to events. The payload is a single byte: 1 to subscribe, 0 to
+     * unsubscribe. The hub will only send events if the host is subscribed.
+     *
+     * Analog of BLE Client Characteristic Configuration Descriptor (CCCD).
      */
-    PBIO_PYBRICKS_OUT_EP_MSG_READ = 1,
+    PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
     /**
      * A Pybricks command (see ::pbio_pybricks_command_t), carried in the
      * remaining payload bytes. The hub replies with a
      * ::PBIO_PYBRICKS_IN_EP_MSG_RESPONSE.
+     *
+     * Analog of BLE Client Characteristic Write with response.
      */
     PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
+    /**
+     * A characteristic read request. The payload is
+     * `[service, char_id_lo, char_id_hi]`, where service is one of the
+     * ::PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT values. The hub
+     * replies with a ::PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY.
+     *
+     * Analog of a BLE host reading a characteristic by UUID.
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_READ = 3,
 } pbio_pybricks_usb_out_ep_msg_t;
 
 #endif // _PBIO_PROTOCOL_H_

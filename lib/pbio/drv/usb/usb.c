@@ -39,13 +39,25 @@ void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t ca
 }
 
 /**
- * Whether the host has opened the serial port (DTR asserted). This is the USB
- * analog of a BLE host subscribing to notifications.
+ * Whether the host has opened the serial port (DTR asserted). This detects
+ * disconnection gracefully, even if the host abruptly goes away (e.g. the
+ * browser tab is closed) without unsubscribing.
  */
 static bool pbdrv_usb_dtr;
 
+/**
+ * Whether the host is subscribed to our outgoing event messages. This is the
+ * USB analog of a BLE host subscribing to notifications.
+ *
+ * Unlike DTR, this is asserted explicitly by the host application rather than
+ * automatically by the OS when the port is opened. It gates the initial event
+ * flood so that we don't bombard the host with events the moment DTR is
+ * (possibly automatically) asserted.
+ */
+static bool pbdrv_usb_subscribed;
+
 bool pbdrv_usb_connection_is_active(void) {
-    return pbdrv_usb_is_ready() && pbdrv_usb_dtr;
+    return pbdrv_usb_is_ready() && pbdrv_usb_dtr && pbdrv_usb_subscribed;
 }
 
 //
@@ -226,10 +238,35 @@ void pbdrv_usb_on_dtr_changed(bool dtr) {
     pbdrv_usb_rx_frame_len = 0;
     pbdrv_usb_rx_overflow = false;
 
-    if (dtr) {
-        // Host just opened the port. Send the current status right away, like
-        // the first notification after a BLE host subscribes. Device info is
-        // not pushed; the host reads it on demand via read requests.
+    if (!dtr) {
+        // Host closed the port. The subscription implicitly falls with DTR. In
+        // practice the host rarely unsubscribes explicitly; it just lets DTR
+        // drop, which we detect even if the host abruptly goes away.
+        pbdrv_usb_subscribed = false;
+    }
+
+    if (pbdrv_usb_host_connection_changed_callback) {
+        pbdrv_usb_host_connection_changed_callback();
+    }
+
+    pbio_os_request_poll();
+}
+
+/**
+ * Sets whether the host is subscribed to event notifications and notifies
+ * listeners of the connection state change.
+ */
+static void pbdrv_usb_set_subscribed(bool subscribed) {
+    if (subscribed == pbdrv_usb_subscribed) {
+        return;
+    }
+
+    pbdrv_usb_subscribed = subscribed;
+
+    if (subscribed) {
+        // Host just subscribed. Send the current status right away, like the
+        // first notification after a BLE host subscribes. Device info is not
+        // pushed; the host reads it on demand via read requests.
         pbdrv_usb_status_data_pending = true;
     }
 
@@ -444,7 +481,11 @@ static void pbdrv_usb_handle_data_in(void) {
 
             // The first byte is the host-to-hub message type and the rest is
             // its payload.
-            if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
+            if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
+                // Subscribe or unsubscribe to event notifications. The payload
+                // is a single byte: 1 to subscribe, 0 to unsubscribe.
+                pbdrv_usb_set_subscribed(msg[1]);
+            } else if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
                 // Compute the response synchronously and queue it immediately.
                 pbio_set_uint32_le(&pbdrv_usb_command_response_buf[1],
                     pbdrv_usb_receive_handler(&msg[1], msg_size - 1));
@@ -475,6 +516,7 @@ static void pbdrv_usb_handle_data_in(void) {
 
 static void pbdrv_usb_reset_state(void) {
     pbdrv_usb_on_dtr_changed(false);
+    pbdrv_usb_subscribed = false;
     pbdrv_usb_command_response_pending = false;
     pbdrv_usb_read_reply_pending = false;
     pbdrv_usb_status_data_pending = false;

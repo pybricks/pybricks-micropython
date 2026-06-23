@@ -97,6 +97,14 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // Fake a subscribe message so the common driver starts sending events,
+    // just as a real host would after opening the port. It is COBS-encoded
+    // like real host traffic.
+    static const uint8_t subscribe_msg[] = {
+        PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1,
+    };
+    usb_in_size = pbdrv_usb_cobs_encode(subscribe_msg, sizeof(subscribe_msg), usb_in_buf);
+
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // CI and MicroPython test suite have lots of problems with stdin. It is
     // only needed for the REPL and interactive input, so don't bother on CI.
@@ -130,7 +138,8 @@ void pbdrv_usb_init_device(void) {
     static pbio_os_process_t pbdrv_usb_test_process;
     pbio_os_process_start(&pbdrv_usb_test_process, pbdrv_usb_test_process_thread, NULL);
 
-    // No physical port to open, so report the connection as active right away.
+    // No physical port to open, so assert DTR right away. The process thread
+    // also fakes a subscribe message, so the connection becomes active.
     pbdrv_usb_on_dtr_changed(true);
 }
 
