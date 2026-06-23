@@ -586,8 +586,9 @@ static mp_obj_t pb_type_ble_radio_make_new(const mp_obj_type_t *type, size_t n_a
 mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in) {
     if (broadcast_channel_in != mp_const_none || observe_channels_in != MP_OBJ_FROM_PTR(&mp_const_empty_tuple_obj)) {
         mp_printf(&mp_plat_print, "Hub messaging has been moved. You should use:\n\nfrom pybricks.messaging import BLERadio\nradio = BLERadio(broadcast_channel, observe_channels)\n\n");
+        return pb_type_ble_radio_init(broadcast_channel_in, observe_channels_in);
     }
-    return pb_type_ble_radio_init(broadcast_channel_in, observe_channels_in);
+    return mp_const_none;
 }
 #endif // PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD
 
