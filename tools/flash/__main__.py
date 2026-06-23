@@ -54,7 +54,7 @@ def main():
         level=logging.DEBUG if args.debug else logging.WARNING,
     )
 
-    print("Creating firmware...")
+    print("Unpacking firmware.")
     hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
 
     # We have a firmware and intended target. Find and flash it.

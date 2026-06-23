@@ -420,16 +420,11 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     devices = get_dfu_devices(idVendor=LEGO_USB_VID)
     if not devices:
         sys.exit(
-            "No DFU devices found. "
-            + "Make sure hub is in DFU mode and connected with USB.",
-            file=sys.stderr,
+            "No DFU devices found."
+            + "Make sure hub is in DFU mode and connected with USB."
         )
-        exit(1)
-
     if len(devices) > 1:
-        sys.exit(
-            "Multiple DFU devices found. Connect at most one.",
-        )
+        sys.exit("Multiple DFU devices found. Connect at most one.")
 
     try:
         dfu = DfuDevice(devices[0])
@@ -441,20 +436,49 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         else:
             raise  # not expecting other errors, so re-raise.
 
-    mcu, pbio_platform, needs_mboot = determine_platform(
+    # Figure out what is attached.
+    mcu, detected_platform, needs_mboot = determine_platform(
         flash_layout=dfu.get_flash_layout_str(),
         serial=dfu.get_serial(),
         vid=int(dfu._dev.idVendor),
         pid=int(dfu._dev.idProduct),
         bcd=int(dfu._dev.bcdDevice),
     )
-    print(f"Detected platform: {pbio_platform}, needs mboot: {needs_mboot}")
+    print(f"Attached platform: {detected_platform}")
     dfu.set_mcu_family(mcu)
 
-    firmware = firmwares.get(pbio_platform)
+    # There is only one viable path for Essential Hub, across all versions.
+    if hub_kind == HubKind.TECHNIC_SMALL:
+        if len(firmwares) > 1 or detected_platform != "essential_hub":
+            sys.exit("Incompatible firmware for this device.")
+        ((_, firmware),) = firmwares.items()
+        print("===Installing SPIKE Essential firmware.===")
+        dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
+        dfu.exit()
+        print("Done.")
+        sys.exit(0)
+
+    # Backwards compatibility for v1.x and v2.x SPIKE Prime firmware archives
+    # which did not specify pbio_platform. It is always F4 with stock bootloader.
+    if hub_kind == HubKind.TECHNIC_LARGE and None in firmwares:
+        if len(firmwares) > 1 or detected_platform != "prime_hub_f4":
+            sys.exit("Incompatible firmware for this device.")
+        if not needs_mboot:
+            sys.exit("Incorrect DFU mode for this legacy firmware.")
+        print("===Installing legacy SPIKE Prime firmware.===")
+        ((_, firmware),) = firmwares.items()
+        dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
+        dfu.exit()
+        print("Done.")
+        sys.exit(0)
+
+    # Otherwise we have a v3.x SPIKE Prime firmware archive, which may
+    # contain multiple variants. All of them use the modernized mboot,
+    # either baked in or installed here.
+    firmware = firmwares.get(detected_platform)
     if firmware is None:
         raise sys.exit(
-            f"The provided archive does not have firmware available for platform: {pbio_platform}"
+            f"The provided archive does not have firmware available for platform: {detected_platform}"
         )
     print("Compatible firmware found for this hub, proceeding.")
 
@@ -462,15 +486,13 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     if needs_mboot:
         with open(MBOOT_PATH, "rb") as f:
             mboot_bin = f.read()
-        print("Installing second-stage mboot bootloader.")
+        print("===Installing second-stage mboot bootloader.===")
         dfu.write_firmware(mboot_bin, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
 
     # With F4 we now have a 32K frozen bootloader and a 32K second-stage mboot
     # bootloader, so we can write the firmware after that. The H5 has a 64K
     # frozen bootloader, so both cases we can write the firmware after 64K.
-    print("Installing firmware.")
+    print("===Installing firmware.===")
     dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K)
-
-    # Leave DFU mode once, after all regions have been written.
     dfu.exit()
     print("Done.")
