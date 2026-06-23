@@ -138,6 +138,16 @@ class DfuDevice:
                     0x21, _DFU_CLRSTATUS, 0, _DFU_INTERFACE, None, _TIMEOUT
                 )
 
+        # Set by user.
+        self.mcu_family: str | None = None
+
+    def set_mcu_family(self, mcu: str) -> None:
+        """Sets the MCU family for this device.
+
+        This is used to determine the flash sector layout for erasing.
+        """
+        self.mcu_family = mcu
+
     def _get_status(self) -> int:
         stat = self._dev.ctrl_transfer(
             0xA1, _DFU_GETSTATUS, 0, _DFU_INTERFACE, 6, 20000
@@ -189,6 +199,82 @@ class DfuDevice:
         self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_BUSY)
         self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_IDLE)
 
+    def page_erase(self, addr: int) -> None:
+        """Erases the single flash sector/page that contains ``addr``."""
+        buf = struct.pack("<BI", 0x41, addr)
+        self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, buf, _TIMEOUT)
+        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_BUSY)
+        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_IDLE)
+
+    def _sector_layout(self) -> list[tuple[int, int]]:
+        """Returns the ``(address, size)`` of every flash sector for ``mcu``.
+
+        The sector layout is a fixed property of the silicon, so we hardcode
+        it per MCU family rather than parsing the (fragile, vendor-specific)
+        DFU flash layout descriptor string. This is independent of which
+        bootloader is installed.
+        """
+        if self.mcu_family == "f4":
+            # Standard STM32F4 1 MB layout: 16/16/16/16/64/128*7 KB.
+            sizes_kb = (16, 16, 16, 16, 64, 128, 128, 128, 128, 128, 128, 128)
+            addr = FLASH_BASE_ADDRESS
+            sectors = []
+            for size_kb in sizes_kb:
+                sectors.append((addr, size_kb * 1024))
+                addr += size_kb * 1024
+            return sectors
+
+        if self.mcu_family == "h5":
+            # STM32H5 uses uniform 8 KB sectors across its flash.
+            # We have the 1 MB variant.
+            page = 8 * 1024
+            count = (1 * 1024 * 1024) // page
+            return [(FLASH_BASE_ADDRESS + i * page, page) for i in range(count)]
+
+        raise ValueError(f"Unknown MCU type: {self.mcu_family}")
+
+    def region_erase(
+        self,
+        start: int,
+        end: int | None = None,
+        progress: Callable[[int], None] | None = None,
+    ) -> None:
+        """Erases every flash sector overlapping ``[start, end)``.
+
+        The MCU family is read from ``self.mcu_family`` to determine the flash
+        sector layout. If ``end`` is ``None``, erases everything from ``start``
+        to the end of flash. Sectors are erased whole, so an erase may extend
+        slightly beyond ``start``/``end`` to the enclosing sector boundaries.
+        ``progress`` is called with the number of bytes erased after each
+        sector.
+        """
+        sectors = self._sector_layout()
+        flash_start = sectors[0][0]
+        flash_end = sectors[-1][0] + sectors[-1][1]
+        if end is None:
+            end = flash_end
+        if not (flash_start <= start < end <= flash_end):
+            raise ValueError(
+                f"erase range [{start:#x}, {end:#x}) is invalid or outside "
+                f"flash [{flash_start:#x}, {flash_end:#x})"
+            )
+        for addr, size in sectors:
+            if addr + size <= start or addr >= end:
+                continue
+            self.page_erase(addr)
+            if progress:
+                progress(size)
+
+    def _region_erase_size(self, start: int, end: int) -> int:
+        """Returns the total number of bytes the sectors overlapping
+        ``[start, end)`` occupy (i.e. how many bytes ``region_erase`` clears).
+        """
+        return sum(
+            size
+            for addr, size in self._sector_layout()
+            if not (addr + size <= start or addr >= end)
+        )
+
     def _set_address(self, addr: int) -> None:
         buf = struct.pack("<BI", 0x21, addr)
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, buf, _TIMEOUT)
@@ -227,6 +313,38 @@ class DfuDevice:
             if progress:
                 progress(chunk)
 
+    def write_firmware(self, data: bytes, address: int) -> None:
+        """Erases the affected flash region and writes ``data`` at ``address``.
+
+        This is the single low-level entry point: it makes no assumptions
+        about what the bytes are, it just puts them on the device. Callers are
+        responsible for validating the firmware before calling this. The
+        sectors overlapping ``[address, address + len(data))`` are erased
+        before writing.
+
+        This does NOT leave DFU mode, so multiple regions can be written in
+        the same session. Call :meth:`exit` once when all writes are done.
+        """
+        end = address + len(data)
+
+        print("Erasing flash...")
+        with (
+            logging_redirect_tqdm(),
+            tqdm(
+                total=self._region_erase_size(address, end),
+                unit="B",
+                unit_scale=True,
+            ) as pbar,
+        ):
+            self.region_erase(address, end, pbar.update)
+
+        print("Writing new firmware...")
+        with (
+            logging_redirect_tqdm(),
+            tqdm(total=len(data), unit="B", unit_scale=True) as pbar,
+        ):
+            self.write_memory(address, data, pbar.update)
+
     def exit(self) -> None:
         """Exits DFU mode and starts running the firmware."""
         self._set_address(FLASH_BASE_ADDRESS)
@@ -244,6 +362,7 @@ class DfuDevice:
 # High-level firmware flashing
 # ---------------------------------------------------------------------------
 
+
 def determine_platform(
     flash_layout: str, serial: str, vid: int, pid: int, bcd: int
 ) -> tuple[str, bool]:
@@ -255,7 +374,7 @@ def determine_platform(
     # There is only one variant with this hub, and we use the stock frozen
     # bootloader. We do not install a second-stage mboot.
     if pid == SPIKE_ESSENTIAL_DFU_USB_PID:
-        return "essential_hub", False
+        return "f4", "essential_hub", False
 
     # Otherwise only expect SPIKE Prime or MINDSTORMS Inventor. Either can come
     # in various variants, which we'll distinguish below.
@@ -267,7 +386,7 @@ def determine_platform(
     # This is the frozen stock bootloader for either the Prime Hub or Inventor
     # Hub. This is always the F4 and we do install a second-stage mboot bootloader.
     if bcd == 0x0100:
-        return "prime_hub_f4", True
+        return "f4", "prime_hub_f4", True
 
     # Now we may still have an F4 with the second stage bootloader already installed
     # or an H5 with its own frozen stock bootloader (modern mboot). Both advertise
@@ -278,38 +397,13 @@ def determine_platform(
     # Since both variants have the same bcdDevice and product ID, we need to
     # distinguish them by their flash layout. Neither need a new mboot.
     if "064Kg" in flash_layout and "128Kg" in flash_layout:
-        return "prime_hub_f4", False
+        return "f4", "prime_hub_f4", False
 
     if "08Kg" in flash_layout:
-        return "prime_hub_h5", False
+        return "f5", "prime_hub_h5", False
 
     # No other known variants exist, so we can assume this is an unknown hub.
     sys.exit(f"Unknown MCU: {flash_layout}")
-
-
-def write_firmware(
-    dfu: "DfuDevice",
-    data: bytes,
-    address: int,
-    erase: bool,
-) -> None:
-    """Mass-erases the device and writes ``data`` to flash at ``address``.
-
-    This is the single low-level entry point: it makes no assumptions about
-    what the bytes are, it just puts them on the device. Callers are
-    responsible for validating the firmware before calling this.
-    """
-    print("Erasing flash...")
-    if erase:
-        dfu.mass_erase()
-    print("Writing new firmware...")
-    with (
-        logging_redirect_tqdm(),
-        tqdm(total=len(data), unit="B", unit_scale=True) as pbar,
-    ):
-        dfu.write_memory(address, data, pbar.update)
-    dfu.exit()
-    print("Done.")
 
 
 def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
@@ -347,7 +441,7 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         else:
             raise  # not expecting other errors, so re-raise.
 
-    pbio_platform, needs_mboot = determine_platform(
+    mcu, pbio_platform, needs_mboot = determine_platform(
         flash_layout=dfu.get_flash_layout_str(),
         serial=dfu.get_serial(),
         vid=int(dfu._dev.idVendor),
@@ -355,6 +449,7 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         bcd=int(dfu._dev.bcdDevice),
     )
     print(f"Detected platform: {pbio_platform}, needs mboot: {needs_mboot}")
+    dfu.set_mcu_family(mcu)
 
     if isinstance(firmwares, dict):
         firmware = firmwares.get(pbio_platform)
@@ -372,12 +467,14 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         with open(MBOOT_PATH, "rb") as f:
             mboot_bin = f.read()
         print("Installing second-stage mboot bootloader.")
-        write_firmware(
-            dfu, mboot_bin, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K, erase=True
-        )
+        dfu.write_firmware(mboot_bin, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
 
     # With F4 we now have a 32K frozen bootloader and a 32K second-stage mboot
     # bootloader, so we can write the firmware after that. The H5 has a 64K
     # frozen bootloader, so both cases we can write the firmware after 64K.
     print("Installing firmware.")
-    write_firmware(dfu, firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K, erase=False)
+    dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K)
+
+    # Leave DFU mode once, after all regions have been written.
+    dfu.exit()
+    print("Done.")
