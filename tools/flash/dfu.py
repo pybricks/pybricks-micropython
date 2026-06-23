@@ -451,16 +451,12 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     print(f"Detected platform: {pbio_platform}, needs mboot: {needs_mboot}")
     dfu.set_mcu_family(mcu)
 
-    if isinstance(firmwares, dict):
-        firmware = firmwares.get(pbio_platform)
-        if firmware is None:
-            raise sys.exit(
-                f"The provided archive does not have firmware available for platform: {pbio_platform}"
-            )
-        print("Compatible firmware found for this hub, proceeding.")
-    else:
-        print("Using a raw firmware binary blob, skipping platform check.")
-        firmware = firmwares
+    firmware = firmwares.get(pbio_platform)
+    if firmware is None:
+        raise sys.exit(
+            f"The provided archive does not have firmware available for platform: {pbio_platform}"
+        )
+    print("Compatible firmware found for this hub, proceeding.")
 
     # Install the second-stage mboot bootloader if needed.
     if needs_mboot:

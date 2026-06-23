@@ -244,13 +244,12 @@ class EV3Bootloader:
         self.close()
 
 
-def flash_ev3(firmware: bytes | dict[str, bytes]) -> None:
+def flash_ev3(firmwares: dict[str, bytes]) -> None:
     """Flashes firmware to EV3."""
 
     # There is only one firmware for the EV3. It deals with hardware
     # variations like Bluetooth chipsets at runtime.
-    if isinstance(firmware, dict):
-        firmware = firmware["ev3"]
+    firmware = firmwares["ev3"]
 
     # TODO: nice error message and exit(1) if EV3 is not found
     with EV3Bootloader() as bootloader:

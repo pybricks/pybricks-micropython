@@ -353,9 +353,7 @@ async def flash_ble(firmwares: bytes | dict[str, bytes], hub_kind: HubKind):
 
     # If there are ever any other variants for these hubs, here we can pick
     # the right one based on the device properties we just found.
-    if not isinstance(firmwares, dict):
-        firmware = firmwares
-    elif hub_kind == HubKind.TECHNIC:
+    if hub_kind == HubKind.TECHNIC:
         firmware = firmwares["technic_hub"]
     elif hub_kind == HubKind.BOOST:
         firmware = firmwares["move_hub"]

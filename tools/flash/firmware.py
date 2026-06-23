@@ -283,11 +283,31 @@ def create_firmware_blob(
         version = metadata["metadata-version"]
         hub_kind = HubKind(metadata["device-id"])
 
+        # V1 and V2 did not specify pbio platform in metadata, so add now.
+        legacy_platforms = {
+            HubKind.CITY: "city_hub",
+            HubKind.TECHNIC: "technic_hub",
+            HubKind.BOOST: "move_hub",
+            HubKind.EV3: "ev3",
+            HubKind.NXT: "nxt",
+            HubKind.TECHNIC_SMALL: "essential_hub",
+            # All V1 and V2 metas had firmware for F4 with stock bootloader.
+            HubKind.TECHNIC_LARGE: "prime_hub_legacy",
+        }
+
         if _firmware_metadata_is_v1(metadata):
-            return hub_kind, bytes(_create_firmware_v1(metadata, archive, name))
+            return hub_kind, {
+                legacy_platforms[hub_kind]: bytes(
+                    _create_firmware_v1(metadata, archive, name)
+                )
+            }
 
         if _firmware_metadata_is_v2(metadata):
-            return hub_kind, bytes(_create_firmware_v2(metadata, archive, name))
+            return hub_kind, {
+                legacy_platforms[hub_kind]: bytes(
+                    _create_firmware_v2(metadata, archive, name)
+                )
+            }
 
         if not version.startswith("3."):
             raise ValueError(f"unsupported metadata version: {version}")
