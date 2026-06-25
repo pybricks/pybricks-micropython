@@ -480,6 +480,10 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         raise sys.exit(
             f"The provided archive does not have firmware available for platform: {detected_platform}"
         )
+    
+    if (firmware[0x1f0] >= 0x0f or firmware[0x264] >= 0x0f):
+        sys.exit("This firmware is not compatible with mboot.")
+
     print("Compatible firmware found for this hub, proceeding.")
 
     # Install the second-stage mboot bootloader if needed.

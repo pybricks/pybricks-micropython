@@ -801,6 +801,11 @@ $(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(PBTOP)/lib/pbio/platform/ev
 else
 # For embeded systems, the firmware is just the base file.
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
+# Safety requirement for SPIKE Prime
+ifneq ($(findstring prime_hub,$(PBIO_PLATFORM)),)
+	$(Q)od -An -t u1 -j 0x264 -N 1 $< | awk '{if ($$1 >= 15) { print "Error: byte at 0x264 must be < 0xf"; exit 1 } }'
+	$(Q)od -An -t u1 -j 0x1f0 -N 1 $< | awk '{if ($$1 >= 15) { print "Error: byte at 0x1f0 must be < 0xf"; exit 1 } }'
+endif
 	$(Q)cp $< $@
 endif
 

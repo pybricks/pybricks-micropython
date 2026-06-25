@@ -29,6 +29,26 @@
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
 
+// Special symbols for firmware compatibility with mboot
+typedef struct {
+    uint8_t hub_ui_color;
+    char mcu_name[15];
+    uint8_t unknown;
+    char board_name[15];
+} lego_fw_info_t;
+
+#define FW_INFO_INITIALIZER { \
+        .hub_ui_color = 0x0d, /* Must be less than 0x0F. */ \
+        .mcu_name = "STM32F413", \
+        .unknown = 0x00, \
+        .board_name = "SPIKE Prime", \
+}
+
+// Different mboot variants look in different places for the firmware info, so
+// we put it in two places.
+const lego_fw_info_t __attribute__((section(".fw_info"), used)) fw_info = FW_INFO_INITIALIZER;
+const lego_fw_info_t __attribute__((section(".fw_info2"), used)) fw_info2 = FW_INFO_INITIALIZER;
+
 enum {
     LED_DEV_0_STATUS,
     LED_DEV_1_BATTERY,
