@@ -120,12 +120,19 @@ for commit in pybricks.iter_commits(
     # Make mpy-cross once
     print("Building mpy-cross")
     mpy_cross_path = os.path.join(PYBRICKS_PATH, "micropython", "mpy-cross")
-    subprocess.check_call(["make", "-C", mpy_cross_path, "CROSS_COMPILE="])
+    subprocess.check_call(["make", "-C", mpy_cross_path, "CROSS_COMPILE=", "-j"])
 
-    # Make the targets simultaneously
-    print("Building firmware")
-    procs = {
-        target: subprocess.Popen(
+    # Build all targets in parallel. Keep going on failure (-k) so that one
+    # broken hub does not prevent the others from building, and do not check
+    # the return code so a failed build for a historical commit is tolerated.
+    print("Building all firmwares")
+    subprocess.run(["make", "-j", "-k", *hubs])
+
+    print("Get firmware-base.bin size")
+    for target in hubs:
+        # Some targets don't build it by default. The heavy compilation is
+        # already done above, so this is quick. Failure is handled below.
+        subprocess.run(
             [
                 "make",
                 "-C",
@@ -134,13 +141,6 @@ for commit in pybricks.iter_commits(
                 "-j",
             ]
         )
-        for target in hubs
-    }
-
-    # Get target sizes
-    for target, proc in procs.items():
-        # Wait for the target to complete building or fail
-        proc.wait()
 
         # Get build size on success
         bin_path = os.path.join(
