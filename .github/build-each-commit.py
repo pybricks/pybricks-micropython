@@ -6,6 +6,7 @@ import os
 import subprocess
 
 from azure.core.credentials import AzureNamedKeyCredential
+from azure.core.exceptions import ResourceNotFoundError
 from azure.data.tables import TableClient, UpdateMode
 import git
 
@@ -27,6 +28,7 @@ pybricks = git.Repo(PYBRICKS_PATH)
 assert not pybricks.bare, "Repository not found"
 
 # if credentials were given, connect to remote database
+firmware_size_table = None
 if STORAGE_ACCOUNT:
     firmware_size_table = TableClient(
         STORAGE_URL,
@@ -51,6 +53,22 @@ end_commit = args.commit
 for commit in pybricks.iter_commits(
     f"{start_commit}..{end_commit}", ancestry_path=start_commit, reverse=True
 ):
+    # skip commits whose size for this hub is already recorded
+    if firmware_size_table is not None:
+        try:
+            entity = firmware_size_table.get_entity("size", commit.hexsha)
+            if entity.get(args.hub) is not None:
+                print(
+                    "Skipping",
+                    commit.hexsha[:8],
+                    f'"{commit.summary}"',
+                    "(already built)",
+                    flush=True,
+                )
+                continue
+        except ResourceNotFoundError:
+            pass
+
     print("Checking out", commit.hexsha[:8], f'"{commit.summary}"', flush=True)
     pybricks.git.checkout(commit.hexsha)
     os.putenv("MICROPY_GIT_HASH", commit.hexsha[:8])
@@ -86,20 +104,29 @@ for commit in pybricks.iter_commits(
             "update", "--init", "lib/pico-sdk"
         )
 
-    # build the firmware
+    # Clean
     subprocess.check_call(
         [
             "make",
             "-C",
             os.path.join(PYBRICKS_PATH, "bricks", args.hub),
             "clean",
+        ]
+    )
+    # build the firmware
+    subprocess.check_call(
+        [
+            "make",
+            "-C",
+            os.path.join(PYBRICKS_PATH, "bricks", args.hub),
             "build/firmware-base.bin",
             "all",
+            "-j",
         ]
     )
 
     # upload firmware size
-    if "firmware_size_table" in globals():
+    if firmware_size_table is not None:
         bin_path = os.path.join(
             PYBRICKS_PATH, "bricks", args.hub, "build", "firmware-base.bin"
         )
