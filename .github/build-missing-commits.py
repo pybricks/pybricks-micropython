@@ -114,6 +114,9 @@ for commit in pybricks.iter_commits(
     )
     pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
 
+    print("Clean all")
+    subprocess.check_call(["make", "clean-all"])
+
     # Make mpy-cross once
     print("Building mpy-cross")
     mpy_cross_path = os.path.join(PYBRICKS_PATH, "micropython", "mpy-cross")
@@ -127,8 +130,8 @@ for commit in pybricks.iter_commits(
                 "make",
                 "-C",
                 os.path.join(PYBRICKS_PATH, "bricks", target),
-                "clean",
                 "build/firmware-base.bin",
+                "-j",
             ]
         )
         for target in hubs

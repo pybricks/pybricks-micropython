@@ -78,7 +78,7 @@ jobs:
       run: |
         ulimit -n 1024 # needed for micropython/tests/extmod/select_poll_fd.py
         cd micropython
-        make -C ports/unix VARIANT=coverage test_full
+        make -C ports/unix VARIANT=coverage test_full -j
         (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/build-coverage/micropython ./run-multitests.py multi_net/*.py)
     - name: List failed tests
       if: failure()
@@ -126,7 +126,7 @@ jobs:
         export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
         export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
         [ "${{ matrix.hub }}" = "buildhat" ] && make -C bricks/${{ matrix.hub }} submodules
-        poetry run make -C bricks/${{ matrix.hub }}
+        poetry run make -C bricks/${{ matrix.hub }} -j
     - name: Extract firmware.zip for upload
       if: ${{ success()}}
       working-directory: bricks/${{ matrix.hub }}/build
