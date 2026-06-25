@@ -11,7 +11,8 @@ if [[ $CI != "true" ]]; then
     NOT_CI="true"
 fi
 
-COVERAGE=1
+# Coverage is opt-in
+COVERAGE="${COVERAGE:-}"
 export COVERAGE
 
 SCRIPT_DIR=$(readlink -f "$(dirname "$0")")

@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install lcov pipx
+      run: sudo apt-get update && sudo apt-get install pipx
     - name: Install Pybricksdev
       run: pipx install pybricksdev
     - name: Checkout repo
@@ -182,7 +182,7 @@ jobs:
     - name: Install prerequisites
       run: |
         sudo apt-get update
-        sudo apt-get install --yes doxygen graphviz lcov
+        sudo apt-get install --yes doxygen graphviz
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
@@ -196,7 +196,7 @@ jobs:
         poetry run make $MAKEOPTS -C lib/pbio/test
     - name: Build docs
       run: |
-        make $MAKEOPTS -C lib/pbio/doc
-    - name: Build coverage
+        make $MAKEOPTS -C lib/pbio/doc -j
+    - name: Run tests
       run: |
-        poetry run make $MAKEOPTS -C lib/pbio/test build-coverage/lcov.info
+        poetry run ./test-pbio.sh

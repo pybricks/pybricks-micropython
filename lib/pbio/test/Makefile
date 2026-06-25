@@ -166,6 +166,11 @@ CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
 
+# Parallelize permutation-heavy tests (e.g. the trajectory tests) across all
+# available CPU cores. Coverage may be inaccurate for that one test, but that's
+# fine.
+CFLAGS += -fopenmp
+
 ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
