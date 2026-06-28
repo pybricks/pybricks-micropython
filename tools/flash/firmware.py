@@ -283,11 +283,29 @@ def create_firmware_blob(
         version = metadata["metadata-version"]
         hub_kind = HubKind(metadata["device-id"])
 
+        # Older metadata did not specify a platform name, but they mapped
+        # directly to a single firmware binary blob from the hub type.
+        legacy_pbio_platform = {
+            HubKind.BOOST: "move_hub",
+            HubKind.CITY: "city_hub",
+            HubKind.TECHNIC: "technic_hub",
+            HubKind.TECHNIC_LARGE: "prime_hub",
+            HubKind.TECHNIC_SMALL: "essential_hub",
+        }.get(hub_kind)
+
         if _firmware_metadata_is_v1(metadata):
-            return hub_kind, {None: bytes(_create_firmware_v1(metadata, archive, name))}
+            return hub_kind, {
+                legacy_pbio_platform: bytes(
+                    _create_firmware_v1(metadata, archive, name)
+                )
+            }
 
         if _firmware_metadata_is_v2(metadata):
-            return hub_kind, {None: bytes(_create_firmware_v2(metadata, archive, name))}
+            return hub_kind, {
+                legacy_pbio_platform: bytes(
+                    _create_firmware_v2(metadata, archive, name)
+                )
+            }
 
         if not version.startswith("3."):
             raise ValueError(f"unsupported metadata version: {version}")

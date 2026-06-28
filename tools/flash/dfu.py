@@ -374,7 +374,7 @@ def determine_platform(
     # There is only one variant with this hub, and we use the stock frozen
     # bootloader. We do not install a second-stage mboot.
     if pid == SPIKE_ESSENTIAL_DFU_USB_PID:
-        return "f4", "essential_hub", False
+        return "f4", "essential_hub"
 
     # Otherwise only expect SPIKE Prime or MINDSTORMS Inventor. Either can come
     # in various variants, which we'll distinguish below.
@@ -384,9 +384,10 @@ def determine_platform(
         )
 
     # This is the frozen stock bootloader for either the Prime Hub or Inventor
-    # Hub. This is always the F4 and we do install a second-stage mboot bootloader.
+    # Hub. This is always the F4. Allows legacy firmware or new firmware if we
+    # install the second-stage bootloader.
     if bcd == 0x0100:
-        return "f4", "prime_hub_f4", True
+        return "f4", "prime_hub"
 
     # Now we may still have an F4 with the second stage bootloader already installed
     # or an H5 with its own frozen stock bootloader (modern mboot). Both advertise
@@ -397,10 +398,10 @@ def determine_platform(
     # Since both variants have the same bcdDevice and product ID, we need to
     # distinguish them by their flash layout. Neither need a new mboot.
     if "064Kg" in flash_layout and "128Kg" in flash_layout:
-        return "f4", "prime_hub_f4", False
+        return "f4", "prime_hub_f4"
 
     if "08Kg" in flash_layout:
-        return "f5", "prime_hub_h5", False
+        return "h5", "prime_hub_h5"
 
     # No other known variants exist, so we can assume this is an unknown hub.
     sys.exit(f"Unknown MCU: {flash_layout}")
@@ -437,66 +438,94 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
             raise  # not expecting other errors, so re-raise.
 
     # Figure out what is attached.
-    mcu, detected_platform, needs_mboot = determine_platform(
+    mcu, attached_platform = determine_platform(
         flash_layout=dfu.get_flash_layout_str(),
         serial=dfu.get_serial(),
         vid=int(dfu._dev.idVendor),
         pid=int(dfu._dev.idProduct),
         bcd=int(dfu._dev.bcdDevice),
     )
-    print(f"Attached platform: {detected_platform}")
+    print(f"Attached platform: {attached_platform} with MCU: {mcu}")
     dfu.set_mcu_family(mcu)
 
     # There is only one viable path for Essential Hub, across all versions.
     if hub_kind == HubKind.TECHNIC_SMALL:
-        if len(firmwares) > 1 or detected_platform != "essential_hub":
+        if (
+            attached_platform != "essential_hub"
+            or len(firmwares) > 1
+            or "essential_hub" not in firmwares
+        ):
             sys.exit("Incompatible firmware for this device.")
-        ((_, firmware),) = firmwares.items()
         print("===Installing SPIKE Essential firmware.===")
-        dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
+        dfu.write_firmware(
+            firmwares["essential_hub"], FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+        )
         dfu.exit()
         print("Done.")
         sys.exit(0)
+
+    # Otherwise only expect SPIKE Prime or MINDSTORMS Inventor.
+    if hub_kind != HubKind.TECHNIC_LARGE:
+        sys.exit(f"Unsupported hub kind: {hub_kind}")
 
     # Backwards compatibility for v1.x and v2.x SPIKE Prime firmware archives
     # which did not specify pbio_platform. It is always F4 with stock bootloader.
-    if hub_kind == HubKind.TECHNIC_LARGE and None in firmwares:
-        if len(firmwares) > 1 or detected_platform != "prime_hub_f4":
-            sys.exit("Incompatible firmware for this device.")
-        if not needs_mboot:
-            sys.exit("Incorrect DFU mode for this legacy firmware.")
+    # So in this case the zip dictates what the device must be.
+    if "prime_hub" in firmwares:
+        print("Legacy firmware detected.")
+        if attached_platform != "prime_hub" or len(firmwares) > 1:
+            sys.exit("Incompatible firmware for this DFU mode.")
         print("===Installing legacy SPIKE Prime firmware.===")
-        ((_, firmware),) = firmwares.items()
-        dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
+        dfu.write_firmware(
+            firmwares["prime_hub"], FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+        )
         dfu.exit()
         print("Done.")
         sys.exit(0)
 
-    # Otherwise we have a v3.x SPIKE Prime firmware archive, which may
-    # contain multiple variants. All of them use the modernized mboot,
-    # either baked in or installed here.
-    firmware = firmwares.get(detected_platform)
-    if firmware is None:
-        raise sys.exit(
-            f"The provided archive does not have firmware available for platform: {detected_platform}"
-        )
-    
-    if (firmware[0x1f0] >= 0x0f or firmware[0x264] >= 0x0f):
+    # There is only one path for the H5, directly after the frozen bootloader.
+    # So in this case, the platform dictates what firmware must be included.
+    if attached_platform == "prime_hub_h5":
+        if "prime_hub_h5" not in firmwares:
+            sys.exit("Incompatible firmware for this device.")
+        firmware_h5 = firmwares["prime_hub_h5"]
+        if firmware_h5[0x264] >= 0x0F:
+            sys.exit("This firmware is not compatible with mboot.")
+        print("===Installing SPIKE Prime H5 firmware.===")
+        dfu.write_firmware(firmware_h5, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K)
+        dfu.exit()
+        print("Done.")
+        sys.exit(0)
+
+    # Now we know we have an F4, but it may be in either frozen bootloader. We
+    # use the same firmware for both.
+    if "prime_hub_f4" not in firmwares:
+        sys.exit("Incompatible firmware for this device.")
+    if firmwares["prime_hub_f4"][0x1F0] >= 0x0F:
         sys.exit("This firmware is not compatible with mboot.")
 
-    print("Compatible firmware found for this hub, proceeding.")
-
-    # Install the second-stage mboot bootloader if needed.
-    if needs_mboot:
+    # Decide whether we need the second-stage bootloader.
+    if attached_platform == "prime_hub_f4":
+        # We are running the second-stage bootloader already, so can directly
+        # flash the firmware.
+        firmware_f4 = firmwares["prime_hub_f4"]
+        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K
+    elif attached_platform == "prime_hub":
+        # We are running the frozen bootloader, so we need to install the
+        # second-stage bootloader first, then the firmware.
+        print("Adding second-stage mboot bootloader.")
         with open(MBOOT_PATH, "rb") as f:
             mboot_bin = f.read()
-        print("===Installing second-stage mboot bootloader.===")
-        dfu.write_firmware(mboot_bin, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K)
+            if len(mboot_bin) != BOOTLOADER_SIZE_32K:
+                sys.exit(f"Unexpected mboot size: {len(mboot_bin)} bytes.")
+        firmware_f4 = mboot_bin + firmwares["prime_hub_f4"]
+        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+    else:
+        sys.exit(f"Unsupported attached platform: {attached_platform}")
 
-    # With F4 we now have a 32K frozen bootloader and a 32K second-stage mboot
-    # bootloader, so we can write the firmware after that. The H5 has a 64K
-    # frozen bootloader, so both cases we can write the firmware after 64K.
-    print("===Installing firmware.===")
-    dfu.write_firmware(firmware, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K)
+    # Install the selected or combined firmware
+    print("===Installing SPIKE Prime F4 firmware.===")
+    dfu.write_firmware(firmware_f4, address)
     dfu.exit()
     print("Done.")
+    sys.exit(0)

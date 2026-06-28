@@ -71,6 +71,7 @@ PLATFORM_INFO = {
     "move_hub": {"device-id": 0x40, "checksum-type": "sum"},
     "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
     "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
+    "prime_hub": {"device-id": 0x81, "checksum-type": "crc32"},
     "prime_hub_f4": {"device-id": 0x81, "checksum-type": "crc32"},
     "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
     "rcx": {"device-id": 0xE0, "checksum-type": "none"},
