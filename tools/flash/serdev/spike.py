@@ -11,6 +11,7 @@ Enough to reboot the hub into update mode, so we can flash new firmware.
 
 import struct
 import time
+from dataclasses import dataclass
 
 import serial
 
@@ -24,6 +25,20 @@ MSG_NAMES = {
     0x00: "InfoRequest",
     0x01: "InfoResponse",
 }
+
+
+@dataclass
+class InfoResponse:
+    rpc_major: int
+    rpc_minor: int
+    rpc_build: int
+    fw_major: int
+    fw_minor: int
+    fw_build: int
+    max_packet: int
+    max_message: int
+    max_chunk: int
+    device_type: int
 
 
 def cobs_decode(data: bytes) -> bytes:
@@ -95,41 +110,25 @@ def pack(data: bytes) -> bytes:
     return bytes(buffer)
 
 
-def decode_info_response(msg: bytes):
-    """Decode a 0x01 InfoResponse into named fields (all little-endian)."""
-    (
-        _type,
-        rpc_major,
-        rpc_minor,
-        rpc_build,
-        fw_major,
-        fw_minor,
-        fw_build,
-        max_packet,
-        max_message,
-        max_chunk,
-        device_type,
-    ) = struct.unpack("<BBBHBBHHHHH", msg[:17])
-    return [
-        ("RPC version", f"{rpc_major}.{rpc_minor} build {rpc_build}"),
-        ("Firmware version", f"{fw_major}.{fw_minor} build {fw_build}"),
-        ("Max packet size", max_packet),
-        ("Max message size", max_message),
-        ("Max chunk size", max_chunk),
-        ("Product group device type", device_type),
-    ]
+def decode_info_response(msg: bytes) -> InfoResponse:
+    if len(msg) < 17 or msg[0] != 0x01:
+        raise ValueError("Invalid InfoResponse message")
+    """Decode a 0x01 InfoResponse payload (all little-endian)."""
+    return InfoResponse(*struct.unpack("<BBHBBHHHHH", msg[1:17]))
 
 
-def print_message(direction: str, msg: bytes) -> None:
-    """Pretty-print a single decoded protocol message."""
-    if not msg:
-        return
-    msg_id = msg[0]
-    name = MSG_NAMES.get(msg_id, f"Unknown(0x{msg_id:02x})")
-    print(f"{direction} 0x{msg_id:02x} {name} ({len(msg)}) {msg.hex(' ')}")
-    if msg_id == 0x01:
-        for field, value in decode_info_response(msg):
-            print(f"        - {field:<26} {value}")
+def print_info_response(info: InfoResponse) -> None:
+    """Pretty-print a decoded InfoResponse."""
+    print(
+        f" - {'RPC version':<26} {info.rpc_major}.{info.rpc_minor} build {info.rpc_build}"
+    )
+    print(
+        f" - {'Firmware version':<26} {info.fw_major}.{info.fw_minor} build {info.fw_build}"
+    )
+    print(f" - {'Max packet size':<26} {info.max_packet}")
+    print(f" - {'Max message size':<26} {info.max_message}")
+    print(f" - {'Max chunk size':<26} {info.max_chunk}")
+    print(f" - {'Product group device type':<26} {info.device_type}")
 
 
 def send_message(ser: serial.Serial, payload: bytes) -> None:
@@ -184,13 +183,12 @@ def reboot_for_update_spike_prime(ser: serial.Serial) -> bool:
     if not msg or msg[0] != 0x01:
         return False
 
-    # Extract firmware version from the InfoResponse.
-    # Layout: type(B) rpc_major(B) rpc_minor(B) rpc_build(H) fw_major(B) fw_minor(B) ...
-    _, _, _, _, fw_major, fw_minor = struct.unpack_from("<BBBHBB", msg)
+    info = decode_info_response(msg)
+    print_info_response(info)
 
-    if fw_major < 1 or fw_minor < 7:
+    if (info.fw_major, info.fw_minor) < (1, 8):
         print(
-            f"SPIKE Prime firmware {fw_major}.{fw_minor} is too old to reboot to update mode."
+            f"SPIKE Prime firmware {info.fw_major}.{info.fw_minor} is too old to reboot to update mode."
         )
         return False
 
