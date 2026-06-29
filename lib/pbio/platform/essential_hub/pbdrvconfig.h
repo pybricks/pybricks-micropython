@@ -93,7 +93,11 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)
-#define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+// Uses a variant of mboot, but not the second stage
+// bootloader as used on prime hub, so we require that
+// the user enters update mode manually as we also used
+// to do on primehub.
+#define PBDRV_CONFIG_RESET_STM32_HAS_MBOOT_BOOTLOADER (0)
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)

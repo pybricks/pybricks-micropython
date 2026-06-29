@@ -101,7 +101,7 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)
-#define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+#define PBDRV_CONFIG_RESET_STM32_HAS_MBOOT_BOOTLOADER (1)
 
 #define PBDRV_CONFIG_RESISTOR_LADDER                (1)
 #define PBDRV_CONFIG_RESISTOR_LADDER_NUM_DEV        (2)

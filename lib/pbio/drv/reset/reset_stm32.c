@@ -9,20 +9,41 @@
 
 #include STM32_H
 
+#include "reset_stm32.h"
+
 #include <pbdrv/reset.h>
 #include <pbdrv/watchdog.h>
 
 #if PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
-
 // Bootloader reads the value at this RAM address to know if BLE firmware loader
 // should run or not.
 // NB: this can't be static, otherwise section attribute is ignored.
 uint32_t pbdrv_reset_stm32_bootloader_selector __attribute__((section(".magic"), used));
+#elif PBDRV_CONFIG_RESET_STM32_HAS_MBOOT_BOOTLOADER
+// Survives reset since .bootloader_selector is not zero-initialized by startup.
+// Checked by the platform's early init to enter mboot. NB: this can't be
+// static, otherwise section attribute is ignored.
+uint32_t pbdrv_reset_stm32_bootloader_selector __attribute__((section(".bootloader_selector"), used));
+#endif
 
-// This value enables the BLE firmware loader.
+#define BOOTLOADER_HAS_UPDATE_MODE (PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER || PBDRV_CONFIG_RESET_STM32_HAS_MBOOT_BOOTLOADER)
+
 #define BOOTLOADER_FIRMWARE_UPDATE_MODE 0xAAAAAAAA
 
-#endif // PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
+#if BOOTLOADER_HAS_UPDATE_MODE
+/**
+ * Returns true if the bootloader should be entered after reset.
+ *
+ * Flag is always unset after reading.
+ */
+bool pbdrv_reset_stm32_is_bootloader_requested(void) {
+    if (pbdrv_reset_stm32_bootloader_selector == BOOTLOADER_FIRMWARE_UPDATE_MODE) {
+        pbdrv_reset_stm32_bootloader_selector = 0;
+        return true;
+    }
+    return false;
+}
+#endif // BOOTLOADER_HAS_UPDATE_MODE
 
 static pbdrv_reset_reason_t reset_reason;
 
@@ -45,12 +66,12 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
     switch (action) {
         // Some platforms can't reboot in update mode. In those cases it will
         // just shutdown instead so that update mode can be manually activated.
-        #if PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
+        #if BOOTLOADER_HAS_UPDATE_MODE
         case PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE:
             pbdrv_reset_stm32_bootloader_selector = BOOTLOADER_FIRMWARE_UPDATE_MODE;
             // fallthrough to PBDRV_RESET_ACTION_RESET
             __attribute__((fallthrough));
-        #endif // PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
+        #endif // BOOTLOADER_HAS_UPDATE_MODE
 
         case PBDRV_RESET_ACTION_RESET:
             NVIC_SystemReset(); // does not return

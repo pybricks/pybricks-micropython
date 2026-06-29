@@ -26,3 +26,6 @@ _minimal_stack_size = 12K;
 /* Read by bootloader */
 "FW_INFO_OFFSET" = 0x1f0;
 "FW_INFO_OFFSET2" = 0x264;
+
+/* Entry point of the second stage mboot, used to enter firmware update mode. */
+_pbdrv_reset_mboot_start = ORIGIN(SECOND_DFU_BOOTLOADER);

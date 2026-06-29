@@ -25,6 +25,7 @@
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/resistor_ladder/resistor_ladder.h"
+#include "../../drv/reset/reset_stm32.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
@@ -1010,6 +1011,18 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
     }
 }
 
+// Jump to mboot the same way MicroPython does: r0 holds the magic key, r1 holds
+// the bootloader vector table from which the stack pointer and reset vector are
+// loaded. r0 is preserved through the jump.
+static __attribute__((naked, noreturn)) void enter_mboot(uint32_t r0, uint32_t bl_addr) {
+    __asm volatile (
+        "ldr r2, [r1, #0]\n" // get stack pointer
+        "msr msp, r2\n"      // set stack pointer
+        "ldr r2, [r1, #4]\n" // get reset vector
+        "bx r2\n"            // branch to bootloader
+        );
+}
+
 // Early initialization
 
 // special memory addresses defined in linker script
@@ -1017,6 +1030,13 @@ extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
+    // If update mode was requested before a reset, the watchdog is now cleared.
+    // Enter mboot here, before anything (including the watchdog) is started.
+    if (pbdrv_reset_stm32_is_bootloader_requested()) {
+        extern uint32_t _pbdrv_reset_mboot_start[];
+        enter_mboot(0x70ad0000, (uint32_t)_pbdrv_reset_mboot_start);
+    }
+
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
