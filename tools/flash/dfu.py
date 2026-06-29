@@ -12,6 +12,7 @@ import errno
 import platform
 import struct
 import sys
+import time
 from collections.abc import Callable
 from typing import NamedTuple
 from pathlib import Path
@@ -123,7 +124,7 @@ class DfuDevice:
 
         # Get the device into a known idle state.
         for _ in range(4):
-            status = self._get_status()
+            status, _ = self._get_status()
             if status == _DFU_STATE_DFU_IDLE:
                 break
             elif status in (
@@ -148,7 +149,12 @@ class DfuDevice:
         """
         self.mcu_family = mcu
 
-    def _get_status(self) -> int:
+    def _get_status(self) -> tuple[int, int]:
+        """Issues GETSTATUS and returns ``(bState, bwPollTimeout_ms)``.
+
+        ``bwPollTimeout`` is the minimum time in milliseconds the host must
+        wait before issuing the next request while the device is busy.
+        """
         stat = self._dev.ctrl_transfer(
             0xA1, _DFU_GETSTATUS, 0, _DFU_INTERFACE, 6, 20000
         )
@@ -157,12 +163,25 @@ class DfuDevice:
             message = usb.util.get_string(self._dev, stat[5])
             if message:
                 print(message)
-        return stat[4]
+        poll_timeout = stat[1] | (stat[2] << 8) | (stat[3] << 16)
+        return stat[4], poll_timeout
 
-    def _check_status(self, stage: str, expected: int) -> None:
-        status = self._get_status()
-        if status != expected:
-            raise SystemExit(f"DFU: {stage} failed (state {status})")
+    def _wait_for_download_idle(self, stage: str) -> None:
+        """Waits for a download (erase/write) command to finish.
+
+        After a DNLOAD command the device reports ``dfuDNBUSY`` along with a
+        ``bwPollTimeout``. The host must wait that long before polling again,
+        and keep polling until the device leaves the busy state. Only then is
+        the operation actually complete and we can verify it reached
+        ``dfuDNLOAD_IDLE``.
+        """
+        state, poll_timeout = self._get_status()
+        while state == _DFU_STATE_DFU_DOWNLOAD_BUSY:
+            if poll_timeout:
+                time.sleep(poll_timeout / 1000)
+            state, poll_timeout = self._get_status()
+        if state != _DFU_STATE_DFU_DOWNLOAD_IDLE:
+            raise SystemExit(f"DFU: {stage} failed (state {state})")
 
     def get_string(self, index: int | None) -> str:
         """
@@ -196,15 +215,13 @@ class DfuDevice:
     def mass_erase(self) -> None:
         """Erases the entire device."""
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, b"\x41", _TIMEOUT)
-        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_BUSY)
-        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_IDLE)
+        self._wait_for_download_idle("erase")
 
     def page_erase(self, addr: int) -> None:
         """Erases the single flash sector/page that contains ``addr``."""
         buf = struct.pack("<BI", 0x41, addr)
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, buf, _TIMEOUT)
-        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_BUSY)
-        self._check_status("erase", _DFU_STATE_DFU_DOWNLOAD_IDLE)
+        self._wait_for_download_idle("erase")
 
     def _sector_layout(self) -> list[tuple[int, int]]:
         """Returns the ``(address, size)`` of every flash sector for ``mcu``.
@@ -278,8 +295,7 @@ class DfuDevice:
     def _set_address(self, addr: int) -> None:
         buf = struct.pack("<BI", 0x21, addr)
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, buf, _TIMEOUT)
-        self._check_status("set address", _DFU_STATE_DFU_DOWNLOAD_BUSY)
-        self._check_status("set address", _DFU_STATE_DFU_DOWNLOAD_IDLE)
+        self._wait_for_download_idle("set address")
 
     def write_memory(
         self,
@@ -306,8 +322,7 @@ class DfuDevice:
                 data[written : written + chunk],
                 _TIMEOUT,
             )
-            self._check_status("write memory", _DFU_STATE_DFU_DOWNLOAD_BUSY)
-            self._check_status("write memory", _DFU_STATE_DFU_DOWNLOAD_IDLE)
+            self._wait_for_download_idle("write memory")
 
             written += chunk
             if progress:
@@ -351,7 +366,7 @@ class DfuDevice:
         # Zero-length download triggers the manifestation/reset.
         self._dev.ctrl_transfer(0x21, _DFU_DNLOAD, 0, _DFU_INTERFACE, None, _TIMEOUT)
         try:
-            if self._get_status() != _DFU_STATE_DFU_MANIFEST:
+            if self._get_status()[0] != _DFU_STATE_DFU_MANIFEST:
                 print("Failed to reset device")
             usb.util.dispose_resources(self._dev)
         except OSError:
