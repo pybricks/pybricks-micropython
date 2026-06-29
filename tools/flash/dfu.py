@@ -421,7 +421,7 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     devices = get_dfu_devices(idVendor=LEGO_USB_VID)
     if not devices:
         sys.exit(
-            "No DFU devices found."
+            "No DFU devices found. "
             + "Make sure hub is in DFU mode and connected with USB."
         )
     if len(devices) > 1:
