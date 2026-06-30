@@ -48,7 +48,7 @@ void pbdrv_sound_init(void) {
 
     __HAL_LINKDMA(&pbdrv_sound_hdac, DMA_Handle1, pbdrv_sound_hdma);
 
-    DAC_ChannelConfTypeDef channel_config;
+    DAC_ChannelConfTypeDef channel_config = { };
     channel_config.DAC_Trigger = pdata->dac_trigger;
     channel_config.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
     HAL_DAC_ConfigChannel(&pbdrv_sound_hdac, &channel_config, pdata->dac_ch);
