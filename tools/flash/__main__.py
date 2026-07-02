@@ -66,11 +66,16 @@ def main():
         if hub_kind == HubKind.TECHNIC_LARGE:
             serial = get_serial_device()
             if serial:
-                print("Found serial device. Look for official Spike firmware.")
-                rebooted_spike_firmware = reboot_for_update_spike_prime(serial)
-                if not rebooted_spike_firmware:
-                    print("Looking for Pybricks firmware instead.")
-                    reboot_to_update_mode_pybricks(serial)
+                print("Found serial device. Look for official Pybricks firmware.")
+                if reboot_to_update_mode_pybricks(serial):
+                    print("Rebooted hub into update mode.")
+                else:
+                    print("Looking for SPIKE Prime firmware instead.")
+                    if reboot_for_update_spike_prime(serial):
+                        print("Rebooted hub into update mode.")
+                    else:
+                        print("Could not reboot hub into update mode.")
+                        sys.exit(1)
                 # Give the hub some time to reboot into DFU.
                 print("Waiting for hub to reboot into DFU mode.")
                 time.sleep(1.5)

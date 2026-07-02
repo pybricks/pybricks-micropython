@@ -72,7 +72,7 @@ def read_frame(ser: serial.Serial, timeout: float = 0.5) -> bytes | None:
             buffer.append(byte[0])
 
 
-def reboot_to_update_mode_pybricks(ser: serial.Serial) -> None:
+def reboot_to_update_mode_pybricks(ser: serial.Serial) -> bool:
     """Reboot a Pybricks hub into firmware update (DFU) mode via the serial protocol.
 
     Reads the firmware version from the hub to confirm it is running Pybricks,
@@ -80,6 +80,9 @@ def reboot_to_update_mode_pybricks(ser: serial.Serial) -> None:
 
     Returns the firmware version as ``(major, minor)`` on success, or ``None``
     if the hub did not respond as a Pybricks hub.
+
+    Returns:
+        True if Pybricks was detected and the reboot command was sent, False otherwise.
     """
     # Send a lone delimiter to resync the hub's COBS framing on connect.
     ser.write(bytes([DELIMITER]))
@@ -89,16 +92,17 @@ def reboot_to_update_mode_pybricks(ser: serial.Serial) -> None:
     send_read(ser, READ_CHARACTERISTIC_GATT, 0x2A26)
     frame = read_frame(ser)
     if frame is None or frame[0] != IN_EP_MSG_READ_REPLY:
-        return
+        return False
     try:
         version_str = frame[4:].decode("utf-8")
         parts = version_str.split(".")
         fw_major = int(parts[0])
         if fw_major != 4:
             print("Unexpected Pybricks firmware version: " + version_str)
-            return
+            return False
     except (ValueError, IndexError, UnicodeDecodeError):
-        return
+        return False
 
     send_command(ser, bytes([PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE]))
     ser.close()
+    return True
