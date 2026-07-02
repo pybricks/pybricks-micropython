@@ -17,6 +17,7 @@
 #include <pbdrv/config.h>
 #include <pbdrv/usb.h>
 
+#include <pbio/cobs.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -61,84 +62,14 @@ bool pbdrv_usb_connection_is_active(void) {
 }
 
 //
-// COBS (Consistent Overhead Byte Stuffing) framing.
+//
+// COBS (Consistent Overhead Byte Stuffing) framing, SPIKE Prime variant.
 //
 // The host to hub and hub to host directions are raw byte streams (CDC ACM /
-// Web Serial), so messages are delimited with a zero byte and COBS-encoded to
-// guarantee the payload itself never contains a zero. This is self
-// synchronizing: a corrupt or oversized frame is discarded at the next
-// delimiter without losing frame alignment.
+// Web Serial), so messages are framed by a trailing delimiter byte. The
+// framing scheme (and the encode/decode helpers) lives in the generic
+// pbio/cobs module so it can be reused and tested independently.
 //
-// The delimiter, size macros and the encode/decode helpers live in usb.h so
-// the mock simulation drivers can reuse them.
-//
-
-/**
- * COBS-encodes @p len bytes from @p src into @p dst and appends the frame
- * delimiter. @p dst must have room for at least ::PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE bytes
- * when @p len is at most ::PBDRV_USB_MAX_DECODED_MESSAGE_SIZE.
- *
- * @return  Number of bytes written to @p dst, including the trailing delimiter.
- */
-uint32_t pbdrv_usb_cobs_encode(const uint8_t *src, uint32_t len, uint8_t *dst) {
-    uint32_t read_idx = 0;
-    uint32_t write_idx = 1;
-    uint32_t code_idx = 0;
-    uint8_t code = 1;
-
-    while (read_idx < len) {
-        if (src[read_idx] == 0) {
-            dst[code_idx] = code;
-            code = 1;
-            code_idx = write_idx++;
-            read_idx++;
-        } else {
-            dst[write_idx++] = src[read_idx++];
-            if (++code == 0xFF) {
-                dst[code_idx] = code;
-                code = 1;
-                code_idx = write_idx++;
-            }
-        }
-    }
-
-    dst[code_idx] = code;
-    dst[write_idx++] = PBDRV_USB_COBS_DELIMITER;
-
-    return write_idx;
-}
-
-/**
- * COBS-decodes @p len bytes from @p src (a single frame with the delimiter
- * already stripped) into @p dst.
- *
- * @return  Number of decoded bytes, or 0 if the frame was empty or malformed.
- */
-uint32_t pbdrv_usb_cobs_decode(const uint8_t *src, uint32_t len, uint8_t *dst, uint32_t dst_max) {
-    uint32_t read_idx = 0;
-    uint32_t write_idx = 0;
-
-    while (read_idx < len) {
-        uint8_t code = src[read_idx++];
-
-        for (uint8_t i = 1; i < code; i++) {
-            if (read_idx >= len || write_idx >= dst_max) {
-                // Malformed frame: ran out of input or output space.
-                return 0;
-            }
-            dst[write_idx++] = src[read_idx++];
-        }
-
-        if (code < 0xFF && read_idx < len) {
-            if (write_idx >= dst_max) {
-                return 0;
-            }
-            dst[write_idx++] = 0;
-        }
-    }
-
-    return write_idx;
-}
 
 /**
  * Pybricks system command handler.
@@ -463,7 +394,7 @@ static void pbdrv_usb_handle_data_in(void) {
     for (uint32_t i = 0; i < size; i++) {
         uint8_t byte = data_in[i];
 
-        if (byte != PBDRV_USB_COBS_DELIMITER) {
+        if (byte != PBIO_COBS_DELIMITER) {
             if (pbdrv_usb_rx_frame_len < sizeof(pbdrv_usb_rx_frame)) {
                 pbdrv_usb_rx_frame[pbdrv_usb_rx_frame_len++] = byte;
             } else {
@@ -476,7 +407,7 @@ static void pbdrv_usb_handle_data_in(void) {
         // Delimiter reached: end of frame.
         if (!pbdrv_usb_rx_overflow && pbdrv_usb_rx_frame_len > 0) {
             uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
-            uint32_t msg_size = pbdrv_usb_cobs_decode(
+            uint32_t msg_size = pbio_cobs_decode(
                 pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, msg, sizeof(msg));
 
             // The first byte is the host-to-hub message type and the rest is
@@ -563,7 +494,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
             // an active connection, since they answer a request that was just
             // received.
             if (pbdrv_usb_command_response_pending) {
-                tx_frame_len = pbdrv_usb_cobs_encode(pbdrv_usb_command_response_buf, sizeof(pbdrv_usb_command_response_buf), tx_frame);
+                tx_frame_len = pbio_cobs_encode(pbdrv_usb_command_response_buf, sizeof(pbdrv_usb_command_response_buf), tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 pbdrv_usb_command_response_pending = false;
@@ -573,7 +504,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                 }
             } else if (pbdrv_usb_read_reply_pending) {
                 // Reply to a characteristic read request.
-                tx_frame_len = pbdrv_usb_cobs_encode(pbdrv_usb_read_reply_buf, pbdrv_usb_read_reply_len, tx_frame);
+                tx_frame_len = pbio_cobs_encode(pbdrv_usb_read_reply_buf, pbdrv_usb_read_reply_len, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 pbdrv_usb_read_reply_pending = false;
@@ -582,7 +513,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
             } else if (pbdrv_usb_connection_is_active() && update_and_get_event_buffer(&noti_buf, &noti_size)) {
-                tx_frame_len = pbdrv_usb_cobs_encode(noti_buf, *noti_size, tx_frame);
+                tx_frame_len = pbio_cobs_encode(noti_buf, *noti_size, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 *noti_size = 0;

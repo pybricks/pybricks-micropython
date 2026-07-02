@@ -205,6 +205,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/angle.c \
 	src/battery.c \
 	src/busy_count.c \
+	src/cobs.c \
 	src/color/conversion.c \
 	src/color/util.c \
 	src/control_settings.c \

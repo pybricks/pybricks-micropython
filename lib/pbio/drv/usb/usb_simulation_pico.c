@@ -54,7 +54,7 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
     // it like the RX path if we turn it into an actual stream.
     static uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
     static uint32_t msg_size;
-    msg_size = pbdrv_usb_cobs_decode(data, size - 1, msg, sizeof(msg));
+    msg_size = pbio_cobs_decode(data, size - 1, msg, sizeof(msg));
 
     if (msg_size < 2 || msg[0] != PBIO_PYBRICKS_IN_EP_MSG_EVENT ||
         msg[1] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
@@ -116,7 +116,7 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
     static const uint8_t subscribe_msg[] = {
         PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1,
     };
-    pbdrv_usb_simulation_pico_in_size = pbdrv_usb_cobs_encode(
+    pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode(
         subscribe_msg, sizeof(subscribe_msg), pbdrv_usb_simulation_pico_in_buf);
 
     for (;;) {
@@ -132,7 +132,7 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         cmd[0] = PBIO_PYBRICKS_OUT_EP_MSG_COMMAND;
         cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
         lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[2], available);
-        pbdrv_usb_simulation_pico_in_size = pbdrv_usb_cobs_encode(
+        pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode(
             cmd, 2 + available, pbdrv_usb_simulation_pico_in_buf);
     }
 

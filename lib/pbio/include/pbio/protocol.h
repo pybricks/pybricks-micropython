@@ -486,19 +486,17 @@ enum {
     PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
 };
 
-// The Pybricks USB interface uses a CDC ACM data pipe (Web Serial on the host),
-// which is a raw, bidirectional byte stream with no inherent message
-// boundaries. Each direction therefore frames its messages with Consistent
-// Overhead Byte Stuffing (COBS): every message is COBS-encoded and terminated
-// with a single zero byte (0x00) delimiter. COBS guarantees the encoded payload
-// never contains a zero, so the delimiter unambiguously marks the end of a
-// frame. This framing is self synchronizing; a receiver that joins mid-stream
-// or sees a corrupt frame simply resumes at the next delimiter.
+// The Pybricks USB interface uses a CDC ACM data pipe (Web Serial on the
+// host), which is a raw, bidirectional byte stream with no inherent message
+// boundaries. Each direction therefore frames its messages using the SPIKE
+// Prime variant of Consistent Overhead Byte Stuffing (COBS). See pbio/cobs.h.
 //
 // The byte stream is independent of the USB hardware packet size: a single
 // frame may span several USB packets, and several small frames may share one
 // packet. Only after a frame has been reassembled and decoded is its first
-// byte interpreted as the message type below.
+// byte interpreted as the message type below. This is self synchronizing: a
+// corrupt or oversized frame is discarded at the next delimiter without losing
+// frame alignment.
 
 /**
  * Hub to host message types.

@@ -10,6 +10,7 @@
 
 #if PBDRV_CONFIG_USB
 
+#include <pbio/cobs.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -17,9 +18,6 @@
 #include <stdint.h>
 
 #define PBDRV_USB_TRANSMIT_TIMEOUT (500)
-
-/** Frame delimiter byte. */
-#define PBDRV_USB_COBS_DELIMITER 0x00
 
 /**
  * Maximum size of a host notification, and of any other host-facing message.
@@ -36,8 +34,8 @@
 /** Maximum size of a decoded message (message type byte plus payload). */
 #define PBDRV_USB_MAX_DECODED_MESSAGE_SIZE PBSYS_CONFIG_HOST_NOTIFICATION_SIZE
 
-/** Maximum size of a COBS-encoded frame including the trailing delimiter. */
-#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE (PBDRV_USB_MAX_DECODED_MESSAGE_SIZE + PBDRV_USB_MAX_DECODED_MESSAGE_SIZE / 254 + 2)
+/** Maximum size of an encoded frame including the trailing delimiter. */
+#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE PBIO_COBS_ENCODED_BUFFER_SIZE(PBDRV_USB_MAX_DECODED_MESSAGE_SIZE)
 
 /**
  * Largest single USB packet any platform delivers on the data OUT endpoint
@@ -46,23 +44,6 @@
  * stream, which may pack several small frames into one hardware packet.
  */
 #define PBDRV_USB_RX_PACKET_MAX_SIZE (512)
-
-/**
- * COBS-encodes @p len bytes from @p src into @p dst and appends the frame
- * delimiter. @p dst must have room for at least ::PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE bytes
- * when @p len is at most ::PBDRV_USB_MAX_DECODED_MESSAGE_SIZE.
- *
- * @return  Number of bytes written to @p dst, including the trailing delimiter.
- */
-uint32_t pbdrv_usb_cobs_encode(const uint8_t *src, uint32_t len, uint8_t *dst);
-
-/**
- * COBS-decodes @p len bytes from @p src (a single frame with the delimiter
- * already stripped) into @p dst.
- *
- * @return  Number of decoded bytes, or 0 if the frame was empty or malformed.
- */
-uint32_t pbdrv_usb_cobs_decode(const uint8_t *src, uint32_t len, uint8_t *dst, uint32_t dst_max);
 
 /**
  * Initializes the USB driver on boot.

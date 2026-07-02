@@ -11,6 +11,8 @@ Enough to reboot the hub into update mode, so we can flash new firmware.
 import time
 import serial
 
+from .cobs import DELIMITER, pack, unpack
+
 # Host -> hub command types (see pbio_pybricks_command_t in protocol.h).
 PBIO_PYBRICKS_COMMAND_REBOOT_TO_UPDATE_MODE = 5
 
@@ -25,58 +27,10 @@ IN_EP_MSG_READ_REPLY = 3
 # (see PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_* in protocol.h).
 READ_CHARACTERISTIC_GATT = 0x01
 
-COBS_DELIMITER = 0x00
-
-
-def cobs_encode(data: bytes) -> bytes:
-    """COBS-encodes ``data``. The result never contains a zero byte."""
-    out = bytearray()
-    code_idx = len(out)
-    out.append(0)  # placeholder for the first code byte
-    code = 1
-
-    for byte in data:
-        if byte == 0:
-            out[code_idx] = code
-            code_idx = len(out)
-            out.append(0)
-            code = 1
-        else:
-            out.append(byte)
-            code += 1
-            if code == 0xFF:
-                out[code_idx] = code
-                code_idx = len(out)
-                out.append(0)
-                code = 1
-
-    out[code_idx] = code
-    return bytes(out)
-
-
-def cobs_decode(data: bytes) -> bytes:
-    """COBS-decodes a single frame (delimiter already stripped)."""
-    out = bytearray()
-    idx = 0
-    n = len(data)
-
-    while idx < n:
-        code = data[idx]
-        idx += 1
-        for _ in range(1, code):
-            if idx >= n:
-                return b""  # malformed
-            out.append(data[idx])
-            idx += 1
-        if code < 0xFF and idx < n:
-            out.append(0)
-
-    return bytes(out)
-
 
 def send_frame(ser: serial.Serial, message: bytes) -> None:
-    """COBS-encodes ``message`` and writes it as a delimited frame."""
-    ser.write(cobs_encode(message) + bytes([COBS_DELIMITER]))
+    """Frames ``message`` with SPIKE-variant COBS and writes it."""
+    ser.write(pack(message))
     ser.flush()
 
 
@@ -110,9 +64,9 @@ def read_frame(ser: serial.Serial, timeout: float = 0.5) -> bytes | None:
         if not byte:
             # Timed out
             return None
-        if byte[0] == COBS_DELIMITER:
+        if byte[0] == DELIMITER:
             if buffer:
-                return cobs_decode(bytes(buffer))
+                return unpack(bytes(buffer))
             # Empty delimiter (flush) — keep waiting.
         else:
             buffer.append(byte[0])
@@ -128,13 +82,8 @@ def reboot_to_update_mode_pybricks(ser: serial.Serial) -> None:
     if the hub did not respond as a Pybricks hub.
     """
     # Send a lone delimiter to resync the hub's COBS framing on connect.
-    ser.write(bytes([COBS_DELIMITER]))
+    ser.write(bytes([DELIMITER]))
     ser.flush()
-
-    # At this point, combined with poking at the SPIKE Prime firmware before
-    # we have sent to the hub: b'\x02' + b'\x00\x00\x02' + b'\x00'. Which splits
-    # to only two single byte messages, both: b'\x02' which are discarded by
-    # the pybricks firmware, so won't get it into a bad state.
 
     # Request the firmware version string (GATT characteristic 0x2A26).
     send_read(ser, READ_CHARACTERISTIC_GATT, 0x2A26)
