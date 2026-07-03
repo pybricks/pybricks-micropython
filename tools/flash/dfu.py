@@ -328,20 +328,9 @@ class DfuDevice:
             if progress:
                 progress(chunk)
 
-    def write_firmware(self, data: bytes, address: int) -> None:
-        """Erases the affected flash region and writes ``data`` at ``address``.
-
-        This is the single low-level entry point: it makes no assumptions
-        about what the bytes are, it just puts them on the device. Callers are
-        responsible for validating the firmware before calling this. The
-        sectors overlapping ``[address, address + len(data))`` are erased
-        before writing.
-
-        This does NOT leave DFU mode, so multiple regions can be written in
-        the same session. Call :meth:`exit` once when all writes are done.
-        """
-        end = address + len(data)
-
+    def erase_firmware(self, address: int, length: int) -> None:
+        """Erases the flash sectors overlapping ``[address, address + length)``."""
+        end = address + length
         print("Erasing flash...")
         with (
             logging_redirect_tqdm(),
@@ -352,6 +341,16 @@ class DfuDevice:
             ) as pbar,
         ):
             self.region_erase(address, end, pbar.update)
+
+    def write_firmware(self, address: int, data: bytes) -> None:
+        """Writes ``data`` at ``address``.
+
+        Callers are responsible for validating the firmware and erasing flash
+        before calling this.
+
+        This does NOT leave DFU mode, so multiple regions can be written in the
+        same session. Call :meth:`exit` once when all writes are done.
+        """
 
         print("Writing new firmware...")
         with (
@@ -472,9 +471,9 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         ):
             sys.exit("Incompatible firmware for this device.")
         print("===Installing SPIKE Essential firmware.===")
-        dfu.write_firmware(
-            firmwares["essential_hub"], FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
-        )
+        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+        dfu.erase_firmware(address, len(firmwares["essential_hub"]))
+        dfu.write_firmware(address, firmwares["essential_hub"])
         dfu.exit()
         print("Done.")
         sys.exit(0)
@@ -491,9 +490,9 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         if attached_platform != "prime_hub" or len(firmwares) > 1:
             sys.exit("Incompatible firmware for this DFU mode.")
         print("===Installing legacy SPIKE Prime firmware.===")
-        dfu.write_firmware(
-            firmwares["prime_hub"], FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
-        )
+        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+        dfu.erase_firmware(address, len(firmwares["prime_hub"]))
+        dfu.write_firmware(address, firmwares["prime_hub"])
         dfu.exit()
         print("Done.")
         sys.exit(0)
@@ -507,7 +506,9 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         if firmware_h5[0x264] >= 0x0F:
             sys.exit("This firmware is not compatible with mboot.")
         print("===Installing SPIKE Prime H5 firmware.===")
-        dfu.write_firmware(firmware_h5, FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K)
+        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K
+        dfu.erase_firmware(address, len(firmware_h5))
+        dfu.write_firmware(address, firmware_h5)
         dfu.exit()
         print("Done.")
         sys.exit(0)
@@ -524,7 +525,7 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
         # We are running the second-stage bootloader already, so can directly
         # flash the firmware.
         firmware_f4 = firmwares["prime_hub_f4"]
-        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K
+        address_f4 = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K
     elif attached_platform == "prime_hub":
         # We are running the frozen bootloader, so we need to install the
         # second-stage bootloader first, then the firmware.
@@ -534,13 +535,14 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
             if len(mboot_bin) != BOOTLOADER_SIZE_32K:
                 sys.exit(f"Unexpected mboot size: {len(mboot_bin)} bytes.")
         firmware_f4 = mboot_bin + firmwares["prime_hub_f4"]
-        address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
+        address_f4 = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_32K
     else:
         sys.exit(f"Unsupported attached platform: {attached_platform}")
 
     # Install the selected or combined firmware
     print("===Installing SPIKE Prime F4 firmware.===")
-    dfu.write_firmware(firmware_f4, address)
+    dfu.erase_firmware(address_f4, len(firmware_f4))
+    dfu.write_firmware(address_f4, firmware_f4)
     dfu.exit()
     print("Done.")
     sys.exit(0)
