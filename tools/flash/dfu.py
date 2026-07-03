@@ -35,6 +35,8 @@ BOOTLOADER_SIZE_32K = 32 * 1024
 BOOTLOADER_SIZE_64K = 64 * 1024
 FLASH_BASE_ADDRESS = 0x08000000
 FLASH_SIZE = 1 * 1024 * 1024
+FLASH_H5_PAGE_SIZE = 8 * 1024
+FLASH_H5_WRITE_SIZE = 16
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 MBOOT_PATH = REPO_ROOT / "bricks" / "primehub_f4" / "mboot.bin"
@@ -331,6 +333,11 @@ class DfuDevice:
     def erase_firmware(self, address: int, length: int) -> None:
         """Erases the flash sectors overlapping ``[address, address + length)``."""
         end = address + length
+
+        if length <= FLASH_H5_PAGE_SIZE:
+            self.region_erase(address, end)
+            return
+
         print("Erasing flash...")
         with (
             logging_redirect_tqdm(),
@@ -351,11 +358,15 @@ class DfuDevice:
         This does NOT leave DFU mode, so multiple regions can be written in the
         same session. Call :meth:`exit` once when all writes are done.
         """
-        write_size_multiple = 4 if self.mcu_family == "f4" else 16
-        if len(data) % write_size_multiple != 0 or address % write_size_multiple != 0:
+        write_size_multiple = 4 if self.mcu_family == "f4" else FLASH_H5_WRITE_SIZE
+        if address % write_size_multiple != 0:
             raise ValueError(
                 f"Firmware length {len(data)} or address is not a multiple of {write_size_multiple}"
             )
+
+        if len(data) <= FLASH_H5_PAGE_SIZE:
+            self.write_memory(address, data)
+            return
 
         print("Writing new firmware...")
         with (
@@ -505,20 +516,41 @@ def flash_dfu(firmwares: dict[str, bytes], hub_kind: HubKind) -> None:
     # There is only one path for the H5, directly after the frozen bootloader.
     # So in this case, the platform dictates what firmware must be included.
     if attached_platform == "prime_hub_h5":
+        page_len = 8 * 1024
+
         if "prime_hub_h5" not in firmwares:
             sys.exit("Incompatible firmware for this device.")
         firmware_h5 = firmwares["prime_hub_h5"]
-        if firmware_h5[0x264] >= 0x0F:
+        if firmware_h5[0x264] >= 0x0F or len(firmware_h5) < page_len * 2:
             sys.exit("This firmware is not compatible with mboot.")
         print("===Installing SPIKE Prime H5 firmware.===")
         address = FLASH_BASE_ADDRESS + BOOTLOADER_SIZE_64K
-        dfu.erase_firmware(address, len(firmware_h5))
 
-        # Write first chunk last to avoid booting into an unfinished
-        # firmware if the write is interrupted.
-        skip_size = 0x264 // 16 * 16
-        dfu.write_firmware(address + skip_size, firmware_h5[skip_size:])
-        dfu.write_firmware(address, firmware_h5[0:skip_size])
+        # Erase only first page containing compatibility value for mboot.
+        dfu.erase_firmware(address, page_len)
+
+        # Write the value for mboot compatibility first.
+        critical_offset = 0x264 // FLASH_H5_WRITE_SIZE * FLASH_H5_WRITE_SIZE
+        dfu.write_firmware(
+            address + critical_offset,
+            firmware_h5[critical_offset : critical_offset + FLASH_H5_WRITE_SIZE],
+        )
+
+        # Erase the rest of the firmware.
+        dfu.erase_firmware(address + page_len, len(firmware_h5) - page_len)
+
+        # Write the rest of the firmware, with the boot vector last so we can
+        # fall back to DFU mode if the write fails when cable is disconnected.
+        dfu.write_firmware(
+            address + critical_offset + FLASH_H5_WRITE_SIZE,
+            firmware_h5[critical_offset + FLASH_H5_WRITE_SIZE :],
+        )
+        dfu.write_firmware(
+            address + FLASH_H5_WRITE_SIZE,
+            firmware_h5[FLASH_H5_WRITE_SIZE:critical_offset],
+        )
+        dfu.write_firmware(address, firmware_h5[0:FLASH_H5_WRITE_SIZE])
+
         dfu.exit()
         print("Done.")
         sys.exit(0)
