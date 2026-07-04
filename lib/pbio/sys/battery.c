@@ -27,6 +27,7 @@
 
 // These values are for LEGO rechargeable battery packs
 #define LIION_FULL_MV           8190    // 4.095V per cell
+#define LIION_FULL_HYSTERESIS_MV 100    // 50mV per cell hysteresis on full level check
 #define LIION_OK_MV             7200    // 3.6V per cell
 #define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
@@ -127,7 +128,16 @@ void pbsys_battery_poll(void) {
  * This is only valid on hubs with a built-in battery charger.
  */
 bool pbsys_battery_is_full(void) {
-    return pbio_battery_get_average_voltage() >= LIION_FULL_MV;
+    static bool was_full;
+    int32_t voltage = pbio_battery_get_average_voltage();
+
+    if (was_full) {
+        was_full = voltage >= LIION_FULL_MV - LIION_FULL_HYSTERESIS_MV;
+    } else {
+        was_full = voltage >= LIION_FULL_MV;
+    }
+
+    return was_full;
 }
 
 #endif // PBSYS_CONFIG_BATTERY
