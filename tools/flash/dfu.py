@@ -361,7 +361,7 @@ class DfuDevice:
         write_size_multiple = 4 if self.mcu_family == "f4" else FLASH_H5_WRITE_SIZE
         if address % write_size_multiple != 0:
             raise ValueError(
-                f"Firmware length {len(data)} or address is not a multiple of {write_size_multiple}"
+                f"Firmware address is not a multiple of {write_size_multiple}"
             )
 
         if len(data) <= FLASH_H5_PAGE_SIZE:
