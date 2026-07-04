@@ -395,7 +395,7 @@ class DfuDevice:
 
 def determine_platform(
     flash_layout: str, serial: str, vid: int, pid: int, bcd: int
-) -> tuple[str, bool]:
+) -> tuple[str, str]:
     """Determines the hub and version from the USB device properties."""
 
     if vid != LEGO_USB_VID:
