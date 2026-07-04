@@ -170,8 +170,7 @@ ifeq ($(PB_MCU_FAMILY),native)
 UNAME_S := $(shell uname -s)
 LD = $(CC)
 ifeq ($(CI_MODE),1)
-COPT = -DPBDRV_CONFIG_RUN_ON_CI
-else
+CFLAGS += -DPBDRV_CONFIG_RUN_ON_CI
 endif
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
 ifeq ($(UNAME_S),Linux)
@@ -205,7 +204,7 @@ endif
 endif
 
 CFLAGS_WARN = -Wall -Werror -Wextra -Wno-unused-parameter -Wno-maybe-uninitialized
-CFLAGS = $(INC) -std=c11 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS += $(INC) -std=c11 -nostdlib -fshort-enums $(CFLAGS_MCU) $(CFLAGS_WARN) $(COPT) $(CFLAGS_EXTRA)
 $(BUILD)/lib/libm/%.o: CFLAGS += -Wno-sign-compare
 
 # linker scripts
@@ -236,12 +235,15 @@ endif # end embedded, begin common
 
 # Tune for Debugging or Optimization
 ifeq ($(COVERAGE), 1)
+COPT = -O0
 CFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LDFLAGS += --coverage
 else ifeq ($(DEBUG), 1)
-CFLAGS += -O0 -ggdb
+COPT = -O0
+CFLAGS += -ggdb
 else
-CFLAGS += -Os -DNDEBUG -flto=auto
+COPT = -Os
+CFLAGS += -DNDEBUG -flto=auto
 endif
 
 CFLAGS += -fdata-sections -ffunction-sections
@@ -437,7 +439,7 @@ endif
 
 # STM32 HAL
 
-COPT += -DUSE_FULL_LL_DRIVER
+CFLAGS += -DUSE_FULL_LL_DRIVER
 
 STM32_HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
