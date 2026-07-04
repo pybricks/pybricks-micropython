@@ -239,7 +239,15 @@ COPT = -O0
 CFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LDFLAGS += --coverage
 else ifeq ($(DEBUG), 1)
+
+# If we are building nativly, -O0 makes step debugging work better. But for
+# embedded targets, -Os is needed just to get the firmware to fit on the device.
+ifeq ($(PB_MCU_FAMILY),native)
 COPT = -O0
+else
+COPT = -Os
+endif
+
 CFLAGS += -ggdb
 else
 COPT = -Os
