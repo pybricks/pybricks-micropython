@@ -240,8 +240,6 @@ CFLAGS += --coverage -fprofile-arcs -ftest-coverage
 LDFLAGS += --coverage
 else ifeq ($(DEBUG), 1)
 CFLAGS += -O0 -ggdb
-else ifeq ($(DEBUG), 2)
-CFLAGS += -Os -DNDEBUG -flto=auto
 else
 CFLAGS += -Os -DNDEBUG -flto=auto
 endif
