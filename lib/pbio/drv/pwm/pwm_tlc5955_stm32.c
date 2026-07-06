@@ -165,15 +165,28 @@ static const pbdrv_pwm_driver_funcs_t pbdrv_pwm_tlc5955_stm32_funcs = {
 };
 
 // toggles LAT signal on and off to latch data in shift register
-static void pbdrv_pwm_tlc5955_toggle_latch(pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
+static pbio_error_t pbdrv_pwm_tlc5955_toggle_wait_and_latch(pbio_os_state_t *state, pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
+
     const pbdrv_pwm_tlc5955_stm32_platform_data_t *pdata = priv->pwm->pdata;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Wait for SPI to finish transmitting data before toggling LAT.
+    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
+
+    // Need to await between toggles or else LTO will inline the two GPIO
+    // writes into back-to-back BSRR accesses (~ns apart), below the TLC5955
+    // minimum latch pulse width.
     HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_SET);
+    PBIO_OS_AWAIT_ONCE(state);
     HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_RESET);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *state, void *context) {
 
     pbdrv_pwm_tlc5955_stm32_priv_t *priv = context;
+    static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -181,13 +194,11 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *stat
     PBIO_OS_AWAIT_ONCE(state);
 
     HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
 
     // have to send twice for max current to take effect
     HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
@@ -197,8 +208,7 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *stat
         PBIO_OS_AWAIT_UNTIL(state, priv->changed);
         HAL_SPI_Transmit_DMA(&priv->hspi, priv->grayscale_latch, TLC5955_DATA_SIZE);
         priv->changed = false;
-        PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-        pbdrv_pwm_tlc5955_toggle_latch(priv);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
     }
 
     // Unreachable
