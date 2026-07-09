@@ -51,6 +51,8 @@
 // TODO: replace this with a serial port implementation - there is no USB hardware
 #define PBDRV_CONFIG_USB                                    (1)
 #define PBDRV_CONFIG_USB_SIMULATION_PICO                    (1)
+#define PBDRV_CONFIG_HUB_KIND                               0
+#define PBDRV_CONFIG_HUB_VARIANT                            0x0000
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Raspberry Pi"
 #define PBDRV_CONFIG_USB_PROD_STR                           u"Build HAT"
 

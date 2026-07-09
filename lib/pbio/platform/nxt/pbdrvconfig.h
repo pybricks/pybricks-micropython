@@ -18,6 +18,9 @@
 
 #define PBDRV_CONFIG_BLUETOOTH                      (0)
 
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_NXT
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
+
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_NXT                      (1)
 

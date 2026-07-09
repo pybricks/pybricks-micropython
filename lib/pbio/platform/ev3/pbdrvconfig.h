@@ -54,7 +54,7 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3          (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2560X      (1)
-#define PBDRV_CONFIG_HUB_KIND                       LWP3_HUB_KIND_TECHNIC_LARGE
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_EV3
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_BUTTON                         (1)

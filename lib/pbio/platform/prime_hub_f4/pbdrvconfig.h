@@ -33,7 +33,7 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32        (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C      (1)
-#define PBDRV_CONFIG_HUB_KIND                       LWP3_HUB_KIND_TECHNIC_LARGE
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_PRIME
 // Product variant is stored in bootloader flash memory of Technic Large hubs.
 #define PBDRV_CONFIG_HUB_VARIANT                    (*(const uint16_t *)0x08007d80)
 

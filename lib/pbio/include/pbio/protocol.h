@@ -459,6 +459,40 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
 #define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 11
 
 /**
+ * Hub kind identifier.
+ *
+ * This is the canonical Pybricks identifier for a hub or programmable brick.
+ * It is used as the Product ID Field of the Device Information Service PnP ID
+ * characteristic (see ::pbio_pybricks_pnp_id) and as the @c device-id field of
+ * the firmware metadata.
+ *
+ * These values are Pybricks-assigned. Coincides with the LWP3 hub kind, but
+ * that is a historical convenience only: RCX, NXT and EV3 have no LWP3 hub
+ * kind and are assigned values here.
+ *
+ * Keep in sync with HubType on the host side and with @c PLATFORM_INFO in
+ * tools/metadata.py.
+ */
+typedef enum {
+    /** BOOST Move hub. */
+    PBIO_PYBRICKS_HUB_KIND_MOVE      = 0x40,
+    /** City hub. */
+    PBIO_PYBRICKS_HUB_KIND_CITY      = 0x41,
+    /** Technic hub. */
+    PBIO_PYBRICKS_HUB_KIND_TECHNIC   = 0x80,
+    /** SPIKE Prime hub (and its MINDSTORMS Robot Inventor variant). */
+    PBIO_PYBRICKS_HUB_KIND_PRIME     = 0x81,
+    /** SPIKE Essential hub. */
+    PBIO_PYBRICKS_HUB_KIND_ESSENTIAL = 0x83,
+    /** MINDSTORMS RCX brick. */
+    PBIO_PYBRICKS_HUB_KIND_RCX       = 0xE0,
+    /** MINDSTORMS NXT brick. */
+    PBIO_PYBRICKS_HUB_KIND_NXT       = 0xE1,
+    /** MINDSTORMS EV3 brick. */
+    PBIO_PYBRICKS_HUB_KIND_EV3       = 0xE2,
+} pbio_pybricks_hub_kind_t;
+
+/**
  * Number of bytes in the Device Information Service PnP ID characteristic value.
  */
 #define PBIO_PYBRICKS_PNP_ID_SIZE 7

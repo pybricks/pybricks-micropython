@@ -70,7 +70,7 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
  *
  * @param [in]  buf              A buffer where the result will be written.
  *                               Must be at least ::PBIO_PYBRICKS_PNP_ID_SIZE bytes.
- * @param [in]  product_id       The Product ID Field (LWP3 hub kind).
+ * @param [in]  product_id       The Product ID Field (::pbio_pybricks_hub_kind_t).
  * @param [in]  product_version  The Product Version Field (hub variant).
  */
 void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version) {
