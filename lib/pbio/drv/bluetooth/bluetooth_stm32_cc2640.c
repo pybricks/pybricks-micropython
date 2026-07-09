@@ -295,8 +295,7 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // Device Information Service (DIS) PnP ID as service data to identify the hub.
     data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
     data[1] = GAP_ADTYPE_SERVICE_DATA;
-    data[2] = 0x50; // 0x2A50 - PnP ID characteristic UUID
-    data[3] = 0x2a;
+    pbio_set_uint16_le(&data[2], PBIO_GATT_PNP_ID_CHAR_UUID);
     pbio_pybricks_pnp_id(&data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     data[11] = hub_name_len + 1;

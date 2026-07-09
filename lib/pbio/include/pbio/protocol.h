@@ -469,11 +469,24 @@ extern const uint8_t pbio_pybricks_service_uuid[];
 extern const uint8_t pbio_pybricks_command_event_char_uuid[];
 extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];
 
-extern const uint16_t pbio_gatt_device_info_service_uuid;
-extern const uint16_t pbio_gatt_device_name_char_uuid;
-extern const uint16_t pbio_gatt_firmware_version_char_uuid;
-extern const uint16_t pbio_gatt_software_version_char_uuid;
-extern const uint16_t pbio_gatt_pnp_id_char_uuid;
+/**
+ * Standard Bluetooth GATT UUIDs used as part of the Pybricks "protocol".
+ *
+ * These are 16-bit UUIDs assigned by the Bluetooth SIG. They are also used to
+ * identify the same characteristics over the USB interface.
+ */
+enum {
+    /** Device Information Service UUID. */
+    PBIO_GATT_DEVICE_INFO_SERVICE_UUID = 0x180A,
+    /** Device Name Characteristic UUID. */
+    PBIO_GATT_DEVICE_NAME_CHAR_UUID = 0x2A00,
+    /** Firmware Version Characteristic UUID. */
+    PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID = 0x2A26,
+    /** Software Version Characteristic UUID (Pybricks protocol version). */
+    PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID = 0x2A28,
+    /** PnP ID Characteristic UUID. */
+    PBIO_GATT_PNP_ID_CHAR_UUID = 0x2A50,
+};
 
 extern const uint8_t pbio_nus_service_uuid[];
 extern const uint8_t pbio_nus_rx_char_uuid[];

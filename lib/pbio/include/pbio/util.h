@@ -34,6 +34,15 @@
 #define PBIO_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
 /**
+ * Unpacks a 16-bit value into two little-endian bytes.
+ *
+ * Intended for use in array initializers, e.g. `{ PBIO_UINT16_LE(0x2A50) }`.
+ *
+ * @param value     The 16-bit value.
+ */
+#define PBIO_UINT16_LE(value) ((value) & 0xff), (((value) >> 8) & 0xff)
+
+/**
  * Get a pointer to the structure that contains another structure.
  * @param ptr       Pointer to the child structure
  * @param type      The type of the parent structure

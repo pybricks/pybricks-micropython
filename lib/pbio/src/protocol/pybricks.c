@@ -116,22 +116,6 @@ const uint8_t pbio_pybricks_hub_capabilities_char_uuid[] = {
     0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
 };
 
-// Standard BLE UUIDs used as part of Pybricks "protocol".
-
-/** Bluetooth Device Information Service UUID. */
-const uint16_t pbio_gatt_device_info_service_uuid = 0x180A;
-
-/** Bluetooth Device Name Characteristic UUID. */
-const uint16_t pbio_gatt_device_name_char_uuid = 0x2A00;
-
-/** Bluetooth Firmware Version Characteristic UUID. */
-const uint16_t pbio_gatt_firmware_version_char_uuid = 0x2A26;
-
-/** Bluetooth Software Version Characteristic UUID (Pybricks protocol version). */
-const uint16_t pbio_gatt_software_version_char_uuid = 0x2A28;
-
-/** Bluetooth PnP ID Characteristic UUID. */
-const uint16_t pbio_gatt_pnp_id_char_uuid = 0x2A50;
 
 /**
  * Converts a ::pbio_error_t to a ::pbio_pybricks_error_t for commands.

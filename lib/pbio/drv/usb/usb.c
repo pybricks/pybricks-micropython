@@ -104,11 +104,11 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
     switch (service) {
         case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
             switch (char_id) {
-                case 0x2A00: // Device Name
+                case PBIO_GATT_DEVICE_NAME_CHAR_UUID:
                     return pbdrv_usb_copy_str(buf, pbdrv_bluetooth_get_hub_name());
-                case 0x2A26: // Firmware Revision
+                case PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID:
                     return pbdrv_usb_copy_str(buf, PBIO_VERSION_STR);
-                case 0x2A28: // Software Revision
+                case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:
                     return pbdrv_usb_copy_str(buf, PBIO_PROTOCOL_VERSION_STR);
                 default:
                     return 0;

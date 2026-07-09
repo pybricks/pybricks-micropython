@@ -263,8 +263,7 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // Device Information Service (DIS) PnP ID as service data to identify the hub.
     response_data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
     response_data[1] = AD_TYPE_SERVICE_DATA;
-    response_data[2] = 0x50; // 0x2A50 - PnP ID characteristic UUID
-    response_data[3] = 0x2a;
+    pbio_set_uint16_le(&response_data[2], PBIO_GATT_PNP_ID_CHAR_UUID);
     pbio_pybricks_pnp_id(&response_data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
@@ -757,10 +756,10 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 static uint8_t reset_reason;
 
 static pbio_error_t init_device_information_service(pbio_os_state_t *state, void *context) {
-    static const uint8_t device_information_service_uuid[] = { 0x0A, 0x18 }; // 0x180A
-    static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
-    static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
-    static const uint8_t pnp_id_char_uuid[] = { 0x50, 0x2A }; // 0x2A50
+    static const uint8_t device_information_service_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_DEVICE_INFO_SERVICE_UUID) };
+    static const uint8_t firmware_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID) };
+    static const uint8_t software_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID) };
+    static const uint8_t pnp_id_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID) };
 
     static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle, pnp_id_char_handle;
     static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];

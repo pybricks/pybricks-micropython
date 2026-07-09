@@ -543,8 +543,8 @@ static void init_advertising_data(void) {
     static uint8_t scan_resp_data[31] = {
         10, BLUETOOTH_DATA_TYPE_SERVICE_DATA,
         // used to identify which hub - Device Information Service (DIS).
-        // 0x2A50 - PnP ID characteristic UUID, followed by the PnP ID value.
-        0x50, 0x2a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        // PnP ID characteristic UUID, followed by the PnP ID value.
+        PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID), 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
     };
 
