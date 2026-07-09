@@ -110,6 +110,9 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
                     return pbdrv_usb_copy_str(buf, PBIO_VERSION_STR);
                 case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:
                     return pbdrv_usb_copy_str(buf, PBIO_PROTOCOL_VERSION_STR);
+                case PBIO_GATT_PNP_ID_CHAR_UUID:
+                    pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+                    return PBIO_PYBRICKS_PNP_ID_SIZE;
                 default:
                     return 0;
             }
