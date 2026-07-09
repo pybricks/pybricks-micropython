@@ -32,7 +32,8 @@
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         158 // 158 matches LEGO firmware - could go up to ~251 - see ATT_MAX_MTU_SIZE
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
-#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x80"
+#define PBDRV_CONFIG_HUB_KIND                       LWP3_HUB_KIND_TECHNIC_MEDIUM
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)

@@ -458,6 +458,13 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
  */
 #define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 11
 
+/**
+ * Number of bytes in the Device Information Service PnP ID characteristic value.
+ */
+#define PBIO_PYBRICKS_PNP_ID_SIZE 7
+
+void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version);
+
 extern const uint8_t pbio_pybricks_service_uuid[];
 extern const uint8_t pbio_pybricks_command_event_char_uuid[];
 extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];

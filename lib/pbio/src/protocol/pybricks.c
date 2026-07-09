@@ -63,6 +63,24 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
 }
 
 /**
+ * Encodes the value of the Device Information Service PnP ID characteristic.
+ *
+ * This is used to identify the hub, both in the Device Information Service and
+ * in the advertising scan response service data.
+ *
+ * @param [in]  buf              A buffer where the result will be written.
+ *                               Must be at least ::PBIO_PYBRICKS_PNP_ID_SIZE bytes.
+ * @param [in]  product_id       The Product ID Field (LWP3 hub kind).
+ * @param [in]  product_version  The Product Version Field (hub variant).
+ */
+void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version) {
+    buf[0] = 0x01; // Vendor ID Source Field - Bluetooth SIG-assigned ID
+    pbio_set_uint16_le(&buf[1], 0x0397); // Vendor ID Field - LEGO company identifier
+    pbio_set_uint16_le(&buf[3], product_id); // Product ID Field
+    pbio_set_uint16_le(&buf[5], product_version); // Product Version Field
+}
+
+/**
  * Pybricks Service UUID.
  *
  * C5F50001-8280-46DA-89F4-6D8051E4AEEF

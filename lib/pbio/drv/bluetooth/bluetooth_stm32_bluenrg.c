@@ -50,13 +50,6 @@ char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 
-// used to identify which hub - Device Information Service (DIS).
-// 0x2A50 - service UUID - PnP ID characteristic UUID
-// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-// 0x0397 - Vendor ID Field - LEGO company identifier
-// 0x0040 - Product ID Field - Move hub device ID
-// 0x0000 - Product Version Field - not applicable to Move hub
-#define PNP_ID "\x50\x2a\x01\x97\x03\x40\x00\x00\x00"
 
 // bluetooth address is set at factory at this address
 #define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
@@ -267,9 +260,12 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
     uint8_t response_data[25];
-    response_data[0] = sizeof(PNP_ID);
+    // Device Information Service (DIS) PnP ID as service data to identify the hub.
+    response_data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
     response_data[1] = AD_TYPE_SERVICE_DATA;
-    memcpy(&response_data[2], PNP_ID, sizeof(PNP_ID) - 1);
+    response_data[2] = 0x50; // 0x2A50 - PnP ID characteristic UUID
+    response_data[3] = 0x2a;
+    pbio_pybricks_pnp_id(&response_data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
     response_data[12] = AD_TYPE_COMPLETE_LOCAL_NAME;
@@ -764,10 +760,14 @@ static pbio_error_t init_device_information_service(pbio_os_state_t *state, void
     static const uint8_t device_information_service_uuid[] = { 0x0A, 0x18 }; // 0x180A
     static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
     static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
+    static const uint8_t pnp_id_char_uuid[] = { 0x50, 0x2A }; // 0x2A50
 
     static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle, pnp_id_char_handle;
+    static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
 
     PBIO_OS_ASYNC_BEGIN(state);
+
+    pbio_pybricks_pnp_id(pnp_id, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 7);
@@ -801,15 +801,15 @@ static pbio_error_t init_device_information_service(pbio_os_state_t *state, void
     aci_gatt_update_char_value_end();
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, (const uint8_t *)PNP_ID,
-        sizeof(PNP_ID) - 3, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, pnp_id_char_uuid,
+        PBIO_PYBRICKS_PNP_ID_SIZE, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
         GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     aci_gatt_add_char_end(&pnp_id_char_handle);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_update_char_value_begin(service_handle, pnp_id_char_handle,
-        0, sizeof(PNP_ID) - 3, &PNP_ID[2]);
+        0, PBIO_PYBRICKS_PNP_ID_SIZE, pnp_id);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // aci_gatt_update_char_value_end();
 

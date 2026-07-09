@@ -33,8 +33,9 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32        (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C      (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND     LWP3_HUB_KIND_TECHNIC_LARGE
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
+#define PBDRV_CONFIG_HUB_KIND                       LWP3_HUB_KIND_TECHNIC_LARGE
+// Product variant is stored in bootloader flash memory of Technic Large hubs.
+#define PBDRV_CONFIG_HUB_VARIANT                    (*(const uint16_t *)0x08007d80)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          ((256 + 16) * 1024)

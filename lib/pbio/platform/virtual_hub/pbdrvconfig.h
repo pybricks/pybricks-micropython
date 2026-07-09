@@ -16,7 +16,8 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS         (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_POSIX                (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND             (LWP3_HUB_KIND_TECHNIC_LARGE)
+#define PBDRV_CONFIG_HUB_KIND                               (LWP3_HUB_KIND_TECHNIC_LARGE)
+#define PBDRV_CONFIG_HUB_VARIANT                            (0x0000)
 #endif // PBDRV_CONFIG_RUN_ON_CI
 
 #define PBDRV_CONFIG_BUTTON                                 (1)

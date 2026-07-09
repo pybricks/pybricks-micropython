@@ -21,6 +21,7 @@
 
 #include <pbio/os.h>
 #include <pbio/protocol.h>
+#include <pbio/util.h>
 #include <pbio/version.h>
 
 #include "bluetooth.h"
@@ -28,19 +29,6 @@
 
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
-
-#ifdef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
-#define HUB_KIND PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND
-#else
-#error "PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND is required"
-#endif
-
-// location of product variant in bootloader flash memory of Technic Large hubs
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
-#define HUB_VARIANT (*(const uint16_t *)PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR)
-#else
-#define HUB_VARIANT 0x0000
-#endif
 
 // Timeouts for various steps in the scan and connect process.
 #define PERIPHERAL_TIMEOUT_MS_CONNECT       (5000)
@@ -555,16 +543,12 @@ static void init_advertising_data(void) {
     static uint8_t scan_resp_data[31] = {
         10, BLUETOOTH_DATA_TYPE_SERVICE_DATA,
         // used to identify which hub - Device Information Service (DIS).
-        // 0x2A50 - service UUID - PnP ID characteristic UUID
-        // 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-        // 0x0397 - Vendor ID Field - LEGO company identifier
-        // 0x00XX - Product ID Field - hub kind
-        // 0x00XX - Product Version Field - product variant
-        0x50, 0x2a, 0x01, 0x97, 0x03, HUB_KIND, 0x00, 0x00, 0x00,
+        // 0x2A50 - PnP ID characteristic UUID, followed by the PnP ID value.
+        0x50, 0x2a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
     };
 
-    scan_resp_data[9] = HUB_VARIANT;
+    pbio_pybricks_pnp_id(&scan_resp_data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
 
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     scan_resp_data[11] = hub_name_len + 1;
@@ -1483,7 +1467,10 @@ void pbdrv_bluetooth_init_hci(void) {
     device_information_service_server_init();
     device_information_service_server_set_firmware_revision(PBIO_VERSION_STR);
     device_information_service_server_set_software_revision(PBIO_PROTOCOL_VERSION_STR);
-    device_information_service_server_set_pnp_id(0x01, LWP3_LEGO_COMPANY_ID, HUB_KIND, HUB_VARIANT);
+    uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
+    pbio_pybricks_pnp_id(pnp_id, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+    device_information_service_server_set_pnp_id(pnp_id[0],
+        pbio_get_uint16_le(&pnp_id[1]), pbio_get_uint16_le(&pnp_id[3]), pbio_get_uint16_le(&pnp_id[5]));
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);

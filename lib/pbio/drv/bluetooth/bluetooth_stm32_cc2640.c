@@ -59,17 +59,6 @@ char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 
-// used to identify which hub - Device Information Service (DIS).
-// 0x2A50 - service UUID - PnP ID characteristic UUID
-// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-// 0x0397 - Vendor ID Field - LEGO company identifier
-// 0x00XX - Product ID Field - hub device ID
-// 0x0000 - Product Version Field - not applicable to most hubs
-#define PNP_ID "\x50\x2a\x01\x97\x03" PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID "\x00\x00\x00"
-
-#ifndef PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID
-#error "Must define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID"
-#endif
 
 // TI Network Processor Interface (NPI)
 #define NPI_SPI_SOF             0xFE    // start of frame
@@ -303,9 +292,12 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // Set scan response data
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    data[0] = sizeof(PNP_ID);  // same as 1 + strlen(PNP_ID)
+    // Device Information Service (DIS) PnP ID as service data to identify the hub.
+    data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
     data[1] = GAP_ADTYPE_SERVICE_DATA;
-    memcpy(&data[2], PNP_ID, sizeof(PNP_ID));
+    data[2] = 0x50; // 0x2A50 - PnP ID characteristic UUID
+    data[3] = 0x2a;
+    pbio_pybricks_pnp_id(&data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     data[11] = hub_name_len + 1;
     data[12] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
@@ -1113,11 +1105,8 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        buf[0] = 0x01; // Vendor ID Source Field - Bluetooth SIG-assigned ID
-                        pbio_set_uint16_le(&buf[1], LWP3_LEGO_COMPANY_ID); // Vendor ID Field
-                        pbio_set_uint16_le(&buf[3], PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID[0]); // Product ID Field
-                        pbio_set_uint16_le(&buf[5], 0); // Product Version Field
-                        rsp.len = 7;
+                        pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+                        rsp.len = PBIO_PYBRICKS_PNP_ID_SIZE;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else if (handle == pybricks_command_event_char_handle + 1) {
