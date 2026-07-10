@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed SPIKE Prime `speaker.beep` playing at double the intended frequency.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.1...HEAD
 
 ## [4.0.1] - 2026-06-23

@@ -682,7 +682,10 @@ const pbdrv_sound_stm32_hal_dac_platform_data_t pbdrv_sound_stm32_hal_dac_platfo
     .dma_ch = DMA_CHANNEL_7,
     .dma_irq = DMA1_Stream5_IRQn,
     .tim = TIM6,
-    .tim_clock_rate = 48000000, // APB1: 48MHz
+    // APB1 timer clock: PCLK1 is 48MHz, but since the APB1 prescaler is not 1,
+    // the timer clock is 2 x PCLK1 = 96MHz. This means that firmware <= 4.0.1
+    // was playing sound at double the frequency.
+    .tim_clock_rate = 96000000,
 };
 
 void HAL_DAC_MspInit(DAC_HandleTypeDef *hdac) {
