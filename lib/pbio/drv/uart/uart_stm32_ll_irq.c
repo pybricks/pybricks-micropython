@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_UART_STM32F4_LL_IRQ
+#if PBDRV_CONFIG_UART_STM32_LL_IRQ
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,13 +23,13 @@
 
 #include <lwrb/lwrb.h>
 
-#include "./uart_stm32f4_ll_irq.h"
+#include "./uart_stm32_ll_irq.h"
 
 #define RX_DATA_SIZE 64 // must be power of 2 for ring buffer!
 
 struct _pbdrv_uart_dev_t {
     /** Platform-specific data */
-    const pbdrv_uart_stm32f4_ll_irq_platform_data_t *pdata;
+    const pbdrv_uart_stm32_ll_irq_platform_data_t *pdata;
     /** Circular buffer for caching received bytes. */
     lwrb_t rx_buf;
     /** Timer for read timeout. */
@@ -50,11 +50,11 @@ struct _pbdrv_uart_dev_t {
     volatile uint32_t write_pos;
 };
 
-static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART];
-static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART][RX_DATA_SIZE];
+static pbdrv_uart_dev_t uart_devs[PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART];
+static uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART][RX_DATA_SIZE];
 
 pbio_error_t pbdrv_uart_get_instance(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
-    if (id >= PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART) {
+    if (id >= PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
     pbdrv_uart_dev_t *dev = &uart_devs[id];
@@ -179,7 +179,7 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart) {
     lwrb_reset(&uart->rx_buf);
 }
 
-void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
+void pbdrv_uart_stm32_ll_irq_handle_irq(uint8_t id) {
     pbdrv_uart_dev_t *uart = &uart_devs[id];
     USART_TypeDef *USARTx = uart->pdata->uart;
     uint32_t sr = USARTx->SR;
@@ -224,8 +224,8 @@ void pbdrv_uart_stop(pbdrv_uart_dev_t *uart) {
 
 void pbdrv_uart_init(void) {
 
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART; i++) {
-        const pbdrv_uart_stm32f4_ll_irq_platform_data_t *pdata = &pbdrv_uart_stm32f4_ll_irq_platform_data[i];
+    for (int i = 0; i < PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART; i++) {
+        const pbdrv_uart_stm32_ll_irq_platform_data_t *pdata = &pbdrv_uart_stm32_ll_irq_platform_data[i];
         uint8_t *rx_data = pbdrv_uart_rx_data[i];
         pbdrv_uart_dev_t *uart = &uart_devs[i];
         uart->pdata = pdata;
@@ -253,4 +253,4 @@ void pbdrv_uart_init(void) {
     }
 }
 
-#endif // PBDRV_CONFIG_UART_STM32F4_LL_IRQ
+#endif // PBDRV_CONFIG_UART_STM32_LL_IRQ

@@ -115,8 +115,8 @@
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
-#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
-#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)
+#define PBDRV_CONFIG_UART_STM32_LL_IRQ              (1)
+#define PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART     (6)
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID

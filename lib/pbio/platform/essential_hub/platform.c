@@ -25,7 +25,7 @@
 #include "../../drv/pwm/pwm_lp50xx_stm32.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
-#include "../../drv/uart/uart_stm32f4_ll_irq.h"
+#include "../../drv/uart/uart_stm32_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
 
 // Special symbols for firmware compatibility with official apps
@@ -456,8 +456,8 @@ void pbdrv_reset_power_off(void) {
 
 // UART
 
-const pbdrv_uart_stm32f4_ll_irq_platform_data_t
-    pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
+const pbdrv_uart_stm32_ll_irq_platform_data_t
+    pbdrv_uart_stm32_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART] = {
     [UART_PORT_A] = {
         .uart = UART5,
         .irq = UART5_IRQn,
@@ -469,11 +469,11 @@ const pbdrv_uart_stm32f4_ll_irq_platform_data_t
 };
 
 void UART5_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_A);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_A);
 }
 
 void USART3_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_B);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_B);
 }
 
 // STM32 HAL integration

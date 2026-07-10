@@ -27,7 +27,7 @@
 #include "../../drv/resistor_ladder/resistor_ladder.h"
 #include "../../drv/reset/reset_stm32.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
-#include "../../drv/uart/uart_stm32f4_ll_irq.h"
+#include "../../drv/uart/uart_stm32_ll_irq.h"
 #include "../../drv/usb/usb_stm32.h"
 
 // Special symbols for firmware compatibility with mboot
@@ -703,8 +703,8 @@ void DMA1_Stream5_IRQHandler(void) {
 
 // UART
 
-const pbdrv_uart_stm32f4_ll_irq_platform_data_t
-    pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
+const pbdrv_uart_stm32_ll_irq_platform_data_t
+    pbdrv_uart_stm32_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART] = {
     [UART_PORT_A] = {
         .uart = UART7,
         .irq = UART7_IRQn,
@@ -733,32 +733,32 @@ const pbdrv_uart_stm32f4_ll_irq_platform_data_t
 
 // overrides weak function in setup.m
 void UART4_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_B);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_B);
 }
 
 // overrides weak function in setup.m
 void UART5_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_D);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_D);
 }
 
 // overrides weak function in setup.m
 void UART7_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_A);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_A);
 }
 
 // overrides weak function in setup.m
 void UART8_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_C);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_C);
 }
 
 // overrides weak function in setup.m
 void UART9_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_F);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_F);
 }
 
 // overrides weak function in setup.m
 void UART10_IRQHandler(void) {
-    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_E);
+    pbdrv_uart_stm32_ll_irq_handle_irq(UART_PORT_E);
 }
 
 // STM32 HAL integration
