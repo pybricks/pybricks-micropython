@@ -63,7 +63,7 @@
 #define PBDRV_CONFIG_COUNTER                        (0)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_STM32F4                   (1)
+#define PBDRV_CONFIG_GPIO_STM32                     (1)
 
 #define PBDRV_CONFIG_IMU                            (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32           (1)

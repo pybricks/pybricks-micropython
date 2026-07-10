@@ -3,17 +3,23 @@
 
 #include "pbdrv/config.h"
 
-#if PBDRV_CONFIG_GPIO_STM32L4
+#if PBDRV_CONFIG_GPIO_STM32
 
 #include <stdint.h>
 
 #include "pbdrv/gpio.h"
 
-#include "stm32l4xx.h"
+#include STM32_H
 
 void pbdrv_gpio_out_low(const pbdrv_gpio_t *gpio) {
     GPIO_TypeDef *bank = gpio->bank;
+    #if defined(STM32F0)
+    bank->BRR = 1 << gpio->pin;
+    #elif defined(STM32F4) || defined(STM32L4) || defined(STM32H5)
     bank->BSRR = (1 << 16) << gpio->pin;
+    #else
+    #error "Unsupported MCU"
+    #endif
     bank->MODER = (bank->MODER & ~(3 << (gpio->pin * 2))) | (1 << (gpio->pin * 2));
 }
 
@@ -40,4 +46,4 @@ void pbdrv_gpio_set_pull(const pbdrv_gpio_t *gpio, pbdrv_gpio_pull_t pull) {
     bank->PUPDR = (bank->PUPDR & ~(3 << (gpio->pin * 2))) | (pull << (gpio->pin * 2));
 }
 
-#endif // PBDRV_CONFIG_GPIO_STM32L4
+#endif // PBDRV_CONFIG_GPIO_STM32

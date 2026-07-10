@@ -150,9 +150,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_ev3.c \
 	drv/gpio/gpio_nxt.c \
 	drv/gpio/gpio_pico.c \
-	drv/gpio/gpio_stm32f0.c \
-	drv/gpio/gpio_stm32f4.c \
-	drv/gpio/gpio_stm32l4.c \
+	drv/gpio/gpio_stm32.c \
 	drv/gpio/gpio_virtual.c \
 	drv/i2c/i2c_ev3.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
