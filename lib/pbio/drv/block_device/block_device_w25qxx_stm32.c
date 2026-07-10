@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2022 The Pybricks Authors
+// Copyright (c) 2022-2026 The Pybricks Authors
 
 // Block device driver for W25Qxx SPI flash memory chip connected to STM32.
 
@@ -69,6 +69,54 @@ typedef enum {
     /** Operation failed. */
     SPI_STATUS_ERROR,
 } spi_status_t;
+
+// Select constant values based on flash device type.
+#if PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q32
+#define W25Qxx(Q32, Q256) (Q32)
+#elif PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q256
+#define W25Qxx(Q32, Q256) (Q256)
+#endif
+
+/**
+ * Device-specific flash commands.
+ */
+enum {
+    FLASH_CMD_GET_STATUS = 0x05,
+    FLASH_CMD_WRITE_ENABLE = 0x06,
+    FLASH_CMD_GET_ID = 0x9F,
+    FLASH_CMD_READ_DATA = W25Qxx(0x0B, 0x0C),
+    FLASH_CMD_ERASE_BLOCK = W25Qxx(0x20, 0x21),
+    FLASH_CMD_WRITE_DATA = W25Qxx(0x02, 0x12),
+};
+
+/**
+ * Flash sizes.
+ */
+enum {
+    FLASH_SIZE_ERASE = 4 * 1024, // Limited by W25QXX operation
+    FLASH_SIZE_READ = UINT16_MAX, // Limited by STM32 DMA transfer size.
+    FLASH_SIZE_WRITE = 256, // Limited by W25QXX operation
+};
+
+/**
+ * Flash status flags.
+ */
+enum {
+    FLASH_STATUS_BUSY = 0x01,
+    FLASH_STATUS_WRITE_ENABLED = 0x02,
+};
+
+// W25Qxx manufacturer and device ID.
+static const uint8_t device_id[] = {0xEF, 0x40, W25Qxx(0x16, 0x19)};
+
+// Buffer for the received device ID, verified against device_id.
+static uint8_t id_data[sizeof(device_id)];
+
+// Buffer for the received status byte.
+static uint8_t status;
+
+// 3 or 4 byte addressing mode.
+#define FLASH_ADDRESS_SIZE (W25Qxx(3, 4))
 
 /**
  * Whether to receive (read) or send (write).
@@ -243,16 +291,6 @@ static pbio_error_t spi_command_thread(pbio_os_state_t *state, const spi_command
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-// Select constant values based on flash device type.
-#if PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q32
-#define W25Qxx(Q32, Q256) (Q32)
-#elif PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q256
-#define W25Qxx(Q32, Q256) (Q256)
-#endif
-
-// 3 or 4 byte addressing mode.
-#define FLASH_ADDRESS_SIZE (W25Qxx(3, 4))
-
 static void set_address_be(uint8_t *buf, uint32_t address) {
     #if PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q32
     buf[0] = address >> 16;
@@ -266,38 +304,6 @@ static void set_address_be(uint8_t *buf, uint32_t address) {
     #endif
 }
 
-/**
- * Device-specific flash commands.
- */
-enum {
-    FLASH_CMD_GET_STATUS = 0x05,
-    FLASH_CMD_WRITE_ENABLE = 0x06,
-    FLASH_CMD_GET_ID = 0x9F,
-    FLASH_CMD_READ_DATA = W25Qxx(0x0B, 0x0C),
-    FLASH_CMD_ERASE_BLOCK = W25Qxx(0x20, 0x21),
-    FLASH_CMD_WRITE_DATA = W25Qxx(0x02, 0x12),
-};
-
-/**
- * Flash sizes.
- */
-enum {
-    FLASH_SIZE_ERASE = 4 * 1024, // Limited by W25QXX operation
-    FLASH_SIZE_READ = UINT16_MAX, // Limited by STM32 DMA transfer size.
-    FLASH_SIZE_WRITE = 256, // Limited by W25QXX operation
-};
-
-/**
- * Flash status flags.
- */
-enum {
-    FLASH_STATUS_BUSY = 0x01,
-    FLASH_STATUS_WRITE_ENABLED = 0x02,
-};
-
-// W25Qxx manufacturer and device ID.
-static const uint8_t device_id[] = {0xEF, 0x40, W25Qxx(0x16, 0x19)};
-
 // Request flash device ID.
 static const spi_command_t cmd_id_tx = {
     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
@@ -306,7 +312,6 @@ static const spi_command_t cmd_id_tx = {
 };
 
 // Receive flash device ID after sending request.
-static uint8_t id_data[sizeof(device_id)];
 static const spi_command_t cmd_id_rx = {
     .operation = SPI_RECV,
     .buffer = id_data,
@@ -328,10 +333,9 @@ static const spi_command_t cmd_status_tx = {
 };
 
 // Get the write-status byte.
-static uint8_t status;
 static const spi_command_t cmd_status_rx = {
     .operation = SPI_RECV,
-    .buffer = (uint8_t *)&status,
+    .buffer = &status,
     .size = sizeof(status),
 };
 
@@ -345,7 +349,7 @@ static const spi_command_t cmd_request_read = {
 };
 
 // Request page write at address. Buffer: write command + address.
-// Should be followed by cmd_data_read to read the data.
+// Should be followed by cmd_data_write to write the data.
 static uint8_t write_address[1 + FLASH_ADDRESS_SIZE] = {FLASH_CMD_WRITE_DATA};
 static const spi_command_t cmd_request_write = {
     .operation = SPI_SEND | SPI_CS_KEEP_ENABLED,
@@ -371,6 +375,82 @@ static spi_command_t cmd_data_read = {
     .operation = SPI_RECV,
 };
 
+static pbio_error_t flash_read_id(pbio_os_state_t *state) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_rx));
+    PBIO_OS_ASYNC_END(err);
+}
+
+static pbio_error_t flash_read_status(pbio_os_state_t *state) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_tx));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_rx));
+    PBIO_OS_ASYNC_END(err);
+}
+
+static pbio_error_t flash_write_enable(pbio_os_state_t *state) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_write_enable));
+    PBIO_OS_ASYNC_END(err);
+}
+
+static pbio_error_t flash_read(pbio_os_state_t *state, uint32_t address, uint8_t *buffer, uint32_t size) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    // Set address for this read request and send it.
+    set_address_be(&cmd_request_read.buffer[1], address);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_read));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Receive the data.
+    cmd_data_read.buffer = buffer;
+    cmd_data_read.size = size;
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_read));
+    PBIO_OS_ASYNC_END(err);
+}
+
+static pbio_error_t flash_write_page(pbio_os_state_t *state, uint32_t address, uint8_t *buffer, uint32_t size) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    // Set address and send the write request.
+    set_address_be(&cmd_request_write.buffer[1], address);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_write));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Write the data.
+    cmd_data_write.buffer = buffer;
+    cmd_data_write.size = size;
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_write));
+    PBIO_OS_ASYNC_END(err);
+}
+
+static pbio_error_t flash_erase_sector(pbio_os_state_t *state, uint32_t address) {
+    static pbio_os_state_t sub;
+    pbio_error_t err;
+    PBIO_OS_ASYNC_BEGIN(state);
+    // Set address and send the erase request.
+    set_address_be(&cmd_request_erase.buffer[1], address);
+    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_erase));
+    PBIO_OS_ASYNC_END(err);
+}
+
 static pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t offset, uint8_t *buffer, uint32_t size) {
 
     static pbio_os_state_t sub;
@@ -388,18 +468,9 @@ static pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t off
     // Split up reads to maximum chunk size.
     for (size_done = 0; size_done < size; size_done += size_now) {
         size_now = pbio_int_math_min(size - size_done, FLASH_SIZE_READ);
-
-        // Set address for this read request and send it.
-        set_address_be(&cmd_request_read.buffer[1], PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset + size_done);
-        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_request_read));
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // Receive the data.
-        cmd_data_read.buffer = buffer + size_done;
-        cmd_data_read.size = size_now;
-        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_read));
+        PBIO_OS_AWAIT(state, &sub, err = flash_read(&sub,
+            PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_START_ADDRESS + offset + size_done,
+            buffer + size_done, size_now));
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -418,47 +489,29 @@ static pbio_error_t pbdrv_block_device_read(pbio_os_state_t *state, uint32_t off
 static pbio_error_t flash_erase_or_write(pbio_os_state_t *state, uint32_t address, uint8_t *buffer, uint32_t size) {
 
     static pbio_os_state_t sub;
-    static const spi_command_t *cmd;
     pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Enable write mode.
-    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_write_enable));
+    PBIO_OS_AWAIT(state, &sub, err = flash_write_enable(&sub));
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Select either write or erase request.
-    cmd = size == 0 ? &cmd_request_erase : &cmd_request_write;
-
-    // Set address and send the request.
-    set_address_be(&cmd->buffer[1], address);
-    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, cmd));
+    // Erase (size == 0) or write the requested chunk.
+    if (size == 0) {
+        PBIO_OS_AWAIT(state, &sub, err = flash_erase_sector(&sub, address));
+    } else {
+        PBIO_OS_AWAIT(state, &sub, err = flash_write_page(&sub, address, buffer, size));
+    }
     if (err != PBIO_SUCCESS) {
         return err;
-    }
-
-    // Write the data, or skip in case of erase.
-    if (size != 0) {
-        cmd_data_write.buffer = buffer;
-        cmd_data_write.size = size;
-        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_data_write));
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
     }
 
     // Wait for busy flag to clear.
     do {
-        // Send command to read status.
-        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_tx));
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // Read the status.
-        PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_status_rx));
+        PBIO_OS_AWAIT(state, &sub, err = flash_read_status(&sub));
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -521,27 +574,22 @@ pbio_error_t pbdrv_block_device_w25qxx_stm32_init_process_thread(pbio_os_state_t
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Write the ID getter command
-    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_tx));
+    // Read the flash device ID.
+    PBIO_OS_AWAIT(state, &sub, err = flash_read_id(&sub));
     if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Get ID command reply
-    PBIO_OS_AWAIT(state, &sub, err = spi_command_thread(&sub, &cmd_id_rx));
-    if (err != PBIO_SUCCESS) {
-        return err;
+        goto done;
     }
 
     // Verify flash device ID
     if (memcmp(device_id, id_data, sizeof(id_data))) {
-        return PBIO_ERROR_FAILED;
+        err = PBIO_ERROR_FAILED;
+        goto done;
     }
 
     // Read size of stored data.
     PBIO_OS_AWAIT(state, &sub, err = pbdrv_block_device_read(&sub, 0, (uint8_t *)&ramdisk.saved_size, sizeof(ramdisk.saved_size)));
     if (err != PBIO_SUCCESS) {
-        return err;
+        goto done;
     }
 
     // Read the available data into RAM.
@@ -553,6 +601,7 @@ pbio_error_t pbdrv_block_device_w25qxx_stm32_init_process_thread(pbio_os_state_t
     // higher level code sees this error when requesting the RAM disk. On
     // failure, it can reset the user data to factory defaults, and save it
     // properly on shutdown.
+done:
     pbio_busy_count_down();
 
     PBIO_OS_ASYNC_END(err);
