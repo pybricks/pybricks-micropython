@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2021 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 // Manages power off and reset for STM32 MCUs.
 
@@ -47,19 +47,29 @@ bool pbdrv_reset_stm32_is_bootloader_requested(void) {
 
 static pbdrv_reset_reason_t reset_reason;
 
-void pbdrv_reset_init(void) {
-    uint32_t status = RCC->CSR;
+#if defined(STM32H5)
+#define RESET_STATUS_REG (RCC->RSR)
+#define RESET_STATUS_SFTRSTF (RCC_RSR_SFTRSTF)
+#define RESET_STATUS_IWDGRSTF (RCC_RSR_IWDGRSTF)
+#define RESET_STATUS_RMVF (RCC_RSR_RMVF)
+#else
+#define RESET_STATUS_REG (RCC->CSR)
+#define RESET_STATUS_SFTRSTF (RCC_CSR_SFTRSTF)
+#define RESET_STATUS_IWDGRSTF (RCC_CSR_IWDGRSTF)
+#define RESET_STATUS_RMVF (RCC_CSR_RMVF)
+#endif
 
-    if (status & RCC_CSR_SFTRSTF) {
+void pbdrv_reset_init(void) {
+    uint32_t status = RESET_STATUS_REG;
+    if (status & RESET_STATUS_SFTRSTF) {
         reset_reason = PBDRV_RESET_REASON_SOFTWARE;
-    } else if (status & RCC_CSR_IWDGRSTF) {
+    } else if (status & RESET_STATUS_IWDGRSTF) {
         reset_reason = PBDRV_RESET_REASON_WATCHDOG;
     } else {
         reset_reason = PBDRV_RESET_REASON_NONE;
     }
-
     // clear flags for next reset
-    RCC->CSR |= RCC_CSR_RMVF;
+    RESET_STATUS_REG |= RESET_STATUS_RMVF;
 }
 
 void pbdrv_reset(pbdrv_reset_action_t action) {
