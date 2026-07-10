@@ -63,9 +63,9 @@
 
 // STM32 MCU Device ID register addresses
 // REVISIT: make pbdrv_xxx_get_serial_number() and use that instead
-#define         DEVICE_ID1          (0x1FFF7A10)
-#define         DEVICE_ID2          (0x1FFF7A14)
-#define         DEVICE_ID3          (0x1FFF7A18)
+#define         DEVICE_ID1          (UID_BASE + 0x00)
+#define         DEVICE_ID2          (UID_BASE + 0x04)
+#define         DEVICE_ID3          (UID_BASE + 0x08)
 
 // bDevCapabilityType for USB_DEVICE_CAPABITY_TYPE
 #define USB_DEV_CAP_TYPE_PLATFORM   (5)
