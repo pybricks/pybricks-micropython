@@ -40,18 +40,6 @@ TINY_TEST_INC = -I$(TINY_TEST_DIR)
 TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 
 # pbio dependency
-CONTIKI_DIR = ../../contiki-core
-CONTIKI_INC = -I$(CONTIKI_DIR)
-CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
-	lib/list.c \
-	lib/memb.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
-# pbio dependency
 LEGO_DIR = ../../lego
 LEGO_INC = -I$(LEGO_DIR)
 LEGO_SRC = $(addprefix $(LEGO_DIR)/, \
@@ -162,7 +150,7 @@ $(BUILD_PREFIX)/font_mono_8x5_8.c: $(PBIO_DIR)/src/image/fonts/mono_8x5.png $(FO
 	$(Q)python3 $(FONT_CONVERT) --image $< 8 > $@
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
-CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
+CFLAGS += $(TINY_TEST_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
 
@@ -175,7 +163,7 @@ ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(LEGO_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 

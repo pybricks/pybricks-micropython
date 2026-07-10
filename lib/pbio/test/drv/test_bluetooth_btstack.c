@@ -9,7 +9,6 @@
 #include <btstack.h>
 #include <btstack_chipset_cc256x.h>
 #include <hci_transport_h4.h>
-#include <contiki-lib.h>
 #include <tinytest_macros.h>
 #include <tinytest.h>
 
@@ -20,13 +19,36 @@
 
 // UART HCI queue
 
-typedef struct {
-    list_t queue;
+typedef struct _queue_item_t {
+    struct _queue_item_t *next;
     const uint8_t *buffer;
     uint16_t length;
 } queue_item_t;
 
-LIST(receive_queue);
+// FIFO queue
+static queue_item_t *receive_queue_head;
+static queue_item_t *receive_queue_tail;
+
+static void receive_queue_add(queue_item_t *item) {
+    item->next = NULL;
+    if (receive_queue_tail) {
+        receive_queue_tail->next = item;
+    } else {
+        receive_queue_head = item;
+    }
+    receive_queue_tail = item;
+}
+
+static queue_item_t *receive_queue_pop(void) {
+    queue_item_t *item = receive_queue_head;
+    if (item) {
+        receive_queue_head = item->next;
+        if (!receive_queue_head) {
+            receive_queue_tail = NULL;
+        }
+    }
+    return item;
+}
 
 static queue_item_t *new_item(const void *buffer, uint16_t length) {
     queue_item_t *item = malloc(sizeof(queue_item_t));
@@ -48,7 +70,7 @@ static void free_item(queue_item_t *item) {
 }
 
 static void queue_packet(const uint8_t *buffer, uint16_t length) {
-    list_add(receive_queue, new_item(buffer, length));
+    receive_queue_add(new_item(buffer, length));
     pbio_os_request_poll();
 }
 
@@ -236,8 +258,8 @@ static pbio_error_t test_uart_receive_process_thread(pbio_os_state_t *state, voi
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, *receive_queue);
-        item = list_pop(receive_queue);
+        PBIO_OS_AWAIT_UNTIL(state, receive_queue_head != NULL);
+        item = receive_queue_pop();
 
         for (i = 0; i < item->length;) {
             PBIO_OS_AWAIT_UNTIL(state, test_uartreceive_buffer_length > 0);
@@ -633,7 +655,7 @@ static void handle_timer_timeout(btstack_timer_source_t *ts) {
     (*callback_count)++;
 }
 
-static pbio_error_t test_btstack_run_loop_contiki_timer(pbio_os_state_t *state, void *context) {
+static pbio_error_t test_btstack_run_loop_timer(pbio_os_state_t *state, void *context) {
     static btstack_timer_source_t timer_source, timer_source_2, timer_source_3;
     static uint32_t callback_count, callback_count_2, callback_count_3;
 
@@ -787,7 +809,7 @@ void pbdrv_bluetooth_btstack_platform_poll(void) {
 void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 }
 
-static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, void *context) {
+static pbio_error_t test_btstack_run_loop_poll(pbio_os_state_t *state, void *context) {
     static btstack_data_source_t data_source;
     static uint32_t callback_count;
 
@@ -820,7 +842,7 @@ static pbio_error_t test_btstack_run_loop_contiki_poll(pbio_os_state_t *state, v
 }
 
 struct testcase_t pbdrv_bluetooth_btstack_tests[] = {
-    PBIO_THREAD_TEST(test_btstack_run_loop_contiki_timer),
-    PBIO_THREAD_TEST(test_btstack_run_loop_contiki_poll),
+    PBIO_THREAD_TEST(test_btstack_run_loop_timer),
+    PBIO_THREAD_TEST(test_btstack_run_loop_poll),
     END_OF_TESTCASES
 };
