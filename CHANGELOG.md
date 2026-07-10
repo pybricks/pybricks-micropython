@@ -7,6 +7,11 @@
 ### Fixed
 - Fixed SPIKE Prime `speaker.beep` playing at double the intended frequency.
 
+### Changed
+- Re-enable USB support for SPIKE for beta releases.
+- Switch to USB serial.
+- Use new mboot version similar to upstream MicroPython for simpler updates.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.1...HEAD
 
 ## [4.0.1] - 2026-06-23
