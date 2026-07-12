@@ -561,8 +561,11 @@ enum {
  */
 typedef enum {
     /**
-     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_COMMAND. The payload is the command
-     * error code, analogous to a BLE write response.
+     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_COMMAND. The payload is
+     * `[tag, status32]`, where `tag` echoes the byte from the command that
+     * produced this response (so the host can correlate a late response with
+     * the command that produced it) and `status32` is the 32-bit little-endian
+     * command error code, analogous to a BLE write response.
      */
     PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
     /** Analog to BLE notification. Only emitted if subscribed. */
@@ -591,9 +594,14 @@ typedef enum {
      */
     PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
     /**
-     * A Pybricks command (see ::pbio_pybricks_command_t), carried in the
-     * remaining payload bytes. The hub replies with a
-     * ::PBIO_PYBRICKS_IN_EP_MSG_RESPONSE.
+     * A Pybricks command. The payload is `[tag, ...command]`, where `tag` is a
+     * single opaque byte chosen by the host and echoed back in the response,
+     * and `command` is a Pybricks command (see ::pbio_pybricks_command_t) with
+     * the same encoding as a BLE command write. The hub replies with a
+     * ::PBIO_PYBRICKS_IN_EP_MSG_RESPONSE carrying the same tag.
+     *
+     * The tag lets the host correlate each response with its command, since
+     * the bare CDC byte stream has no transaction correlation of its own.
      *
      * Analog of BLE Client Characteristic Write with response.
      */

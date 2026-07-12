@@ -120,7 +120,7 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
             switch (char_id) {
                 case 0x0003: // Hub capabilities
                     pbio_pybricks_hub_capabilities(buf,
-                        PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 1,
+                        PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 2,
                         PBSYS_CONFIG_APP_FEATURE_FLAGS,
                         pbsys_storage_get_maximum_program_size(),
                         PBSYS_CONFIG_HMI_NUM_SLOTS);
@@ -356,9 +356,11 @@ static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
  * Pending command response to the most recently received command.
  *
  * The host keeps a single command outstanding at a time (like a BLE write with
- * response), so a single command response slot is sufficient.
+ * response), so a single command response slot is sufficient. The buffer holds
+ * the full message `[RESPONSE, tag, status32]`, where `tag` echoes the byte
+ * from the command that produced this response so the host can correlate them.
  */
-static uint8_t pbdrv_usb_command_response_buf[sizeof(uint32_t) + 1] = {
+static uint8_t pbdrv_usb_command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1] = {
     [0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
 };
 static bool pbdrv_usb_command_response_pending;
@@ -419,10 +421,14 @@ static void pbdrv_usb_handle_data_in(void) {
                 // Subscribe or unsubscribe to event notifications. The payload
                 // is a single byte: 1 to subscribe, 0 to unsubscribe.
                 pbdrv_usb_set_subscribed(msg[1]);
-            } else if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
-                // Compute the response synchronously and queue it immediately.
-                pbio_set_uint32_le(&pbdrv_usb_command_response_buf[1],
-                    pbdrv_usb_receive_handler(&msg[1], msg_size - 1));
+            } else if (msg_size >= 3 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
+                // The command is [COMMAND, tag, ...payload]. The tag is opaque
+                // to us: echo it back in the response so the host can correlate
+                // a late response with the command that produced it. The
+                // payload after the tag is the same as a BLE command write.
+                pbdrv_usb_command_response_buf[1] = msg[1];
+                pbio_set_uint32_le(&pbdrv_usb_command_response_buf[2],
+                    pbdrv_usb_receive_handler(&msg[2], msg_size - 2));
                 pbdrv_usb_command_response_pending = true;
                 pbio_os_request_poll();
             } else if (msg_size >= 4 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_READ) {

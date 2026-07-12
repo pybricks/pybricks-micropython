@@ -35,8 +35,12 @@ def send_frame(ser: serial.Serial, message: bytes) -> None:
 
 
 def send_command(ser: serial.Serial, payload: bytes) -> None:
-    """Sends a Pybricks command (prefixed with the OUT command discriminator)."""
-    send_frame(ser, bytes([OUT_EP_MSG_COMMAND]) + payload)
+    """Sends a Pybricks command (prefixed with the OUT command discriminator).
+
+    A correlation tag byte precedes the payload; the hub echoes it back in the
+    response. It is opaque, so a fixed value is fine here.
+    """
+    send_frame(ser, bytes([OUT_EP_MSG_COMMAND, 0]) + payload)
 
 
 def send_read(ser: serial.Serial, service: int, char_id: int) -> None:

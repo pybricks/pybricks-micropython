@@ -124,16 +124,17 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_simulation_pico_in_size == 0 &&
             (available = lwrb_get_full(&pbdrv_usb_simulation_pico_in_ringbuf)) > 0);
 
-        available = pbio_int_math_clamp(available, PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 2);
+        available = pbio_int_math_clamp(available, PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 3);
 
         // Wrap the raw UART bytes as a write stdin command and COBS-encode it,
         // the same way a real host would, so the common driver can decode it.
         static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
         cmd[0] = PBIO_PYBRICKS_OUT_EP_MSG_COMMAND;
-        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[2], available);
+        cmd[1] = 0; // correlation tag (opaque; unused here)
+        cmd[2] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[3], available);
         pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode(
-            cmd, 2 + available, pbdrv_usb_simulation_pico_in_buf);
+            cmd, 3 + available, pbdrv_usb_simulation_pico_in_buf);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

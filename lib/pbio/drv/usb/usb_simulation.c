@@ -124,10 +124,11 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // host would. This has been made non-blocking in platform.c.
         static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
         cmd[0] = PBIO_PYBRICKS_OUT_EP_MSG_COMMAND;
-        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 2);
+        cmd[1] = 0; // correlation tag (opaque; unused here)
+        cmd[2] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        ssize_t num_read = read(STDIN_FILENO, &cmd[3], sizeof(cmd) - 3);
         if (num_read > 0) {
-            usb_in_size = pbio_cobs_encode(cmd, 2 + num_read, usb_in_buf);
+            usb_in_size = pbio_cobs_encode(cmd, 3 + num_read, usb_in_buf);
         }
     }
 
