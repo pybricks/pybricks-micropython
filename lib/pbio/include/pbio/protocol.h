@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 5
+#define PBIO_PROTOCOL_VERSION_MINOR 6
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -532,6 +532,8 @@ extern const uint8_t pbio_nus_tx_char_uuid[];
  * Selects which group the 16-bit characteristic id in a read request belongs
  * to, mirroring how a BLE host distinguishes standard GATT characteristics
  * from Pybricks-specific ones.
+ *
+ * @since Pybricks Profile v1.6.0
  */
 enum {
     /** Retrieve GATT characteristics */
@@ -558,6 +560,8 @@ enum {
  * The hub to host direction is a single byte stream that multiplexes command
  * responses, events and read replies, so the first byte of each message
  * discriminates between them.
+ *
+ * @since Pybricks Profile v1.6.0
  */
 typedef enum {
     /**
@@ -584,6 +588,8 @@ typedef enum {
  *
  * The host to hub direction is a single byte stream, so the first byte of each
  * message discriminates between a command and a characteristic read request.
+ *
+ * @since Pybricks Profile v1.6.0
  */
 typedef enum {
     /**
