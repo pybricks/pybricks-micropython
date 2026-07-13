@@ -21,7 +21,7 @@ jobs:
       - name: Install cross-compiler
         run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
           fetch-depth: 0
@@ -83,7 +83,7 @@ jobs:
               $PRERELEASE_FLAG \
               $ASSETS
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
