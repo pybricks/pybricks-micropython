@@ -911,10 +911,6 @@ sync:
  */
 pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev, pbio_os_timer_t *timer) {
 
-    if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
     pbio_error_t err;
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -944,8 +940,8 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
             // samples since some devices use our keep alive heartbeat to send
             // idle messages, meaning they'll get sent just after one timeout.
             if (lump_dev->err_count > EV3_UART_DATA_KEEP_ALIVE_MAX_MISSED) {
-                lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
-                return PBIO_ERROR_TIMEDOUT;
+                err = PBIO_ERROR_TIMEDOUT;
+                goto exit;
             }
 
             lump_dev->data_rec = false;
@@ -954,7 +950,7 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
             PBIO_OS_AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
             if (err != PBIO_SUCCESS) {
                 debug_pr("Error during keepalive.\n");
-                return err;
+                goto exit;
             }
             pbio_os_timer_set(timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
         }
@@ -966,7 +962,7 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
             PBIO_OS_AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
             if (err != PBIO_SUCCESS) {
                 debug_pr("Setting requested mode failed.\n");
-                return err;
+                goto exit;
             }
         }
 
@@ -980,7 +976,7 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
                 PBIO_OS_AWAIT(state, &lump_dev->write_pt, err = pbdrv_uart_write(&lump_dev->write_pt, uart_dev, lump_dev->tx_msg, lump_dev->tx_msg_size, EV3_UART_IO_TIMEOUT));
                 if (err != PBIO_SUCCESS) {
                     debug_pr("Setting requested data failed.\n");
-                    return err;
+                    goto exit;
                 }
                 lump_dev->data_set->time = pbdrv_clock_get_ms();
             } else if (pbdrv_clock_get_ms() - lump_dev->data_set->time < 500) {
@@ -993,7 +989,9 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
         }
     }
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+exit:
+    lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
+    PBIO_OS_ASYNC_END(err);
 }
 
 /**
@@ -1007,10 +1005,6 @@ pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *state, pbio_port_l
  */
 pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev) {
 
-    if (lump_dev->status != PBDRV_LEGODEV_LUMP_STATUS_DATA) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
     pbio_error_t err;
 
     // REVISIT: This is not the greatest. We can easily get a buffer overrun and
@@ -1019,7 +1013,7 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    while (true) {
+    for (;;) {
         PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg, 1,
             // This is essentially the timeout for receiving the next data
             // message, so we should allow at least as much timeout as allowed
@@ -1028,7 +1022,7 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
             ));
         if (err != PBIO_SUCCESS) {
             debug_pr("Did not receive UART Rx data header byte\n");
-            return err;
+            goto exit;
         }
 
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
@@ -1048,15 +1042,16 @@ pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_l
         PBIO_OS_AWAIT(state, &lump_dev->read_pt, err = pbdrv_uart_read(&lump_dev->read_pt, uart_dev, lump_dev->rx_msg + 1, lump_dev->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
         if (err != PBIO_SUCCESS) {
             debug_pr("UART Rx data error\n");
-            return err;
+            goto exit;
         }
 
         // at this point, we have a full lump_dev->msg that can be parsed
         pbio_port_lump_lump_parse_msg(lump_dev);
     }
 
-    // Unreachable.
-    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+exit:
+    lump_dev->status = PBDRV_LEGODEV_LUMP_STATUS_ERR;
+    PBIO_OS_ASYNC_END(err);
 }
 
 /**

@@ -6,6 +6,7 @@
 
 ### Fixed
 - Fixed SPIKE Prime `speaker.beep` playing at double the intended frequency.
+- Fixed sensors not raising `ENODEV` if the sensor was used after being unplugged.
 
 ### Changed
 - Re-enable USB support for SPIKE for beta releases.
