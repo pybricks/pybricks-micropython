@@ -11,12 +11,11 @@ jobs:
       pull-requests: write
     steps:
       - name: Download pull request number
-        uses: dawidd6/action-download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: build.yml
-          run_id: ${{ github.event.workflow_run.id }}
           name: pr_number
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
       - uses: actions/github-script@v9
         with:
           # This snippet is public-domain, taken from
