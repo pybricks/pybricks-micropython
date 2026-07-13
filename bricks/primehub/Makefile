@@ -14,7 +14,13 @@ VARIANT_ZIPS = $(foreach v,$(VARIANTS),../$(v)/build/firmware.zip)
 
 all: $(BUILD)/firmware.zip
 
-$(VARIANTS):
+# Check out git submodules serially first, using one variant, so that the
+# parallel variant sub-makes below don't race each other trying to clone the
+# same submodules at the same time (which fails).
+submodules:
+	$(MAKE) -C ../$(firstword $(VARIANTS)) submodules
+
+$(VARIANTS): submodules
 	$(MAKE) -C ../$@
 
 # Always rebuild: the variant sub-makes decide what is up to date.
@@ -36,4 +42,4 @@ clean:
 	for variant in $(VARIANTS); do $(MAKE) -C ../$$variant clean; done
 	rm -rf $(BUILD)
 
-.PHONY: all clean deploy $(VARIANTS)
+.PHONY: all clean deploy submodules $(VARIANTS)
