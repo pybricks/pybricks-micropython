@@ -7,8 +7,13 @@
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b1...HEAD
 
 ### Fixed
+- Fixed charge indicator blinking due to battery level variations ([support#2762]).
+- Fixed host OS getting confused by hub driver changes by reporting a new
+  bcdDevice version ([support#2764]).
 - Enabled charging on SPIKE Prime variant.
-- Fixed charge indicator blinking due to slight battery level variations.
+
+[support#2762]: https://github.com/pybricks/support/issues/2762
+[support#2764]: https://github.com/pybricks/support/issues/2764
 
 ## [4.1.0b1] - 2026-07-13
 
