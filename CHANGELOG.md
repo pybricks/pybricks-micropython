@@ -6,6 +6,10 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b1...HEAD
 
+### Fixed
+- Enabled charging on SPIKE Prime variant.
+- Fixed charge indicator blinking due to slight battery level variations.
+
 ## [4.1.0b1] - 2026-07-13
 
 ### Added

@@ -99,11 +99,21 @@ static void pbdrv_charger_enable(bool enable, pbdrv_charger_limit_t limit) {
 
     #else // PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 
+    // Pulling MODE pin physically low enables the charger, but there may be
+    // extra circuitry that inverts the MODE pin state compared to the GPIO.
+    #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_GPIO_INVERTED
+    if (enable) {
+        pbdrv_gpio_out_high(&platform.mode_gpio);
+    } else {
+        pbdrv_gpio_out_low(&platform.mode_gpio);
+    }
+    #else
     if (enable) {
         pbdrv_gpio_out_low(&platform.mode_gpio);
     } else {
         pbdrv_gpio_out_high(&platform.mode_gpio);
     }
+    #endif
 
     #endif // PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 
