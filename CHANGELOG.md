@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b1...HEAD
+
+## [4.1.0b1] - 2026-07-13
+
 ### Added
 - Added a version of SPIKE Prime with slightly updated electronics. Everything
   should work the same as the original.
@@ -17,7 +21,7 @@
 - Switch to USB serial.
 - Use new mboot version similar to upstream MicroPython for simpler updates.
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.1...HEAD
+[4.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v4.0.1...v4.1.0b1
 
 ## [4.0.1] - 2026-06-23
 
