@@ -48,13 +48,15 @@ start_commit = (
     .decode()
     .strip()
 )
-end_commit = args.commit
-
 for commit in pybricks.iter_commits(
-    f"{start_commit}..{end_commit}", ancestry_path=start_commit, reverse=True
+    f"{start_commit}..{args.commit}", ancestry_path=start_commit, reverse=True
 ):
-    # skip commits whose size for this hub is already recorded
-    if firmware_size_table is not None:
+    # skip commits whose size for this hub is already recorded, but never skip
+    # the target commit, whose build output must exist to upload on success.
+    if (
+        firmware_size_table is not None
+        and commit.hexsha != pybricks.commit(args.commit).hexsha
+    ):
         try:
             entity = firmware_size_table.get_entity("size", commit.hexsha)
             if entity.get(args.hub) is not None:
