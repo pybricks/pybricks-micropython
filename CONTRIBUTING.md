@@ -271,15 +271,8 @@ JavaScript packages that are build from this repository.
 
 ### firmware
 
-This package is for distributing the Pybricks firmware.
-
-
-In the `pybricks-micropython` directory:
-
-    cd npm/firmware
-    yarn install
-    yarn build
-
+This package is for distributing the Pybricks firmware. It only contains the
+firmware `.zip` files (no code to build).
 
 ### mpy-cross
 

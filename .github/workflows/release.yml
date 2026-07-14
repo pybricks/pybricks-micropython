@@ -64,6 +64,7 @@ jobs:
           fi
           HUBS="movehub cityhub technichub primehub essentialhub nxt ev3"
           mkdir -p npm/firmware/build
+          cp LICENSE npm/firmware/LICENSE
           for HUB in $HUBS; do
             NEW_FILENAME="./bricks/$HUB/build/pybricks-$HUB-${{ env.GITHUB_TAG }}.zip"
             cp "./bricks/$HUB/build/firmware.zip" "npm/firmware/build/$HUB.zip"
@@ -91,7 +92,4 @@ jobs:
         working-directory: npm/firmware
         run: |
           npm version --no-git-tag-version "${{ env.NPM_VERSION }}"
-          echo "export const FIRMWARE_TAG = '${{ env.GITHUB_TAG }}';" > version.ts
-          yarn install
-          npx tsc
           npm publish --tag "${{ env.NPM_TAG }}"

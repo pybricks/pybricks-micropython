@@ -2,8 +2,6 @@
     "name": "@pybricks/firmware",
     "version": "0.0.0",
     "description": "Pybricks firmware",
-    "main": "./build/index.js",
-    "types": "./build/index.d.ts",
     "files": [
         "./build/"
     ],
@@ -17,19 +15,5 @@
         "access": "public"
     },
     "author": "The Pybricks Authors",
-    "license": "MIT",
-    "scripts": {
-        "build": "tsc",
-        "test": "tsc && jest"
-    },
-    "devDependencies": {
-        "@types/jest": "^30.0.0",
-        "@types/node": "^20.0.0",
-        "jest": "^30.3.0",
-        "ts-jest": "^29.4.6",
-        "typescript": "^5.9.3"
-    },
-    "dependencies": {
-        "jszip": "^3.10.1"
-    }
+    "license": "MIT"
 }
