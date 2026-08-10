@@ -684,6 +684,26 @@ static void pybricks_on_ready_to_send(void *context) {
 }
 #endif
 
+uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    // Minimum negotiated ATT MTU over all connected hosts, capped at the
+    // platform maximum, minus the 3-byte ATT notification header. The same
+    // value is sent to every host, so we must fit the smallest one.
+    uint16_t mtu = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        if (host->con_handle == HCI_CON_HANDLE_INVALID) {
+            continue;
+        }
+        uint16_t host_mtu = att_server_get_mtu(host->con_handle);
+        if (host_mtu && host_mtu < mtu) {
+            mtu = host_mtu;
+        }
+    }
+    #endif
+    return mtu - 3;
+}
+
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
     if (!pbdrv_bluetooth_btstack_ble_supported()) {
         return PBIO_ERROR_NOT_SUPPORTED;

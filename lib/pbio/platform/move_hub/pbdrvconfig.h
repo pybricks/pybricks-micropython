@@ -26,6 +26,7 @@
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG        (1)
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         (23)
 #define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_MOVE
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 

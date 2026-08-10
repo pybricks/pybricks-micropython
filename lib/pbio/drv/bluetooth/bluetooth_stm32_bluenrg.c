@@ -304,6 +304,11 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    // Fixed MTU minus the 3-byte ATT notification header.
+    return PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - 3;
+}
+
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
 
     PBIO_OS_ASYNC_BEGIN(state);

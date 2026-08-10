@@ -18,6 +18,7 @@
 #define PBSYS_CONFIG_HMI_EV3_UI                     (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (4)
 #define PBSYS_CONFIG_HOST                           (1)
+#define PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE           (1024)
 #define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (21)
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (1)

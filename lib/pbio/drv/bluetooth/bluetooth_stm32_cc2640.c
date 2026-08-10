@@ -342,6 +342,17 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    // conn_mtu is the negotiated ATT MTU (defaults to the 23-byte minimum on
+    // connect). Cap it at the platform maximum and subtract the 3-byte ATT
+    // notification header.
+    uint16_t mtu = conn_mtu >= ATT_MTU_SIZE ? conn_mtu : ATT_MTU_SIZE;
+    if (mtu > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE) {
+        mtu = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+    }
+    return mtu - 3;
+}
+
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
 
     static attHandleValueNoti_t notification;
@@ -939,11 +950,11 @@ static void handle_event(uint8_t *packet) {
                     // If we allow multiple connections, this will need to be
                     // changed.
                     if (connection_handle == conn_handle) {
-                        conn_mtu = MIN(client_mtu, PBDRV_BLUETOOTH_MAX_MTU_SIZE);
+                        conn_mtu = MIN(client_mtu, PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
                     }
 
                     attExchangeMTURsp_t rsp;
-                    rsp.serverRxMTU = PBDRV_BLUETOOTH_MAX_MTU_SIZE;
+                    rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;

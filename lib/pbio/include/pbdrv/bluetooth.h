@@ -235,16 +235,6 @@ typedef struct {
     uint32_t class_of_device;
 } pbdrv_bluetooth_inquiry_result_t;
 
-#ifdef PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE
-#if PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE < 23 || PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE > 515
-#error PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE out of range
-#endif
-#define PBDRV_BLUETOOTH_MAX_MTU_SIZE PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE
-#else
-/** The maximum allowable MTU size for this chip. */
-#define PBDRV_BLUETOOTH_MAX_MTU_SIZE 23
-#endif
-
 #if PBDRV_CONFIG_BLUETOOTH
 
 //
