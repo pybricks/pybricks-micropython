@@ -214,7 +214,7 @@ static void pbdrv_bluetooth_peripheral_disconnect_now(pbdrv_bluetooth_peripheral
 
 
 static pbio_os_state_t bluetooth_thread_state;
-static pbio_os_state_t bluetooth_thread_err;
+static pbio_error_t bluetooth_thread_err;
 
 /**
  * Runs tasks that may be waiting for event.
