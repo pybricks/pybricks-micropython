@@ -70,6 +70,9 @@ static const pbdrv_bluetooth_btstack_chipset_info_t usb_chipset_info = {
     .supports_ble = true,
 };
 
+#define RTL_FIRMWARE_PATH "/lib/firmware/rtl_bt/rtl8761bu_fw.bin"
+#define RTL_CONFIG_PATH "/lib/firmware/rtl_bt/rtl8761bu_config.bin"
+
 const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
 
     assert_manufacturer_id(device_info->manufacturer);
@@ -78,8 +81,14 @@ const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipse
     btstack_chipset_realtek_set_lmp_subversion(device_info->lmp_pal_subversion);
     btstack_chipset_realtek_set_product_id(usb_product_id);
 
-    btstack_chipset_realtek_set_firmware_file_path("/lib/firmware/rtl_bt/rtl8761bu_fw.bin");
-    btstack_chipset_realtek_set_config_file_path("/lib/firmware/rtl_bt/rtl8761bu_config.bin");
+    if (access(RTL_FIRMWARE_PATH, R_OK) != 0 || access(RTL_CONFIG_PATH, R_OK) != 0) {
+        // Newer distros ship these zstd-compressed. So run one off:
+        // sudo zstd -dk /lib/firmware/rtl_bt/rtl8761bu_fw.bin.zst /lib/firmware/rtl_bt/rtl8761bu_config.bin.zst
+        printf("Realtek firmware not found");
+    }
+
+    btstack_chipset_realtek_set_firmware_file_path(RTL_FIRMWARE_PATH);
+    btstack_chipset_realtek_set_config_file_path(RTL_CONFIG_PATH);
 
     hci_set_chipset(btstack_chipset_realtek_instance());
 
