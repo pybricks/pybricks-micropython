@@ -7,7 +7,7 @@
 VARIANTS = primehub_f4 primehub_h5
 
 BUILD = build
-PYTHON ?= python
+PYTHON = python3
 COMBINE = ../../tools/combine_firmware.py
 FLASH = $(PYTHON) ../../tools/flash
 VARIANT_ZIPS = $(foreach v,$(VARIANTS),../$(v)/build/firmware.zip)

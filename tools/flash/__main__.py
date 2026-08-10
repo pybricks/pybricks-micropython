@@ -61,14 +61,12 @@ def main():
     hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
 
     # Reboot into update mode if present.
-    detected_hub, serial = get_serial_device()
+    serial = get_serial_device(hub_kind)
 
-    if detected_hub is not None and detected_hub != hub_kind:
-        print("Detected hub does not match firmware.")
-        sys.exit(1)
+    if serial and hub_kind == HubKind.TECHNIC_SMALL:
+        sys.exit("SPIKE Essential cannot reboot into update mode automatically.")
 
-    did_reboot_pybricks = False
-    if serial and hub_kind != HubKind.TECHNIC_SMALL:
+    if serial:
         print("Found serial device. Look for official Pybricks firmware.")
         did_reboot_pybricks = reboot_to_update_mode_pybricks(serial)
         if did_reboot_pybricks:
@@ -84,18 +82,18 @@ def main():
 
     # We have a firmware and intended target. Find and flash it.
     if hub_kind in (HubKind.TECHNIC_SMALL, HubKind.TECHNIC_LARGE):
-        if did_reboot_pybricks:
+        if serial:
             time.sleep(1.5)
         flash_dfu(firmwares, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
         asyncio.run(flash_ble(firmwares, hub_kind))
     elif hub_kind == HubKind.NXT:
-        if did_reboot_pybricks:
+        if serial:
             # It takes a long time for samba to come up.
             time.sleep(16)
         flash_nxt(firmwares)
     elif hub_kind == HubKind.EV3:
-        if did_reboot_pybricks:
+        if serial:
             time.sleep(2)
         flash_ev3(firmwares)
     else:
