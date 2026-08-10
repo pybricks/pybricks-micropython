@@ -75,10 +75,19 @@
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
                 },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
+                },
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -113,10 +122,19 @@
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
                 },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
+                },
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -153,11 +171,20 @@
                 {
                     "name": "UB500_INDEX",
                     "value": "0"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
                 }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -194,11 +221,20 @@
                 {
                     "name": "UB500_INDEX",
                     "value": "1"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
                 }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
