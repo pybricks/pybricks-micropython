@@ -89,6 +89,7 @@ def reboot_to_update_mode_pybricks(ser: serial.Serial) -> bool:
         True if Pybricks was detected and the reboot command was sent, False otherwise.
     """
     # Send a lone delimiter to resync the hub's COBS framing on connect.
+    time.sleep(0.1)
     ser.write(bytes([DELIMITER]))
     ser.flush()
 

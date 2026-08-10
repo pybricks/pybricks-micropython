@@ -60,32 +60,43 @@ def main():
     print("Unpacking firmware.")
     hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
 
+    # Reboot into update mode if present.
+    detected_hub, serial = get_serial_device()
+
+    if detected_hub is not None and detected_hub != hub_kind:
+        print("Detected hub does not match firmware.")
+        sys.exit(1)
+
+    did_reboot_pybricks = False
+    if serial and hub_kind != HubKind.TECHNIC_SMALL:
+        print("Found serial device. Look for official Pybricks firmware.")
+        did_reboot_pybricks = reboot_to_update_mode_pybricks(serial)
+        if did_reboot_pybricks:
+            print("Rebooted hub into update mode.")
+        else:
+            print("Looking for SPIKE Prime firmware instead.")
+            if reboot_for_update_spike_prime(serial):
+                print("Rebooted hub into update mode.")
+                time.sleep(1.5)
+            else:
+                print("Could not reboot hub into update mode.")
+                sys.exit(1)
+
     # We have a firmware and intended target. Find and flash it.
     if hub_kind in (HubKind.TECHNIC_SMALL, HubKind.TECHNIC_LARGE):
-        # Newer SPIKE Prime hubs can automatically reboot into DFU mode.
-        if hub_kind == HubKind.TECHNIC_LARGE:
-            serial = get_serial_device()
-            if serial:
-                print("Found serial device. Look for official Pybricks firmware.")
-                if reboot_to_update_mode_pybricks(serial):
-                    print("Rebooted hub into update mode.")
-                else:
-                    print("Looking for SPIKE Prime firmware instead.")
-                    if reboot_for_update_spike_prime(serial):
-                        print("Rebooted hub into update mode.")
-                    else:
-                        print("Could not reboot hub into update mode.")
-                        sys.exit(1)
-                # Give the hub some time to reboot into DFU.
-                print("Waiting for hub to reboot into DFU mode.")
-                time.sleep(1.5)
-        # Flash the firmware using DFU.
+        if did_reboot_pybricks:
+            time.sleep(1.5)
         flash_dfu(firmwares, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
         asyncio.run(flash_ble(firmwares, hub_kind))
     elif hub_kind == HubKind.NXT:
+        if did_reboot_pybricks:
+            # It takes a long time for samba to come up.
+            time.sleep(16)
         flash_nxt(firmwares)
     elif hub_kind == HubKind.EV3:
+        if did_reboot_pybricks:
+            time.sleep(2)
         flash_ev3(firmwares)
     else:
         raise ValueError(f"unsupported hub kind: {hub_kind}")
