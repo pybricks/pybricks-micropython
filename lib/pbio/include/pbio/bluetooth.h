@@ -32,14 +32,6 @@ typedef struct _pbdrv_bluetooth_send_context_t pbdrv_bluetooth_send_context_t;
 typedef void (*pbdrv_bluetooth_send_done_t)(void);
 
 /**
- * Callback that is called when Pybricks BLE characteristic is written to.
- *
- * @param [in]  data        The data that was received.
- * @param [in]  size        The size of @p data in bytes.
- */
-typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(const uint8_t *data, uint32_t size);
-
-/**
  * Callback to match an advertisement or scan response.
  *
  * @param [in]  user        The user of this peripheral, usually a high-level object.
@@ -243,11 +235,6 @@ typedef struct {
 //
 
 /**
- * Initializes the Bluetooth driver.
- */
-void pbdrv_bluetooth_init(void);
-
-/**
  * Deinitializes the Bluetooth driver.
  */
 void pbdrv_bluetooth_deinit(void);
@@ -283,22 +270,6 @@ bool pbdrv_bluetooth_host_is_connected(void);
  *                          otherwise false.
  */
 bool pbdrv_bluetooth_hci_is_enabled(void);
-
-/**
- * Sets a callback to be called when a Bluetooth host is connected or disconnected.
- *
- * @param [in]  callback    The function that will be called.
- */
-void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback);
-
-/**
- * Registers a callback that will be called when Pybricks data is received via a
- * characteristic write.
- *
- * @param [in]  handler     The function that will be called.
- */
-void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler);
-
 
 //
 // Functions related to sending value notifications (stdout, status, app data).
@@ -615,9 +586,6 @@ pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *co
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
-static inline void pbdrv_bluetooth_init(void) {
-}
-
 static inline void pbdrv_bluetooth_deinit(void) {
 }
 
@@ -635,12 +603,6 @@ static inline bool pbdrv_bluetooth_host_is_connected(void) {
 
 static inline bool pbdrv_bluetooth_hci_is_enabled(void) {
     return false;
-}
-
-static inline void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
-}
-
-static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
 
 static inline void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {

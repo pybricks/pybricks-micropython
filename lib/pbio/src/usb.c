@@ -30,18 +30,13 @@
 
 #include <pbsys/config.h>
 #include <pbsys/storage.h>
+#include <pbsys/command.h>
 
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
 #define PBSYS_USB_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE)
 #define PBSYS_USB_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_USB_MAX_DECODED_MESSAGE_SIZE))
-
-static pbio_util_void_callback_t pbdrv_usb_host_connection_changed_callback;
-
-void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
-    pbdrv_usb_host_connection_changed_callback = callback;
-}
 
 /**
  * Whether the host has opened the serial port (DTR asserted). This detects
@@ -61,27 +56,8 @@ static bool pbdrv_usb_dtr;
  */
 static bool pbdrv_usb_subscribed;
 
-bool pbdrv_usb_connection_is_active(void) {
+bool pbio_usb_connection_is_active(void) {
     return pbdrv_usb_is_ready() && pbdrv_usb_dtr && pbdrv_usb_subscribed;
-}
-
-//
-//
-// COBS (Consistent Overhead Byte Stuffing) framing, SPIKE Prime variant.
-//
-// The host to hub and hub to host directions are raw byte streams (CDC ACM /
-// Web Serial), so messages are framed by a trailing delimiter byte. The
-// framing scheme (and the encode/decode helpers) lives in the generic
-// pbio/cobs module so it can be reused and tested independently.
-//
-
-/**
- * Pybricks system command handler.
- */
-static pbdrv_usb_receive_handler_t pbdrv_usb_receive_handler;
-
-void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
-    pbdrv_usb_receive_handler = handler;
 }
 
 static uint32_t pbdrv_usb_copy_str(uint8_t *buf, const char *str) {
@@ -164,9 +140,7 @@ void pbdrv_usb_on_dtr_changed(bool dtr) {
         pbdrv_usb_subscribed = false;
     }
 
-    if (pbdrv_usb_host_connection_changed_callback) {
-        pbdrv_usb_host_connection_changed_callback();
-    }
+    pbsys_host_connection_changed();
 
     pbio_os_request_poll();
 }
@@ -189,9 +163,7 @@ static void pbdrv_usb_set_subscribed(bool subscribed) {
         pbsys_status_update_emit();
     }
 
-    if (pbdrv_usb_host_connection_changed_callback) {
-        pbdrv_usb_host_connection_changed_callback();
-    }
+    pbsys_host_connection_changed();
 
     pbio_os_request_poll();
 }
@@ -266,14 +238,14 @@ static void pbdrv_usb_handle_data_in(void) {
                 // Subscribe or unsubscribe to event notifications. The payload
                 // is a single byte: 1 to subscribe, 0 to unsubscribe.
                 pbdrv_usb_set_subscribed(msg[0]);
-            } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
+            } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
                 // The command payload is [tag, ...payload]. The tag is opaque
                 // to us: echo it back in the response so the host can correlate
                 // a late response with the command that produced it. The
                 // payload after the tag is the same as a BLE command write.
                 pbdrv_usb_command_response_buf[0] = msg[0];
                 pbio_set_uint32_le(&pbdrv_usb_command_response_buf[1],
-                    pbdrv_usb_receive_handler(&msg[1], msg_size - 1));
+                    pbsys_handle_command(&msg[1], msg_size - 1));
                 pbdrv_usb_command_response_pending = true;
                 pbio_os_request_poll();
             } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
@@ -329,9 +301,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
     for (;;) {
 
-        if (pbdrv_usb_host_connection_changed_callback) {
-            pbdrv_usb_host_connection_changed_callback();
-        }
+        pbsys_host_connection_changed();
 
         // Run charger detection: wait for USB to become physically plugged in.
         PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_until_configured(&sub));
@@ -364,7 +334,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                     pbdrv_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
-            } else if (pbdrv_usb_connection_is_active() && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_USB, &event_buf, &event_size) == PBIO_ERROR_AGAIN) {
+            } else if (pbio_usb_connection_is_active() && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_USB, &event_buf, &event_size) == PBIO_ERROR_AGAIN) {
                 tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_EVENT,
                     event_buf, *event_size, tx_frame);
 

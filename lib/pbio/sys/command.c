@@ -32,7 +32,7 @@ void pbsys_command_set_write_app_data_callback(pbsys_command_write_app_data_call
  * @param [in]  data    The raw command data.
  * @param [in]  size    The size of @p data in bytes.
  */
-pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size) {
+pbio_pybricks_error_t pbsys_handle_command(const uint8_t *data, uint32_t size) {
     assert(data);
     assert(size);
 

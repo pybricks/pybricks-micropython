@@ -22,7 +22,7 @@
 #include <pbdrv/gpio.h>
 #include <pbdrv/pwm.h>
 #include <pbdrv/resistor_ladder.h>
-#include <pbio/usb.h>
+#include <pbdrv/usb.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/error.h>

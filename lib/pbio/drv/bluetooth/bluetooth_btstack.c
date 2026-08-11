@@ -196,11 +196,7 @@ static pbio_error_t att_error_to_pbio_error(uint8_t status) {
 
 static pbio_pybricks_error_t pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
     // Treating all incoming host data the same.
-    if (pbdrv_bluetooth_receive_handler) {
-        return pbdrv_bluetooth_receive_handler(data, size);
-    }
-
-    return ATT_ERROR_UNLIKELY_ERROR;
+    return pbio_bluetooth_receive_handler(data, size);
 }
 
 static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) {
@@ -209,7 +205,7 @@ static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) 
         return;
     }
     host->pybricks_configured = !!value;
-    pbdrv_bluetooth_host_connection_changed();
+    pbio_bluetooth_host_connection_changed();
 }
 
 /**
@@ -402,7 +398,7 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 host->con_handle = HCI_CON_HANDLE_INVALID;
                 host->pybricks_configured = false;
                 host->uart_configured = false;
-                pbdrv_bluetooth_host_connection_changed();
+                pbio_bluetooth_host_connection_changed();
                 DEBUG_PRINT("Host with handle %u disconnected\n", handle);
             } else {
                 for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
@@ -1472,7 +1468,7 @@ static pbio_error_t pbdrv_bluetooth_hci_process_thread(pbio_os_state_t *state, v
 const uint32_t cc256x_init_script_size = 0;
 const uint8_t cc256x_init_script[] = {};
 
-void pbdrv_bluetooth_init_hci(void) {
+void pbdrv_bluetooth_init(void) {
 
     // Initialize host structs as not connected.
     #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS

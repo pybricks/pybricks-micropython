@@ -885,7 +885,7 @@ static void handle_event(hci_event_pckt *event) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
                 uart_tx_notify_en = false;
-                pbdrv_bluetooth_host_connection_changed();
+                pbio_bluetooth_host_connection_changed();
             } else if (evt->handle == peri->con_handle) {
                 peri->con_handle = 0;
             }
@@ -943,7 +943,7 @@ static void handle_event(hci_event_pckt *event) {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
-                        pbdrv_bluetooth_host_connection_changed();
+                        pbio_bluetooth_host_connection_changed();
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         // not implemented
                     } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
@@ -965,9 +965,7 @@ static void handle_event(hci_event_pckt *event) {
                     pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 1) {
-                        if (pbdrv_bluetooth_receive_handler) {
-                            err = pbdrv_bluetooth_receive_handler(subevt->data, subevt->data_length);
-                        }
+                        err = pbio_bluetooth_receive_handler(subevt->data, subevt->data_length);
                     }
 
                     aci_gatt_write_response_begin(subevt->conn_handle, subevt->attr_handle, !!err, err, subevt->data_length, subevt->data);
@@ -1355,7 +1353,7 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
-void pbdrv_bluetooth_init_hci(void) {
+void pbdrv_bluetooth_init(void) {
     bluetooth_reset(true);
     spi_init();
     pbio_os_process_start(&pbdrv_bluetooth_spi_process, pbdrv_bluetooth_spi_process_thread, NULL);

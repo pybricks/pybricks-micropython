@@ -21,6 +21,7 @@
 
 #include <pbdrv/bluetooth.h>
 
+#include <pbsys/command.h>
 #include <pbsys/host.h>
 
 #define DEBUG 0
@@ -32,54 +33,12 @@
 #define DEBUG_PRINT(...)
 #endif
 
-pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
-
-void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
-    pbdrv_bluetooth_receive_handler = handler;
+void pbio_bluetooth_host_connection_changed(void) {
+    pbsys_host_connection_changed();
 }
 
-/**
- * Buffer scheduled status.
- */
-static uint8_t status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
-static bool status_data_pending;
-
-void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
-    // Ignore if message identical to last.
-    if (!memcmp(status_data, status_msg, sizeof(status_data))) {
-        return;
-    }
-
-    // Schedule to send whenever the Bluetooth process gets round to it.
-    memcpy(status_data, status_msg, sizeof(status_data));
-    status_data_pending = true;
-    pbio_os_request_poll();
-}
-
-/**
- * Buffer for scheduled stdout.
- */
-static lwrb_t stdout_ring_buf;
-
-void pbdrv_bluetooth_init(void) {
-    // enough for two packets, one currently being sent and one to be ready
-    // as soon as the previous one completes + 1 byte for ring buf pointer
-    static uint8_t stdout_buf[PBDRV_BLUETOOTH_MAX_CHAR_SIZE * 2 + 1];
-    lwrb_init(&stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
-
-    pbdrv_bluetooth_init_hci();
-}
-
-static pbio_util_void_callback_t pbdrv_bluetooth_host_connection_changed_callback;
-
-void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
-    pbdrv_bluetooth_host_connection_changed_callback = callback;
-}
-
-void pbdrv_bluetooth_host_connection_changed(void) {
-    if (pbdrv_bluetooth_host_connection_changed_callback) {
-        pbdrv_bluetooth_host_connection_changed_callback();
-    }
+pbio_pybricks_error_t pbio_bluetooth_receive_handler(const uint8_t *data, uint32_t size) {
+    return pbsys_handle_command(data, size);
 }
 
 //
