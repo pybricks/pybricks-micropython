@@ -21,6 +21,8 @@
 
 #include "./bluetooth.h"
 
+#include <pbsys/host.h>
+
 #define DEBUG 0
 
 #if DEBUG
@@ -645,6 +647,14 @@ init:
         if (can_send && update_and_get_event_buffer(&noti_buf, &noti_size)) {
             PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, noti_buf, *noti_size));
             *noti_size = 0;
+        }
+
+        // Send one event notification (status, stdout, ...)
+        static uint32_t *event_size;
+        static uint8_t *event_buf;
+        if (can_send && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH, &event_buf, &event_size) == PBIO_ERROR_AGAIN) {
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, event_buf, *event_size));
+            *event_size = 0;
         }
 
         // Handle pending advertising/scan enable/disable task, if any.

@@ -19,10 +19,14 @@
 
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
+static lwrb_t pbsys_host_stdout_ring_buf;
 
 void pbsys_host_init(void) {
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
+
+    static uint8_t stdout_buf[PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE];
+    lwrb_init(&pbsys_host_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
 
     pbdrv_bluetooth_set_receive_handler(pbsys_command);
     pbdrv_usb_set_receive_handler(pbsys_command);
@@ -146,45 +150,42 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
  *                          ::PBIO_SUCCESS if at least some data was queued.
  */
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
-    #if BLE_ONLY
-    return pbdrv_bluetooth_tx(data, size);
-    #elif USB_ONLY
-    return pbdrv_usb_stdout_tx(data, size);
-    #elif BLE_AND_USB
-
-    uint32_t bt_avail = pbdrv_bluetooth_tx_available();
-    uint32_t usb_avail = pbdrv_usb_stdout_tx_available();
-    uint32_t available = bt_avail < usb_avail ? bt_avail : usb_avail;
-
-    // If all tx_available() calls returned UINT32_MAX, then there is one listening.
-    if (available == UINT32_MAX) {
+    // Fail if no one is listening.
+    if (!pbdrv_bluetooth_host_is_connected() && !pbdrv_usb_connection_is_active()) {
         return PBIO_ERROR_INVALID_OP;
     }
-    // If one or more tx_available() calls returned 0, then we need to wait.
-    if (available == 0) {
+
+    // Wait if full.
+    uint32_t free_size = lwrb_get_free(&pbsys_host_stdout_ring_buf);
+    if (free_size == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
-    // Limit size to smallest available space from all transports so that we
-    // don't do partial writes to one transport and not the other.
-    if (*size > available) {
-        *size = available;
+    // Limit size to available space.
+    if (*size > free_size) {
+        *size = free_size;
     }
 
-    // Unless something became disconnected in an interrupt handler, these
-    // functions should always succeed since we already checked tx_available().
-    // And if both somehow got disconnected at the same time, it is not a big deal
-    // if we return PBIO_SUCCESS without actually sending anything.
-    (void)pbdrv_bluetooth_tx(data, size);
-    (void)pbdrv_usb_stdout_tx(data, size);
+    // Buffer data to send it more efficiently even if the caller is only
+    // writing one byte at a time.
+    if ((*size = lwrb_write(&pbsys_host_stdout_ring_buf, data, *size)) == 0) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // poke the process to start tx soon-ish. This way, we can accumulate
+    // multiple messages before actually transmitting.
+    pbio_os_request_poll();
 
     return PBIO_SUCCESS;
-
-    #else
-    // stdout goes to /dev/null
-    return PBIO_SUCCESS;
-    #endif
 }
+
+#if PBDRV_CONFIG_BLUETOOTH && (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBDRV_BLUETOOTH_ATT_HEADER_SIZE)
+#error "Host event message must fit in one BLE packet".
+#endif
+
+static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
+static bool pbsys_host_event_out_busy;
+static bool pbsys_host_event_stdout_busy;
 
 /**
  * Checks if all data has been transmitted.
@@ -196,17 +197,66 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
  *                      listening, false if there is still data queued to be sent.
  */
 bool pbsys_host_tx_is_idle(void) {
-    // The USB part is a bit of a hack since it depends on the USB driver not
-    // buffering more than one packet at a time to actually be accurate.
-    #if BLE_ONLY
-    return pbdrv_bluetooth_tx_is_idle();
-    #elif USB_ONLY
-    return pbdrv_usb_stdout_tx_is_idle();
-    #elif BLE_AND_USB
-    return pbdrv_bluetooth_tx_is_idle() && pbdrv_usb_stdout_tx_is_idle();
-    #else
-    return true;
-    #endif
+    if (!pbsys_host_is_connected()) {
+        return true;
+    }
+
+    return lwrb_get_full(&pbsys_host_stdout_ring_buf) == 0 && !pbsys_host_event_stdout_busy;
+}
+
+pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
+
+    static uint32_t bluetooth_size;
+    static uint32_t usb_size;
+    static uint8_t *current_buf;
+
+    // Returns the relevant busy state for the requested transport.
+    *len = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ? &bluetooth_size : &usb_size;
+
+    if (pbsys_host_event_out_busy) {
+        // Clear locks if disconnected.
+        if (!pbdrv_bluetooth_host_is_connected()) {
+            bluetooth_size = 0;
+        }
+        if (!pbdrv_usb_connection_is_active()) {
+            usb_size = 0;
+        }
+        if (bluetooth_size || usb_size) {
+            // At least one transport is still going, so keep referencing
+            // current data, no matter which transport initiated first.
+            *buf = current_buf;
+            return PBIO_ERROR_AGAIN;
+        }
+        // Last transmission is complete, so we can initiate another.
+        pbsys_host_event_out_busy = false;
+        pbsys_host_event_stdout_busy = false;
+    }
+
+    // TODO, status first priority.
+
+    // Prepare stdout, drain into chunk of maximum send size.
+    if (lwrb_get_full(&pbsys_host_stdout_ring_buf) != 0) {
+        // Message always starts with event byte.
+        pbsys_host_event_out_buf[0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
+
+        // Drain ring buffer to send buffer as much as we can. Limit is the
+        // runtime MTU. USB sizes are protected by constant build flags.
+        uint32_t mtu = pbdrv_bluetooth_get_max_message_size();
+        uint32_t size = 1 + lwrb_read(&pbsys_host_stdout_ring_buf, &pbsys_host_event_out_buf[1], mtu - 1);
+
+        // All transports are marked to send the same size, guarding current transmission.
+        usb_size = size;
+        bluetooth_size = size;
+
+        // This is the buffer to send; ready to get started.
+        *buf = pbsys_host_event_out_buf;
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // TODO: The other events
+
+    // Nothing to do.
+    return PBIO_SUCCESS;
 }
 
 /**

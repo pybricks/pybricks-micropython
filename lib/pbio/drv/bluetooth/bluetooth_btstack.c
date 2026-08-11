@@ -701,7 +701,7 @@ uint16_t pbdrv_bluetooth_get_max_message_size(void) {
         }
     }
     #endif
-    return mtu - 3;
+    return mtu - PBDRV_BLUETOOTH_ATT_HEADER_SIZE;
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {

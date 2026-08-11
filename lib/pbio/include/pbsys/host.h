@@ -24,8 +24,14 @@
  */
 typedef bool (*pbsys_host_stdin_event_callback_t)(uint8_t c);
 
+typedef enum {
+    PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH,
+    PBSYS_HOST_TRANSPORT_TYPE_USB,
+} pbsys_host_transport_type_t;
+
 #if PBSYS_CONFIG_HOST
 
+pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
 void pbsys_host_init(void);
 bool pbsys_host_is_connected(void);
 void pbsys_host_schedule_status_update(const uint8_t *buf);
@@ -40,6 +46,10 @@ bool pbsys_host_tx_is_idle(void);
 pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size);
 
 #else // PBSYS_CONFIG_HOST
+
+static inline pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #define pbsys_host_init()
 #define pbsys_host_is_connected() false

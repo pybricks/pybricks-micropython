@@ -37,19 +37,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size);
 
-/**
- * Gets the maximum Pybricks message size (the full notification value,
- * including the leading event type byte) that can be sent to the host.
- *
- * For BLE this is the negotiated ATT MTU minus the 3-byte notification header,
- * taken as the minimum over all connected hosts and capped at the platform's
- * maximum MTU. Callers must not send more than this many bytes in a single
- * notification. The actual user payload is one byte less (the event type byte).
- *
- * @return              The maximum message size in bytes.
- */
-uint16_t pbdrv_bluetooth_get_max_message_size(void);
-
 void pbdrv_bluetooth_host_connection_changed(void);
 
 extern pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;

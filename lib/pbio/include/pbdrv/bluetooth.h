@@ -21,6 +21,7 @@
 #define PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
 #define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
 #define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
+#define PBDRV_BLUETOOTH_ATT_HEADER_SIZE (3)
 
 /** Data structure that holds context needed for sending BLE notifications. */
 typedef struct _pbdrv_bluetooth_send_context_t pbdrv_bluetooth_send_context_t;
@@ -327,6 +328,19 @@ void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg);
  *                          if this platform does not support Bluetooth.
  */
 pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size);
+
+/**
+ * Gets the maximum Pybricks message size (the full notification value,
+ * including the leading event type byte) that can be sent to the host.
+ *
+ * For BLE this is the negotiated ATT MTU minus the 3-byte notification header,
+ * taken as the minimum over all connected hosts and capped at the platform's
+ * maximum MTU. Callers must not send more than this many bytes in a single
+ * notification. The actual user payload is one byte less (the event type byte).
+ *
+ * @return              The maximum message size in bytes.
+ */
+uint16_t pbdrv_bluetooth_get_max_message_size(void);
 
 /**
  * Gets the number of bytes that can be queued for transmission via Bluetooth.
@@ -730,6 +744,9 @@ static inline pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_in
 
 static inline pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    return 0;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH
