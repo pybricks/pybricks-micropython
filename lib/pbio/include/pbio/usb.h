@@ -18,7 +18,7 @@
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 
-#if PBDRV_CONFIG_USB
+#if PBIO_CONFIG_USB
 
 /**
  * Initializes the USB process on boot.
@@ -49,7 +49,7 @@ static inline bool pbio_usb_connection_is_active(void) {
     return false;
 }
 
-#endif // PBDRV_CONFIG_USB
+#endif // PBIO_CONFIG_USB
 
 #endif // _PBDRV_USB_H_
 

@@ -26,5 +26,12 @@
 #define PBIO_CONFIG_SERVO_PUP               (1)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (1)
 #define PBIO_CONFIG_TACHO                   (1)
+#define PBIO_CONFIG_USB                     (1)
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)
+
+#ifndef PBDRV_CONFIG_RUN_ON_CI
+#define PBIO_CONFIG_BLUETOOTH               (1)
+#else
+#define PBIO_CONFIG_BLUETOOTH               (0)
+#endif

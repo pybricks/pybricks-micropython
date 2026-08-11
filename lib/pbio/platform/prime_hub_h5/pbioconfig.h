@@ -2,6 +2,7 @@
 // Copyright (c) 2019-2026 The Pybricks Authors
 
 #define PBIO_CONFIG_BATTERY                 (1)
+#define PBIO_CONFIG_BLUETOOTH               (1)
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (6)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (1)
@@ -26,5 +27,6 @@
 #define PBIO_CONFIG_SERVO_PUP               (1)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (0)
 #define PBIO_CONFIG_TACHO                   (1)
+#define PBIO_CONFIG_USB                     (1)
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)

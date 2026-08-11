@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <pbdrv/config.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -228,7 +228,7 @@ typedef struct {
     uint32_t class_of_device;
 } pbdrv_bluetooth_inquiry_result_t;
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBIO_CONFIG_BLUETOOTH
 
 //
 // General purpose functions: initialization and power/connected state.
@@ -584,7 +584,7 @@ pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t
  */
 pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
 
-#else // PBDRV_CONFIG_BLUETOOTH
+#else // PBIO_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_deinit(void) {
 }
@@ -711,7 +711,7 @@ static inline uint16_t pbdrv_bluetooth_get_max_message_size(void) {
     return 0;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH
+#endif // PBIO_CONFIG_BLUETOOTH
 
 #endif // _PBDRV_BLUETOOTH_H_
 
