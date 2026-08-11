@@ -6,7 +6,7 @@
 #if PYBRICKS_PY_COMMON_CHARGER
 
 #include <pbdrv/charger.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"

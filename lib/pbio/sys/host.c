@@ -8,7 +8,7 @@
 #include <lwrb/lwrb.h>
 
 #include <pbio/bluetooth.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbsys/command.h>
 #include <pbsys/host.h>

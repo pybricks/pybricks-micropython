@@ -14,10 +14,10 @@
 
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 #include <pbio/os.h>
 
-#include "usb.h"
+#include <pbdrv/usb.h>
 
 #include <tiam1808/armv5/am1808/interrupt.h>
 #include <tiam1808/cppi41dma.h>

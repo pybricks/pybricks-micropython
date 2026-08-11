@@ -12,10 +12,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "usb.h"
+#include <pbdrv/usb.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/cobs.h>
 #include <pbio/error.h>

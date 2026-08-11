@@ -28,10 +28,10 @@
 #include "sound/sound.h"
 #include "uart/uart.h"
 #include "uart/uart_debug_first_port.h"
-#include "usb/usb.h"
 #include "watchdog/watchdog.h"
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/usb.h>
 
 /** Initializes all enabled drivers. */
 void pbdrv_init(void) {

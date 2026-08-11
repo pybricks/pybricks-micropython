@@ -14,7 +14,7 @@
 
 #include <pbio/bluetooth.h>
 #include <pbdrv/led.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/button.h>
 #include <pbio/busy_count.h>

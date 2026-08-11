@@ -16,7 +16,7 @@
 #include <pbdrv/charger.h>
 #include <pbdrv/config.h>
 #include <pbdrv/clock.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 

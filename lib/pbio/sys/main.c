@@ -9,7 +9,7 @@
 
 #include <pbdrv/core.h>
 #include <pbdrv/reset.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
 #include <pbio/port_interface.h>
