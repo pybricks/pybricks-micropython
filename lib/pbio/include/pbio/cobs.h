@@ -61,8 +61,8 @@
  */
 #define PBIO_COBS_ENCODED_BUFFER_SIZE(n) ((n) + (n) / PBIO_COBS_MAX_BLOCK_SIZE + 2)
 
-uint32_t pbio_cobs_encode(const uint8_t *src, uint32_t len, uint8_t *dst);
+uint32_t pbio_cobs_encode_prefixed(uint8_t prefix, const uint8_t *src, uint32_t len, uint8_t *dst);
 
-uint32_t pbio_cobs_decode(const uint8_t *src, uint32_t len, uint8_t *dst, uint32_t dst_max);
+uint32_t pbio_cobs_decode_prefixed(const uint8_t *src, uint32_t len, uint8_t *prefix, uint8_t *dst, uint32_t dst_max);
 
 #endif // _PBIO_COBS_H_

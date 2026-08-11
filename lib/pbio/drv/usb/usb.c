@@ -285,7 +285,7 @@ pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybr
         return PBIO_ERROR_INVALID_OP;
     }
 
-    if (size + 2 > PBIO_ARRAY_SIZE(pbdrv_usb_noti_buf[0]) || event_type >= PBIO_PYBRICKS_EVENT_NUM_EVENTS) {
+    if (size + 1 > PBIO_ARRAY_SIZE(pbdrv_usb_noti_buf[0]) || event_type >= PBIO_PYBRICKS_EVENT_NUM_EVENTS) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -295,9 +295,10 @@ pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybr
     }
 
     // Copy to local buffer and set size so main thread knows to handle it. The
-    // first two bytes (end point message type and event type) are already set.
-    pbdrv_usb_noti_size[event_type] = size + 2;
-    memcpy(&pbdrv_usb_noti_buf[event_type][2], data, size);
+    // first byte (event type) is already set; the endpoint message type is
+    // added as the COBS prefix at transmit time.
+    pbdrv_usb_noti_size[event_type] = size + 1;
+    memcpy(&pbdrv_usb_noti_buf[event_type][1], data, size);
     pbio_os_request_poll();
 
     // Await until main process has finished sending user data. If it
@@ -317,18 +318,17 @@ static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
     if (pbdrv_usb_status_data_pending) {
         // When a status is pending, drain it here while we write it out,
         // so a new status can be set in the mean time without losing it.
-        // This is offset by one for the endpoint message type. The status
-        // already starts with the event type.
-        memcpy(&pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT][1], pbdrv_usb_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-        pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_STATUS_REPORT] = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE + 1;
+        // The status already starts with the event type.
+        memcpy(&pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT][0], pbdrv_usb_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+        pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_STATUS_REPORT] = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
         pbdrv_usb_status_data_pending = false;
     }
 
     // Prepare stdout, drain into chunk of maximum send size.
     if (lwrb_get_full(&pbdrv_usb_stdout_ring_buf) != 0) {
-        // Message always starts with endpoint type and event byte, but these are already set.
+        // Message always starts with the event byte, which is already set.
         if (!pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) {
-            pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] = 2;
+            pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] = 1;
         }
         // Drain ring buffer to send buffer as much as we can.
         uint32_t stdout_free = sizeof(pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
@@ -357,27 +357,27 @@ static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
  *
  * The host keeps a single command outstanding at a time (like a BLE write with
  * response), so a single command response slot is sufficient. The buffer holds
- * the full message `[RESPONSE, tag, status32]`, where `tag` echoes the byte
- * from the command that produced this response so the host can correlate them.
+ * the message payload `[tag, status32]`; the RESPONSE message type is added as
+ * the COBS prefix at transmit time. `tag` echoes the byte from the command
+ * that produced this response so the host can correlate them.
  */
-static uint8_t pbdrv_usb_command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1] = {
-    [0] = PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
-};
+static uint8_t pbdrv_usb_command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1];
 static bool pbdrv_usb_command_response_pending;
 
 /**
  * Pending reply to the most recently received read request.
  *
  * Like responses, the host keeps a single read outstanding at a time, so a
- * single reply slot is sufficient. The buffer holds the full message
- * `[READ_REPLY, service, char_id_lo, char_id_hi, value...]`.
+ * single reply slot is sufficient. The buffer holds the message payload
+ * `[service, char_id_lo, char_id_hi, value...]`; the READ_REPLY message type
+ * is added as the COBS prefix at transmit time.
  */
 static uint8_t pbdrv_usb_read_reply_buf[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
 static uint32_t pbdrv_usb_read_reply_len;
 static bool pbdrv_usb_read_reply_pending;
 
 /** Number of header bytes before the value in a read reply. */
-#define PBDRV_USB_READ_REPLY_HEADER_SIZE 4
+#define PBDRV_USB_READ_REPLY_HEADER_SIZE 3
 
 /**
  * Non-blocking poll handler to process incoming bytes.
@@ -411,36 +411,36 @@ static void pbdrv_usb_handle_data_in(void) {
 
         // Delimiter reached: end of frame.
         if (!pbdrv_usb_rx_overflow && pbdrv_usb_rx_frame_len > 0) {
+            uint8_t msg_type;
             uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
-            uint32_t msg_size = pbio_cobs_decode(
-                pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, msg, sizeof(msg));
+            uint32_t msg_size = pbio_cobs_decode_prefixed(
+                pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
 
-            // The first byte is the host-to-hub message type and the rest is
-            // its payload.
-            if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
+            // The decoded prefix is the host-to-hub message type and the rest
+            // is its payload.
+            if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
                 // Subscribe or unsubscribe to event notifications. The payload
                 // is a single byte: 1 to subscribe, 0 to unsubscribe.
-                pbdrv_usb_set_subscribed(msg[1]);
-            } else if (msg_size >= 3 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
-                // The command is [COMMAND, tag, ...payload]. The tag is opaque
+                pbdrv_usb_set_subscribed(msg[0]);
+            } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND && pbdrv_usb_receive_handler) {
+                // The command payload is [tag, ...payload]. The tag is opaque
                 // to us: echo it back in the response so the host can correlate
                 // a late response with the command that produced it. The
                 // payload after the tag is the same as a BLE command write.
-                pbdrv_usb_command_response_buf[1] = msg[1];
-                pbio_set_uint32_le(&pbdrv_usb_command_response_buf[2],
-                    pbdrv_usb_receive_handler(&msg[2], msg_size - 2));
+                pbdrv_usb_command_response_buf[0] = msg[0];
+                pbio_set_uint32_le(&pbdrv_usb_command_response_buf[1],
+                    pbdrv_usb_receive_handler(&msg[1], msg_size - 1));
                 pbdrv_usb_command_response_pending = true;
                 pbio_os_request_poll();
-            } else if (msg_size >= 4 && msg[0] == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
-                // A read request is [type, service, char_id_lo, char_id_hi].
+            } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
+                // A read request payload is [service, char_id_lo, char_id_hi].
                 // Read the value synchronously and queue the reply, echoing the
                 // selector so the host can correlate it.
-                uint8_t service = msg[1];
-                uint16_t char_id = pbio_get_uint16_le(&msg[2]);
-                pbdrv_usb_read_reply_buf[0] = PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY;
-                pbdrv_usb_read_reply_buf[1] = service;
+                uint8_t service = msg[0];
+                uint16_t char_id = pbio_get_uint16_le(&msg[1]);
+                pbdrv_usb_read_reply_buf[0] = service;
+                pbdrv_usb_read_reply_buf[1] = msg[1];
                 pbdrv_usb_read_reply_buf[2] = msg[2];
-                pbdrv_usb_read_reply_buf[3] = msg[3];
                 uint32_t value_size = pbdrv_usb_read_characteristic(
                     service, char_id, &pbdrv_usb_read_reply_buf[PBDRV_USB_READ_REPLY_HEADER_SIZE]);
                 pbdrv_usb_read_reply_len = PBDRV_USB_READ_REPLY_HEADER_SIZE + value_size;
@@ -503,7 +503,8 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
             // an active connection, since they answer a request that was just
             // received.
             if (pbdrv_usb_command_response_pending) {
-                tx_frame_len = pbio_cobs_encode(pbdrv_usb_command_response_buf, sizeof(pbdrv_usb_command_response_buf), tx_frame);
+                tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
+                    pbdrv_usb_command_response_buf, sizeof(pbdrv_usb_command_response_buf) - 1, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 pbdrv_usb_command_response_pending = false;
@@ -513,7 +514,8 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                 }
             } else if (pbdrv_usb_read_reply_pending) {
                 // Reply to a characteristic read request.
-                tx_frame_len = pbio_cobs_encode(pbdrv_usb_read_reply_buf, pbdrv_usb_read_reply_len, tx_frame);
+                tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY,
+                    pbdrv_usb_read_reply_buf, pbdrv_usb_read_reply_len, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 pbdrv_usb_read_reply_pending = false;
@@ -522,7 +524,8 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
             } else if (pbdrv_usb_connection_is_active() && update_and_get_event_buffer(&noti_buf, &noti_size)) {
-                tx_frame_len = pbio_cobs_encode(noti_buf, *noti_size, tx_frame);
+                tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_EVENT,
+                    noti_buf, *noti_size, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 *noti_size = 0;
@@ -551,8 +554,7 @@ void pbdrv_usb_init(void) {
     pbdrv_usb_init_device();
 
     for (int8_t i = 0; i < PBIO_PYBRICKS_EVENT_NUM_EVENTS; i++) {
-        pbdrv_usb_noti_buf[i][0] = PBIO_PYBRICKS_IN_EP_MSG_EVENT;
-        pbdrv_usb_noti_buf[i][1] = i; // event type
+        pbdrv_usb_noti_buf[i][0] = i; // event type
     }
 
     // Hardware agnostic buffer before user print waits.

@@ -42,16 +42,17 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
     // REVISIT: This assumes that we do one chunk per stdout event. That is
     // currently true for the logic in usb.c, but we should revise this to make
     // it like the RX path if we turn it into an actual stream.
+    uint8_t msg_type;
     uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
-    uint32_t msg_size = pbio_cobs_decode(data, size - 1, msg, sizeof(msg));
+    uint32_t msg_size = pbio_cobs_decode_prefixed(data, size - 1, &msg_type, msg, sizeof(msg));
 
-    if (msg_size >= 2 && msg[0] == PBIO_PYBRICKS_IN_EP_MSG_EVENT &&
-        msg[1] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
-        int ret = write(STDOUT_FILENO, &msg[2], msg_size - 2);
+    if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_IN_EP_MSG_EVENT &&
+        msg[0] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
+        int ret = write(STDOUT_FILENO, &msg[1], msg_size - 1);
         (void)ret;
 
         #ifdef PBDRV_CONFIG_RPROC_VIRTUAL
-        pbdrv_rproc_virtual_socket_send(&msg[2], msg_size - 2);
+        pbdrv_rproc_virtual_socket_send(&msg[1], msg_size - 1);
         #endif
     }
 
@@ -99,11 +100,10 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
 
     // Fake a subscribe message so the common driver starts sending events,
     // just as a real host would after opening the port. It is COBS-encoded
-    // like real host traffic.
-    static const uint8_t subscribe_msg[] = {
-        PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1,
-    };
-    usb_in_size = pbio_cobs_encode(subscribe_msg, sizeof(subscribe_msg), usb_in_buf);
+    // like real host traffic. The payload is a single byte: 1 to subscribe.
+    static const uint8_t subscribe_payload[] = { 1 };
+    usb_in_size = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE,
+        subscribe_payload, sizeof(subscribe_payload), usb_in_buf);
 
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // CI and MicroPython test suite have lots of problems with stdin. It is
@@ -123,12 +123,12 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // driver as a COBS-framed write stdin command, the same way a real
         // host would. This has been made non-blocking in platform.c.
         static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
-        cmd[0] = PBIO_PYBRICKS_OUT_EP_MSG_COMMAND;
-        cmd[1] = 0; // correlation tag (opaque; unused here)
-        cmd[2] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        ssize_t num_read = read(STDIN_FILENO, &cmd[3], sizeof(cmd) - 3);
+        cmd[0] = 0; // correlation tag (opaque; unused here)
+        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 3);
         if (num_read > 0) {
-            usb_in_size = pbio_cobs_encode(cmd, 3 + num_read, usb_in_buf);
+            usb_in_size = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_OUT_EP_MSG_COMMAND,
+                cmd, 2 + num_read, usb_in_buf);
         }
     }
 

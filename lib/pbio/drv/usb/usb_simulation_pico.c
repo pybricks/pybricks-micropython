@@ -54,15 +54,16 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
     // it like the RX path if we turn it into an actual stream.
     static uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
     static uint32_t msg_size;
-    msg_size = pbio_cobs_decode(data, size - 1, msg, sizeof(msg));
+    uint8_t msg_type;
+    msg_size = pbio_cobs_decode_prefixed(data, size - 1, &msg_type, msg, sizeof(msg));
 
-    if (msg_size < 2 || msg[0] != PBIO_PYBRICKS_IN_EP_MSG_EVENT ||
-        msg[1] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
+    if (msg_size < 1 || msg_type != PBIO_PYBRICKS_IN_EP_MSG_EVENT ||
+        msg[0] != PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
         return PBIO_SUCCESS;
     }
 
     static int i;
-    for (i = 2; i < msg_size; i++) {
+    for (i = 1; i < msg_size; i++) {
         if (!uart_is_writable(uart_default)) {
             pbdrv_usb_simulation_tx_ready = false;
             // Enable TX interrupt to be notified when ready.
@@ -112,12 +113,11 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
 
     // Fake a subscribe message so the common driver starts sending events,
     // just as a real host would after opening the port. It is COBS-encoded
-    // like real host traffic.
-    static const uint8_t subscribe_msg[] = {
-        PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, 1,
-    };
-    pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode(
-        subscribe_msg, sizeof(subscribe_msg), pbdrv_usb_simulation_pico_in_buf);
+    // like real host traffic. The payload is a single byte: 1 to subscribe.
+    static const uint8_t subscribe_payload[] = { 1 };
+    pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode_prefixed(
+        PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE, subscribe_payload,
+        sizeof(subscribe_payload), pbdrv_usb_simulation_pico_in_buf);
 
     for (;;) {
         static size_t available;
@@ -129,12 +129,12 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // Wrap the raw UART bytes as a write stdin command and COBS-encode it,
         // the same way a real host would, so the common driver can decode it.
         static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
-        cmd[0] = PBIO_PYBRICKS_OUT_EP_MSG_COMMAND;
-        cmd[1] = 0; // correlation tag (opaque; unused here)
-        cmd[2] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[3], available);
-        pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode(
-            cmd, 3 + available, pbdrv_usb_simulation_pico_in_buf);
+        cmd[0] = 0; // correlation tag (opaque; unused here)
+        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[2], available);
+        pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode_prefixed(
+            PBIO_PYBRICKS_OUT_EP_MSG_COMMAND, cmd, 2 + available,
+            pbdrv_usb_simulation_pico_in_buf);
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
