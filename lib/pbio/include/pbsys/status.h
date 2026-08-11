@@ -15,6 +15,7 @@
 #include <pbio/protocol.h>
 
 void pbsys_status_set_program_id(pbio_pybricks_user_program_id_t program_id);
+void pbsys_status_update_emit(void);
 void pbsys_status_set(pbio_pybricks_status_flags_t status);
 void pbsys_status_clear(pbio_pybricks_status_flags_t status);
 bool pbsys_status_test(pbio_pybricks_status_flags_t status);

@@ -835,7 +835,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 

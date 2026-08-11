@@ -31,6 +31,7 @@ typedef enum {
 
 #if PBSYS_CONFIG_HOST
 
+void pbsys_host_debug_print(const char *data, size_t len);
 pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
 void pbsys_host_init(void);
 bool pbsys_host_is_connected(void);
@@ -47,6 +48,8 @@ pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t
 
 #else // PBSYS_CONFIG_HOST
 
+static inline void pbsys_host_debug_print(const char *data, size_t len) {
+}
 static inline pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

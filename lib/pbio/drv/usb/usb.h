@@ -56,7 +56,7 @@ void pbdrv_usb_deinit_device(void);
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 
 /**
- * Sends and awaits a raw chunk of bytes on the data IN endpoint.
+ * Sends and awaits an arbitrarily sized message on the data IN endpoint.
  *
  * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
  *
@@ -70,7 +70,7 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
  *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
  */
-pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
 
 /**
  * Notifies the common driver that the host's serial control line state (DTR)

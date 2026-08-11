@@ -20,6 +20,7 @@
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
 static lwrb_t pbsys_host_stdout_ring_buf;
+static bool pbsys_host_event_stdout_busy;
 
 void pbsys_host_init(void) {
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
@@ -33,13 +34,26 @@ void pbsys_host_init(void) {
 }
 
 /**
+ * Buffer scheduled status.
+ */
+static uint8_t pbsys_host_status_data[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
+static bool pbsys_host_status_data_pending;
+
+/**
  * Schedules sending a status update to connected hosts.
  *
  * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
  */
-void pbsys_host_schedule_status_update(const uint8_t *buf) {
-    pbdrv_bluetooth_schedule_status_update(buf);
-    pbdrv_usb_schedule_status_update(buf);
+void pbsys_host_schedule_status_update(const uint8_t *status_msg) {
+    // Ignore if message identical to last.
+    if (!memcmp(pbsys_host_status_data, status_msg, sizeof(pbsys_host_status_data))) {
+        return;
+    }
+
+    // Schedule to send whenever transmission processes get round to it.
+    memcpy(pbsys_host_status_data, status_msg, sizeof(pbsys_host_status_data));
+    pbsys_host_status_data_pending = true;
+    pbio_os_request_poll();
 }
 
 /**
@@ -179,13 +193,27 @@ pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
 }
 
+void pbsys_host_debug_print(const char *data, size_t len) {
+
+    if (!lwrb_is_ready(&pbsys_host_stdout_ring_buf)) {
+        return;
+    }
+
+    // Buffer result with \r injected before \n.
+    for (size_t i = 0; i < len; i++) {
+        if (data[i] == '\n') {
+            lwrb_write(&pbsys_host_stdout_ring_buf, (const uint8_t *)"\r", 1);
+        }
+        lwrb_write(&pbsys_host_stdout_ring_buf, (const uint8_t *)&data[i], 1);
+    }
+
+    pbio_os_request_poll();
+}
+
+
 #if PBDRV_CONFIG_BLUETOOTH && (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBDRV_BLUETOOTH_ATT_HEADER_SIZE)
 #error "Host event message must fit in one BLE packet".
 #endif
-
-static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
-static bool pbsys_host_event_out_busy;
-static bool pbsys_host_event_stdout_busy;
 
 /**
  * Checks if all data has been transmitted.
@@ -205,6 +233,9 @@ bool pbsys_host_tx_is_idle(void) {
 }
 
 pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
+
+    static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
+    static bool pbsys_host_event_out_busy;
 
     static uint32_t bluetooth_size;
     static uint32_t usb_size;
@@ -232,7 +263,20 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         pbsys_host_event_stdout_busy = false;
     }
 
-    // TODO, status first priority.
+    // Prepare status.
+    if (pbsys_host_status_data_pending) {
+        // When a status is pending, drain it here while we write it out,
+        // so a new status can be set in the mean time without losing it.
+        // The status already starts with the event type.
+        //
+        memcpy(&pbsys_host_event_out_buf[0], pbsys_host_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
+        usb_size = bluetooth_size = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
+        pbsys_host_status_data_pending = false;
+        // This is the buffer to send; ready to get started.
+        *buf = pbsys_host_event_out_buf;
+        pbsys_host_event_out_busy = true;
+        return PBIO_ERROR_AGAIN;
+    }
 
     // Prepare stdout, drain into chunk of maximum send size.
     if (lwrb_get_full(&pbsys_host_stdout_ring_buf) != 0) {
@@ -250,10 +294,11 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
 
         // This is the buffer to send; ready to get started.
         *buf = pbsys_host_event_out_buf;
+        pbsys_host_event_out_busy = true;
         return PBIO_ERROR_AGAIN;
     }
 
-    // TODO: The other events
+    // TODO: Queue generic numbered events from pbsys_host_send_event.
 
     // Nothing to do.
     return PBIO_SUCCESS;
@@ -274,33 +319,7 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
  *                          ::PBIO_SUCCESS on completion.
  */
 pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
-    #if BLE_ONLY
-    return pbdrv_bluetooth_send_event_notification(state, event_type, data, size);
-    #elif USB_ONLY
-    return pbdrv_usb_send_event_notification(state, event_type, data, size);
-    #endif
-
-    static pbio_os_state_t ble_state;
-    static pbio_os_state_t usb_state;
-
-    static pbio_error_t ble_err;
-    static pbio_error_t usb_err;
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_GATHER(state,
-        &ble_err, &ble_state, pbdrv_bluetooth_send_event_notification(&ble_state, event_type, data, size),
-        &usb_err, &usb_state, pbdrv_usb_send_event_notification(&usb_state, event_type, data, size)
-        );
-
-    // If any output is successful, the whole will be considered successful.
-    if (ble_err == PBIO_SUCCESS || usb_err == PBIO_SUCCESS) {
-        return PBIO_SUCCESS;
-    }
-
-    // Both have failed. In most cases, this means being fully disconnected so
-    // it does not matter which one we return. Otherwise return the ble error.
-    PBIO_OS_ASYNC_END(ble_err != PBIO_SUCCESS ? ble_err : usb_err);
+    // Todo: copy data to local host buffer or use without copying.
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
-
 #endif // PBSYS_CONFIG_HOST

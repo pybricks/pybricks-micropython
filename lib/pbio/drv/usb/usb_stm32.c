@@ -299,7 +299,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 

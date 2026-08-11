@@ -32,7 +32,7 @@ static struct {
 /**
  * Let other processes and external hosts know that the status changed.
  */
-static void pbsys_status_update_emit(void) {
+void pbsys_status_update_emit(void) {
 
     uint8_t buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
     pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);

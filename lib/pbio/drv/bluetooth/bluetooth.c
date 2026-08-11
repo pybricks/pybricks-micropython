@@ -38,17 +38,6 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
     pbdrv_bluetooth_receive_handler = handler;
 }
 
-//
-// Functions related to sending value notifications (stdout, status, app data).
-//
-
-/**
- * Each event has a buffer of maximum packet size. They are prioritized by
- * ascending event number, so status gets sent first, then stdout, etc.
- */
-static uint32_t pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_NUM_EVENTS];
-static uint8_t pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_NUM_EVENTS][PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
-
 /**
  * Buffer scheduled status.
  */
@@ -91,71 +80,6 @@ void pbdrv_bluetooth_host_connection_changed(void) {
     if (pbdrv_bluetooth_host_connection_changed_callback) {
         pbdrv_bluetooth_host_connection_changed_callback();
     }
-}
-
-pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size) {
-
-    // make sure we have a Bluetooth connection
-    if (!pbdrv_bluetooth_host_is_connected()) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    // Buffer data to send it more efficiently even if the caller is only
-    // writing one byte at a time.
-    if ((*size = lwrb_write(&stdout_ring_buf, data, *size)) == 0) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    // poke the process to start tx soon-ish. This way, we can accumulate up to
-    // PBDRV_BLUETOOTH_MAX_CHAR_SIZE bytes before actually transmitting
-    pbio_os_request_poll();
-
-    return PBIO_SUCCESS;
-}
-
-uint32_t pbdrv_bluetooth_tx_available(void) {
-    if (!pbdrv_bluetooth_host_is_connected()) {
-        return UINT32_MAX;
-    }
-
-    return lwrb_get_free(&stdout_ring_buf);
-}
-
-bool pbdrv_bluetooth_tx_is_idle(void) {
-    if (!pbdrv_bluetooth_host_is_connected()) {
-        return true;
-    }
-
-    return lwrb_get_full(&stdout_ring_buf) == 0 && !pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
-}
-
-pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    if (!pbdrv_bluetooth_host_is_connected()) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    if (size + 1 > PBIO_ARRAY_SIZE(pbdrv_bluetooth_noti_buf[0]) || event_type >= PBIO_PYBRICKS_EVENT_NUM_EVENTS) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Existing notification waiting to be sent first.
-    if (pbdrv_bluetooth_noti_size[event_type]) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    // Copy to local buffer and set size so main thread knows to handle it.
-    pbdrv_bluetooth_noti_size[event_type] = size + 1;
-    pbdrv_bluetooth_noti_buf[event_type][0] = event_type;
-    memcpy(&pbdrv_bluetooth_noti_buf[event_type][1], data, size);
-    pbio_os_request_poll();
-
-    // Await until main process has finished sending user data. If it
-    // disconnected while sending, this completes as well.
-    PBIO_OS_AWAIT_WHILE(state, pbdrv_bluetooth_noti_size[event_type]);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 //
@@ -495,53 +419,6 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
     return advertising_or_scan_err;
 }
 
-/**
- * Updates send buffers by draining relevant data buffers and find which event
- * has the highest priority to send.
- */
-static bool update_and_get_event_buffer(uint8_t **buf, uint32_t **len) {
-
-    static pbio_os_timer_t status_timer;
-
-    // Prepare status.
-    if (status_data_pending || pbio_os_timer_is_expired(&status_timer)) {
-        // When a status is pending, drain it here while we write it out,
-        // so a new status can be set in the mean time without losing it.
-        memcpy(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT], status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-        pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_STATUS_REPORT] = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
-        status_data_pending = false;
-        pbio_os_timer_set(&status_timer, PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL);
-    }
-
-    // Prepare stdout, drain into chunk of maximum send size.
-    if (lwrb_get_full(&stdout_ring_buf) != 0) {
-        // Message always starts with event byte.
-        if (!pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) {
-            pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT][0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
-            pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] = 1;
-        }
-        // Drain ring buffer to send buffer as much as we can.
-        uint32_t stdout_free = sizeof(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT];
-        if (stdout_free) {
-            uint8_t *dest = &pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT][sizeof(pbdrv_bluetooth_noti_buf[PBIO_PYBRICKS_EVENT_WRITE_STDOUT]) - stdout_free];
-            pbdrv_bluetooth_noti_size[PBIO_PYBRICKS_EVENT_WRITE_STDOUT] += lwrb_read(&stdout_ring_buf, dest, stdout_free);
-        }
-    }
-
-    // Other events are awaited as-is and don't allow setting new data until
-    // they have been transmitted, so don't need further processing/draining.
-
-    // Return highest priority pending event, ready for sending.s
-    for (uint32_t i = 0; i < PBIO_PYBRICKS_EVENT_NUM_EVENTS; i++) {
-        if (pbdrv_bluetooth_noti_size[i]) {
-            *len = &pbdrv_bluetooth_noti_size[i];
-            *buf = pbdrv_bluetooth_noti_buf[i];
-            return true;
-        }
-    }
-    return false;
-}
-
 #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
 static pbdrv_bluetooth_classic_task_context_t pbdrv_bluetooth_classic_task_context;
 
@@ -640,14 +517,6 @@ init:
         // In practice, leaving it here helps rather than hurts since it
         // allows short stdout messages to be queued rather than sent separately.
         PBIO_OS_AWAIT_MS(state, &timer, 1);
-
-        // Send one event notification (status, stdout, ...)
-        static uint32_t *noti_size;
-        static uint8_t *noti_buf;
-        if (can_send && update_and_get_event_buffer(&noti_buf, &noti_size)) {
-            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, noti_buf, *noti_size));
-            *noti_size = 0;
-        }
 
         // Send one event notification (status, stdout, ...)
         static uint32_t *event_size;
