@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
 #include <pbdrv/random.h>
@@ -40,7 +40,7 @@
 #include <hci.h>
 #include <util.h>
 
-#include "./bluetooth.h"
+#include <pbdrv/bluetooth.h>
 #include "./bluetooth_stm32_cc2640.h"
 
 #define DEBUG 0

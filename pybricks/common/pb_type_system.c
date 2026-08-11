@@ -7,7 +7,7 @@
 
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/reset.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>

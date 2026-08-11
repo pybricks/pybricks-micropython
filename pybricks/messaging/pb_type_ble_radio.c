@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbsys/config.h>
 #include <pbsys/status.h>

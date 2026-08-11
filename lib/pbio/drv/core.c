@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2020-2023 The Pybricks Authors
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
@@ -11,7 +11,6 @@
 #include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
-#include "bluetooth/bluetooth.h"
 #include "button/button.h"
 #include "charger/charger.h"
 #include "clock/clock.h"
@@ -31,6 +30,8 @@
 #include "uart/uart_debug_first_port.h"
 #include "usb/usb.h"
 #include "watchdog/watchdog.h"
+
+#include <pbdrv/bluetooth.h>
 
 /** Initializes all enabled drivers. */
 void pbdrv_init(void) {

@@ -10,7 +10,7 @@
 #include "py/objtuple.h"
 #include "py/runtime.h"
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbio/version.h>
 #include <pbsys/host.h>
 #include <pbsys/status.h>
