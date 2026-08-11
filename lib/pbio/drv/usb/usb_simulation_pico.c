@@ -29,6 +29,8 @@ static volatile bool pbdrv_usb_simulation_tx_ready;
 // Size of the UART receive ring buffer. This is a mock with no real USB
 // hardware, so the value is arbitrary.
 #define PBDRV_USB_SIMULATION_PICO_RX_RINGBUF_SIZE (128)
+#define PBDRV_USB_MAX_DECODED_MESSAGE_SIZE (512)
+#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE (512)
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;

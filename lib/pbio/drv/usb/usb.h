@@ -20,32 +20,6 @@
 #define PBDRV_USB_TRANSMIT_TIMEOUT (500)
 
 /**
- * Maximum size of a host notification, and of any other host-facing message.
- *
- * This is deliberately decoupled from the USB hardware packet size: it bounds
- * how large a single message can be, independent of how the transport splits
- * the resulting byte stream into hardware packets.
- *
- * REVISIT: this is a system-level concept that should eventually live in pbsys
- * config and be shared with the BLE transport.
- */
-#define PBSYS_CONFIG_HOST_NOTIFICATION_SIZE (62)
-
-/** Maximum size of a decoded message (message type byte plus payload). */
-#define PBDRV_USB_MAX_DECODED_MESSAGE_SIZE PBSYS_CONFIG_HOST_NOTIFICATION_SIZE
-
-/** Maximum size of an encoded frame including the trailing delimiter. */
-#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE PBIO_COBS_ENCODED_BUFFER_SIZE(PBDRV_USB_MAX_DECODED_MESSAGE_SIZE)
-
-/**
- * Largest single USB packet any platform delivers on the data OUT endpoint
- * (EV3 high-speed bulk). The common driver provides a receive scratch buffer of
- * this size; the framing layer then reassembles messages from the raw byte
- * stream, which may pack several small frames into one hardware packet.
- */
-#define PBDRV_USB_RX_PACKET_MAX_SIZE (512)
-
-/**
  * Initializes the USB driver on boot.
  */
 void pbdrv_usb_init(void);
@@ -75,8 +49,7 @@ void pbdrv_usb_deinit_device(void);
  * handled by the common driver), so the returned bytes are an arbitrary slice
  * of that stream, not necessarily a whole message.
  *
- * @param [in] data     Buffer to copy the bytes to. Must be at least
- *                      ::PBDRV_USB_RX_PACKET_MAX_SIZE bytes.
+ * @param [in] data     Buffer to copy the bytes to.
  * @return              Number of bytes copied. Zero means nothing was available.
  */
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
