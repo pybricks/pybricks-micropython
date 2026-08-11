@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/error.h>
 #include <pbio/imu.h>

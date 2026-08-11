@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/watchdog.h>
 #include <pbdrv/usb.h>

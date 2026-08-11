@@ -9,7 +9,7 @@
 #include <tinytest_macros.h>
 #include <tinytest.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>

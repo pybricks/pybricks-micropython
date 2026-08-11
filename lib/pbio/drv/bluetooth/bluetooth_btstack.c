@@ -16,7 +16,7 @@
 #include <btstack.h>
 #include <btstack_run_loop.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 
 #include <pbio/os.h>
@@ -24,7 +24,7 @@
 #include <pbio/util.h>
 #include <pbio/version.h>
 
-#include "bluetooth.h"
+#include <pbdrv/bluetooth.h>
 #include "bluetooth_btstack.h"
 
 #include "genhdr/pybricks_service.h"

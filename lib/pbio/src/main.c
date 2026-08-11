@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/display.h>
 #include <pbdrv/sound.h>
 

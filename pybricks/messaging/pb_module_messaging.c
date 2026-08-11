@@ -14,7 +14,7 @@
 #include "py/runtime.h"
 #include "py/mperrno.h"
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/int_math.h>
 #include <pbio/util.h>

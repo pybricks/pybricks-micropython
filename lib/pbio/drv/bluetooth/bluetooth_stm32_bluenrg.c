@@ -15,9 +15,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bluetooth.h"
-
 #include <pbdrv/bluetooth.h>
+
+#include <pbio/bluetooth.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>

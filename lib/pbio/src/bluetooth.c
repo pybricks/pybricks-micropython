@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
@@ -19,7 +19,7 @@
 
 #include <lwrb/lwrb.h>
 
-#include "./bluetooth.h"
+#include <pbdrv/bluetooth.h>
 
 #include <pbsys/host.h>
 

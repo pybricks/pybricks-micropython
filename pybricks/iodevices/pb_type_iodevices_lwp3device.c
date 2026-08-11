@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/button.h>
 #include <pbio/color.h>

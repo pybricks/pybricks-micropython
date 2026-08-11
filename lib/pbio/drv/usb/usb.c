@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/version.h>
 

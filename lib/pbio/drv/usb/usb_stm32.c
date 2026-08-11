@@ -16,7 +16,7 @@
 #include <usbd_desc.h>
 #include <usbd_pybricks.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/usb.h>
 #include <pbio/protocol.h>
 #include <pbio/os.h>
