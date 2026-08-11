@@ -1,174 +1,146 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2022 The Pybricks Authors
 
-/**
- * @addtogroup UsbDriver Driver: USB
- * @{
- */
+// Common interface shared by USB drivers
 
-#ifndef _PBDRV_USB_H_
-#define _PBDRV_USB_H_
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdarg.h>
+#ifndef _INTERNAL_PBDRV_USB_H_
+#define _INTERNAL_PBDRV_USB_H_
 
 #include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_USB
+
+#include <pbio/cobs.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 
+#include <stdint.h>
+
+#define PBDRV_USB_TRANSMIT_TIMEOUT (500)
+
 /**
- * Indicates battery charging capabilites that were detected on a USB port.
+ * Initializes the USB driver on boot.
  */
-typedef enum {
-    // NOTE: These values are part of the MicroPython API, don't change the numbers.
-
-    /** The USB cable is not connected (no VBUS). */
-    PBDRV_USB_BCD_NONE = 0,
-    /** The USB cable is connected to a non-standard charger or PS/2 port. */
-    PBDRV_USB_BCD_NONSTANDARD = 1,
-    /** The USB cable is connected to standard downstream port. */
-    PBDRV_USB_BCD_STANDARD_DOWNSTREAM = 2,
-    /** The USB cable is connected to charging downstream port. */
-    PBDRV_USB_BCD_CHARGING_DOWNSTREAM = 3,
-    /** The USB cable is connected to dedicated charging port. */
-    PBDRV_USB_BCD_DEDICATED_CHARGING = 4,
-} pbdrv_usb_bcd_t;
+void pbdrv_usb_init(void);
 
 /**
- * Callback that is called when receiving a Pybricks command.
- *
- * @param [in]  data        The data that was received.
- * @param [in]  size        The size of @p data in bytes.
+ * Platform specific device initialization.
  */
-typedef pbio_pybricks_error_t (*pbdrv_usb_receive_handler_t)(const uint8_t *data, uint32_t size);
-
-#if PBDRV_CONFIG_USB
+void pbdrv_usb_init_device(void);
 
 /**
- * Gets the result of the USB battery charger detection.
- * @return              The result.
+ * De-initializes the USB driver for data transfers on soft-poweroff. Keeps charging if supported.
  */
-pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void);
+void pbdrv_usb_deinit(void);
 
 /**
- * Registers a callback that will be called when Pybricks data is received.
- *
- * @param [in]  handler     The function that will be called.
+ * Platform specific device deinitialization.
  */
-void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler);
+void pbdrv_usb_deinit_device(void);
 
 /**
- * Sets a callback to be called when a USB host is connected or disconnected.
+ * Gets bytes most recently received on the data OUT endpoint and copies them
+ * to the provided buffer.
  *
- * @param [in]  callback    The function that will be called.
+ * The driver's receive buffer is then cleared and prepared to receive again.
+ *
+ * The host to hub direction is a raw byte stream (the message framing is
+ * handled by the common driver), so the returned bytes are an arbitrary slice
+ * of that stream, not necessarily a whole message.
+ *
+ * @param [in] data     Buffer to copy the bytes to.
+ * @return              Number of bytes copied. Zero means nothing was available.
  */
-void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback);
+uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 
 /**
- * Schedules Pybricks status to be sent soon.
+ * Sends and awaits an arbitrarily sized message on the data IN endpoint.
  *
- * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
- */
-void pbdrv_usb_schedule_status_update(const uint8_t *status_msg);
-
-/**
- * Transmits the given buffer over the USB stdout stream.
- * @return              The result of the operation.
- */
-pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size);
-
-/**
- * Gets the number of bytes that can be queued for sending stdout via USB.
+ * Driver-specific implementation. Must return within ::PBDRV_USB_TRANSMIT_TIMEOUT.
  *
- * Returns UINT32_MAX if there is no USB connection or no app is subscribed to
- * stdout.
- *
- * @return              The number of bytes that can be queued.
- */
-uint32_t pbdrv_usb_stdout_tx_available(void);
-
-/**
- * Indicates if the USB stdout stream is idle.
- * @return              true if the USB stdout stream is idle.
-*/
-bool pbdrv_usb_stdout_tx_is_idle(void);
-
-/**
- * Indicates if a Pybricks app is connected and configured.
- *
- * @retval  true if active, so the host has subscribed to events.
- */
-bool pbdrv_usb_connection_is_active(void);
-
-/**
- * Sends a value notification and await it.
- *
- * Uses the same mechanism as stdout or status events, but is user-awaitable.
- *
- * This does not not use a ringbuffer. Await operation before sending more.
+ * The USB process ensures that only one call is made at once.
  *
  * @param [in] state    Protothread state.
- * @param [in] event    Event type (status, stdout, or app data, etc.)
  * @param [in] data     Data to send.
- * @param [in] size     Data size, not counting event type byte.
+ * @param [in] size     Data size.
  * @return              ::PBIO_SUCCESS on completion.
- *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
  *                      ::PBIO_ERROR_AGAIN while awaiting.
  *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
- *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
+ *                      ::PBIO_ERROR_TIMEDOUT if the operation was started but could not complete.
  */
-pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size);
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
 
 /**
- * Stores a string in the USB stdout ring buffer.
+ * Notifies the common driver that the host's serial control line state (DTR)
+ * changed. Called by the platform driver, typically from interrupt context.
  *
- * @param data      The string data.
- * @param len       The length of the string data.
+ * DTR asserted means a host application has opened the serial port and is the
+ * USB analog of a BLE host subscribing to notifications.
+ *
+ * @param [in] dtr      True if DTR is asserted (port open), otherwise false.
  */
-void pbdrv_usb_debug_print(const char *data, size_t len);
+void pbdrv_usb_on_dtr_changed(bool dtr);
+
+/**
+ * Resets the driver transmission state.
+ *
+ * @param [in] state    Protothread state.
+ * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_AGAIN while awaiting.
+ */
+pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state);
+
+/**
+ * Waits for USB to be plugged. Detects what charger type is connected if
+ * applicable.
+ *
+ * @param [in] state    Protothread state.
+ * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_AGAIN while awaiting.
+ */
+pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state);
+
+/**
+ * Tests if USB is ready for communication.
+ */
+bool pbdrv_usb_is_ready(void);
 
 #else // PBDRV_CONFIG_USB
 
-static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
-    return PBDRV_USB_BCD_NONE;
+static inline void pbdrv_usb_init(void) {
 }
 
-static inline void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
+static inline void pbdrv_usb_deinit(void) {
 }
 
-static inline void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
+static inline void pbdrv_usb_init_device(void) {
 }
 
-static inline void pbdrv_usb_schedule_status_update(const uint8_t *status_msg) {
+static inline void pbdrv_usb_deinit_device(void) {
 }
 
-static inline pbio_error_t pbdrv_usb_stdout_tx(const uint8_t *data, uint32_t *size) {
-    return PBIO_SUCCESS;
+static inline pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-static inline uint32_t pbdrv_usb_stdout_tx_available(void) {
-    return UINT32_MAX;
+static inline uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
+    return 0;
 }
 
-static inline bool pbdrv_usb_stdout_tx_is_idle(void) {
-    return true;
+static inline pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
-static inline bool pbdrv_usb_connection_is_active(void) {
+static inline pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+static inline bool pbdrv_usb_is_ready(void) {
     return false;
 }
 
-static inline pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbdrv_usb_debug_print(const char *data, size_t len) {
-}
 
 #endif // PBDRV_CONFIG_USB
 
-#endif // _PBDRV_USB_H_
-
-/** @} */
+#endif // _INTERNAL_PBDRV_USB_H_

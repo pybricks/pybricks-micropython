@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include <pbdrv/display.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/button.h>
 #include <pbio/image.h>

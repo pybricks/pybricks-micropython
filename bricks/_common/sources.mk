@@ -190,7 +190,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
-	drv/usb/usb.c \
 	drv/usb/usb_common_desc.c \
 	drv/usb/usb_ev3.c \
 	drv/usb/usb_nxt.c \
@@ -237,6 +236,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory.c \
+	src/usb.c \
 	src/util.c \
 	sys/battery_temp.c \
 	sys/battery.c \

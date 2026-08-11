@@ -6,7 +6,7 @@
 #include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/watchdog.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/main.h>

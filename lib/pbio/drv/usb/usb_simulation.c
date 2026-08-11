@@ -5,8 +5,8 @@
 
 #if PBDRV_CONFIG_USB_SIMULATION
 
+#include <pbio/usb.h>
 #include <pbdrv/usb.h>
-#include "usb.h"
 
 #include <pbio/error.h>
 #include <pbio/os.h>

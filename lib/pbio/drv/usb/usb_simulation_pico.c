@@ -11,7 +11,7 @@
 
 #include <lwrb/lwrb.h>
 
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 #include <pbio/os.h>
@@ -21,7 +21,7 @@
 #include "hardware/uart.h"
 #include "pico/stdlib.h"
 
-#include "usb.h"
+#include <pbdrv/usb.h>
 
 #include <pbsys/config.h>
 

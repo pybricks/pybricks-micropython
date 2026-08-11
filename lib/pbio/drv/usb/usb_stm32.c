@@ -17,7 +17,7 @@
 #include <usbd_pybricks.h>
 
 #include <pbio/bluetooth.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 #include <pbio/protocol.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -28,7 +28,7 @@
 #include <pbsys/storage.h>
 
 #include "../charger/charger.h"
-#include "./usb.h"
+#include <pbdrv/usb.h>
 #include "./usb_stm32.h"
 
 // These buffers need to be 32-bit aligned because the USB driver moves data

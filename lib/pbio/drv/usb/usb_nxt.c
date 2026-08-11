@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -32,7 +32,7 @@
 
 #include <lego/usb.h>
 
-#include "usb.h"
+#include <pbdrv/usb.h>
 
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
