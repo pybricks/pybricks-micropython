@@ -921,10 +921,10 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
     return usb_rx_sz;
 }
 
-void pbdrv_usb_deinit_device(void) {
+void pbdrv_usb_deinit(void) {
 }
 
-void pbdrv_usb_init_device(void) {
+void pbdrv_usb_init(void) {
     // If we came straight from a firmware update, we need to send a disconnect
     // to the host, then reset the USB controller.
     USBDevDisconnect(USB0_BASE);

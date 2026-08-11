@@ -337,7 +337,7 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
     return size;
 }
 
-void pbdrv_usb_init_device(void) {
+void pbdrv_usb_init(void) {
     // Link the driver data structures
     husbd.pData = &hpcd;
     hpcd.pData = &husbd;
@@ -353,7 +353,7 @@ void pbdrv_usb_init_device(void) {
     #endif
 }
 
-void pbdrv_usb_deinit_device(void) {
+void pbdrv_usb_deinit(void) {
     USBD_Stop(&husbd);
     USBD_DeInit(&husbd);
 }

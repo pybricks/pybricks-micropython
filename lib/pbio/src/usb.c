@@ -391,14 +391,12 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
-void pbdrv_usb_init(void) {
-    pbdrv_usb_init_device();
-
+void pbio_usb_init(void) {
     pbio_os_process_start(&pbdrv_usb_process, pbdrv_usb_process_thread, NULL);
 }
 
-void pbdrv_usb_deinit(void) {
-    pbdrv_usb_deinit_device();
+void pbio_usb_deinit(void) {
+    pbdrv_usb_deinit();
     pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 

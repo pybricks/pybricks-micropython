@@ -759,7 +759,7 @@ void pbdrv_usb_nxt_deinit(void) {
     nx_systick_wait_ms(200);
 }
 
-void pbdrv_usb_init_device(void) {
+void pbdrv_usb_init(void) {
 
     extern char bluetooth_address_string[PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString)];
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString); i++) {
@@ -819,7 +819,7 @@ void pbdrv_usb_init_device(void) {
     *AT91C_PIOA_CODR = (1 << 16);
 }
 
-void pbdrv_usb_deinit_device(void) {
+void pbdrv_usb_deinit(void) {
     pbdrv_usb_nxt_deinit();
 }
 

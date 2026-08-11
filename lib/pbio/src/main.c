@@ -13,6 +13,7 @@
 #include <pbio/light_animation.h>
 #include <pbio/motor_process.h>
 #include <pbio/port_interface.h>
+#include <pbio/usb.h>
 
 #define DEBUG 0
 
@@ -29,9 +30,9 @@
  * the library.
  */
 void pbio_init(void) {
-
     pbio_battery_init();
     pbio_imu_init();
+    pbio_usb_init();
 
     // This will also initialize the dcmotor and servo pbio object instances.
     pbio_port_init();
@@ -44,6 +45,7 @@ void pbio_init(void) {
  * Deinitialize pbio modules that are not needed after soft-poweroff.
  */
 void pbio_deinit(void) {
+    pbio_usb_deinit();
     // Power off sensors and motors, including the ones that are always powered.
     pbio_port_power_off();
 }
