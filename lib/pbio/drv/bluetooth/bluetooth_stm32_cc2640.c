@@ -1248,14 +1248,12 @@ static void handle_event(uint8_t *packet) {
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
                     if (char_handle == pybricks_command_event_char_handle) {
-                        if (pbdrv_bluetooth_receive_handler) {
-                            err = pbdrv_bluetooth_receive_handler(&data[10], pdu_len - 4);
-                        }
+                        err = pbio_bluetooth_receive_handler(&data[10], pdu_len - 4);
                     } else if (char_handle == pybricks_command_event_char_handle + 1) {
                         pybricks_notify_en = data[10];
                         err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", pybricks_notify_en);
-                        pbdrv_bluetooth_host_connection_changed();
+                        pbio_bluetooth_host_connection_changed();
                     } else if (char_handle == uart_rx_char_handle) {
                         // Not implemented
                     } else if (char_handle == uart_tx_char_handle + 1) {
@@ -1357,7 +1355,7 @@ static void handle_event(uint8_t *packet) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
                         uart_tx_notify_en = false;
-                        pbdrv_bluetooth_host_connection_changed();
+                        pbio_bluetooth_host_connection_changed();
                     } else if (peri->con_handle == connection_handle) {
                         peri->con_handle = NO_CONNECTION;
                     }
@@ -2053,7 +2051,7 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *payload_data, uin
     return bleSUCCESS;
 }
 
-void pbdrv_bluetooth_init_hci(void) {
+void pbdrv_bluetooth_init(void) {
     pbdrv_gpio_set_pull(&pdata->reset_gpio, PBDRV_GPIO_PULL_NONE);
     bluetooth_reset(RESET_STATE_OUT_LOW);
 

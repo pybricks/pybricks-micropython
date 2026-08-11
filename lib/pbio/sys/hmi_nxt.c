@@ -99,7 +99,7 @@ static void draw_status_text(const char *status) {
 }
 
 static void pbsys_hmi_host_update_indications(void) {
-    if (pbdrv_usb_connection_is_active()) {
+    if (pbio_usb_connection_is_active()) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
@@ -111,7 +111,7 @@ static bool pbsys_hmi_handle_connection_change;
 /**
  * Called from the USB and Bluetooth driver if a host connection state changes.
  */
-static void pbsys_hmi_connection_changed_callback(void) {
+void pbsys_hmi_connection_changed_handler(void) {
     DEBUG_PRINT("A host connected or disconnected.\n");
     pbsys_hmi_handle_connection_change = true;
     pbsys_hmi_host_update_indications();
@@ -119,12 +119,10 @@ static void pbsys_hmi_connection_changed_callback(void) {
 
 
 void pbsys_hmi_init(void) {
-    pbdrv_usb_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
 }
 
 void pbsys_hmi_deinit(void) {
 
-    pbdrv_usb_set_host_connection_changed_callback(NULL);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 
     pbio_image_t *display = pbdrv_display_get_image();

@@ -12,6 +12,7 @@
 
 #include <pbsys/command.h>
 #include <pbsys/host.h>
+#include <pbsys/hmi.h>
 
 #define BLE_ONLY (PBDRV_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY))
 #define USB_ONLY (!PBDRV_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
@@ -28,9 +29,10 @@ void pbsys_host_init(void) {
 
     static uint8_t stdout_buf[PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE];
     lwrb_init(&pbsys_host_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
+}
 
-    pbdrv_bluetooth_set_receive_handler(pbsys_command);
-    pbdrv_usb_set_receive_handler(pbsys_command);
+void pbsys_host_connection_changed(void) {
+    pbsys_hmi_connection_changed_handler();
 }
 
 /**
@@ -66,7 +68,7 @@ void pbsys_host_schedule_status_update(const uint8_t *status_msg) {
  */
 bool pbsys_host_is_connected(void) {
     return pbdrv_bluetooth_host_is_connected() ||
-           pbdrv_usb_connection_is_active();
+           pbio_usb_connection_is_active();
 }
 
 // Publisher APIs. Pybricks Profile connections call these to push data to
@@ -165,7 +167,7 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
  */
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     // Fail if no one is listening.
-    if (!pbdrv_bluetooth_host_is_connected() && !pbdrv_usb_connection_is_active()) {
+    if (!pbdrv_bluetooth_host_is_connected() && !pbio_usb_connection_is_active()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -249,7 +251,7 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         if (!pbdrv_bluetooth_host_is_connected()) {
             bluetooth_size = 0;
         }
-        if (!pbdrv_usb_connection_is_active()) {
+        if (!pbio_usb_connection_is_active()) {
             usb_size = 0;
         }
         if (bluetooth_size || usb_size) {

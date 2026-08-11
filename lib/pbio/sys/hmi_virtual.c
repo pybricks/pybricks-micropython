@@ -143,6 +143,9 @@ void pbsys_hmi_init(void) {
     pbsys_hmi_virtual_reload_programs();
 }
 
+void pbsys_hmi_connection_changed_handler(void) {
+}
+
 void pbsys_hmi_deinit(void) {
     // For most virtual hub tests, we don't want to wait on the closing
     // credits, so we leave this empty. The EV3 variant of this function can be

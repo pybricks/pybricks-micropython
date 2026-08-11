@@ -17,7 +17,7 @@
 
 #include <pbio/protocol.h>
 
-pbio_pybricks_error_t pbsys_command(const uint8_t *data, uint32_t size);
+pbio_pybricks_error_t pbsys_handle_command(const uint8_t *data, uint32_t size);
 
 /**
  * Callback called when the write app data command is given by the host.

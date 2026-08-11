@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-void pbdrv_bluetooth_init_hci(void);
+void pbdrv_bluetooth_init(void);
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state);
@@ -37,9 +37,9 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size);
 
-void pbdrv_bluetooth_host_connection_changed(void);
+void pbio_bluetooth_host_connection_changed(void);
 
-extern pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
+pbio_pybricks_error_t pbio_bluetooth_receive_handler(const uint8_t *data, uint32_t size);
 
 extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
 extern uint8_t pbdrv_bluetooth_broadcast_data_size;
@@ -98,6 +98,11 @@ typedef struct {
 } pbdrv_bluetooth_classic_task_context_t;
 
 pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context);
+
+#else // PBDRV_CONFIG_BLUETOOTH
+
+static inline void pbdrv_bluetooth_init(void) {
+}
 
 #endif // PBDRV_CONFIG_BLUETOOTH
 

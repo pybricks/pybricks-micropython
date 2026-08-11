@@ -136,7 +136,7 @@ static pbio_error_t boot_animation_process_shutdown_thread(pbio_os_state_t *stat
 
 static void pbsys_hmi_host_update_indications(void) {
     // Update USB light indication.
-    if (pbdrv_usb_connection_is_active()) {
+    if (pbio_usb_connection_is_active()) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
@@ -158,7 +158,7 @@ static bool pbsys_hmi_handle_connection_change;
  * This pertains to the actual Pybricks profile/events (un)subscribe, not
  * necessarily the physical link.
  */
-static void pbsys_hmi_connection_changed_callback(void) {
+void pbsys_hmi_connection_changed_handler(void) {
     DEBUG_PRINT("A host connected or disconnected.\n");
     pbsys_hmi_handle_connection_change = true;
     pbsys_hmi_host_update_indications();
@@ -167,9 +167,6 @@ static void pbsys_hmi_connection_changed_callback(void) {
 static pbio_os_process_t boot_animation_process;
 
 void pbsys_hmi_init(void) {
-
-    pbdrv_usb_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
-    pbdrv_bluetooth_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
 
     #if PBIO_CONFIG_LIGHT_MATRIX
     pbio_busy_count_up();
@@ -183,9 +180,6 @@ void pbsys_hmi_init(void) {
 }
 
 void pbsys_hmi_deinit(void) {
-
-    pbdrv_usb_set_host_connection_changed_callback(NULL);
-    pbdrv_bluetooth_set_host_connection_changed_callback(NULL);
 
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED);
