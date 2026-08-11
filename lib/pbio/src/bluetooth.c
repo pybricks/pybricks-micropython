@@ -3,9 +3,9 @@
 
 // Common Bluetooth driver code
 
-#include <pbdrv/config.h>
+#include <pbio/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBIO_CONFIG_BLUETOOTH
 
 #include <stdint.h>
 
@@ -617,4 +617,4 @@ void pbdrv_bluetooth_deinit(void) {
     pbio_os_request_poll();
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
+#endif // PBIO_CONFIG_BLUETOOTH

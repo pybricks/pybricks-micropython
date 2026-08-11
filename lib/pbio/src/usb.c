@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 The Pybricks Authors
 
-#include <pbdrv/config.h>
+#include <pbio/config.h>
 
-#if PBDRV_CONFIG_USB
+#if PBIO_CONFIG_USB
 
 #include <errno.h>
 #include <signal.h>
@@ -370,4 +370,4 @@ void pbio_usb_deinit(void) {
     pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
-#endif // PBDRV_CONFIG_USB
+#endif // PBIO_CONFIG_USB
