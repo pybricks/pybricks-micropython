@@ -33,6 +33,11 @@
 #include <pbsys/config.h>
 #include <pbsys/storage.h>
 
+#include <pbsys/host.h>
+
+#define PBSYS_USB_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE)
+#define PBSYS_USB_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_USB_MAX_DECODED_MESSAGE_SIZE))
+
 static pbio_util_void_callback_t pbdrv_usb_host_connection_changed_callback;
 
 void pbdrv_usb_set_host_connection_changed_callback(pbio_util_void_callback_t callback) {
@@ -80,13 +85,12 @@ void pbdrv_usb_set_receive_handler(pbdrv_usb_receive_handler_t handler) {
     pbdrv_usb_receive_handler = handler;
 }
 
-/** Maximum number of value bytes in a USB read reply message. */
-#define PBDRV_USB_READ_MAX_PAYLOAD (PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 4)
-
 static uint32_t pbdrv_usb_copy_str(uint8_t *buf, const char *str) {
     uint32_t size = strlen(str);
-    if (size > PBDRV_USB_READ_MAX_PAYLOAD) {
-        size = PBDRV_USB_READ_MAX_PAYLOAD;
+
+    // Data with 4 byte header must fit in the unencoded frame.
+    if (size > PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 4) {
+        size = PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 4;
     }
     memcpy(buf, str, size);
     return size;
@@ -120,7 +124,7 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
             switch (char_id) {
                 case 0x0003: // Hub capabilities
                     pbio_pybricks_hub_capabilities(buf,
-                        PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 2,
+                        PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 2,
                         PBSYS_CONFIG_APP_FEATURE_FLAGS,
                         pbsys_storage_get_maximum_program_size(),
                         PBSYS_CONFIG_HMI_NUM_SLOTS);
@@ -142,7 +146,7 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
  * prioritized by ascending event number, so status gets sent first, then
  * stdout, etc.
  */
-static uint8_t pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_NUM_EVENTS][PBSYS_CONFIG_HOST_NOTIFICATION_SIZE] __attribute__((aligned(4)));
+static uint8_t pbdrv_usb_noti_buf[PBIO_PYBRICKS_EVENT_NUM_EVENTS][20] __attribute__((aligned(4)));
 static uint32_t pbdrv_usb_noti_size[PBIO_PYBRICKS_EVENT_NUM_EVENTS];
 
 /**
@@ -154,7 +158,7 @@ static bool pbdrv_usb_status_data_pending;
 /**
  * Incoming COBS frame assembly buffer (encoded bytes, delimiter excluded).
  */
-static uint8_t pbdrv_usb_rx_frame[PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE];
+static uint8_t pbdrv_usb_rx_frame[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
 static uint32_t pbdrv_usb_rx_frame_len;
 static bool pbdrv_usb_rx_overflow;
 
@@ -372,7 +376,7 @@ static bool pbdrv_usb_command_response_pending;
  * `[service, char_id_lo, char_id_hi, value...]`; the READ_REPLY message type
  * is added as the COBS prefix at transmit time.
  */
-static uint8_t pbdrv_usb_read_reply_buf[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+static uint8_t pbdrv_usb_read_reply_buf[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
 static uint32_t pbdrv_usb_read_reply_len;
 static bool pbdrv_usb_read_reply_pending;
 
@@ -393,7 +397,7 @@ static void pbdrv_usb_handle_data_in(void) {
     // Bytes are copied here so the driver can immediately queue the next
     // receive. Only the single USB process thread runs this, so a static
     // scratch buffer is safe and keeps the worst-case packet off the stack.
-    static uint8_t data_in[PBDRV_USB_RX_PACKET_MAX_SIZE];
+    static uint8_t data_in[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
     uint32_t size = pbdrv_usb_get_data_and_start_receive(data_in);
 
     for (uint32_t i = 0; i < size; i++) {
@@ -412,7 +416,7 @@ static void pbdrv_usb_handle_data_in(void) {
         // Delimiter reached: end of frame.
         if (!pbdrv_usb_rx_overflow && pbdrv_usb_rx_frame_len > 0) {
             uint8_t msg_type;
-            uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+            uint8_t msg[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
             uint32_t msg_size = pbio_cobs_decode_prefixed(
                 pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
 
@@ -475,8 +479,11 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
     static uint32_t *noti_size;
     static uint8_t *noti_buf;
 
+    static uint32_t *event_size;
+    static uint8_t *event_buf;
+
     // COBS-encoded frame scratch buffer, populated just before each transmit.
-    static uint8_t tx_frame[PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE];
+    static uint8_t tx_frame[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
     static uint32_t tx_frame_len;
 
     pbio_error_t err;
@@ -526,6 +533,16 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
             } else if (pbdrv_usb_connection_is_active() && update_and_get_event_buffer(&noti_buf, &noti_size)) {
                 tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_EVENT,
                     noti_buf, *noti_size, tx_frame);
+
+                PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
+                *noti_size = 0;
+                if (err != PBIO_SUCCESS) {
+                    pbdrv_usb_reset_state();
+                    PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
+                }
+            } else if (pbdrv_usb_connection_is_active() && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_USB, &event_buf, &event_size) == PBIO_ERROR_AGAIN) {
+                tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_EVENT,
+                    event_buf, *event_size, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_chunk(&sub, tx_frame, tx_frame_len));
                 *noti_size = 0;
