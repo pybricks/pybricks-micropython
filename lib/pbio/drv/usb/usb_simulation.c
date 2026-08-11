@@ -139,7 +139,7 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-void pbdrv_usb_init_device(void) {
+void pbdrv_usb_init(void) {
     static pbio_os_process_t pbdrv_usb_test_process;
     pbio_os_process_start(&pbdrv_usb_test_process, pbdrv_usb_test_process_thread, NULL);
 
@@ -148,7 +148,7 @@ void pbdrv_usb_init_device(void) {
     pbdrv_usb_on_dtr_changed(true);
 }
 
-void pbdrv_usb_deinit_device(void) {
+void pbdrv_usb_deinit(void) {
 }
 
 #endif // PBDRV_CONFIG_USB_SIMULATION

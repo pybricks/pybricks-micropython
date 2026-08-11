@@ -161,7 +161,7 @@ static void pbdrv_usb_simulation_pico_uart_rx_irq(void) {
     pbio_os_request_poll();
 }
 
-void pbdrv_usb_init_device(void) {
+void pbdrv_usb_init(void) {
     static uint8_t in_ringbuf_data[PBDRV_USB_SIMULATION_PICO_RX_RINGBUF_SIZE];
     lwrb_init(&pbdrv_usb_simulation_pico_in_ringbuf, in_ringbuf_data, sizeof(in_ringbuf_data));
 
@@ -178,7 +178,7 @@ void pbdrv_usb_init_device(void) {
     pbdrv_usb_on_dtr_changed(true);
 }
 
-void pbdrv_usb_deinit_device(void) {
+void pbdrv_usb_deinit(void) {
 }
 
 #endif // PBDRV_CONFIG_USB_SIMULATION_PICO

@@ -20,24 +20,14 @@
 #define PBDRV_USB_TRANSMIT_TIMEOUT (500)
 
 /**
- * Initializes the USB driver on boot.
+ * Platform specific device initialization.
  */
 void pbdrv_usb_init(void);
 
 /**
- * Platform specific device initialization.
- */
-void pbdrv_usb_init_device(void);
-
-/**
- * De-initializes the USB driver for data transfers on soft-poweroff. Keeps charging if supported.
- */
-void pbdrv_usb_deinit(void);
-
-/**
  * Platform specific device deinitialization.
  */
-void pbdrv_usb_deinit_device(void);
+void pbdrv_usb_deinit(void);
 
 /**
  * Gets bytes most recently received on the data OUT endpoint and copies them
@@ -113,12 +103,6 @@ static inline void pbdrv_usb_init(void) {
 }
 
 static inline void pbdrv_usb_deinit(void) {
-}
-
-static inline void pbdrv_usb_init_device(void) {
-}
-
-static inline void pbdrv_usb_deinit_device(void) {
 }
 
 static inline pbio_error_t pbdrv_usb_tx(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {

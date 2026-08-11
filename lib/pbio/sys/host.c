@@ -279,7 +279,7 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
     }
 
     // Prepare stdout, drain into chunk of maximum send size.
-    if (lwrb_get_full(&pbsys_host_stdout_ring_buf) != 0) {
+    if (lwrb_is_ready(&pbsys_host_stdout_ring_buf) && lwrb_get_full(&pbsys_host_stdout_ring_buf) != 0) {
         // Message always starts with event byte.
         pbsys_host_event_out_buf[0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
 

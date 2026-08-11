@@ -47,6 +47,16 @@ typedef pbio_pybricks_error_t (*pbdrv_usb_receive_handler_t)(const uint8_t *data
 #if PBDRV_CONFIG_USB
 
 /**
+ * Initializes the USB driver on boot.
+ */
+void pbio_usb_init(void);
+
+/**
+ * De-initializes the USB driver for data transfers on soft-poweroff. Keeps charging if supported.
+ */
+void pbio_usb_deinit(void);
+
+/**
  * Gets the result of the USB battery charger detection.
  * @return              The result.
  */
@@ -130,6 +140,12 @@ pbio_error_t pbdrv_usb_send_event_notification(pbio_os_state_t *state, pbio_pybr
 void pbdrv_usb_debug_print(const char *data, size_t len);
 
 #else // PBDRV_CONFIG_USB
+
+static inline void pbio_usb_init(void) {
+}
+
+static inline void pbio_usb_deinit(void) {
+}
 
 static inline pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
