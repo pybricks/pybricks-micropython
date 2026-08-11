@@ -23,14 +23,15 @@
 
 #include "usb.h"
 
+#include <pbsys/config.h>
+
 static lwrb_t pbdrv_usb_simulation_pico_in_ringbuf;
 static volatile bool pbdrv_usb_simulation_tx_ready;
 
 // Size of the UART receive ring buffer. This is a mock with no real USB
 // hardware, so the value is arbitrary.
 #define PBDRV_USB_SIMULATION_PICO_RX_RINGBUF_SIZE (128)
-#define PBDRV_USB_MAX_DECODED_MESSAGE_SIZE (512)
-#define PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE (512)
+#define BUFFER_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
@@ -44,7 +45,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -54,7 +55,7 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
     // REVISIT: This assumes that we do one chunk per stdout event. That is
     // currently true for the logic in usb.c, but we should revise this to make
     // it like the RX path if we turn it into an actual stream.
-    static uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+    static uint8_t msg[BUFFER_SIZE];
     static uint32_t msg_size;
     uint8_t msg_type;
     msg_size = pbio_cobs_decode_prefixed(data, size - 1, &msg_type, msg, sizeof(msg));
@@ -83,7 +84,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-static uint8_t pbdrv_usb_simulation_pico_in_buf[PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE];
+static uint8_t pbdrv_usb_simulation_pico_in_buf[BUFFER_SIZE];
 static uint32_t pbdrv_usb_simulation_pico_in_size;
 
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
@@ -126,11 +127,11 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_usb_simulation_pico_in_size == 0 &&
             (available = lwrb_get_full(&pbdrv_usb_simulation_pico_in_ringbuf)) > 0);
 
-        available = pbio_int_math_clamp(available, PBDRV_USB_MAX_DECODED_MESSAGE_SIZE - 3);
+        available = pbio_int_math_clamp(available, BUFFER_SIZE - 3);
 
         // Wrap the raw UART bytes as a write stdin command and COBS-encode it,
         // the same way a real host would, so the common driver can decode it.
-        static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+        static uint8_t cmd[BUFFER_SIZE];
         cmd[0] = 0; // correlation tag (opaque; unused here)
         cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
         lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[2], available);

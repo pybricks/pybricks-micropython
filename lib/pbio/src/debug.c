@@ -3,10 +3,10 @@
 
 #include <pbdrv/config.h>
 
-#include <pbdrv/usb.h>
 #include <pbdrv/../../drv/uart/uart_debug_first_port.h>
 
 #include <pbio/debug.h>
+#include <pbsys/host.h>
 
 void pbio_debug_va(const char *format, va_list args) {
     #if PBDRV_CONFIG_USB_SIMULATION
@@ -19,7 +19,7 @@ void pbio_debug_va(const char *format, va_list args) {
     #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
     pbdrv_uart_debug_print(buf, len);
     #else
-    pbdrv_usb_debug_print(buf, len);
+    pbsys_host_debug_print(buf, len);
     #endif
 }
 

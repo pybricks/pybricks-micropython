@@ -18,6 +18,10 @@
 
 #include "../rproc/rproc_virtual.h"
 
+#include <pbsys/config.h>
+
+#define BUFFER_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
+
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -30,7 +34,7 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
     return PBDRV_USB_BCD_NONE;
 }
 
-pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
     static pbio_os_timer_t timer;
 
@@ -43,7 +47,7 @@ pbio_error_t pbdrv_usb_tx_chunk(pbio_os_state_t *state, const uint8_t *data, uin
     // currently true for the logic in usb.c, but we should revise this to make
     // it like the RX path if we turn it into an actual stream.
     uint8_t msg_type;
-    uint8_t msg[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+    uint8_t msg[BUFFER_SIZE];
     uint32_t msg_size = pbio_cobs_decode_prefixed(data, size - 1, &msg_type, msg, sizeof(msg));
 
     if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_IN_EP_MSG_EVENT &&
@@ -66,7 +70,7 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-static uint8_t usb_in_buf[PBDRV_USB_MAX_ENCODED_MESSAGE_SIZE];
+static uint8_t usb_in_buf[BUFFER_SIZE];
 static uint32_t usb_in_size;
 
 uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
@@ -122,7 +126,7 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // Read raw bytes from native stdin and present them to the common
         // driver as a COBS-framed write stdin command, the same way a real
         // host would. This has been made non-blocking in platform.c.
-        static uint8_t cmd[PBDRV_USB_MAX_DECODED_MESSAGE_SIZE];
+        static uint8_t cmd[BUFFER_SIZE];
         cmd[0] = 0; // correlation tag (opaque; unused here)
         cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
         ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 3);

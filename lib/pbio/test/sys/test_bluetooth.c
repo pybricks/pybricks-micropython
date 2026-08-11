@@ -47,7 +47,7 @@ static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
 
     PBIO_OS_AWAIT_UNTIL(state, ({
         size = strlen(test_data_1);
-        pbdrv_bluetooth_tx((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
+        pbsys_host_stdout_write((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_1));
@@ -55,7 +55,7 @@ static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
     // this next data should get pushed in the buffer too
     PBIO_OS_AWAIT_UNTIL(state, ({
         size = strlen(test_data_2);
-        pbdrv_bluetooth_tx((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
+        pbsys_host_stdout_write((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
     }));
 
     tt_want_uint_op(size, ==, strlen(test_data_2));
