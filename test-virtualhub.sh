@@ -19,7 +19,12 @@ SCRIPT_DIR=$(readlink -f "$(dirname "$0")")
 BRICK_DIR="$SCRIPT_DIR/bricks/virtualhub"
 MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"
 PB_TEST_DIR=$"$SCRIPT_DIR/tests"
-BUILD_DIR_NAME="build${COVERAGE:+-coverage}"
+# Use a dedicated build dir so the CI_MODE build never mixes with `make virtualhub`.
+if [[ $COVERAGE ]]; then
+    BUILD_DIR_NAME="build-coverage"
+else
+    BUILD_DIR_NAME="build-ci"
+fi
 BUILD_DIR="$BRICK_DIR/$BUILD_DIR_NAME"
 PBIO_DIR="$SCRIPT_DIR/lib/pbio"
 

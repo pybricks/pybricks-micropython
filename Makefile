@@ -80,6 +80,7 @@ virtualhub: mpy-cross
 clean-virtualhub: clean-mpy-cross
 	@$(MAKE) -C bricks/virtualhub clean
 	@$(MAKE) -C bricks/virtualhub clean BUILD=build-debug
+	@$(MAKE) -C bricks/virtualhub clean BUILD=build-ci
 	@$(MAKE) -C bricks/virtualhub clean BUILD=build-coverage
 
 buildhat: mpy-cross
