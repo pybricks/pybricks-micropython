@@ -35,7 +35,8 @@
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
-#define PBSYS_USB_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE)
+// Host event size (already includes its 1 event byte) + 1 EP type byte.
+#define PBSYS_USB_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1)
 #define PBSYS_USB_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_USB_MAX_DECODED_MESSAGE_SIZE))
 
 /**
@@ -210,6 +211,7 @@ static void pbdrv_usb_handle_data_in(void) {
     // receive. Only the single USB process thread runs this, so a static
     // scratch buffer is safe and keeps the worst-case packet off the stack.
     static uint8_t data_in[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
+    static uint8_t msg[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
     uint32_t size = pbdrv_usb_get_data_and_start_receive(data_in);
 
     for (uint32_t i = 0; i < size; i++) {
@@ -228,7 +230,6 @@ static void pbdrv_usb_handle_data_in(void) {
         // Delimiter reached: end of frame.
         if (!pbdrv_usb_rx_overflow && pbdrv_usb_rx_frame_len > 0) {
             uint8_t msg_type;
-            uint8_t msg[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
             uint32_t msg_size = pbio_cobs_decode_prefixed(
                 pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
 
