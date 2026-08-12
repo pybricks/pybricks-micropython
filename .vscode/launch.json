@@ -58,6 +58,7 @@
             "type":"debugpy",
             "request":"launch",
             "program":"${workspaceFolder}/lib/pbio/platform/virtual_hub/animation.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "console":"integratedTerminal"
         },
         {
