@@ -36,32 +36,29 @@ pbdrv_usb_bcd_t pbdrv_usb_get_bcd(void) {
 
 pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
-    static pbio_os_timer_t timer;
-
     PBIO_OS_ASYNC_BEGIN(state);
 
     // The common driver hands us a COBS-encoded frame with a trailing
     // delimiter. This mock only forwards stdout to the native console, so
     // decode the frame and write out the payload of stdout events only.
-    // REVISIT: This assumes that we do one chunk per stdout event. That is
-    // currently true for the logic in usb.c, but we should revise this to make
-    // it like the RX path if we turn it into an actual stream.
     uint8_t msg_type;
     uint8_t msg[BUFFER_SIZE];
     uint32_t msg_size = pbio_cobs_decode_prefixed(data, size - 1, &msg_type, msg, sizeof(msg));
 
-    if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_IN_EP_MSG_EVENT &&
-        msg[0] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
-        int ret = write(STDOUT_FILENO, &msg[1], msg_size - 1);
-        (void)ret;
-
-        #ifdef PBDRV_CONFIG_RPROC_VIRTUAL
-        pbdrv_rproc_virtual_socket_send(&msg[1], msg_size - 1);
-        #endif
+    if (!msg_size || msg_type != PBIO_PYBRICKS_IN_EP_MSG_EVENT) {
+        return PBIO_SUCCESS;
     }
 
-    // Simulate some I/O time.
-    PBIO_OS_AWAIT_MS(state, &timer, 1);
+    if (msg[0] == PBIO_PYBRICKS_EVENT_WRITE_STDOUT) {
+        int ret = write(STDOUT_FILENO, &msg[1], msg_size - 1);
+        (void)ret;
+    }
+
+    #ifdef PBDRV_CONFIG_RPROC_VIRTUAL
+    pbdrv_rproc_virtual_socket_send(msg, msg_size);
+    #endif
+
+    PBIO_OS_AWAIT_ONCE(state);
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
