@@ -32,7 +32,7 @@ typedef enum {
 #if PBSYS_CONFIG_HOST
 
 void pbsys_host_debug_print(const char *data, size_t len);
-pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
+bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
 void pbsys_host_init(void);
 bool pbsys_host_is_connected(void);
 void pbsys_host_schedule_status_update(const uint8_t *buf);
@@ -44,7 +44,8 @@ uint32_t pbsys_host_stdin_get_available(void);
 pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size);
 bool pbsys_host_tx_is_idle(void);
-pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size);
+pbio_error_t pbsys_host_send_app_data(pbio_os_state_t *state, const uint8_t *data, size_t size);
+void pbsys_host_app_data_clear_pending(void);
 void pbsys_host_connection_changed(void);
 
 #else // PBSYS_CONFIG_HOST

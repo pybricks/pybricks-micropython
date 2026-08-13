@@ -29,6 +29,12 @@ typedef struct {
 typedef struct _pb_type_app_data_obj_t {
     mp_obj_base_t base;
     pb_type_async_t *tx_iter;
+    /**
+     * Data object of an ongoing write. Kept here so it stays alive until
+     * pbsys copies it at transmission time. Our finalizer clears the pending
+     * state in pbsys, so it never reads collected data.
+     */
+    mp_obj_t tx_data;
     size_t rx_len;
     size_t num_modes;
     pb_type_app_data_mode_info_t *modes;
@@ -84,19 +90,26 @@ static mp_obj_t pb_type_app_data_get_bytes(size_t n_args, const mp_obj_t *pos_ar
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_app_data_get_bytes_obj, 1, pb_type_app_data_get_bytes);
 
 static pbio_error_t app_data_write_bytes_iterate_once(pbio_os_state_t *state, mp_obj_t parent_obj) {
-    // No need to pass in buffered arguments since they were copied on the
-    // inital run. We can just keep calling this until completion.
-    return pbsys_host_send_event(state, PBIO_PYBRICKS_EVENT_WRITE_APP_DATA, NULL, 0);
+    pb_type_app_data_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
+    size_t size;
+    const uint8_t *data = (const uint8_t *)mp_obj_str_get_data(self->tx_data, &size);
+    pbio_error_t err = pbsys_host_send_app_data(state, data, size);
+    if (err != PBIO_ERROR_AGAIN) {
+        // Done (or failed), so no longer needed.
+        self->tx_data = MP_OBJ_NULL;
+    }
+    return err;
 }
 
 static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in) {
 
-    // The first call will copy given data (or raise errors) so we don't need
-    // to buffer things here.
+    pb_type_app_data_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->tx_data = data_in;
+
     size_t size;
     const uint8_t *data = (const uint8_t *)mp_obj_str_get_data(data_in, &size);
     pbio_os_state_t state = 0;
-    pbio_error_t err = pbsys_host_send_event(&state, PBIO_PYBRICKS_EVENT_WRITE_APP_DATA, data, size);
+    pbio_error_t err = pbsys_host_send_app_data(&state, data, size);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -111,7 +124,6 @@ static mp_obj_t pb_type_app_data_write_bytes(mp_obj_t self_in, mp_obj_t data_in)
         .state = state,
     };
 
-    pb_type_app_data_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return pb_type_async_wait_or_await(&config, &self->tx_iter, true);
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(pb_type_app_data_write_bytes_obj, pb_type_app_data_write_bytes);
@@ -217,6 +229,8 @@ static mp_obj_t pb_type_app_data_make_new(const mp_obj_type_t *type, size_t n_ar
 }
 
 mp_obj_t pb_type_app_data_close(mp_obj_t stream) {
+    // Pending outgoing data may point into this object, so drop it.
+    pbsys_host_app_data_clear_pending();
     if (app_data_instance) {
         pbsys_command_set_write_app_data_callback(NULL);
         app_data_instance = NULL;

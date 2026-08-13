@@ -14,6 +14,8 @@
 #include <pbsys/host.h>
 #include <pbsys/hmi.h>
 
+#include "telemetry.h"
+
 #define BLE_ONLY (PBDRV_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY))
 #define USB_ONLY (!PBDRV_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
 #define BLE_AND_USB (PBDRV_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
@@ -218,6 +220,28 @@ void pbsys_host_debug_print(const char *data, size_t len) {
 #endif
 
 /**
+ * Shared buffer for one outgoing event message at a time, and whether a
+ * transmission from it (or a telemetry buffer) is currently in progress.
+ */
+static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
+static bool pbsys_host_event_out_busy;
+
+/**
+ * App data message staged for transmission (NULL if none). The data is owned
+ * by the sender, which must keep it valid until it is copied out at
+ * transmission time, or call pbsys_host_app_data_clear_pending() when it
+ * can't, such as when it is about to be garbage collected. A zero size with
+ * the pointer still set means it was copied and is now being transmitted.
+ */
+static const uint8_t *pbsys_host_app_data;
+static size_t pbsys_host_app_data_size;
+
+/**
+ * Whether a telemetry transmission is in progress.
+ */
+static bool pbsys_host_event_telemetry_busy;
+
+/**
  * Checks if all data has been transmitted.
  *
  * This is used to implement, e.g. a flush() function that blocks until all
@@ -234,10 +258,7 @@ bool pbsys_host_tx_is_idle(void) {
     return lwrb_get_full(&pbsys_host_stdout_ring_buf) == 0 && !pbsys_host_event_stdout_busy;
 }
 
-pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
-
-    static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
-    static bool pbsys_host_event_out_busy;
+bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
 
     static uint32_t bluetooth_size;
     static uint32_t usb_size;
@@ -246,6 +267,7 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
     // Returns the relevant busy state for the requested transport.
     *len = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ? &bluetooth_size : &usb_size;
 
+    // Handle possible completion on ongoing transmission.
     if (pbsys_host_event_out_busy) {
         // Clear locks if disconnected.
         if (!pbdrv_bluetooth_host_is_connected()) {
@@ -258,12 +280,22 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
             // At least one transport is still going, so keep referencing
             // current data, no matter which transport initiated first.
             *buf = current_buf;
-            return PBIO_ERROR_AGAIN;
+            return true;
         }
         // Last transmission is complete, so we can initiate another.
         pbsys_host_event_out_busy = false;
         pbsys_host_event_stdout_busy = false;
+        if (pbsys_host_app_data && !pbsys_host_app_data_size) {
+            // App data was in flight; mark it fully transmitted.
+            pbsys_host_app_data = NULL;
+        }
+        if (pbsys_host_event_telemetry_busy) {
+            pbsys_host_event_telemetry_busy = false;
+            pbsys_telemetry_data_sent();
+        }
     }
+
+    // Prepare a new transmission if any, prioritizing events by type, status first.
 
     // Prepare status.
     if (pbsys_host_status_data_pending) {
@@ -274,10 +306,11 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         memcpy(&pbsys_host_event_out_buf[0], pbsys_host_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
         usb_size = bluetooth_size = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
         pbsys_host_status_data_pending = false;
-        // This is the buffer to send; ready to get started.
+
+        // Initiatiate transfer.
         current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
-        return PBIO_ERROR_AGAIN;
+        return true;
     }
 
     // Prepare stdout, drain into chunk of maximum send size.
@@ -294,35 +327,104 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         usb_size = size;
         bluetooth_size = size;
 
-        // This is the buffer to send; ready to get started.
+        // Initiatiate transfer, marking stdout busy.
         current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
         pbsys_host_event_stdout_busy = true;
-        return PBIO_ERROR_AGAIN;
+        return true;
     }
 
-    // TODO: Queue generic numbered events from pbsys_host_send_event.
+    // App data, if pending. Copied only now. Data is valid unless cleared
+    // by the sender before it is picked up.
+    if (pbsys_host_app_data_size) {
+        pbsys_host_event_out_buf[0] = PBIO_PYBRICKS_EVENT_WRITE_APP_DATA;
+        memcpy(&pbsys_host_event_out_buf[1], pbsys_host_app_data, pbsys_host_app_data_size);
+        usb_size = bluetooth_size = pbsys_host_app_data_size + 1;
+        // Keep the pointer latched until transmitted; zero size marks pickup.
+        pbsys_host_app_data_size = 0;
+
+        // Initiatiate transfer.
+        current_buf = *buf = pbsys_host_event_out_buf;
+        pbsys_host_event_out_busy = true;
+        return true;
+    }
+
+    // Telemetry, if pending, is sent from its own buffer without copying.
+    uint32_t telemetry_size;
+    uint8_t *telemetry_data = pbsys_telemetry_get_data(&telemetry_size);
+    if (telemetry_size) {
+        usb_size = bluetooth_size = telemetry_size;
+        current_buf = *buf = telemetry_data;
+        pbsys_host_event_out_busy = true;
+        pbsys_host_event_telemetry_busy = true;
+        return true;
+    }
 
     // Nothing to do.
-    return PBIO_SUCCESS;
+    return false;
 }
 
 /**
- * Transmits data over any connected transport that is subscribed to Pybricks
- * protocol events, and awaits until it is written.
+ * Clears a pending app data message without sending it.
  *
- * @param event_type  [in]  Event type.
- * @param data        [in]  The data to transmit.
- * @param size        [in]  The size of the data to transmit.
- *                          contains the number of bytes actually processed.
- * @return                  ::PBIO_ERROR_AGAIN while the operation is in progress.
- *                          ::PBIO_ERROR_INVALID_ARG if invalid event type or size too big.
- *                          ::PBIO_ERROR_INVALID_OP if there is no connection to send it to.
- *                          ::PBIO_ERROR_BUSY if another transfer is already queued or in progress.
- *                          ::PBIO_SUCCESS on completion.
+ * The sender must call this when the pending data is about to become invalid,
+ * e.g. from a garbage collection finalizer.
  */
-pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
-    // Todo: copy data to local host buffer or use without copying.
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+void pbsys_host_app_data_clear_pending(void) {
+    pbsys_host_app_data = NULL;
+    pbsys_host_app_data_size = 0;
+}
+
+/**
+ * Sends an app data event message to connected hosts, awaiting until it is
+ * transmitted.
+ *
+ * This stages the given data for transmission after pending status and stdout,
+ * where it is copied into the shared event buffer. Until then, the caller must
+ * keep @p data valid, or call pbsys_host_app_data_clear_pending() when it
+ * can't. Any previously staged message that was not yet picked up is replaced.
+ *
+ * @param state  [in]  Protothread state.
+ * @param data   [in]  The data to transmit.
+ * @param size   [in]  The size of the data to transmit.
+ * @return             ::PBIO_ERROR_AGAIN while the operation is in progress.
+ *                     ::PBIO_ERROR_INVALID_ARG if the size is too big.
+ *                     ::PBIO_ERROR_INVALID_OP if there is no connection or it was lost.
+ *                     ::PBIO_SUCCESS on completion.
+ */
+pbio_error_t pbsys_host_send_app_data(pbio_os_state_t *state, const uint8_t *data, size_t size) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (size + 1 > PBSYS_CONFIG_HOST_EVENT_OUT_SIZE ||
+        (pbdrv_bluetooth_host_is_connected() && size + 1 > pbdrv_bluetooth_get_max_message_size())) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    if (!pbsys_host_is_connected()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Nothing to send; would otherwise stage as already picked up.
+    if (size == 0) {
+        return PBIO_SUCCESS;
+    }
+
+    // Stage for pickup by pbsys_host_get_event_buf.
+    pbsys_host_app_data = data;
+    pbsys_host_app_data_size = size;
+    pbio_os_request_poll();
+
+    // Await pickup and transmission. The pointer is cleared when fully
+    // transmitted, or replaced if a newer message superseded this one.
+    PBIO_OS_AWAIT_UNTIL(state, !pbsys_host_is_connected() || pbsys_host_app_data != data);
+
+    if (pbsys_host_app_data == data) {
+        // Disconnected before or during transmission, so drop it.
+        pbsys_host_app_data_clear_pending();
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 #endif // PBSYS_CONFIG_HOST
