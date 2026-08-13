@@ -480,7 +480,7 @@ init:
         // Send one event notification (status, stdout, ...)
         static uint32_t *event_size;
         static uint8_t *event_buf;
-        if (can_send && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH, &event_buf, &event_size) == PBIO_ERROR_AGAIN) {
+        if (can_send && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH, &event_buf, &event_size)) {
             PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, event_buf, *event_size));
             *event_size = 0;
         }

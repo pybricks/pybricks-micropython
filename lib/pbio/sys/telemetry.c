@@ -13,6 +13,8 @@
 
 #include <pbsys/host.h>
 
+#include "telemetry.h"
+
 typedef struct {
     lego_device_type_id_t type_id;
     int32_t value;
@@ -51,14 +53,28 @@ static uint8_t update_port_data(uint8_t index, uint8_t *buf) {
 }
 
 /**
+ * Message staged for pickup by the host, which sends it from this buffer
+ * without copying. First byte is the event type.
+ */
+static uint8_t pbsys_telemetry_msg[20];
+static uint32_t pbsys_telemetry_msg_size;
+
+uint8_t *pbsys_telemetry_get_data(uint32_t *size) {
+    *size = pbsys_telemetry_msg_size;
+    return pbsys_telemetry_msg;
+}
+
+void pbsys_telemetry_data_sent(void) {
+    pbsys_telemetry_msg_size = 0;
+    pbio_os_request_poll();
+}
+
+/**
  * Hub, motor, and sensor telemetry to host.
  */
 static pbio_error_t pbsys_telemetry_process_thread(pbio_os_state_t *state, void *context) {
 
     static pbio_os_timer_t timer;
-    static pbio_os_state_t sub;
-    static uint8_t buf[20];
-    static uint8_t size;
     static uint32_t i = 0;
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -68,10 +84,18 @@ static pbio_error_t pbsys_telemetry_process_thread(pbio_os_state_t *state, void 
 
         // Revisit, could concatenate packages for more efficient BLE sending.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
-            size = update_port_data(i, buf);
-            if (size) {
-                PBIO_OS_AWAIT(state, &sub, pbsys_host_send_event(&sub, PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY, buf, size));
+            uint8_t size = update_port_data(i, &pbsys_telemetry_msg[1]);
+            if (!size) {
+                continue;
             }
+            pbsys_telemetry_msg[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
+            pbsys_telemetry_msg_size = size + 1;
+            pbio_os_request_poll();
+
+            // Await pickup and transmission by the host, since it sends from
+            // our buffer. Drop the message if the connection is lost.
+            PBIO_OS_AWAIT_UNTIL(state, pbsys_telemetry_msg_size == 0 || !pbsys_host_is_connected());
+            pbsys_telemetry_msg_size = 0;
         }
     }
 
