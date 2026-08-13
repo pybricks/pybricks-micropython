@@ -278,9 +278,11 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         }
         if (bluetooth_size || usb_size) {
             // At least one transport is still going, so keep referencing
-            // current data, no matter which transport initiated first.
+            // current data, no matter which transport initiated first. Only
+            // resume the caller if it still has data itself, else it would
+            // retransmit while waiting for the other transport to finish.
             *buf = current_buf;
-            return true;
+            return **len != 0;
         }
         // Last transmission is complete, so we can initiate another.
         pbsys_host_event_out_busy = false;

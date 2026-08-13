@@ -58,8 +58,6 @@ pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, u
     pbdrv_rproc_virtual_socket_send(msg, msg_size);
     #endif
 
-    PBIO_OS_AWAIT_ONCE(state);
-
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
