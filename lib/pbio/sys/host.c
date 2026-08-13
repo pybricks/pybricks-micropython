@@ -275,7 +275,7 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         usb_size = bluetooth_size = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
         pbsys_host_status_data_pending = false;
         // This is the buffer to send; ready to get started.
-        *buf = pbsys_host_event_out_buf;
+        current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
         return PBIO_ERROR_AGAIN;
     }
@@ -295,8 +295,9 @@ pbio_error_t pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uin
         bluetooth_size = size;
 
         // This is the buffer to send; ready to get started.
-        *buf = pbsys_host_event_out_buf;
+        current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
+        pbsys_host_event_stdout_busy = true;
         return PBIO_ERROR_AGAIN;
     }
 
