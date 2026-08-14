@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Creates interactive graph of pybricks-micropython firmware size changes."""
 
-import json
+import csv
+import io
 import os
 import re
 import sys
@@ -13,12 +14,26 @@ from plotly import graph_objects as go
 from plotly.offline import plot
 from plotly.subplots import make_subplots
 
-BUILD_DIR = os.environ.get("BUILD_DIR", "build")
+# size-data worktree checked out inside this repo (gitignored), same as CI
+SIZE_DATA_DIR = "size-data"
+BUILD_DIR = os.environ.get("BUILD_DIR", os.path.join(SIZE_DATA_DIR, "build"))
+
+# branch holding the size data, used when the worktree does not exist locally
+SIZE_BRANCH = os.environ.get("SIZE_BRANCH", "size-data")
 
 # Number of digits of hash to display
 HASH_SIZE = 8
 
-HUBS = ["cityhub", "technichub", "movehub", "primehub", "essentialhub", "nxt", "ev3"]
+HUBS = [
+    "movehub",
+    "cityhub",
+    "technichub",
+    "essentialhub",
+    "primehub",
+    "nxt",
+    "ev3",
+    "buildhat",
+]
 
 GITHUB_REPO_URL = "https://github.com/pybricks/pybricks-micropython"
 
@@ -36,45 +51,56 @@ except Exception as e:
 assert not pybricks.bare, "Repository not found"
 
 
-def select(commit_map, commit_range, hub):
+def select(sizes, commits, hub):
     """Selects the useful fields from sorted items. Skips the first diff as well
     as commits that did not change the firmware size.
 
     Args:
-        commit_map (dict of dict): contents commits.json from download.py
-        commit_range (list of str): the list of commit hashes to include
+        sizes (dict): firmware size keyed by commit hash, None for failures
+        commits (list of git.Commit): mainline commits, oldest first
         hub (str): The hub type.
 
     Yields:
-        (tuple of int, string, string, int, int) The index, commit hash, commit
-            message, firmware size and change in size from previous commit
+        (tuple of int, string, string, int, int, bool) The index, commit hash,
+            commit message, firmware size, change in size from previous commit
+            and whether the size data is missing for this commit
     """
     prev_size = 0
+    i = 0
 
-    for i, hexsha in enumerate(reversed(commit_range)):
-        commit = commit_map[hexsha]
+    for commit in commits:
+        size = sizes.get(commit.hexsha)
 
-        sha = commit["oid"][:HASH_SIZE]
-        message = commit["messageHeadline"]
-        date = commit["committedDate"]
-        size = commit["firmwareSize"][hub]
+        # skip leading commits before the first recorded size
+        if size is None and prev_size == 0:
+            continue
+
+        sha = commit.hexsha[:HASH_SIZE]
+        message = commit.summary
+        date = commit.committed_datetime.strftime("%Y-%m-%d")
         diff = 0
+        missing = size is None
 
-        if size is None:
-            size = 0
+        if missing:
+            size = prev_size
+            message = f"no data<br />{message}<br />{date}"
         else:
             if prev_size != 0:
                 diff = size - prev_size
                 message = f"{diff:+}<br />{message}<br />{date}"
             prev_size = size
 
-        yield i, sha, message, size, diff
+        yield i, sha, message, size, diff, missing
+        i += 1
 
 
-def create_plot(commit_map, commit_range, hub):
+def create_plot(size_map, commits, hub):
     print("creating plot for", hub)
 
-    indexes, shas, messages, sizes, diffs = zip(*select(commit_map, commit_range, hub))
+    indexes, shas, messages, sizes, diffs, missing = zip(
+        *select(size_map, commits, hub)
+    )
+    marker_colors = ["red" if m else "#636efa" for m in missing]
 
     # Find sensible ranges to display by default
     x_end = len(indexes)
@@ -101,6 +127,7 @@ def create_plot(commit_map, commit_range, hub):
             name="Size",
             line={"shape": "hv"},
             mode="lines+markers",
+            marker={"color": marker_colors},
             hovertext=messages,
             hoverinfo="y+text",
             customdata=shas,
@@ -177,23 +204,45 @@ def create_plot(commit_map, commit_range, hub):
         f.write(html_str)
 
 
+def load_sizes(hub):
+    """Loads a hub's sizes from the worktree, or from the size-data branch
+    (local or remote-tracking, whichever exists) when not checked out.
+
+    Returns:
+        (dict) firmware size keyed by commit hash, None for recorded failures
+    """
+    path = os.path.join(SIZE_DATA_DIR, f"{hub}.csv")
+    if os.path.exists(path):
+        with open(path, newline="") as f:
+            reader = csv.reader(f)
+            return {row[0]: int(row[1]) if row[1] else None for row in reader}
+
+    for ref in (SIZE_BRANCH, f"origin/{SIZE_BRANCH}"):
+        try:
+            data = pybricks.git.show(f"{ref}:{hub}.csv")
+        except git.GitCommandError:
+            continue
+        reader = csv.reader(io.StringIO(data))
+        return {row[0]: int(row[1]) if row[1] else None for row in reader}
+
+    print(f"Size data not found: no {path} file or {SIZE_BRANCH} branch")
+    sys.exit(1)
+
+
 def main():
-    with open(Path(BUILD_DIR, "commits.json"), "r") as f:
-        commits = json.load(f)
-
-    commit_map = {c["oid"]: c for c in commits}
-
     # the tree has multiple independent histories that have been merged
     # we only want commits that belong the the mainline
-    commit_range = [
-        c.hexsha
-        for c in pybricks.iter_commits(
+    commits = list(
+        pybricks.iter_commits(
             f"{INITIAL_COMMIT}..{PYBRICKS_BRANCH}", ancestry_path=True
         )
-    ]
+    )
+    commits.reverse()  # oldest first
+
+    Path(BUILD_DIR).mkdir(parents=True, exist_ok=True)
 
     for h in HUBS:
-        create_plot(commit_map, commit_range, h)
+        create_plot(load_sizes(h), commits, h)
 
 
 if __name__ == "__main__":

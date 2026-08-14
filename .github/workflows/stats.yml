@@ -1,16 +1,21 @@
 name: Stats
 
 on:
-  push:
-    branches:
-      - "master"
+  workflow_run:
+    workflows: [Build]
+    types: [completed]
+    branches: [master]
+
 env:
   MAKEOPTS: -j2
 
 jobs:
   stats:
     name: Generate stats
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - name: Install cross-compiler
         run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
@@ -19,24 +24,21 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
+          # never expose the token to makefiles of built commits
+          persist-credentials: false
+      - name: Checkout size data
+        uses: actions/checkout@v7
+        with:
+          ref: size-data
+          path: size-data
+      - name: Configure size data git identity
+        run: |
+          git -C size-data config user.name "CI"
+          git -C size-data config user.email "team@pybricks.com"
       - run: pipx install poetry
       - run: poetry install --only=build
       - name: Build missing commits
-        env:
-          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
-          STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
-          STORAGE_URL: ${{ secrets.STORAGE_URL }}
-          CI_STATUS_TABLE: ${{ secrets.CI_STATUS_TABLE }}
-          FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-        run: poetry run .github/build-missing-commits.py
-      - name: Download commit metadata
-        env:
-          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
-          STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
-          STORAGE_URL: ${{ secrets.STORAGE_URL }}
-          FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: poetry run .github/download-commit-metadata.py
+        run: poetry run .github/build-commits.py --publish
       - name: Build web pages
         run: poetry run .github/build-stats-web.py
       - name: Install lftp
@@ -50,4 +52,4 @@ jobs:
           LFTP_PASSWORD: ${{ secrets.lftpPassword }}
           LFTP_SITE: ${{ secrets.lftpSite }}
         run: |
-          lftp -e "set ssl:check-hostname false; open --user $LFTP_USER --env-password $LFTP_SITE && mirror --verbose --reverse --delete --exclude=.htaccess build stats; exit"
+          lftp -e "set ssl:check-hostname false; open --user $LFTP_USER --env-password $LFTP_SITE && mirror --verbose --reverse --delete --exclude=.htaccess size-data/build stats; exit"

@@ -4,8 +4,6 @@ on:
   push:
     branches:
     - '**'
-    tags-ignore:
-    - '@pybricks/**'
   pull_request:
 
 concurrency:
@@ -92,6 +90,8 @@ jobs:
         hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub, ev3, buildhat]
     needs: [mpy_cross]
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
     - name: Install cross-compiler
       run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
@@ -100,6 +100,8 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
+        # never expose the token to makefiles of built commits
+        persist-credentials: false
     - name: Download mpy-cross
       uses: actions/download-artifact@v8
       with:
@@ -109,24 +111,34 @@ jobs:
       run: chmod +x micropython/mpy-cross/build/mpy-cross
     - run: pipx install poetry
     - run: poetry install --only=build
-    - name: Build firmware (pull request)
-      if: ${{ github.base_ref != null }}
-      run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.sha }}
-    - name: Build firmware (non-master branch)
-      if: ${{ github.base_ref == null && github.ref != 'refs/heads/master' }}
-      env:
-        STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
-        STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
-        STORAGE_URL: ${{ secrets.STORAGE_URL }}
-        FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
-      run: poetry run .github/build-each-commit.py ${{ matrix.hub }} ${{ github.ref_name }}
-    - name: Build firmware (master branch)
-      if: ${{ github.base_ref == null && github.ref == 'refs/heads/master' }}
+    - name: Checkout size data
+      uses: actions/checkout@v7
+      with:
+        ref: size-data
+        path: size-data
+        # only publishing (push events) needs a writable token
+        persist-credentials: ${{ github.event_name == 'push' }}
+    - name: Configure size data git identity
       run: |
-        export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
-        export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
-        [ "${{ matrix.hub }}" = "buildhat" ] && make -C bricks/${{ matrix.hub }} submodules
-        poetry run make -C bricks/${{ matrix.hub }} -j
+        git -C size-data config user.name "CI"
+        git -C size-data config user.email "team@pybricks.com"
+    - name: Build commits and publish size data (push)
+      if: github.event_name == 'push'
+      run: poetry run .github/build-commits.py ${{ matrix.hub }} --publish
+    - name: Build commits without publishing size data (pull request)
+      if: github.event_name == 'pull_request'
+      run: poetry run .github/build-commits.py ${{ matrix.hub }}
+    - name: Build firmware for upload
+      run: |
+        if [ ! -f bricks/${{ matrix.hub }}/build/firmware.zip ] || [ "$(git rev-parse HEAD)" != "${{ github.sha }}" ]; then
+          git checkout ${{ github.sha }}
+          git submodule update --init micropython
+          git -C micropython submodule update --init lib/micropython-lib lib/stm32lib
+          export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
+          export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
+          [ "${{ matrix.hub }}" = "buildhat" ] && make -C bricks/${{ matrix.hub }} submodules
+          poetry run make -C bricks/${{ matrix.hub }} -j
+        fi
     - name: Extract firmware.zip for upload
       if: ${{ success()}}
       working-directory: bricks/${{ matrix.hub }}/build
