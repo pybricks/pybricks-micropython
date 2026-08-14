@@ -8,6 +8,7 @@
 #include <lwrb/lwrb.h>
 
 #include <pbio/bluetooth.h>
+#include <pbio/int_math.h>
 #include <pbio/usb.h>
 
 #include <pbsys/command.h>
@@ -15,10 +16,6 @@
 #include <pbsys/hmi.h>
 
 #include "telemetry.h"
-
-#define BLE_ONLY (PBDRV_CONFIG_BLUETOOTH && (!PBDRV_CONFIG_USB || PBDRV_CONFIG_USB_CHARGE_ONLY))
-#define USB_ONLY (!PBDRV_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
-#define BLE_AND_USB (PBDRV_CONFIG_BLUETOOTH && PBDRV_CONFIG_USB && !PBDRV_CONFIG_USB_CHARGE_ONLY)
 
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
@@ -82,6 +79,16 @@ bool pbsys_host_is_connected(void) {
  */
 uint32_t pbsys_host_stdin_get_free(void) {
     return lwrb_get_free(&pbsys_host_stdin_ring_buf);
+}
+
+/**
+ * Gets the maximum message size that can be sent to the host on all active
+ * connections. Accounts for event byte, so size is the payload.
+ */
+static uint32_t pbsys_host_get_max_message_size(void) {
+    // USB limit is configured to allow configured host event size, so poses
+    // no additional runtime limit.
+    return pbio_int_math_min(pbdrv_bluetooth_get_max_message_size(), PBSYS_CONFIG_HOST_EVENT_OUT_SIZE) - 1;
 }
 
 /**
@@ -214,11 +221,6 @@ void pbsys_host_debug_print(const char *data, size_t len) {
     pbio_os_request_poll();
 }
 
-
-#if PBDRV_CONFIG_BLUETOOTH && (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBDRV_BLUETOOTH_ATT_HEADER_SIZE)
-#error "Host event message must fit in one BLE packet".
-#endif
-
 /**
  * Shared buffer for one outgoing event message at a time, and whether a
  * transmission from it (or a telemetry buffer) is currently in progress.
@@ -321,13 +323,11 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         pbsys_host_event_out_buf[0] = PBIO_PYBRICKS_EVENT_WRITE_STDOUT;
 
         // Drain ring buffer to send buffer as much as we can. Limit is the
-        // runtime MTU. USB sizes are protected by constant build flags.
-        uint32_t mtu = pbdrv_bluetooth_get_max_message_size();
-        uint32_t size = 1 + lwrb_read(&pbsys_host_stdout_ring_buf, &pbsys_host_event_out_buf[1], mtu - 1);
+        // runtime MTU minus one event byte.
+        uint32_t drained_size = lwrb_read(&pbsys_host_stdout_ring_buf, &pbsys_host_event_out_buf[1], pbsys_host_get_max_message_size());
 
         // All transports are marked to send the same size, guarding current transmission.
-        usb_size = size;
-        bluetooth_size = size;
+        usb_size = bluetooth_size = drained_size + 1;
 
         // Initiatiate transfer, marking stdout busy.
         current_buf = *buf = pbsys_host_event_out_buf;
@@ -399,7 +399,7 @@ pbio_error_t pbsys_host_send_app_data(pbio_os_state_t *state, const uint8_t *dat
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (size + 1 > PBSYS_CONFIG_HOST_EVENT_OUT_SIZE ||
-        (pbdrv_bluetooth_host_is_connected() && size + 1 > pbdrv_bluetooth_get_max_message_size())) {
+        (pbdrv_bluetooth_host_is_connected() && size > pbsys_host_get_max_message_size())) {
         return PBIO_ERROR_INVALID_ARG;
     }
 

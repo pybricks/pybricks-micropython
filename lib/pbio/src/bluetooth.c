@@ -33,6 +33,10 @@
 #define DEBUG_PRINT(...)
 #endif
 
+#if PBDRV_CONFIG_BLUETOOTH && (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBDRV_BLUETOOTH_ATT_HEADER_SIZE)
+#error "Host event message must fit in one BLE packet".
+#endif
+
 void pbio_bluetooth_host_connection_changed(void) {
     pbsys_host_connection_changed();
 }
