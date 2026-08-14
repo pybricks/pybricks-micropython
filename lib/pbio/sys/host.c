@@ -239,11 +239,6 @@ static const uint8_t *pbsys_host_app_data;
 static size_t pbsys_host_app_data_size;
 
 /**
- * Whether a telemetry transmission is in progress.
- */
-static bool pbsys_host_event_telemetry_busy;
-
-/**
  * Checks if all data has been transmitted.
  *
  * This is used to implement, e.g. a flush() function that blocks until all
@@ -292,10 +287,6 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         if (pbsys_host_app_data && !pbsys_host_app_data_size) {
             // App data was in flight; mark it fully transmitted.
             pbsys_host_app_data = NULL;
-        }
-        if (pbsys_host_event_telemetry_busy) {
-            pbsys_host_event_telemetry_busy = false;
-            pbsys_telemetry_data_sent();
         }
     }
 
@@ -352,13 +343,11 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     }
 
     // Telemetry, if pending, is sent from its own buffer without copying.
-    uint32_t telemetry_size;
-    uint8_t *telemetry_data = pbsys_telemetry_get_data(&telemetry_size);
+    uint32_t telemetry_size = pbsys_telemetry_get_data(pbsys_host_event_out_buf, pbsys_host_get_max_message_size());
     if (telemetry_size) {
         usb_size = bluetooth_size = telemetry_size;
-        current_buf = *buf = telemetry_data;
+        current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
-        pbsys_host_event_telemetry_busy = true;
         return true;
     }
 

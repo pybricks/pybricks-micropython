@@ -22,9 +22,11 @@ typedef struct {
 
 static pbsys_telemetry_port_data_t last_data[PBIO_CONFIG_PORT_NUM_DEV];
 
+#define MOTOR_DATA_SIZE (2 + sizeof(uint32_t))
+
 // Revisit: Come up with a data encoding protocol. Right now it just sends
 // six motor positions to drive the existing motor animation.
-static uint8_t update_port_data(uint8_t index, uint8_t *buf) {
+static pbio_error_t update_port_data(uint8_t index, uint8_t *buf) {
 
     // Get type and angle.
     int32_t degrees = 0;
@@ -40,7 +42,8 @@ static uint8_t update_port_data(uint8_t index, uint8_t *buf) {
     pbsys_telemetry_port_data_t *data = &last_data[index];
 
     if (data->type_id == type_id && data->value == degrees) {
-        return 0;
+        // Same as before, don't send.
+        return PBIO_ERROR_AGAIN;
     }
 
     data->type_id = type_id;
@@ -49,66 +52,94 @@ static uint8_t update_port_data(uint8_t index, uint8_t *buf) {
     buf[0] = type_id;
     buf[1] = index;
     pbio_set_uint32_le(&buf[2], degrees);
-    return 6;
+    return PBIO_SUCCESS;
 }
+
+#define YIELD_DATA(state, size, return_size) \
+    do {                                     \
+        *size = (return_size);               \
+        PBIO_OS_AWAIT_ONCE(state);           \
+    } while (0)
 
 /**
- * Message staged for pickup by the host, which sends it from this buffer
- * without copying. First byte is the event type.
+ * The telemetry "process" is not driven from the main event loop, but serves
+ * as a data generator, for the host process to pull when ready to send.
+ *
+ * Uses PBIO_SUCCESS to indicate yielding data, rather than returning.
  */
-static uint8_t pbsys_telemetry_msg[20];
-static uint32_t pbsys_telemetry_msg_size;
+static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size) {
 
-uint8_t *pbsys_telemetry_get_data(uint32_t *size) {
-    *size = pbsys_telemetry_msg_size;
-    return pbsys_telemetry_msg;
-}
+    // Input argument is how much we are free to write.
+    uint32_t available = *size;
 
-void pbsys_telemetry_data_sent(void) {
-    pbsys_telemetry_msg_size = 0;
-    pbio_os_request_poll();
-}
+    // Resulting yield with 0 means no data, so await.
+    *size = 0;
 
-/**
- * Hub, motor, and sensor telemetry to host.
- */
-static pbio_error_t pbsys_telemetry_process_thread(pbio_os_state_t *state, void *context) {
-
+    static uint8_t i = 0;
     static pbio_os_timer_t timer;
-    static uint32_t i = 0;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
-        PBIO_OS_AWAIT_MS(state, &timer, 40);
 
-        // Revisit, could concatenate packages for more efficient BLE sending.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
-            uint8_t size = update_port_data(i, &pbsys_telemetry_msg[1]);
-            if (!size) {
+
+            // Can't fit any more motor samples.
+            if (available < MOTOR_DATA_SIZE) {
+                return PBIO_ERROR_BUSY;
+            }
+
+            // REVISIT: Generalize I/O protocol.
+            pbio_error_t err = update_port_data(i, data);
+            if (err != PBIO_SUCCESS) {
+                // Skip unavailable device.
                 continue;
             }
-            pbsys_telemetry_msg[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
-            pbsys_telemetry_msg_size = size + 1;
-            pbio_os_request_poll();
 
-            // Await pickup and transmission by the host, since it sends from
-            // our buffer. Drop the message if the connection is lost.
-            PBIO_OS_AWAIT_UNTIL(state, pbsys_telemetry_msg_size == 0 || !pbsys_host_is_connected());
-            pbsys_telemetry_msg_size = 0;
+            // Yield one motor payload for appending.
+            YIELD_DATA(state, size, MOTOR_DATA_SIZE);
+        }
+
+        // Yields with no data.
+        PBIO_OS_AWAIT_MS(state, &timer, 40);
+    }
+
+    // Unreachable
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+}
+
+uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
+
+    static pbio_os_state_t state;
+    uint32_t next_index = 1;
+
+    data[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
+
+    while (next_index < max_size - 1) {
+
+        // Fetch one sensor sample and attempt to append.
+        uint32_t size = max_size - next_index - 1;
+        pbio_error_t err = pbsys_telemetry_iterate_data(&state, &data[next_index + 1], &size);
+
+        if (err == PBIO_ERROR_AGAIN) {
+            // Yield with no data means nothing more now. Send what we have.
+            if (!size) {
+                break;
+            }
+
+            // Got a data point. Advance to the next.
+            data[next_index] = size;
+            next_index += size + 1;
+            continue;
+        }
+
+        if (err == PBIO_ERROR_BUSY) {
+            // Data full, time to send.
+            break;
         }
     }
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-/**
- *
- * Starts telemetry process.
- */
-void pbsys_telemetry_init(void) {
-    static pbio_os_process_t pbsys_telemetry_process;
-    pbio_os_process_start(&pbsys_telemetry_process, pbsys_telemetry_process_thread, NULL);
+    return next_index > 1 ? next_index : 0;
 }
 
 #endif // PBSYS_CONFIG_TELEMETRY

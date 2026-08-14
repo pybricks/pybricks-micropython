@@ -11,19 +11,12 @@
 
 #if PBSYS_CONFIG_TELEMETRY
 
-void pbsys_telemetry_init(void);
-uint8_t *pbsys_telemetry_get_data(uint32_t *size);
-void pbsys_telemetry_data_sent(void);
+uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size);
 
 #else
 
-static inline void pbsys_telemetry_init(void) {
-}
-static inline uint8_t *pbsys_telemetry_get_data(uint32_t *size) {
-    *size = 0;
-    return NULL;
-}
-static inline void pbsys_telemetry_data_sent(void) {
+static inline uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
+    return 0;
 }
 
 #endif // PBSYS_CONFIG_TELEMETRY

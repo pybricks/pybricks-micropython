@@ -58,7 +58,6 @@ void pbsys_init(void) {
     pbsys_hmi_init();
     pbsys_host_init();
     pbsys_status_light_init();
-    pbsys_telemetry_init();
 
     pbio_os_process_start(&pbsys_system_poll_process, pbsys_system_poll_process_thread, NULL);
 

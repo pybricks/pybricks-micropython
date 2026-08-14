@@ -59,12 +59,21 @@ def update_display(data):
                 virtual_display.set_at((x, y), color)
 
 
-def process_telemetry(payload):
-    # Only supports motors for now.
-    if len(payload) == 6:
-        type_id, index, angle = struct.unpack("<bbi", payload[0:6])
-        if type_id == 94:  # REVISIT: Align with firmware
-            angles[index] = angle
+def iter_chunks(data: bytes):
+    i = 0
+    while i < len(data):
+        size = data[i]
+        yield data[i + 1 : i + 1 + size]
+        i += 1 + size
+
+
+def process_telemetry(message):
+    for payload in iter_chunks(message):
+        # Only supports motors for now.
+        if len(payload) == 6:
+            type_id, index, angle = struct.unpack("<bbi", payload[0:6])
+            if type_id == 94:  # REVISIT: Align with firmware
+                angles[index] = angle
 
 
 def update_state():
