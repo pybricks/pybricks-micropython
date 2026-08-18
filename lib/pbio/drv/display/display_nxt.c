@@ -386,6 +386,12 @@ pbio_image_t *pbdrv_display_get_image(void) {
     return &pbdrv_display_image;
 }
 
+uint32_t pbdrv_display_get_buffer(uint8_t *buffer, uint32_t offset, uint32_t max_size, uint32_t *update_count) {
+    // Not implemented for this driver.
+    *update_count = 0;
+    return 0;
+}
+
 uint8_t pbdrv_display_get_max_value(void) {
     return 1;
 }

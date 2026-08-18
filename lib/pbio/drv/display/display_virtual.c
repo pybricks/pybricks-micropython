@@ -7,17 +7,12 @@
 
 #if PBDRV_CONFIG_DISPLAY_VIRTUAL
 
-#include <stdio.h>
 #include <string.h>
 
 #include <pbdrv/display.h>
 
-#include <pbio/busy_count.h>
-#include <pbio/error.h>
 #include <pbio/image.h>
 #include <pbio/os.h>
-
-#include "../rproc/rproc_virtual.h"
 
 /**
  * User frame buffer. Each value is one pixel with value:
@@ -37,40 +32,18 @@ static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][PBDRV_CON
 static pbio_image_t display_image;
 
 /**
- * Flag to indicate that the user frame has been updated and needs to be
- * encoded and sent to the display driver.
+ * Number of display updates so far. Readers of the frame buffer compare this
+ * to a previously read value to know whether the buffer changed.
  */
-static bool pbdrv_display_user_frame_update_requested;
-
-static pbio_os_process_t pbdrv_display_virtual_process;
-
-/**
- * Display driver process. Initializes the display and updates the display
- * with the user frame buffer if the user data was updated.
- */
-static pbio_error_t pbdrv_display_virtual_process_thread(pbio_os_state_t *state, void *context) {
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // Clear display to start with.
-    memset(&pbdrv_display_user_frame, 0, sizeof(pbdrv_display_user_frame));
-    pbdrv_display_user_frame_update_requested = true;
-    pbio_busy_count_down();
-
-    // Update the display with the user frame buffer, if changed.
-    for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
-        pbdrv_display_user_frame_update_requested = false;
-        pbdrv_rproc_virtual_socket_send(display_image.pixels, sizeof(pbdrv_display_user_frame));
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
+static uint32_t pbdrv_display_update_count;
 
 /**
  * Initialize the display driver.
  */
 void pbdrv_display_init(void) {
+
+    // Clear display to start with.
+    memset(&pbdrv_display_user_frame, 0, sizeof(pbdrv_display_user_frame));
 
     // Initialize image.
     pbio_image_init(&display_image, (uint8_t *)pbdrv_display_user_frame,
@@ -79,12 +52,33 @@ void pbdrv_display_init(void) {
     display_image.print_font = &pbio_font_terminus_normal_16;
     display_image.print_value = 3;
 
-    pbio_busy_count_up();
-    pbio_os_process_start(&pbdrv_display_virtual_process, pbdrv_display_virtual_process_thread, NULL);
+    // Count the initial cleared frame as an update so readers pick it up.
+    pbdrv_display_update_count = 1;
 }
 
 pbio_image_t *pbdrv_display_get_image(void) {
     return &display_image;
+}
+
+uint32_t pbdrv_display_get_buffer(uint8_t *buffer, uint32_t offset, uint32_t max_size, uint32_t *update_count) {
+    *update_count = pbdrv_display_update_count;
+
+    // Pixels are 2 bits each, so packed 4 per byte, LSB first. Offset and
+    // sizes are in packed bytes.
+    const uint8_t *pixels = (const uint8_t *)pbdrv_display_user_frame;
+    uint32_t packed_size = sizeof(pbdrv_display_user_frame) / 4;
+    if (offset >= packed_size) {
+        return 0;
+    }
+    uint32_t copy_size = packed_size - offset;
+    if (copy_size > max_size) {
+        copy_size = max_size;
+    }
+    for (uint32_t i = 0; i < copy_size; i++) {
+        const uint8_t *p = &pixels[(offset + i) * 4];
+        buffer[i] = (p[0] & 0x03) | ((p[1] & 0x03) << 2) | ((p[2] & 0x03) << 4) | ((p[3] & 0x03) << 6);
+    }
+    return copy_size;
 }
 
 uint8_t pbdrv_display_get_max_value(void) {
@@ -111,7 +105,7 @@ uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
 }
 
 void pbdrv_display_update(void) {
-    pbdrv_display_user_frame_update_requested = true;
+    pbdrv_display_update_count++;
     pbio_os_request_poll();
 }
 
