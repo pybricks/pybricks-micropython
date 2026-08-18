@@ -708,7 +708,8 @@ static inline pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *s
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline uint16_t pbdrv_bluetooth_get_max_message_size(void) {
-    return 0;
+    // Bluetooth does not impose any limits when not enabled.
+    return UINT16_MAX;
 }
 
 #endif // PBIO_CONFIG_BLUETOOTH
