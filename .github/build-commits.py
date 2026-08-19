@@ -6,8 +6,8 @@ that already has a recorded size. Results are appended to <hub>.csv in the size
 data worktree as one "hash,size" line per commit and committed there. Build
 failures are recorded with an empty size so they are never retried. With
 --publish, each commit is also pushed to the GitHub remote, retrying when
-concurrent CI jobs push in between; the script fails if any results remain
-unpublished at the end.
+concurrent CI jobs push in between; the script fails if a push still does
+not go through.
 
 Example:
 
@@ -81,13 +81,10 @@ def load_recorded():
 
 recorded = load_recorded()
 
-# set when a push gives up; cleared when a later push carries the results along
-unpublished = False
-
 
 def record(commit, size):
     """Appends one result and commits it, pushing when enabled."""
-    global recorded, unpublished
+    global recorded
     recorded[commit.hexsha] = "" if size is None else str(size)
 
     message = f"{args.hub}: Add {commit.hexsha[:8]}: "
@@ -101,7 +98,8 @@ def record(commit, size):
         with open(CSV_PATH, "w", newline="") as f:
             csv.writer(f, lineterminator="\n").writerows(recorded.items())
 
-        # another job may have already recorded the same result
+        # nothing left to commit: after a rejected push, the job that beat us
+        # may have already published this same commit with the same size
         if not size_data.is_dirty(untracked_files=True):
             return
 
@@ -113,7 +111,6 @@ def record(commit, size):
 
         try:
             size_data.git.push()
-            unpublished = False
             return
         except git.GitCommandError:
             # another CI job pushed in between: redo on top of its result,
@@ -125,9 +122,7 @@ def record(commit, size):
             merged.update(recorded)
             recorded = merged
 
-    # the result rides along with the next push, or the job fails at the end
-    print("Could not push size data, continuing", flush=True)
-    unpublished = True
+    sys.exit("Could not push size data; rerun to retry")
 
 
 # newest ancestor of HEAD already recorded
@@ -179,6 +174,9 @@ def build():
 
 failures = False
 
+# micropython submodule commit that mpy-cross was last built from
+mpy_cross_built = None
+
 for commit in pybricks.iter_commits(
     f"{start}..{head}", ancestry_path=True, reverse=True
 ):
@@ -194,12 +192,20 @@ for commit in pybricks.iter_commits(
 
     update_submodules()
 
-    print("Clean all", flush=True)
-    subprocess.check_call(["make", "-C", PYBRICKS_PATH, "clean-all"])
+    print("Clean", flush=True)
+    # clean the brick directly: top-level clean-<hub> would also clean the
+    # mpy-cross that is kept while the micropython submodule is unchanged
+    subprocess.check_call(
+        ["make", "-C", os.path.join(PYBRICKS_PATH, "bricks", args.hub), "clean"]
+    )
 
-    print("Building mpy-cross", flush=True)
-    mpy_cross_path = os.path.join(PYBRICKS_PATH, "micropython", "mpy-cross")
-    subprocess.check_call(["make", "-C", mpy_cross_path, "CROSS_COMPILE=", "-j"])
+    micropython_commit = commit.tree["micropython"].hexsha
+    if micropython_commit != mpy_cross_built:
+        print("Building mpy-cross", flush=True)
+        mpy_cross_path = os.path.join(PYBRICKS_PATH, "micropython", "mpy-cross")
+        subprocess.check_call(["make", "-C", mpy_cross_path, "clean"])
+        subprocess.check_call(["make", "-C", mpy_cross_path, "CROSS_COMPILE=", "-j"])
+        mpy_cross_built = micropython_commit
 
     print("Building", args.hub, flush=True)
     try:
@@ -212,6 +218,3 @@ for commit in pybricks.iter_commits(
 
 if failures:
     sys.exit("Some builds failed")
-
-if unpublished:
-    sys.exit("Some size data could not be published; rerun to retry")
