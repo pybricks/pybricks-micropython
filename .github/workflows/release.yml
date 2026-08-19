@@ -18,13 +18,16 @@ jobs:
     name: Upload Release Assets
     runs-on: ubuntu-24.04
     steps:
-      - name: Install cross-compiler
-        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
       - name: Checkout code
         uses: actions/checkout@v7
         with:
           submodules: true
           fetch-depth: 0
+      - name: Install cross-compiler
+        timeout-minutes: 5
+        uses: ./.github/actions/apt-install
+        with:
+          packages: gcc-arm-none-eabi
       - run: pipx install poetry
       - run: poetry install --only=build
       - name: Create credits file

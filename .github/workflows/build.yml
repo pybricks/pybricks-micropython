@@ -82,19 +82,30 @@ jobs:
       if: failure()
       run: micropython/tests/run-tests.py --print-failures
 
+  arm_toolchain_cache:
+    name: warm ARM toolchain cache
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v7
+    - name: Warm toolchain cache
+      timeout-minutes: 10
+      uses: ./.github/actions/apt-install
+      with:
+        packages: gcc-arm-none-eabi
+        warm-cache-only: 'true'
+
   firmware:
     name: firmware
     strategy:
       fail-fast: false
       matrix:
         hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub, ev3, buildhat]
-    needs: [mpy_cross]
+    needs: [mpy_cross, arm_toolchain_cache]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
-    - name: Install cross-compiler
-      run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
     - name: Checkout repo
       uses: actions/checkout@v7
       with:
@@ -102,6 +113,11 @@ jobs:
         fetch-depth: 0
         # never expose the token to makefiles of built commits
         persist-credentials: false
+    - name: Install cross-compiler
+      timeout-minutes: 10
+      uses: ./.github/actions/apt-install
+      with:
+        packages: gcc-arm-none-eabi
     - name: Download mpy-cross
       uses: actions/download-artifact@v8
       with:
@@ -158,8 +174,6 @@ jobs:
     needs: [mpy_cross]
     runs-on: ubuntu-24.04
     steps:
-    - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install pipx
     - name: Install Pybricksdev
       run: pipx install pybricksdev
     - name: Checkout repo
@@ -191,14 +205,15 @@ jobs:
     env:
       PBIO_TEST_RESULTS_DIR: lib/pbio/test/results
     steps:
-    - name: Install prerequisites
-      run: |
-        sudo apt-get update
-        sudo apt-get install --yes doxygen graphviz
     - name: Checkout repo
       uses: actions/checkout@v7
       with:
         submodules: true
+    - name: Install prerequisites
+      timeout-minutes: 10
+      uses: ./.github/actions/apt-install
+      with:
+        packages: doxygen graphviz
     - name: Setup poetry
       run: |
         pipx install poetry
