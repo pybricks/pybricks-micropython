@@ -44,7 +44,7 @@
  * disconnection gracefully, even if the host abruptly goes away (e.g. the
  * browser tab is closed) without unsubscribing.
  */
-static bool pbdrv_usb_dtr;
+static bool pbio_usb_dtr;
 
 /**
  * Whether the host is subscribed to our outgoing event messages. This is the
@@ -55,13 +55,13 @@ static bool pbdrv_usb_dtr;
  * flood so that we don't bombard the host with events the moment DTR is
  * (possibly automatically) asserted.
  */
-static bool pbdrv_usb_subscribed;
+static bool pbio_usb_subscribed;
 
 bool pbio_usb_connection_is_active(void) {
-    return pbdrv_usb_is_ready() && pbdrv_usb_dtr && pbdrv_usb_subscribed;
+    return pbdrv_usb_is_ready() && pbio_usb_dtr && pbio_usb_subscribed;
 }
 
-static uint32_t pbdrv_usb_copy_str(uint8_t *buf, const char *str) {
+static uint32_t pbio_usb_copy_str(uint8_t *buf, const char *str) {
     uint32_t size = strlen(str);
 
     // Data with 4 byte header must fit in the unencoded frame.
@@ -80,16 +80,16 @@ static uint32_t pbdrv_usb_copy_str(uint8_t *buf, const char *str) {
  * driver still does today. We should invert this so pbsys registers a single read
  * handler shared by USB and all BLE drivers.
  */
-static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id, uint8_t *buf) {
+static uint32_t pbio_usb_read_characteristic(uint8_t service, uint16_t char_id, uint8_t *buf) {
     switch (service) {
         case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
             switch (char_id) {
                 case PBIO_GATT_DEVICE_NAME_CHAR_UUID:
-                    return pbdrv_usb_copy_str(buf, pbdrv_bluetooth_get_hub_name());
+                    return pbio_usb_copy_str(buf, pbdrv_bluetooth_get_hub_name());
                 case PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID:
-                    return pbdrv_usb_copy_str(buf, PBIO_VERSION_STR);
+                    return pbio_usb_copy_str(buf, PBIO_VERSION_STR);
                 case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:
-                    return pbdrv_usb_copy_str(buf, PBIO_PROTOCOL_VERSION_STR);
+                    return pbio_usb_copy_str(buf, PBIO_PROTOCOL_VERSION_STR);
                 case PBIO_GATT_PNP_ID_CHAR_UUID:
                     pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
                     return PBIO_PYBRICKS_PNP_ID_SIZE;
@@ -116,29 +116,29 @@ static uint32_t pbdrv_usb_read_characteristic(uint8_t service, uint16_t char_id,
 /**
  * Incoming COBS frame assembly buffer (encoded bytes, delimiter excluded).
  */
-static uint8_t pbdrv_usb_rx_frame[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
-static uint32_t pbdrv_usb_rx_frame_len;
-static bool pbdrv_usb_rx_overflow;
+static uint8_t pbio_usb_rx_frame[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
+static uint32_t pbio_usb_rx_frame_len;
+static bool pbio_usb_rx_overflow;
 
-void pbdrv_usb_on_dtr_changed(bool dtr) {
-    if (dtr == pbdrv_usb_dtr) {
+void pbio_usb_on_dtr_changed(bool dtr) {
+    if (dtr == pbio_usb_dtr) {
         return;
     }
 
-    pbdrv_usb_dtr = dtr;
+    pbio_usb_dtr = dtr;
 
     // Drop any partially-assembled incoming frame. Otherwise stray bytes from a
     // previous port opener (e.g. an OS modem probe like ModemManager, which
     // writes AT strings with no frame delimiter) would prepend to and corrupt
     // the first real frame of this new connection.
-    pbdrv_usb_rx_frame_len = 0;
-    pbdrv_usb_rx_overflow = false;
+    pbio_usb_rx_frame_len = 0;
+    pbio_usb_rx_overflow = false;
 
     if (!dtr) {
         // Host closed the port. The subscription implicitly falls with DTR. In
         // practice the host rarely unsubscribes explicitly; it just lets DTR
         // drop, which we detect even if the host abruptly goes away.
-        pbdrv_usb_subscribed = false;
+        pbio_usb_subscribed = false;
     }
 
     pbsys_host_connection_changed();
@@ -150,12 +150,12 @@ void pbdrv_usb_on_dtr_changed(bool dtr) {
  * Sets whether the host is subscribed to event notifications and notifies
  * listeners of the connection state change.
  */
-static void pbdrv_usb_set_subscribed(bool subscribed) {
-    if (subscribed == pbdrv_usb_subscribed) {
+static void pbio_usb_set_subscribed(bool subscribed) {
+    if (subscribed == pbio_usb_subscribed) {
         return;
     }
 
-    pbdrv_usb_subscribed = subscribed;
+    pbio_usb_subscribed = subscribed;
 
     if (subscribed) {
         // Host just subscribed. Send the current status right away, like the
@@ -178,8 +178,8 @@ static void pbdrv_usb_set_subscribed(bool subscribed) {
  * the COBS prefix at transmit time. `tag` echoes the byte from the command
  * that produced this response so the host can correlate them.
  */
-static uint8_t pbdrv_usb_command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1];
-static bool pbdrv_usb_command_response_pending;
+static uint8_t pbio_usb_command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1];
+static bool pbio_usb_command_response_pending;
 
 /**
  * Pending reply to the most recently received read request.
@@ -189,12 +189,12 @@ static bool pbdrv_usb_command_response_pending;
  * `[service, char_id_lo, char_id_hi, value...]`; the READ_REPLY message type
  * is added as the COBS prefix at transmit time.
  */
-static uint8_t pbdrv_usb_read_reply_buf[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
-static uint32_t pbdrv_usb_read_reply_len;
-static bool pbdrv_usb_read_reply_pending;
+static uint8_t pbio_usb_read_reply_buf[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
+static uint32_t pbio_usb_read_reply_len;
+static bool pbio_usb_read_reply_pending;
 
 /** Number of header bytes before the value in a read reply. */
-#define PBDRV_USB_READ_REPLY_HEADER_SIZE 3
+#define pbio_usb_READ_REPLY_HEADER_SIZE 3
 
 /**
  * Non-blocking poll handler to process incoming bytes.
@@ -205,7 +205,7 @@ static bool pbdrv_usb_read_reply_pending;
  * answered synchronously and queued as a read reply. This never depends on the
  * transmit state, so it cannot deadlock.
  */
-static void pbdrv_usb_handle_data_in(void) {
+static void pbio_usb_handle_data_in(void) {
 
     // Bytes are copied here so the driver can immediately queue the next
     // receive. Only the single USB process thread runs this, so a static
@@ -218,36 +218,36 @@ static void pbdrv_usb_handle_data_in(void) {
         uint8_t byte = data_in[i];
 
         if (byte != PBIO_COBS_DELIMITER) {
-            if (pbdrv_usb_rx_frame_len < sizeof(pbdrv_usb_rx_frame)) {
-                pbdrv_usb_rx_frame[pbdrv_usb_rx_frame_len++] = byte;
+            if (pbio_usb_rx_frame_len < sizeof(pbio_usb_rx_frame)) {
+                pbio_usb_rx_frame[pbio_usb_rx_frame_len++] = byte;
             } else {
                 // Frame too big. Discard until the next delimiter resyncs us.
-                pbdrv_usb_rx_overflow = true;
+                pbio_usb_rx_overflow = true;
             }
             continue;
         }
 
         // Delimiter reached: end of frame.
-        if (!pbdrv_usb_rx_overflow && pbdrv_usb_rx_frame_len > 0) {
+        if (!pbio_usb_rx_overflow && pbio_usb_rx_frame_len > 0) {
             uint8_t msg_type;
             uint32_t msg_size = pbio_cobs_decode_prefixed(
-                pbdrv_usb_rx_frame, pbdrv_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
+                pbio_usb_rx_frame, pbio_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
 
             // The decoded prefix is the host-to-hub message type and the rest
             // is its payload.
             if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
                 // Subscribe or unsubscribe to event notifications. The payload
                 // is a single byte: 1 to subscribe, 0 to unsubscribe.
-                pbdrv_usb_set_subscribed(msg[0]);
+                pbio_usb_set_subscribed(msg[0]);
             } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
                 // The command payload is [tag, ...payload]. The tag is opaque
                 // to us: echo it back in the response so the host can correlate
                 // a late response with the command that produced it. The
                 // payload after the tag is the same as a BLE command write.
-                pbdrv_usb_command_response_buf[0] = msg[0];
-                pbio_set_uint32_le(&pbdrv_usb_command_response_buf[1],
+                pbio_usb_command_response_buf[0] = msg[0];
+                pbio_set_uint32_le(&pbio_usb_command_response_buf[1],
                     pbsys_handle_command(&msg[1], msg_size - 1));
-                pbdrv_usb_command_response_pending = true;
+                pbio_usb_command_response_pending = true;
                 pbio_os_request_poll();
             } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
                 // A read request payload is [service, char_id_lo, char_id_hi].
@@ -255,34 +255,34 @@ static void pbdrv_usb_handle_data_in(void) {
                 // selector so the host can correlate it.
                 uint8_t service = msg[0];
                 uint16_t char_id = pbio_get_uint16_le(&msg[1]);
-                pbdrv_usb_read_reply_buf[0] = service;
-                pbdrv_usb_read_reply_buf[1] = msg[1];
-                pbdrv_usb_read_reply_buf[2] = msg[2];
-                uint32_t value_size = pbdrv_usb_read_characteristic(
-                    service, char_id, &pbdrv_usb_read_reply_buf[PBDRV_USB_READ_REPLY_HEADER_SIZE]);
-                pbdrv_usb_read_reply_len = PBDRV_USB_READ_REPLY_HEADER_SIZE + value_size;
-                pbdrv_usb_read_reply_pending = true;
+                pbio_usb_read_reply_buf[0] = service;
+                pbio_usb_read_reply_buf[1] = msg[1];
+                pbio_usb_read_reply_buf[2] = msg[2];
+                uint32_t value_size = pbio_usb_read_characteristic(
+                    service, char_id, &pbio_usb_read_reply_buf[pbio_usb_READ_REPLY_HEADER_SIZE]);
+                pbio_usb_read_reply_len = pbio_usb_READ_REPLY_HEADER_SIZE + value_size;
+                pbio_usb_read_reply_pending = true;
                 pbio_os_request_poll();
             }
         }
 
-        pbdrv_usb_rx_frame_len = 0;
-        pbdrv_usb_rx_overflow = false;
+        pbio_usb_rx_frame_len = 0;
+        pbio_usb_rx_overflow = false;
     }
 }
 
-static void pbdrv_usb_reset_state(void) {
-    pbdrv_usb_on_dtr_changed(false);
-    pbdrv_usb_subscribed = false;
-    pbdrv_usb_command_response_pending = false;
-    pbdrv_usb_read_reply_pending = false;
-    pbdrv_usb_rx_frame_len = 0;
-    pbdrv_usb_rx_overflow = false;
+static void pbio_usb_reset_state(void) {
+    pbio_usb_on_dtr_changed(false);
+    pbio_usb_subscribed = false;
+    pbio_usb_command_response_pending = false;
+    pbio_usb_read_reply_pending = false;
+    pbio_usb_rx_frame_len = 0;
+    pbio_usb_rx_overflow = false;
 }
 
-static pbio_os_process_t pbdrv_usb_process;
+static pbio_os_process_t pbio_usb_process;
 
-static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *context) {
+static pbio_error_t pbio_usb_process_thread(pbio_os_state_t *state, void *context) {
 
     static pbio_os_state_t sub;
 
@@ -296,7 +296,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
     pbio_error_t err;
 
     // Runs every time. If there is no connection, there just won't be data.
-    pbdrv_usb_handle_data_in();
+    pbio_usb_handle_data_in();
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -307,32 +307,32 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
         // Run charger detection: wait for USB to become physically plugged in.
         PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_wait_until_configured(&sub));
 
-        while (pbdrv_usb_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL && pbdrv_usb_is_ready()) {
+        while (pbio_usb_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL && pbdrv_usb_is_ready()) {
 
             // Find out what we should send, if anything, prioritizing replies
             // to host requests (command response, then read reply), then status, then
             // stdout, then other events. Unlike events, replies do not require
             // an active connection, since they answer a request that was just
             // received.
-            if (pbdrv_usb_command_response_pending) {
+            if (pbio_usb_command_response_pending) {
                 tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
-                    pbdrv_usb_command_response_buf, sizeof(pbdrv_usb_command_response_buf) - 1, tx_frame);
+                    pbio_usb_command_response_buf, sizeof(pbio_usb_command_response_buf) - 1, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_message(&sub, tx_frame, tx_frame_len));
-                pbdrv_usb_command_response_pending = false;
+                pbio_usb_command_response_pending = false;
                 if (err != PBIO_SUCCESS) {
-                    pbdrv_usb_reset_state();
+                    pbio_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
-            } else if (pbdrv_usb_read_reply_pending) {
+            } else if (pbio_usb_read_reply_pending) {
                 // Reply to a characteristic read request.
                 tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY,
-                    pbdrv_usb_read_reply_buf, pbdrv_usb_read_reply_len, tx_frame);
+                    pbio_usb_read_reply_buf, pbio_usb_read_reply_len, tx_frame);
 
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_message(&sub, tx_frame, tx_frame_len));
-                pbdrv_usb_read_reply_pending = false;
+                pbio_usb_read_reply_pending = false;
                 if (err != PBIO_SUCCESS) {
-                    pbdrv_usb_reset_state();
+                    pbio_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
             } else if (pbio_usb_connection_is_active() && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_USB, &event_buf, &event_size)) {
@@ -342,7 +342,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
                 PBIO_OS_AWAIT(state, &sub, err = pbdrv_usb_tx_message(&sub, tx_frame, tx_frame_len));
                 *event_size = 0;
                 if (err != PBIO_SUCCESS) {
-                    pbdrv_usb_reset_state();
+                    pbio_usb_reset_state();
                     PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
                 }
             } else {
@@ -353,7 +353,7 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 
         PBIO_OS_AWAIT_WHILE(state, pbdrv_usb_is_ready());
 
-        pbdrv_usb_reset_state();
+        pbio_usb_reset_state();
         PBIO_OS_AWAIT(state, &sub, pbdrv_usb_tx_reset(&sub));
     }
 
@@ -363,12 +363,12 @@ static pbio_error_t pbdrv_usb_process_thread(pbio_os_state_t *state, void *conte
 }
 
 void pbio_usb_init(void) {
-    pbio_os_process_start(&pbdrv_usb_process, pbdrv_usb_process_thread, NULL);
+    pbio_os_process_start(&pbio_usb_process, pbio_usb_process_thread, NULL);
 }
 
 void pbio_usb_deinit(void) {
     pbdrv_usb_deinit();
-    pbio_os_process_make_request(&pbdrv_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
+    pbio_os_process_make_request(&pbio_usb_process, PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
 }
 
 #endif // PBIO_CONFIG_USB

@@ -772,7 +772,7 @@ static void usb_device_intr(void) {
                         case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
                             // DTR asserted means a host app opened the serial
                             // port (analogous to a BLE host subscribing).
-                            pbdrv_usb_on_dtr_changed(
+                            pbio_usb_on_dtr_changed(
                                 (setup_pkt.s.wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
                             handled = true;
                             break;

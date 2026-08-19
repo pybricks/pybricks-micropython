@@ -37,6 +37,17 @@ void pbio_usb_deinit(void);
  */
 bool pbio_usb_connection_is_active(void);
 
+/**
+ * Notifies the common driver that the host's serial control line state (DTR)
+ * changed. Called by the platform driver, typically from interrupt context.
+ *
+ * DTR asserted means a host application has opened the serial port and is the
+ * USB analog of a BLE host subscribing to notifications.
+ *
+ * @param [in] dtr      True if DTR is asserted (port open), otherwise false.
+ */
+void pbio_usb_on_dtr_changed(bool dtr);
+
 #else // PBDRV_CONFIG_USB
 
 static inline void pbio_usb_init(void) {
@@ -47,6 +58,9 @@ static inline void pbio_usb_deinit(void) {
 
 static inline bool pbio_usb_connection_is_active(void) {
     return false;
+}
+
+static inline void pbio_usb_on_dtr_changed(bool dtr) {
 }
 
 #endif // PBIO_CONFIG_USB

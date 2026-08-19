@@ -81,17 +81,6 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
 pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
 
 /**
- * Notifies the common driver that the host's serial control line state (DTR)
- * changed. Called by the platform driver, typically from interrupt context.
- *
- * DTR asserted means a host application has opened the serial port and is the
- * USB analog of a BLE host subscribing to notifications.
- *
- * @param [in] dtr      True if DTR is asserted (port open), otherwise false.
- */
-void pbdrv_usb_on_dtr_changed(bool dtr);
-
-/**
  * Resets the driver transmission state.
  *
  * @param [in] state    Protothread state.

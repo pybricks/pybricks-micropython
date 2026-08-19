@@ -537,7 +537,7 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_setup_packet_t *packet)
             // DTR asserted means a host app opened the serial port. This is
             // the USB analog of a BLE host subscribing to notifications, and
             // is how we detect connect/disconnect.
-            pbdrv_usb_on_dtr_changed(
+            pbio_usb_on_dtr_changed(
                 (packet->wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
             pbdrv_usb_nxt_send_null();
             break;

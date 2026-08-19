@@ -282,7 +282,7 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
 static USBD_StatusTypeDef Pybricks_Itf_SetControlLineState(bool dtr) {
     // The DTR signal indicates whether a host application has opened the serial
     // port. This is the USB analog of a BLE host subscribing to notifications.
-    pbdrv_usb_on_dtr_changed(dtr);
+    pbio_usb_on_dtr_changed(dtr);
     return USBD_OK;
 }
 
