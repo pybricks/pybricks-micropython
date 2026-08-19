@@ -98,7 +98,7 @@ def select(sizes, commits, hub):
 
 
 def create_plot(size_map, commits, hub):
-    print("creating plot for", hub)
+    print("creating plot for", hub, "at", Path(BUILD_DIR, f"{hub}.html"))
 
     indexes, shas, messages, sizes, diffs, missing = zip(
         *select(size_map, commits, hub)
@@ -228,7 +228,9 @@ def main():
         )
         sys.exit(1)
 
-    print(f"To refresh size data first: git -C {SIZE_DATA_DIR} pull")
+    print(
+        f"\nTo refresh size data first: git -C {SIZE_DATA_DIR} pull origin {SIZE_BRANCH}\n"
+    )
 
     # the tree has multiple independent histories that have been merged
     # we only want commits that belong the the mainline
