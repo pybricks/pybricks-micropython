@@ -6,12 +6,13 @@ that already has a recorded size for all hubs being built. Results are
 appended to <hub>.csv in the size data worktree as one "hash,size" line per
 commit and committed there. Build failures are recorded with an empty size
 so they are never retried. With --publish, each commit is also pushed to the
-GitHub remote, retrying when concurrent CI jobs push in between.
+GitHub remote, retrying when concurrent CI jobs push in between; the script
+fails if any results remain unpublished at the end.
 
 Examples:
 
     build-commits.py movehub --publish   # branch CI matrix job
-    build-commits.py --publish           # master stats job, all hubs
+    build-commits.py                     # all hubs, e.g. locally
 """
 
 import argparse
@@ -85,9 +86,13 @@ def load_recorded(hub):
 
 recorded = {h: load_recorded(h) for h in hubs}
 
+# set when a push gives up; cleared when a later push carries the results along
+unpublished = False
+
 
 def record(hub, commit, size):
     """Appends one result and commits it, pushing when enabled."""
+    global unpublished
     recorded[hub][commit.hexsha] = "" if size is None else str(size)
 
     message = f"{hub}: Add {commit.hexsha[:8]}: "
@@ -113,6 +118,7 @@ def record(hub, commit, size):
 
         try:
             size_data.git.push()
+            unpublished = False
             return
         except git.GitCommandError:
             # another CI job pushed in between: redo on top of its result,
@@ -124,8 +130,9 @@ def record(hub, commit, size):
             merged.update(recorded[hub])
             recorded[hub] = merged
 
-    # not fatal: the result rides along with the next push, or is rebuilt later
+    # the result rides along with the next push, or the job fails at the end
     print("Could not push size data, continuing", flush=True)
+    unpublished = True
 
 
 # newest ancestor of HEAD already recorded for all hubs being built
@@ -216,3 +223,6 @@ for commit in pybricks.iter_commits(
 
 if failures:
     sys.exit("Some builds failed")
+
+if unpublished:
+    sys.exit("Some size data could not be published; rerun to retry")

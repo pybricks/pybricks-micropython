@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Creates interactive graph of pybricks-micropython firmware size changes."""
+"""Creates interactive graph of pybricks-micropython firmware size changes.
+
+Reads recorded sizes from the size-data worktree, or from the size-data
+branch when not checked out. Run it locally after refreshing that data;
+the applicable git command is printed on start.
+"""
 
 import csv
 import io
@@ -230,6 +235,11 @@ def load_sizes(hub):
 
 
 def main():
+    if os.path.isdir(os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR)):
+        print("To refresh size data first: git -C size-data pull")
+    else:
+        print(f"To refresh size data first: git fetch origin {SIZE_BRANCH}")
+
     # the tree has multiple independent histories that have been merged
     # we only want commits that belong the the mainline
     commits = list(
