@@ -16,7 +16,7 @@
  * Every frame carries the @p prefix byte (a message type) ahead of its
  * payload, so callers never have to copy the two into one contiguous buffer.
  * @p len counts only the payload and may be 0. @p dst must have room for at
- * least ::PBIO_COBS_ENCODED_BUFFER_SIZE(@p len + 1) bytes.
+ * least ::PBIO_COBS_ENCODED_BUFFER_SIZE(@p len) bytes.
  *
  * While the decoder tolerates a leading high-priority start delimiter (0x01),
  * this encoder never emits one. All messages are treated as low priority.

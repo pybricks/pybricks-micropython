@@ -53,13 +53,14 @@
 
 /**
  * Upper bound on the encoded size (including the trailing delimiter) for a
- * decoded message of @p n bytes.
+ * message with a prefix byte and @p n payload bytes, matching the arguments
+ * of ::pbio_cobs_encode_prefixed.
  *
  * The overhead is at most one code word per ::PBIO_COBS_MAX_BLOCK_SIZE bytes
  * (a block hitting the size cap, or an all-delimiter input closing a block per
  * byte), plus the final code word and the trailing delimiter.
  */
-#define PBIO_COBS_ENCODED_BUFFER_SIZE(n) ((n) + (n) / PBIO_COBS_MAX_BLOCK_SIZE + 2)
+#define PBIO_COBS_ENCODED_BUFFER_SIZE(n) ((n) + 1 + ((n) + 1) / PBIO_COBS_MAX_BLOCK_SIZE + 2)
 
 uint32_t pbio_cobs_encode_prefixed(uint8_t prefix, const uint8_t *src, uint32_t len, uint8_t *dst);
 

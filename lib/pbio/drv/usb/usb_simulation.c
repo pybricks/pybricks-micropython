@@ -121,10 +121,10 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // Read raw bytes from native stdin and present them to the common
         // driver as a COBS-framed write stdin command, the same way a real
         // host would. This has been made non-blocking in platform.c.
-        static uint8_t cmd[BUFFER_SIZE];
+        static uint8_t cmd[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
         cmd[0] = 0; // correlation tag (opaque; unused here)
         cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 3);
+        ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 2);
         if (num_read > 0) {
             usb_in_size = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_OUT_EP_MSG_COMMAND,
                 cmd, 2 + num_read, usb_in_buf);

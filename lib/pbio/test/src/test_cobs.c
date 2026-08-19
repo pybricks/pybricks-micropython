@@ -36,8 +36,8 @@ static void check_roundtrip(uint8_t prefix, const uint8_t *payload, uint32_t len
         tt_want(enc[i] != 0x01 && enc[i] != 0x02 && enc[i] != 0x03);
     }
 
-    // Encoded size must stay within the advertised bound (prefix plus payload).
-    tt_want_int_op(enc_len, <=, PBIO_COBS_ENCODED_BUFFER_SIZE(len + 1));
+    // Encoded size must stay within the advertised bound.
+    tt_want_int_op(enc_len, <=, PBIO_COBS_ENCODED_BUFFER_SIZE(len));
 
     // Decode the frame body (delimiter stripped) and compare.
     uint8_t dec_prefix = 0;
@@ -91,7 +91,7 @@ static void test_cobs_edge_cases(void *env) {
     // Runs of only delimiter values (worst case for overhead).
     for (uint8_t v = 0; v <= PBIO_COBS_MAX_DELIMITER; v++) {
         memset(payload, v, sizeof(payload));
-        check_roundtrip(v, payload, sizeof(payload) - 1);
+        check_roundtrip(v, payload, sizeof(payload));
     }
 
     // Runs of only ordinary bytes around the block-size boundary.

@@ -37,7 +37,8 @@
 
 // Host event size (already includes its 1 event byte) + 1 EP type byte.
 #define PBSYS_USB_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1)
-#define PBSYS_USB_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_USB_MAX_DECODED_MESSAGE_SIZE))
+// The EP type byte is the COBS prefix, so the payload bound excludes it.
+#define PBSYS_USB_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
 
 /**
  * Whether the host has opened the serial port (DTR asserted). This detects
