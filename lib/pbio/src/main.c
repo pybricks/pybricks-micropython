@@ -94,7 +94,7 @@ pbio_error_t pbio_main_stop_application_resources(void) {
     DEBUG_PRINT("Waiting for Bluetooth user tasks to close...\n");
 
     // Run event loop until Bluetooth is idle or times out.
-    while ((err = pbdrv_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
         pbio_os_run_processes_and_wait_for_event();
     }
 

@@ -41,7 +41,7 @@ typedef struct {
     mp_obj_base_t base;
     uint32_t num_results;
     uint32_t num_results_max;
-    pbdrv_bluetooth_inquiry_result_t results[];
+    pbio_bluetooth_inquiry_result_t results[];
 } pb_messaging_bluetooth_scan_result_obj_t;
 
 static mp_obj_t pb_messaging_bluetooth_scan_close(mp_obj_t self_in) {
@@ -85,7 +85,7 @@ static mp_obj_t pb_messaging_bluetooth_scan_return_map(mp_obj_t parent_obj) {
 
     for (uint32_t i = 0; i < scanner->num_results; i++) {
         mp_obj_t dict = mp_obj_new_dict(0);
-        pbdrv_bluetooth_inquiry_result_t *result = &scanner->results[i];
+        pbio_bluetooth_inquiry_result_t *result = &scanner->results[i];
         mp_obj_dict_store(dict, MP_ROM_QSTR(MP_QSTR_address), mp_obj_new_str(format_bluetooth_address(result->bdaddr), 17));
         mp_obj_dict_store(dict, MP_ROM_QSTR(MP_QSTR_name), mp_obj_new_str(result->name, strlen(result->name)));
         mp_obj_dict_store(dict, MP_ROM_QSTR(MP_QSTR_rssi), mp_obj_new_int(result->rssi));
@@ -107,19 +107,19 @@ static mp_obj_t pb_messaging_bluetooth_scan(size_t n_args, const mp_obj_t *pos_a
         num_results_max = 1;
     }
     pb_messaging_bluetooth_scan_result_obj_t *scanner = mp_obj_malloc_var_with_finaliser(
-        pb_messaging_bluetooth_scan_result_obj_t, pbdrv_bluetooth_inquiry_result_t,
+        pb_messaging_bluetooth_scan_result_obj_t, pbio_bluetooth_inquiry_result_t,
         num_results_max, &pb_type_messaging_bluetooth_scan);
 
     // Initialize at zero results.
     scanner->num_results = 0;
     scanner->num_results_max = mp_obj_get_int(num_results_in);
-    pb_assert(pbdrv_bluetooth_start_inquiry_scan(scanner->results, &scanner->num_results, &scanner->num_results_max, mp_obj_get_int(timeout_in)));
+    pb_assert(pbio_bluetooth_start_inquiry_scan(scanner->results, &scanner->num_results, &scanner->num_results_max, mp_obj_get_int(timeout_in)));
 
     // Create an awaitable with a reference to our result to keep it from being
     // garbage collected.
     pb_type_async_t *iter = NULL;
     pb_type_async_t config = {
-        .iter_once = pbdrv_bluetooth_await_classic_task,
+        .iter_once = pbio_bluetooth_await_classic_task,
         .parent_obj = MP_OBJ_FROM_PTR(scanner),
         .return_map = pb_messaging_bluetooth_scan_return_map,
     };

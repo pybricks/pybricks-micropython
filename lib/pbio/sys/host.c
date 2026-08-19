@@ -7,6 +7,7 @@
 
 #include <lwrb/lwrb.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbio/bluetooth.h>
 #include <pbio/int_math.h>
 #include <pbio/usb.h>

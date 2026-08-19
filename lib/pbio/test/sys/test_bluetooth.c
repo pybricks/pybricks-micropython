@@ -28,8 +28,8 @@ static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
     tt_want_uint_op(pbio_test_bluetooth_get_control_state(), ==, PBIO_TEST_BLUETOOTH_STATE_ON);
 
     // Should be possible to schedule this command.
-    pbdrv_bluetooth_start_advertising(true);
-    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+    pbio_bluetooth_start_advertising(true);
+    PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
     tt_want(pbio_test_bluetooth_is_advertising_enabled());
 

@@ -132,16 +132,16 @@ static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_blueto
 // after a while.
 #define SCAN_RESTART_INTERVAL 3000
 
-static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+static pbio_bluetooth_peripheral_t peripheral_singleton;
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
     // This platform supports only a single peripheral instance. Some of its
     // states are global variables listed above. This single instance is used
     // troughout the event handler.
     return &peripheral_singleton;
 }
 
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
     return peri == &peripheral_singleton && peri->con_handle != NO_CONNECTION;
 }
 
@@ -350,7 +350,7 @@ uint16_t pbdrv_bluetooth_get_max_message_size(void) {
     if (mtu > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE) {
         mtu = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
     }
-    return mtu - PBDRV_BLUETOOTH_ATT_HEADER_SIZE;
+    return mtu - PBIO_BLUETOOTH_ATT_HEADER_SIZE;
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
@@ -372,7 +372,7 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     static pbio_os_timer_t peripheral_scan_restart_timer;
 
@@ -390,7 +390,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 
     // Optionally, disconnect from host (usually Pybricks Code).
     if (conn_handle != NO_CONNECTION &&
-        (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
+        (peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
         DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
         // Guard used in pbdrv_bluetooth_host_is_connected so higher level
         // processes won't try to send anything while we are disconnecting.
@@ -446,7 +446,7 @@ try_again:
         }
 
         // If advertisement doesn't match context-specific filter, keep scanning.
-        if (read_buf[9] > PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, &read_buf[19], read_buf[18])) {
+        if (read_buf[9] > PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, &read_buf[19], read_buf[18])) {
             continue;
         }
 
@@ -493,7 +493,7 @@ try_again:
         }
 
         // We are looking for a scan response from the same device as before, else keep scanning for responses.
-        if (read_buf[9] != PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, &read_buf[11], sizeof(peri->bdaddr))) {
+        if (read_buf[9] != PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, &read_buf[11], sizeof(peri->bdaddr))) {
             continue;
         }
 
@@ -526,7 +526,7 @@ try_again:
     // Pybricks Code or it will try to pair with the PC. We do this just before
     // starting to advertise again, which covers all our use cases.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    bond_auth_mode_last = (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
+    bond_auth_mode_last = (peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
         GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
     GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, sizeof(bond_auth_mode_last), &bond_auth_mode_last);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -548,7 +548,7 @@ try_again:
 
     DEBUG_PRINT("Connected.\n");
 
-    if (!(peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
+    if (!(peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
         // Pairing not required, so we are done here.
         return PBIO_SUCCESS;
     }
@@ -587,7 +587,7 @@ try_again:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -676,7 +676,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     HCI_StatusCodes_t status;
 
@@ -730,7 +730,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     HCI_StatusCodes_t status;
 
@@ -782,7 +782,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -924,7 +924,7 @@ static void handle_event(uint8_t *packet) {
     uint8_t event = packet[0];
     uint8_t size = packet[1];
     uint8_t *data = &packet[2];
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbio_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
     (void)size;
 

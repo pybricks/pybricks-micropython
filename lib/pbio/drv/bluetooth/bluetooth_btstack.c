@@ -63,7 +63,7 @@ static const hci_dump_t pbdrv_bluetooth_btstack_hci_dump = {
 /**
  * BTstack state that we need to maintain for each peripheral.
  */
-static struct _pbdrv_bluetooth_peripheral_platform_state_t {
+static struct _pbio_bluetooth_peripheral_platform_state_t {
     /**
      * Current connection state, needed to unset callback on disconnect.
      */
@@ -89,9 +89,9 @@ static struct _pbdrv_bluetooth_peripheral_platform_state_t {
     uint8_t gatt_att_status;
 } peripheral_platform_state[PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS];
 
-static pbdrv_bluetooth_peripheral_t _peripherals[PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS];
+static pbio_bluetooth_peripheral_t _peripherals[PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS];
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
     if (index >= PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS) {
         return NULL;
     }
@@ -121,7 +121,7 @@ static struct {
      * connection complete event are recorded here. NULL when not scanning.
      * Once it has a handle, we can look it up directly for normal operations.
      */
-    pbdrv_bluetooth_peripheral_t *scanning_peri;
+    pbio_bluetooth_peripheral_t *scanning_peri;
 } recorded_events;
 
 /**
@@ -160,9 +160,9 @@ static pbdrv_bluetooth_btstack_host_connection_t *pbdrv_bluetooth_btstack_get_ho
     return NULL;
 }
 
-static pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_btstack_get_peripheral(hci_con_handle_t con_handle) {
+static pbio_bluetooth_peripheral_t *pbdrv_bluetooth_btstack_get_peripheral(hci_con_handle_t con_handle) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
         if (peri && peri->con_handle == con_handle) {
             return peri;
         }
@@ -211,7 +211,7 @@ static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) 
 /**
  * Wrapper for gap_disconnect that is safe to call if already disconnected.
  */
-static void pbdrv_bluetooth_peripheral_disconnect_now(pbdrv_bluetooth_peripheral_t *peri) {
+static void pbdrv_bluetooth_peripheral_disconnect_now(pbio_bluetooth_peripheral_t *peri) {
     if (peri->con_handle == HCI_CON_HANDLE_INVALID) {
         // Nothing to do. The synchronous callback from gap_disconnect() is no
         // longer a reentrancy hazard since packet handlers only record state,
@@ -225,7 +225,7 @@ static void pbdrv_bluetooth_peripheral_disconnect_now(pbdrv_bluetooth_peripheral
 static pbio_os_state_t bluetooth_thread_state;
 static pbio_error_t bluetooth_thread_err;
 
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
     return peri->con_handle != HCI_CON_HANDLE_INVALID;
 }
 
@@ -317,7 +317,7 @@ static bool pbdrv_bluetooth_btstack_ble_supported(void) {
 }
 
 // Defined alongside the scan and connect thread below.
-static void scan_and_connect_match_advertising_report(pbdrv_bluetooth_peripheral_t *peri, uint8_t *packet);
+static void scan_and_connect_match_advertising_report(pbio_bluetooth_peripheral_t *peri, uint8_t *packet);
 
 /**
  * Main handler for HCI and BLE events, recording state for the driver
@@ -354,7 +354,7 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
         }
         case GATT_EVENT_NOTIFICATION:
             for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-                pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+                pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
                 if (!peri || !peri->config.notification_handler) {
                     continue;
                 }
@@ -402,7 +402,7 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 DEBUG_PRINT("Host with handle %u disconnected\n", handle);
             } else {
                 for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-                    pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+                    pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
                     if (peri && handle == peri->con_handle) {
                         DEBUG_PRINT("Peripheral %u with handle %u disconnected\n", i, peri->con_handle);
                         gatt_client_stop_listening_for_characteristic_value_updates(&peri->platform_state->notification);
@@ -484,7 +484,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
             DEBUG_PRINT("Pairing complete with status %u and reason %u.\n",
                 sm_event_pairing_complete_get_status(packet),
                 sm_event_pairing_complete_get_reason(packet));
-            pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(sm_event_pairing_complete_get_handle(packet));
+            pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(sm_event_pairing_complete_get_handle(packet));
             if (peri) {
                 peri->platform_state->pairing_via_reencryption = false;
                 peri->platform_state->pairing_status = sm_event_pairing_complete_get_status(packet);
@@ -502,7 +502,7 @@ static void sm_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *pa
         case SM_EVENT_REENCRYPTION_COMPLETE: {
             DEBUG_PRINT("Re-encryption complete with status %u.\n",
                 sm_event_reencryption_complete_get_status(packet));
-            pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(sm_event_reencryption_complete_get_handle(packet));
+            pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(sm_event_reencryption_complete_get_handle(packet));
             if (peri) {
                 peri->platform_state->pairing_via_reencryption = true;
                 peri->platform_state->pairing_status = sm_event_reencryption_complete_get_status(packet);
@@ -529,7 +529,7 @@ static void gatt_op_handler(uint8_t packet_type, uint16_t channel, uint8_t *pack
 
     switch (hci_event_packet_get_type(packet)) {
         case GATT_EVENT_CHARACTERISTIC_QUERY_RESULT: {
-            pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
+            pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
                 gatt_event_characteristic_query_result_get_handle(packet));
             // During discovery, save only the first characteristic that has
             // at least the requested properties.
@@ -546,7 +546,7 @@ static void gatt_op_handler(uint8_t packet_type, uint16_t channel, uint8_t *pack
             break;
         }
         case GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT: {
-            pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
+            pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
                 gatt_event_characteristic_value_query_result_get_handle(packet));
             if (peri && gatt_event_characteristic_value_query_result_get_value_handle(packet) == peri->char_handle) {
                 peri->char_size = gatt_event_characteristic_value_query_result_get_value_length(packet);
@@ -555,7 +555,7 @@ static void gatt_op_handler(uint8_t packet_type, uint16_t channel, uint8_t *pack
             break;
         }
         case GATT_EVENT_QUERY_COMPLETE: {
-            pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
+            pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_btstack_get_peripheral(
                 gatt_event_query_complete_get_handle(packet));
             if (peri) {
                 peri->platform_state->gatt_att_status = gatt_event_query_complete_get_att_status(packet);
@@ -592,7 +592,7 @@ static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t attribut
 
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0x30, 0x30, PBDRV_BLUETOOTH_AD_TYPE_ADV_IND, 0x00, null_addr, 0x07, 0x00);
+    gap_advertisements_set_params(0x30, 0x30, PBIO_BLUETOOTH_AD_TYPE_ADV_IND, 0x00, null_addr, 0x07, 0x00);
 
     static const uint8_t adv_data[] = {
         // Flags general discoverable, BR/EDR not supported
@@ -697,7 +697,7 @@ uint16_t pbdrv_bluetooth_get_max_message_size(void) {
         }
     }
     #endif
-    return mtu - PBDRV_BLUETOOTH_ATT_HEADER_SIZE;
+    return mtu - PBIO_BLUETOOTH_ATT_HEADER_SIZE;
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
@@ -748,7 +748,7 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
  * not pass the filter, goes back to matching advertisements, but not the
  * device that was just rejected.
  */
-static void scan_and_connect_match_advertising_report(pbdrv_bluetooth_peripheral_t *peri, uint8_t *packet) {
+static void scan_and_connect_match_advertising_report(pbio_bluetooth_peripheral_t *peri, uint8_t *packet) {
 
     uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
     uint8_t data_length = gap_event_advertising_report_get_data_length(packet);
@@ -756,7 +756,7 @@ static void scan_and_connect_match_advertising_report(pbdrv_bluetooth_peripheral
 
     if (!peri->platform_state->adv_matched) {
         // Match advertisement data against context-specific filter.
-        if (event_type <= PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND &&
+        if (event_type <= PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND &&
             peri->config.match_adv(peri->user, data, data_length)) {
             bd_addr_t adv_address;
             gap_event_advertising_report_get_address(packet, adv_address);
@@ -774,7 +774,7 @@ static void scan_and_connect_match_advertising_report(pbdrv_bluetooth_peripheral
             }
         }
     } else if (!peri->platform_state->scan_rsp_matched &&
-               event_type == PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP) {
+               event_type == PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP) {
         bd_addr_t rsp_address;
         gap_event_advertising_report_get_address(packet, rsp_address);
         if (!memcmp(peri->bdaddr, rsp_address, sizeof(bd_addr_t))) {
@@ -803,7 +803,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
     uint8_t btstack_error;
 
     // Operation can be explicitly cancelled or automatically on inactivity.
@@ -814,7 +814,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    memset(peri->platform_state, 0, sizeof(pbdrv_bluetooth_peripheral_platform_state_t));
+    memset(peri->platform_state, 0, sizeof(pbio_bluetooth_peripheral_platform_state_t));
 
     peri->con_handle = HCI_CON_HANDLE_INVALID;
     recorded_events.scanning_peri = peri;
@@ -868,7 +868,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     DEBUG_PRINT("Connected with handle %d.\n", peri->con_handle);
 
     // We are done if no pairing is requested.
-    if (!(peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
+    if (!(peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
         DEBUG_PRINT("Simple connection done.\n");
         return PBIO_SUCCESS;
     }
@@ -964,7 +964,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
     gatt_client_characteristic_t *current_char = &peri->platform_state->current_char;
 
     uint8_t btstack_error;
@@ -1050,7 +1050,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     uint8_t btstack_error;
 
@@ -1092,7 +1092,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     uint8_t btstack_error;
 
@@ -1128,7 +1128,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1156,7 +1156,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     }
 
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0xA0, 0xA0, PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
+    gap_advertisements_set_params(0xA0, 0xA0, PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
     recorded_events.advertise_enable_complete = false;
     gap_advertisements_enable(true);
 
@@ -1215,7 +1215,7 @@ static struct {
     bool inquiry_complete;
 } classic_events;
 
-static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *packet, pbdrv_bluetooth_inquiry_result_t *result) {
+static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *packet, pbio_bluetooth_inquiry_result_t *result) {
 
     gap_event_inquiry_result_get_bd_addr(packet, result->bdaddr);
     if (gap_event_inquiry_result_get_rssi_available(packet)) {
@@ -1363,7 +1363,7 @@ pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
 
     static pbio_os_state_t sub;
     static uint8_t i;
-    static pbdrv_bluetooth_peripheral_t *peri;
+    static pbio_bluetooth_peripheral_t *peri;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -1497,7 +1497,7 @@ void pbdrv_bluetooth_init(void) {
 
     // Attach btstack platform state to peripherals.
     for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
-        pbdrv_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+        pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
         peri->platform_state = &peripheral_platform_state[i];
         peri->con_handle = HCI_CON_HANDLE_INVALID;
     }

@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbio/bluetooth.h>
 #include <pbdrv/led.h>
 #include <pbio/usb.h>
@@ -204,8 +205,8 @@ static pbio_error_t start_advertising(pbio_os_state_t *state, bool advertise) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbdrv_bluetooth_start_advertising(advertise);
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_advertise_or_scan_command(&unused, NULL));
+    pbio_bluetooth_start_advertising(advertise);
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_advertise_or_scan_command(&unused, NULL));
 
     if (advertise && err == PBIO_SUCCESS) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);

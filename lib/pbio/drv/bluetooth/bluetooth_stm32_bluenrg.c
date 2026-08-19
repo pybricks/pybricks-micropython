@@ -117,16 +117,16 @@ static const pbdrv_gpio_t mosi_gpio = { .bank = GPIOC, .pin = 3 };
 static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
 static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
 
-static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+static pbio_bluetooth_peripheral_t peripheral_singleton;
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
     // This platform supports only a single peripheral instance. Some of its
     // states are global variables listed above. This single instance is used
     // troughout the event handler.
     return &peripheral_singleton;
 }
 
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
     return peri == &peripheral_singleton && peri->con_handle != 0;
 }
 
@@ -306,7 +306,7 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
 
 uint16_t pbdrv_bluetooth_get_max_message_size(void) {
     // Fixed MTU minus the 3-byte ATT notification header.
-    return PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBDRV_BLUETOOTH_ATT_HEADER_SIZE;
+    return PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE;
 }
 
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
@@ -331,7 +331,7 @@ retry:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     // Scan and connect timeout, if applicable.
     bool timed_out = peri->config.timeout && pbio_os_timer_is_expired(&peri->timer);
@@ -367,7 +367,7 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // If advertisement doesn't match context-specific filter, keep scanning.
-        if (subevt->evt_type > PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, subevt->data_RSSI, subevt->data_length)) {
+        if (subevt->evt_type > PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, subevt->data_RSSI, subevt->data_length)) {
             continue;
         }
 
@@ -403,7 +403,7 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // We are looking for a scan response from the same device as before, else keep scanning for responses.
-        if (subevt->evt_type != PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
+        if (subevt->evt_type != PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
             continue;
         }
 
@@ -452,7 +452,7 @@ try_again:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -535,7 +535,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     evt_gatt_procedure_complete *payload;
 
@@ -567,7 +567,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -876,7 +876,7 @@ static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context)
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbio_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
     switch (event->evt) {
         case EVT_DISCONN_COMPLETE: {

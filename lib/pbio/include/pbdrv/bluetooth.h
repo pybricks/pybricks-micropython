@@ -8,8 +8,6 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH
-
 #include <pbio/os.h>
 
 #include <pbio/bluetooth.h>
@@ -17,7 +15,58 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if PBDRV_CONFIG_BLUETOOTH
+
 void pbdrv_bluetooth_init(void);
+
+/**
+ * Gets the Bluetooth chip firmware version.
+ *
+ * This should not be called until after the Bluetooth chip is powered on and
+ * initalized.
+ *
+ * @returns A string describing the version or an empty string if not supported.
+ */
+const char *pbdrv_bluetooth_get_fw_version(void);
+
+/**
+ * Tests if at least one central is connected to the Bluetooth chip and
+ * subscribed to Pybricks events.
+ *
+ * @param [in]  connection  The type of connection of interest.
+ * @return                  True if Pybricks host connected, otherwise false.
+ */
+bool pbdrv_bluetooth_host_is_connected(void);
+
+/**
+ * Tests if the Bluetooth controller is up and running.
+ *
+ * @return                  True if running,
+ *                          otherwise false.
+ */
+bool pbdrv_bluetooth_hci_is_enabled(void);
+
+/**
+ * Gets the maximum Pybricks message size (the full notification value,
+ * including the leading event type byte) that can be sent to the host.
+ *
+ * For BLE this is the negotiated ATT MTU minus the 3-byte notification header,
+ * taken as the minimum over all connected hosts and capped at the platform's
+ * maximum MTU. Callers must not send more than this many bytes in a single
+ * notification. The actual user payload is one byte less (the event type byte).
+ *
+ * @return              The maximum message size in bytes.
+ */
+uint16_t pbdrv_bluetooth_get_max_message_size(void);
+
+/**
+ * Checks if the given peripheral is connected.
+ *
+ * @param [in]  peri    The peripheral to check.
+ * @return              True if connected, false otherwise.
+ */
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri);
+
 pbio_error_t pbdrv_bluetooth_controller_reset(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_os_timer_t *timer);
 pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state);
@@ -28,7 +77,7 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
 pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *context);
 pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *context);
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index);
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index);
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context);
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context);
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context);
@@ -41,7 +90,7 @@ void pbio_bluetooth_host_connection_changed(void);
 
 pbio_pybricks_error_t pbio_bluetooth_receive_handler(const uint8_t *data, uint32_t size);
 
-extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
+extern uint8_t pbdrv_bluetooth_broadcast_data[PBIO_BLUETOOTH_MAX_ADV_SIZE];
 extern uint8_t pbdrv_bluetooth_broadcast_data_size;
 
 typedef enum {
@@ -53,7 +102,7 @@ typedef enum {
 extern pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
 
 extern bool pbdrv_bluetooth_is_observing;
-extern pbdrv_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
+extern pbio_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
 
 pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context);
 
@@ -82,7 +131,7 @@ typedef struct {
     /**
      * Inquiry scan results.
      */
-    pbdrv_bluetooth_inquiry_result_t *inq_results;
+    pbio_bluetooth_inquiry_result_t *inq_results;
     /**
      * Number of scan results found so far.
      */
@@ -102,6 +151,26 @@ pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *con
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
+}
+
+static inline const char *pbdrv_bluetooth_get_fw_version(void) {
+    return NULL;
+}
+
+static inline bool pbdrv_bluetooth_host_is_connected(void) {
+    return false;
+}
+
+static inline bool pbdrv_bluetooth_hci_is_enabled(void) {
+    return false;
+}
+
+static inline uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    return UINT16_MAX;
+}
+
+static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

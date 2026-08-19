@@ -6,8 +6,8 @@
  * @{
  */
 
-#ifndef _PBDRV_BLUETOOTH_H_
-#define _PBDRV_BLUETOOTH_H_
+#ifndef _PBIO_BLUETOOTH_H_
+#define _PBIO_BLUETOOTH_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -18,18 +18,10 @@
 #include <pbio/protocol.h>
 #include <lego/lwp3.h>
 
-#define PBDRV_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
-#define PBDRV_BLUETOOTH_MAX_CHAR_SIZE 20
-#define PBDRV_BLUETOOTH_MAX_ADV_SIZE 31
-#define PBDRV_BLUETOOTH_ATT_HEADER_SIZE (3)
-
-/** Data structure that holds context needed for sending BLE notifications. */
-typedef struct _pbdrv_bluetooth_send_context_t pbdrv_bluetooth_send_context_t;
-
-/**
- * Callback that is called when sending a notification is done.
- */
-typedef void (*pbdrv_bluetooth_send_done_t)(void);
+#define PBIO_BLUETOOTH_STATUS_UPDATE_INTERVAL (500)
+#define PBIO_BLUETOOTH_MAX_CHAR_SIZE 20
+#define PBIO_BLUETOOTH_MAX_ADV_SIZE 31
+#define PBIO_BLUETOOTH_ATT_HEADER_SIZE (3)
 
 /**
  * Callback to match an advertisement or scan response.
@@ -39,28 +31,7 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
  * @param [in]  length      The advertisement data size.
  * @return                  True if the advertisement matches, false otherwise.
  */
-typedef bool (*pbdrv_bluetooth_advertising_callback_t)(void *user, const uint8_t *data, uint8_t length);
-
-struct _pbdrv_bluetooth_send_context_t {
-    /** Callback that is called when the data has been sent. */
-    pbdrv_bluetooth_send_done_t done;
-    /** The data to be sent. This data must remain valid until @p done is called. */
-    const uint8_t *data;
-    /** The size of @p data. */
-    uint8_t size;
-};
-
-/**
- * A GATT value.
- */
-typedef struct {
-    /** Value handle, little endian. Stored as two bytes to ensure safe packing. */
-    uint8_t handle[2];
-    /** The size of @p data in bytes. */
-    uint8_t size;
-    /** The value data. */
-    uint8_t data[0];
-} pbdrv_bluetooth_value_t;
+typedef bool (*pbio_bluetooth_advertising_callback_t)(void *user, const uint8_t *data, uint8_t length);
 
 /**
  * Client characteristic discovery request and resulting handle.
@@ -81,19 +52,19 @@ typedef struct {
     const uint8_t *uuid128;
     /** Whether to request enabling notifications after successful discovery. */
     bool request_notification;
-} pbdrv_bluetooth_peripheral_char_discovery_t;
+} pbio_bluetooth_peripheral_char_discovery_t;
 
 /** Peripheral connection options flags. */
 typedef enum {
     /** No options. */
-    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE = 0,
+    PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE = 0,
     /** Whether to initiate pairing after connecting. */
-    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR = 1 << 0,
+    PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR = 1 << 0,
     /** Whether to disconnect from the host before connecting to peripheral. */
-    PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST = 1 << 1,
-} pbdrv_bluetooth_peripheral_options_t;
+    PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST = 1 << 1,
+} pbio_bluetooth_peripheral_options_t;
 
-typedef struct _pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_t;
+typedef struct _pbio_bluetooth_peripheral_t pbio_bluetooth_peripheral_t;
 
 /**
  * Callback that is called when a peripheral sends a notification.
@@ -102,37 +73,37 @@ typedef struct _pbdrv_bluetooth_peripheral_t pbdrv_bluetooth_peripheral_t;
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_peripheral_notification_handler_t)(void *user, const uint8_t *data, uint32_t size);
+typedef void (*pbio_bluetooth_peripheral_notification_handler_t)(void *user, const uint8_t *data, uint32_t size);
 
 /** Peripheral scan and connection configuration */
 typedef struct {
     /** Matcher for advertisement */
-    pbdrv_bluetooth_advertising_callback_t match_adv;
+    pbio_bluetooth_advertising_callback_t match_adv;
     /** Matcher for scan response */
-    pbdrv_bluetooth_advertising_callback_t match_adv_rsp;
+    pbio_bluetooth_advertising_callback_t match_adv_rsp;
     /** Handler for received notifications after connecting */
-    pbdrv_bluetooth_peripheral_notification_handler_t notification_handler;
+    pbio_bluetooth_peripheral_notification_handler_t notification_handler;
     /** Option flags governing connection and pairing */
-    pbdrv_bluetooth_peripheral_options_t options;
+    pbio_bluetooth_peripheral_options_t options;
     /** Timeout before aborting scan and connect. Use 0 for no timeout. */
     uint32_t timeout;
     /** Last matching advertisement data for this peripheral. */
-    uint8_t match_adv_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
+    uint8_t match_adv_data[PBIO_BLUETOOTH_MAX_ADV_SIZE];
     /** Last matching advertisement data length for this peripheral. */
     uint8_t match_adv_data_len;
     /** Last matching advertisement response data for this peripheral. */
-    uint8_t match_adv_rsp_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
+    uint8_t match_adv_rsp_data[PBIO_BLUETOOTH_MAX_ADV_SIZE];
     /** Last matching advertisement response data length for this peripheral. */
     uint8_t match_adv_rsp_data_len;
-} pbdrv_bluetooth_peripheral_connect_config_t;
+} pbio_bluetooth_peripheral_connect_config_t;
 
 /** Platform-specific state needed to operate the peripheral. */
-typedef struct _pbdrv_bluetooth_peripheral_platform_state_t pbdrv_bluetooth_peripheral_platform_state_t;
+typedef struct _pbio_bluetooth_peripheral_platform_state_t pbio_bluetooth_peripheral_platform_state_t;
 
 /**
  * State of a peripheral that the hub may be connected to, such as a remote.
  */
-struct _pbdrv_bluetooth_peripheral_t {
+struct _pbio_bluetooth_peripheral_t {
     /**
      * Optional reference to higher-level user of this peripheral.
      */
@@ -143,9 +114,9 @@ struct _pbdrv_bluetooth_peripheral_t {
     uint8_t bdaddr[6];
     char name[20];
     /** The characteristic currently being discovered. */
-    pbdrv_bluetooth_peripheral_char_discovery_t char_disc;
+    pbio_bluetooth_peripheral_char_discovery_t char_disc;
     /** Scan and connect configuration. */
-    pbdrv_bluetooth_peripheral_connect_config_t config;
+    pbio_bluetooth_peripheral_connect_config_t config;
     /** Currently ongoing peripheral function. */
     pbio_os_process_func_t func;
     /** Most recent result of calling above function from main process. */
@@ -157,7 +128,7 @@ struct _pbdrv_bluetooth_peripheral_t {
     /** Cancellation requested */
     bool cancel;
     /** Platform-specific state needed to operate the peripheral. */
-    pbdrv_bluetooth_peripheral_platform_state_t *platform_state;
+    pbio_bluetooth_peripheral_platform_state_t *platform_state;
     /**
      * Handle of the characteristic to read or write (used by write_func and read_func).
      */
@@ -165,7 +136,7 @@ struct _pbdrv_bluetooth_peripheral_t {
     /**
      * Buffer for reading/writing characteristic value (used by write_func and read_func).
      */
-    uint8_t char_data[PBDRV_BLUETOOTH_MAX_CHAR_SIZE];
+    uint8_t char_data[PBIO_BLUETOOTH_MAX_CHAR_SIZE];
     /**
      * Size of the data to write or data read (used by write_func and read_func).
      */
@@ -177,33 +148,33 @@ typedef enum {
     // NB: the numeric values come from the Bluetooth spec - do not change!
 
     /** Undirected, scannable, connectable. */
-    PBDRV_BLUETOOTH_AD_TYPE_ADV_IND = 0,
+    PBIO_BLUETOOTH_AD_TYPE_ADV_IND = 0,
     /** Directed, scannable, connectable. */
-    PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND = 1,
+    PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND = 1,
     /** Undirected, scannable, non-connectable. */
-    PBDRV_BLUETOOTH_AD_TYPE_ADV_SCAN_IND = 2,
+    PBIO_BLUETOOTH_AD_TYPE_ADV_SCAN_IND = 2,
     /** Undirected, non-scannable, non-connectable. */
-    PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND = 3,
+    PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND = 3,
     /** Scan response. */
-    PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP = 4,
-} pbdrv_bluetooth_ad_type_t;
+    PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP = 4,
+} pbio_bluetooth_ad_type_t;
 
 /** Advertisement data types. */
 typedef enum {
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_FLAGS = 0x01,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST = 0x03,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST = 0x06,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST = 0x07,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_TX_POWER_LEVEL = 0x0A,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_APPEARANCE = 0x19,
-    PBDRV_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA = 0xFF,
-} pbdrv_bluetooth_ad_data_type_t;
+    PBIO_BLUETOOTH_AD_DATA_TYPE_FLAGS = 0x01,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST = 0x03,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST = 0x06,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST = 0x07,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_TX_POWER_LEVEL = 0x0A,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_APPEARANCE = 0x19,
+    PBIO_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA = 0xFF,
+} pbio_bluetooth_ad_data_type_t;
 
 /** Characteristic size */
 typedef enum {
-    PBDRV_BLUETOOTH_CHAR_UUID_SIZE_16 = 0x01,
-    PBDRV_BLUETOOTH_CHAR_UUID_SIZE_128 = 0x02,
-} pbdrv_bluetooth_char_size_t;
+    PBIO_BLUETOOTH_CHAR_UUID_SIZE_16 = 0x01,
+    PBIO_BLUETOOTH_CHAR_UUID_SIZE_128 = 0x02,
+} pbio_bluetooth_char_size_t;
 
 /**
  * Callback called when advertising data is received.
@@ -212,7 +183,7 @@ typedef enum {
  * @param [in]  length  The length of @p data in bytes.
  * @param [in]  rssi    The RSSI value for the event.
  */
-typedef void (*pbdrv_bluetooth_start_observing_callback_t)(pbdrv_bluetooth_ad_type_t type, const uint8_t *data, uint8_t length, int8_t rssi);
+typedef void (*pbio_bluetooth_start_observing_callback_t)(pbio_bluetooth_ad_type_t type, const uint8_t *data, uint8_t length, int8_t rssi);
 
 /**
  * A single result from an inquiry scan.
@@ -226,7 +197,7 @@ typedef struct {
     char name[249];
     /** Class of device. */
     uint32_t class_of_device;
-} pbdrv_bluetooth_inquiry_result_t;
+} pbio_bluetooth_inquiry_result_t;
 
 #if PBIO_CONFIG_BLUETOOTH
 
@@ -237,118 +208,12 @@ typedef struct {
 /**
  * Deinitializes the Bluetooth driver.
  */
-void pbdrv_bluetooth_deinit(void);
+void pbio_bluetooth_deinit(void);
 
 /**
- * Gets the bluetooth hub name.
+ * Gets the bluetooth hub name. REVISIT: Move to sys/host.
  */
 const char *pbdrv_bluetooth_get_hub_name(void);
-
-/**
- * Gets the Bluetooth chip firmware version.
- *
- * This should not be called until after the Bluetooth chip is powered on and
- * initalized.
- *
- * @returns A string describing the version or an empty string if not supported.
- */
-const char *pbdrv_bluetooth_get_fw_version(void);
-
-/**
- * Tests if at least one central is connected to the Bluetooth chip and
- * subscribed to Pybricks events.
- *
- * @param [in]  connection  The type of connection of interest.
- * @return                  True if Pybricks host connected, otherwise false.
- */
-bool pbdrv_bluetooth_host_is_connected(void);
-
-/**
- * Tests if the Bluetooth controller is up and running.
- *
- * @return                  True if running,
- *                          otherwise false.
- */
-bool pbdrv_bluetooth_hci_is_enabled(void);
-
-//
-// Functions related to sending value notifications (stdout, status, app data).
-//
-// These are all transferred over the air in the same way, but the interfaces
-// below differ in terms of how the data is scheduled and buffered or awaited.
-//
-
-/**
- * Schedules Pybricks status to be sent via a characteristic notification.
- *
- * The data length is always ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE.
- */
-void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg);
-
-/**
- * Queues data to be transmitted via Bluetooth serial port.
- *
- * @param data  [in]        The data to be sent.
- * @param size  [in, out]   The size of @p data in bytes. After return, @p size
- *                          contains the number of bytes actually written.
- * @return                  ::PBIO_SUCCESS if some @p data was queued,
- *                          ::PBIO_ERROR_AGAIN if no @p data could be
- *                          queued at this time (e.g. buffer is full),
- *                          ::PBIO_ERROR_INVALID_OP if there is not an
- *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
- *                          if this platform does not support Bluetooth.
- */
-pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size);
-
-/**
- * Gets the maximum Pybricks message size (the full notification value,
- * including the leading event type byte) that can be sent to the host.
- *
- * For BLE this is the negotiated ATT MTU minus the 3-byte notification header,
- * taken as the minimum over all connected hosts and capped at the platform's
- * maximum MTU. Callers must not send more than this many bytes in a single
- * notification. The actual user payload is one byte less (the event type byte).
- *
- * @return              The maximum message size in bytes.
- */
-uint16_t pbdrv_bluetooth_get_max_message_size(void);
-
-/**
- * Gets the number of bytes that can be queued for transmission via Bluetooth.
- *
- * If there is no connection, this will return ::UINT32_MAX.
- *
- * @returns The number of bytes that can be queued.
- */
-uint32_t pbdrv_bluetooth_tx_available(void);
-
-/**
- * Tests if the Tx queue is empty and all data has been sent over the air.
- *
- * If there is no connection, this will always return @c true.
- *
- * @returns @c true if the condition is met, otherwise @c false.
- */
-bool pbdrv_bluetooth_tx_is_idle(void);
-
-/**
- * Sends a value notification and await it.
- *
- * Uses the same mechanism as stdout or status events, but is user-awaitable.
- *
- * This does not not use a ringbuffer. Await operation before sending more.
- *
- * @param [in] state    Protothread state.
- * @param [in] event    Event type (status, stdout, or app data).
- * @param [in] data     Data to send.
- * @param [in] size     Data size, not counting event type byte.
- * @return              ::PBIO_SUCCESS on completion.
- *                      ::PBIO_ERROR_INVALID_OP if there is no connection.
- *                      ::PBIO_ERROR_AGAIN while awaiting.
- *                      ::PBIO_ERROR_BUSY if this operation is already ongoing.
- *                      ::PBIO_ERROR_INVALID_ARG if @p size is too large.
- */
-pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size);
 
 //
 // Functions related to connections to peripherals.
@@ -363,7 +228,7 @@ pbio_error_t pbdrv_bluetooth_send_event_notification(pbio_os_state_t *state, pbi
  *                          ::PBIO_ERROR_NO_DEV if no peripheral instance is available.
  *                          ::PBIO_ERROR_BUSY if all peripheral instances are in use.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user);
+pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user);
 
 /**
  * Gets an matching connected peripheral if available,
@@ -374,23 +239,14 @@ pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral
  * @return                   ::PBIO_SUCCESS if a peripheral instance is connected and available.
  *                           ::PBIO_ERROR_NO_DEV if no matching peripheral instance connected or is available.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral_t **peripheral, void *user, pbdrv_bluetooth_peripheral_connect_config_t *config);
-
-/**
- * Checks if the given peripheral is connected.
- *
- * @param [in]  peri    The peripheral to check.
- * @return              True if connected, false otherwise.
- */
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri);
-
+pbio_error_t pbio_bluetooth_peripheral_get_connected(pbio_bluetooth_peripheral_t **peripheral, void *user, pbio_bluetooth_peripheral_connect_config_t *config);
 /**
  * Releases a peripheral instance for reuse by another user.
  *
  * @param [in]  peripheral   The peripheral instance to free.
  * @param [in]  user         The user reference that was used to claim the peripheral.
  */
-void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user);
+void pbio_bluetooth_peripheral_release(pbio_bluetooth_peripheral_t *peripheral, void *user);
 
 /**
  * Gets the name of the connected peripheral.
@@ -398,7 +254,7 @@ void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral
  * @param [in]  peripheral     The peripheral to use.
  * @return  The name of the connected peripheral. May not be set.
  */
-const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *peripheral);
+const char *pbio_bluetooth_peripheral_get_name(pbio_bluetooth_peripheral_t *peripheral);
 
 /**
  * Starts scanning for a BLE device and connects to it.
@@ -408,7 +264,7 @@ const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *pe
  * @return               ::PBIO_SUCCESS if the operation was scheduled.
  *                       ::PBIO_ERROR_BUSY if already connected or another peripheral operation is ongoing.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_connect_config_t *config);
+pbio_error_t pbio_bluetooth_peripheral_scan_and_connect(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_connect_config_t *config);
 
 /**
  * Disconnect from the peripheral.
@@ -417,7 +273,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_periphe
  * @return                     ::PBIO_SUCCESS if disconnection schefuled or when already disconnected.
  *                             ::PBIO_ERROR_BUSY if another peripheral operation is ongoing.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t *peripheral);
+pbio_error_t pbio_bluetooth_peripheral_disconnect(pbio_bluetooth_peripheral_t *peripheral);
 
 /**
  * Find a characteristic by UUID and properties.
@@ -430,7 +286,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t 
  *                             ::PBIO_ERROR_BUSY if another peripheral operation is ongoing.
  *                             ::PBIO_ERROR_NO_DEV if no peripheral is connected.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic);
+pbio_error_t pbio_bluetooth_peripheral_discover_characteristic(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_char_discovery_t *characteristic);
 
 /**
  * Gets the result of the last characteristic discovery.
@@ -438,7 +294,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_
  * @param [in]  peri    The peripheral to use.
  * @return              The handle of the discovered characteristic, or 0 if not found.
  */
-uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_bluetooth_peripheral_t *peri);
+uint16_t pbio_bluetooth_peripheral_discover_characteristic_get_result(pbio_bluetooth_peripheral_t *peri);
 
 /**
  * Read a characteristic.
@@ -449,7 +305,7 @@ uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_blu
  *                             ::PBIO_ERROR_NO_DEV if not connected to a peripheral.
  *                             ::PBIO_ERROR_BUSY if another operation is ongoing.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle);
+pbio_error_t pbio_bluetooth_peripheral_read_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle);
 
 /**
  * Write a value to a peripheral characteristic without response.
@@ -465,7 +321,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peri
  *                         ::PBIO_ERROR_BUSY if another peripheral operation is ongoing.
  *                         ::PBIO_ERROR_INVALID_ARG if @p size is too big.
  */
-pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size);
+pbio_error_t pbio_bluetooth_peripheral_write_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size);
 
 /**
  * Awaits for a task associated with a peripheral to complete. Used to await
@@ -477,7 +333,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_per
  *                             ::PBIO_ERROR_AGAIN while awaiting.
  *                             or a thread specific error code if the operation failed.
  */
-pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context);
+pbio_error_t pbio_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context);
 
 //
 // Functions related to advertising and scanning.
@@ -493,7 +349,7 @@ pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, vo
  *                      ::PBIO_ERROR_BUSY if an advertising or scan initialization
  *                      command is already in progress.
  */
-pbio_error_t pbdrv_bluetooth_start_advertising(bool start);
+pbio_error_t pbio_bluetooth_start_advertising(bool start);
 
 /**
  * Starts broadcasting undirected, non-connectable, non-scannable advertisement
@@ -512,7 +368,7 @@ pbio_error_t pbdrv_bluetooth_start_advertising(bool start);
  *                      ::PBIO_ERROR_BUSY if another advertising/broadcast/scan is ongoing.
  *                      ::PBIO_ERROR_INVALID_ARG if @p size is invalid.
  */
-pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size);
+pbio_error_t pbio_bluetooth_start_broadcasting(const uint8_t *data, size_t size);
 
 /**
  * Starts observing, non-connectable, non-scannable advertisements.
@@ -524,14 +380,14 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size
  * @return                  ::PBIO_SUCCESS if operation was scheduled,
  *                          ::PBIO_ERROR_BUSY if another advertising/broadcast/scan command is ongoing.
  */
-pbio_error_t pbdrv_bluetooth_start_observing(pbdrv_bluetooth_start_observing_callback_t callback);
+pbio_error_t pbio_bluetooth_start_observing(pbio_bluetooth_start_observing_callback_t callback);
 
 /**
  * Request to restart observing if it is active.
  *
  * Used on device that require occasionally restarting observing to keep it active.
  */
-void pbdrv_bluetooth_restart_observing_request(void);
+void pbio_bluetooth_restart_observing_request(void);
 
 /**
  * Awaits for the advertising/broadcast/scan/observe call to complete.
@@ -545,7 +401,7 @@ void pbdrv_bluetooth_restart_observing_request(void);
  *                             ::PBIO_ERROR_AGAIN while awaiting.
  *                             or an thread specific error code if the operation failed.
  */
-pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context);
+pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context);
 
 /**
  * Awaits user activity to complete, usually called during cleanup after running
@@ -558,7 +414,7 @@ pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *st
  *                             ::PBIO_ERROR_AGAIN while awaiting.
  *                             ::PBIO_ERROR_TIMEDOUT if the timer expired.
  */
-pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
+pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
 
 /**
  * Starts a classic Bluetooth inquiry scan.
@@ -571,7 +427,7 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
  *                                    It will be internally rounded to the nearest
  *                                    supported nonzero value.
  */
-pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms);
+pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms);
 
 /**
  * Awaits for the classic Bluetooth inquiry scan to complete.
@@ -582,138 +438,93 @@ pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t
  *                             ::PBIO_ERROR_AGAIN while awaiting.
  *                             or an thread specific error code if the operation failed.
  */
-pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
+pbio_error_t pbio_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
 
 #else // PBIO_CONFIG_BLUETOOTH
 
-static inline void pbdrv_bluetooth_deinit(void) {
+static inline void pbio_bluetooth_deinit(void) {
 }
 
 static inline const char *pbdrv_bluetooth_get_hub_name(void) {
-    return "Pybricks Hub";
-}
-
-static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return "";
 }
 
-static inline bool pbdrv_bluetooth_host_is_connected(void) {
-    return false;
-}
-
-static inline bool pbdrv_bluetooth_hci_is_enabled(void) {
-    return false;
-}
-
-static inline void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {
-}
-
-static inline pbio_error_t pbdrv_bluetooth_tx(const uint8_t *data, uint32_t *size) {
-    if (size) {
-        *size = 0;
-    }
+static inline pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline uint32_t pbdrv_bluetooth_tx_available(void) {
-    return UINT32_MAX;
-}
-
-static inline bool pbdrv_bluetooth_tx_is_idle(void) {
-    return true;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_send_event_notification(
-    pbio_os_state_t *state, pbio_pybricks_event_t event, const uint8_t *data, size_t size) {
+static inline pbio_error_t pbio_bluetooth_peripheral_get_connected(pbio_bluetooth_peripheral_t **peripheral, void *user, pbio_bluetooth_peripheral_connect_config_t *config) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_get_available(pbdrv_bluetooth_peripheral_t **peripheral, void *user) {
+static inline void pbio_bluetooth_peripheral_release(pbio_bluetooth_peripheral_t *peripheral, void *user) {
+}
+
+static inline const char *pbio_bluetooth_peripheral_get_name(pbio_bluetooth_peripheral_t *peripheral) {
+    return "";
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_scan_and_connect(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_connect_config_t *config) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_get_connected(pbdrv_bluetooth_peripheral_t **peripheral, void *user, pbdrv_bluetooth_peripheral_connect_config_t *config) {
+static inline pbio_error_t pbio_bluetooth_peripheral_disconnect(pbio_bluetooth_peripheral_t *peripheral) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peripheral) {
-    return false;
-}
-
-static inline void pbdrv_bluetooth_peripheral_release(pbdrv_bluetooth_peripheral_t *peripheral, void *user) {
-}
-
-static inline const char *pbdrv_bluetooth_peripheral_get_name(pbdrv_bluetooth_peripheral_t *peripheral) {
-    return NULL;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_connect_config_t *config) {
+static inline pbio_error_t pbio_bluetooth_peripheral_discover_characteristic(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_char_discovery_t *characteristic) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_disconnect(pbdrv_bluetooth_peripheral_t *peripheral) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, pbdrv_bluetooth_peripheral_char_discovery_t *characteristic) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline uint16_t pbdrv_bluetooth_peripheral_discover_characteristic_get_result(pbdrv_bluetooth_peripheral_t *peri) {
+static inline uint16_t pbio_bluetooth_peripheral_discover_characteristic_get_result(pbio_bluetooth_peripheral_t *peri) {
     return 0;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle) {
+static inline pbio_error_t pbio_bluetooth_peripheral_read_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic(pbdrv_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size) {
+static inline pbio_error_t pbio_bluetooth_peripheral_write_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
+static inline pbio_error_t pbio_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_start_advertising(bool start) {
+static inline pbio_error_t pbio_bluetooth_start_advertising(bool start) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
+static inline pbio_error_t pbio_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_start_observing(
-    pbdrv_bluetooth_start_observing_callback_t callback) {
+static inline pbio_error_t pbio_bluetooth_start_observing(pbio_bluetooth_start_observing_callback_t callback) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbdrv_bluetooth_restart_observing_request(void) {
+static inline void pbio_bluetooth_restart_observing_request(void) {
 }
 
-static inline pbio_error_t pbdrv_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
+static inline pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
-    // Should not hold up systems without Bluetooth.
-    return PBIO_SUCCESS;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_start_inquiry_scan(pbdrv_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
+static inline pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
+static inline pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline uint16_t pbdrv_bluetooth_get_max_message_size(void) {
-    // Bluetooth does not impose any limits when not enabled.
-    return UINT16_MAX;
+
+static inline pbio_error_t pbio_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBIO_CONFIG_BLUETOOTH
 
-#endif // _PBDRV_BLUETOOTH_H_
+#endif // _PBIO_BLUETOOTH_H_
 
 /** @} */

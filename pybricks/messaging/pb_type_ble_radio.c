@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbio/bluetooth.h>
 
 #include <pbsys/config.h>
@@ -119,8 +120,8 @@ static observed_data_t *lookup_observed_data(uint8_t channel) {
  * @param [in]  length          The length of @p data in bytes.
  * @param [in]  rssi            The RSSI of the event in dBm.
  */
-static void handle_observe_event(pbdrv_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
-    // NB: ideally we would also be checking `event_type == PBDRV_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND`
+static void handle_observe_event(pbio_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
+    // NB: ideally we would also be checking `event_type == PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND`
     // here but due to a Bluetooth firmware bug on city hub, we have to allow other
     // advertisement types. This would filter out broadcasts from the experimental
     // feature in official LEGO Robot Inventor firmware.
@@ -251,7 +252,7 @@ static size_t pb_module_ble_encode(void *dst, size_t index, mp_obj_t arg) {
 static mp_obj_t wait_or_await_operation(mp_obj_t self_in) {
     pb_obj_BLE_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_async_t config = {
-        .iter_once = pbdrv_bluetooth_await_advertise_or_scan_command,
+        .iter_once = pbio_bluetooth_await_advertise_or_scan_command,
         .parent_obj = self_in,
     };
     return pb_type_async_wait_or_await(&config, &self->iter, true);
@@ -286,7 +287,7 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
 
     // Stop broadcasting if data is None.
     if (data_in == mp_const_none) {
-        pb_assert(pbdrv_bluetooth_start_broadcasting(NULL, 0));
+        pb_assert(pbio_bluetooth_start_broadcasting(NULL, 0));
         return wait_or_await_operation(self_in);
     }
 
@@ -318,7 +319,7 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     pbio_set_uint16_le(&data[2], LEGO_CID);
     data[4] = mp_obj_get_int(self->broadcast_channel);
 
-    pb_assert(pbdrv_bluetooth_start_broadcasting(data, index + 5));
+    pb_assert(pbio_bluetooth_start_broadcasting(data, index + 5));
     return wait_or_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_ble_broadcast_obj, 1, pb_module_ble_broadcast);
@@ -453,7 +454,7 @@ static mp_obj_t pb_module_ble_observe(mp_obj_t self_in, mp_obj_t channel_in) {
     // Have not received data yet or timed out.
     if (ch_data.rssi == INT8_MIN) {
 
-        pbdrv_bluetooth_restart_observing_request();
+        pbio_bluetooth_restart_observing_request();
 
         return mp_const_none;
     }
@@ -567,7 +568,7 @@ static mp_obj_t pb_type_ble_radio_init(mp_obj_t broadcast_channel_in, mp_obj_t o
 
     // Start observing right away by default.
     if (num_observe_channels > 0) {
-        pb_assert(pbdrv_bluetooth_start_observing(handle_observe_event));
+        pb_assert(pbio_bluetooth_start_observing(handle_observe_event));
         pb_module_tools_assert_blocking();
         wait_or_await_operation(MP_OBJ_FROM_PTR(self));
     }
