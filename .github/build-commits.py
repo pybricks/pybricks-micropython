@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Builds a range of commits and records their firmware sizes.
+"""Builds a range of commits and records their firmware sizes for one hub.
 
 Builds every commit up to the current HEAD, starting after the newest commit
-that already has a recorded size for all hubs being built. Results are
-appended to <hub>.csv in the size data worktree as one "hash,size" line per
-commit and committed there. Build failures are recorded with an empty size
-so they are never retried. With --publish, each commit is also pushed to the
-GitHub remote, retrying when concurrent CI jobs push in between; the script
-fails if any results remain unpublished at the end.
+that already has a recorded size. Results are appended to <hub>.csv in the size
+data worktree as one "hash,size" line per commit and committed there. Build
+failures are recorded with an empty size so they are never retried. With
+--publish, each commit is also pushed to the GitHub remote, retrying when
+concurrent CI jobs push in between; the script fails if any results remain
+unpublished at the end.
 
-Examples:
+Example:
 
-    build-commits.py movehub --publish   # branch CI matrix job
-    build-commits.py                     # all hubs, e.g. locally
+    build-commits.py movehub
+    build-commits.py movehub --publish
 """
 
 import argparse
@@ -48,10 +48,9 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument(
     "hub",
-    nargs="?",
     choices=HUBS,
     metavar="<hub>",
-    help="build only this hub; default is all hubs",
+    help="hub to build",
 )
 parser.add_argument(
     "--publish",
@@ -59,8 +58,6 @@ parser.add_argument(
     help="push each recorded size to the GitHub remote",
 )
 args = parser.parse_args()
-
-hubs = [args.hub] if args.hub else HUBS
 
 pybricks = git.Repo(PYBRICKS_PATH)
 assert not pybricks.bare, "Repository not found"
@@ -70,47 +67,45 @@ head = pybricks.head.commit.hexsha
 
 size_data = git.Repo(os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR))
 
-
-def csv_path(hub):
-    return os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR, f"{hub}.csv")
+CSV_PATH = os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR, f"{args.hub}.csv")
 
 
-def load_recorded(hub):
+def load_recorded():
     """hash -> size string, where empty string is a recorded build failure"""
     try:
-        with open(csv_path(hub), newline="") as f:
+        with open(CSV_PATH, newline="") as f:
             return {row[0]: row[1] for row in csv.reader(f)}
     except FileNotFoundError:
         return {}
 
 
-recorded = {h: load_recorded(h) for h in hubs}
+recorded = load_recorded()
 
 # set when a push gives up; cleared when a later push carries the results along
 unpublished = False
 
 
-def record(hub, commit, size):
+def record(commit, size):
     """Appends one result and commits it, pushing when enabled."""
-    global unpublished
-    recorded[hub][commit.hexsha] = "" if size is None else str(size)
+    global recorded, unpublished
+    recorded[commit.hexsha] = "" if size is None else str(size)
 
-    message = f"{hub}: Add {commit.hexsha[:8]}: "
+    message = f"{args.hub}: Add {commit.hexsha[:8]}: "
     if size is None:
         message += "build failed."
     else:
-        prev = recorded[hub].get(commit.parents[0].hexsha) if commit.parents else None
+        prev = recorded.get(commit.parents[0].hexsha) if commit.parents else None
         message += f"{size} ({size - int(prev):+d})." if prev else f"{size}."
 
     for _ in range(10):
-        with open(csv_path(hub), "w", newline="") as f:
-            csv.writer(f, lineterminator="\n").writerows(recorded[hub].items())
+        with open(CSV_PATH, "w", newline="") as f:
+            csv.writer(f, lineterminator="\n").writerows(recorded.items())
 
         # another job may have already recorded the same result
         if not size_data.is_dirty(untracked_files=True):
             return
 
-        size_data.git.add(f"{hub}.csv")
+        size_data.git.add(f"{args.hub}.csv")
         size_data.git.commit("-m", message)
 
         if not args.publish:
@@ -126,22 +121,18 @@ def record(hub, commit, size):
             time.sleep(random.uniform(1, 10))
             size_data.git.fetch()
             size_data.git.reset("--hard", f"origin/{SIZE_BRANCH}")
-            merged = load_recorded(hub)
-            merged.update(recorded[hub])
-            recorded[hub] = merged
+            merged = load_recorded()
+            merged.update(recorded)
+            recorded = merged
 
     # the result rides along with the next push, or the job fails at the end
     print("Could not push size data, continuing", flush=True)
     unpublished = True
 
 
-# newest ancestor of HEAD already recorded for all hubs being built
+# newest ancestor of HEAD already recorded
 start = next(
-    (
-        c.hexsha
-        for c in pybricks.iter_commits(head)
-        if all(c.hexsha in recorded[h] for h in hubs)
-    ),
+    (c.hexsha for c in pybricks.iter_commits(head) if c.hexsha in recorded),
     None,
 )
 if start is None:
@@ -154,35 +145,35 @@ if GITHUB_RUN_NUMBER:
     os.putenv("MICROPY_GIT_TAG", f"ci-build-{GITHUB_RUN_NUMBER}-{tag}")
 
 
-def update_submodules(hubs):
+def update_submodules():
     pybricks.git.submodule("update", "--init", "micropython")
     micropython = pybricks.submodule("micropython").module()
     micropython.git.submodule("update", "--init", "lib/micropython-lib")
     micropython.git.submodule("update", "--init", "lib/stm32lib")
-    if "primehub" in hubs or "essentialhub" in hubs:
+    if args.hub in ("primehub", "essentialhub"):
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
         pybricks.git.submodule(
             "update", "--init", "--checkout", "lib/STM32_USB_Device_Library"
         )
-    if "ev3" in hubs or "nxt" in hubs:
+    if args.hub in ("ev3", "nxt"):
         pybricks.git.submodule("update", "--init", "--checkout", "lib/umm_malloc")
-    if "buildhat" in hubs:
+    if args.hub == "buildhat":
         micropython.git.submodule("update", "--init", "lib/pico-sdk")
 
 
-def build(hub):
+def build():
     subprocess.check_call(
         [
             "make",
             "-C",
-            os.path.join(PYBRICKS_PATH, "bricks", hub),
+            os.path.join(PYBRICKS_PATH, "bricks", args.hub),
             "build/firmware-base.bin",
             "all",
             "-j",
         ]
     )
     return os.path.getsize(
-        os.path.join(PYBRICKS_PATH, "bricks", hub, "build", "firmware-base.bin")
+        os.path.join(PYBRICKS_PATH, "bricks", args.hub, "build", "firmware-base.bin")
     )
 
 
@@ -193,8 +184,7 @@ for commit in pybricks.iter_commits(
 ):
     # recorded results are final: an empty size means the build failed at
     # this commit and would fail again
-    todo = [h for h in hubs if commit.hexsha not in recorded[h]]
-    if not todo:
+    if commit.hexsha in recorded:
         print("Skipping", commit.hexsha[:8], f'"{commit.summary}"', flush=True)
         continue
 
@@ -202,7 +192,7 @@ for commit in pybricks.iter_commits(
     pybricks.git.checkout(commit.hexsha)
     os.putenv("MICROPY_GIT_HASH", commit.hexsha[:8])
 
-    update_submodules(todo)
+    update_submodules()
 
     print("Clean all", flush=True)
     subprocess.check_call(["make", "-C", PYBRICKS_PATH, "clean-all"])
@@ -211,15 +201,14 @@ for commit in pybricks.iter_commits(
     mpy_cross_path = os.path.join(PYBRICKS_PATH, "micropython", "mpy-cross")
     subprocess.check_call(["make", "-C", mpy_cross_path, "CROSS_COMPILE=", "-j"])
 
-    for hub in todo:
-        print("Building", hub, flush=True)
-        try:
-            size = build(hub)
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            print("Build failed:", e, flush=True)
-            size = None
-            failures = True
-        record(hub, commit, size)
+    print("Building", args.hub, flush=True)
+    try:
+        size = build()
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print("Build failed:", e, flush=True)
+        size = None
+        failures = True
+    record(commit, size)
 
 if failures:
     sys.exit("Some builds failed")
