@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Creates interactive graph of pybricks-micropython firmware size changes.
 
-Reads recorded sizes from the size-data worktree, or from the size-data
-branch when not checked out. Run it locally after refreshing that data;
-the applicable git command is printed on start.
+Reads recorded sizes from the size-data worktree; setup and refresh
+commands are printed on start.
 """
 
 import csv
-import io
 import os
 import re
 import sys
@@ -23,7 +21,7 @@ from plotly.subplots import make_subplots
 SIZE_DATA_DIR = "size-data"
 BUILD_DIR = os.environ.get("BUILD_DIR", os.path.join(SIZE_DATA_DIR, "build"))
 
-# branch holding the size data, used when the worktree does not exist locally
+# branch holding the size data
 SIZE_BRANCH = os.environ.get("SIZE_BRANCH", "size-data")
 
 # Number of digits of hash to display
@@ -210,35 +208,27 @@ def create_plot(size_map, commits, hub):
 
 
 def load_sizes(hub):
-    """Loads a hub's sizes from the worktree, or from the size-data branch
-    (local or remote-tracking, whichever exists) when not checked out.
+    """Loads a hub's sizes from the size-data worktree.
 
     Returns:
         (dict) firmware size keyed by commit hash, None for recorded failures
     """
-    path = os.path.join(SIZE_DATA_DIR, f"{hub}.csv")
-    if os.path.exists(path):
-        with open(path, newline="") as f:
-            reader = csv.reader(f)
-            return {row[0]: int(row[1]) if row[1] else None for row in reader}
-
-    for ref in (SIZE_BRANCH, f"origin/{SIZE_BRANCH}"):
-        try:
-            data = pybricks.git.show(f"{ref}:{hub}.csv")
-        except git.GitCommandError:
-            continue
-        reader = csv.reader(io.StringIO(data))
-        return {row[0]: int(row[1]) if row[1] else None for row in reader}
-
-    print(f"Size data not found: no {path} file or {SIZE_BRANCH} branch")
-    sys.exit(1)
+    path = os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR, f"{hub}.csv")
+    with open(path, newline="") as f:
+        return {row[0]: int(row[1]) if row[1] else None for row in csv.reader(f)}
 
 
 def main():
-    if os.path.isdir(os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR)):
-        print("To refresh size data first: git -C size-data pull")
-    else:
-        print(f"To refresh size data first: git fetch origin {SIZE_BRANCH}")
+    if not os.path.isdir(os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR)):
+        print("Size data worktree not found. Set it up once with:")
+        print(f"    git fetch origin {SIZE_BRANCH}")
+        print(
+            f"    git worktree add -b {SIZE_BRANCH}"
+            f" {SIZE_DATA_DIR} origin/{SIZE_BRANCH}"
+        )
+        sys.exit(1)
+
+    print(f"To refresh size data first: git -C {SIZE_DATA_DIR} pull")
 
     # the tree has multiple independent histories that have been merged
     # we only want commits that belong the the mainline
