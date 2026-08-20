@@ -10,12 +10,14 @@
 #include "py/builtin.h"
 #include "py/gc.h"
 #include "py/mphal.h"
+#include "py/objarray.h"
 #include "py/objmodule.h"
 #include "py/runtime.h"
 #include "py/stream.h"
 
 #include <pbdrv/clock.h>
 
+#include <pbio/cobs.h>
 #include <pbio/int_math.h>
 #include <pbio/util.h>
 #include <pbsys/light.h>
@@ -296,6 +298,121 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR(pb_module_tools_hub_menu_obj, 2, pb_module_to
 
 #endif // PYBRICKS_PY_TOOLS_HUB_MENU
 
+#if PYBRICKS_PY_TOOLS_COBS
+
+/**
+ * COBS-encodes a prefix byte and a bytes-like payload and returns the framed
+ * result as bytes.
+ */
+static mp_obj_t pb_module_tools_cobs_encode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(prefix),
+        PB_ARG_REQUIRED(data));
+
+    mp_int_t prefix = pb_obj_get_int(prefix_in);
+    if (prefix < 0 || prefix > UINT8_MAX) {
+        mp_raise_ValueError(MP_ERROR_TEXT("prefix must be 0--255"));
+    }
+
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(data_in, &bufinfo, MP_BUFFER_READ);
+
+    vstr_t vstr;
+    vstr_init_len(&vstr, PBIO_COBS_ENCODED_BUFFER_SIZE(bufinfo.len));
+    vstr.len = pbio_cobs_encode_prefixed(prefix, bufinfo.buf, bufinfo.len, (uint8_t *)vstr.buf);
+    return mp_obj_new_bytes_from_vstr(&vstr);
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_cobs_encode_obj, 0, pb_module_tools_cobs_encode);
+
+/**
+ * Feeds a chunk of encoded stream data into @p buffer and returns a tuple of
+ * (prefix, payload) tuples for each frame completed by this chunk.
+ *
+ * @p buffer is a user-allocated bytearray that carries the pending (partial)
+ * frame between calls: bytes up to its current length are the pending frame
+ * and its fixed allocation is the capacity. Encoded bytes are copied in
+ * verbatim; each delimiter decodes the pending bytes and rewinds the length
+ * to zero. No reallocation ever happens, so the user can tune the capacity.
+ *
+ * The pending frame is never allowed to fill the buffer completely, so a
+ * completely full buffer can only be a freshly allocated one like
+ * bytearray(64) and is safely treated as empty.
+ */
+static mp_obj_t pb_module_tools_cobs_decode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(buffer),
+        PB_ARG_REQUIRED(data));
+
+    if (!mp_obj_is_type(buffer_in, &mp_type_bytearray)) {
+        mp_raise_TypeError(MP_ERROR_TEXT("buffer must be a bytearray"));
+    }
+    mp_obj_array_t *buffer = MP_OBJ_TO_PTR(buffer_in);
+    const size_t capacity = buffer->len + buffer->free;
+    uint8_t *pending = buffer->items;
+
+    // We never leave the buffer completely full, so this state can only be a
+    // freshly allocated bytearray.
+    if (buffer->len == capacity) {
+        buffer->len = 0;
+        buffer->free = capacity;
+    }
+
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(data_in, &bufinfo, MP_BUFFER_READ);
+    const uint8_t *data = bufinfo.buf;
+
+    mp_obj_t results = mp_obj_new_list(0, NULL);
+
+    for (size_t i = 0; i < bufinfo.len; i++) {
+        uint8_t byte = data[i];
+
+        if (byte != PBIO_COBS_DELIMITER) {
+            // Raise one byte early: a completely full buffer is reserved to
+            // mean a freshly allocated one, checked on entry above.
+            if (buffer->len + 1 >= capacity) {
+                // Drop the partial frame so the stream can resync later.
+                buffer->len = 0;
+                buffer->free = capacity;
+                mp_raise_ValueError(MP_ERROR_TEXT("buffer full"));
+            }
+            pending[buffer->len++] = byte;
+            buffer->free--;
+            continue;
+        }
+
+        // Delimiter: decode the pending frame. Back-to-back delimiters (an
+        // empty frame body) are tolerated as a resync, like in pbio/usb.
+        size_t frame_len = buffer->len;
+        buffer->len = 0;
+        buffer->free = capacity;
+        if (frame_len == 0) {
+            continue;
+        }
+
+        // Decoded output never exceeds the encoded size, and the prefix byte
+        // is stored separately, so frame_len bytes of capacity always suffice.
+        vstr_t vstr;
+        vstr_init_len(&vstr, frame_len);
+        uint8_t prefix;
+        vstr.len = pbio_cobs_decode_prefixed(pending, frame_len, &prefix, (uint8_t *)vstr.buf, frame_len);
+        if (vstr.len == 0) {
+            // Skip instead of raise for malformed frame.
+            continue;
+        }
+
+        mp_obj_t items[] = {
+            MP_OBJ_NEW_SMALL_INT(prefix),
+            mp_obj_new_bytes_from_vstr(&vstr),
+        };
+        mp_obj_list_append(results, mp_obj_new_tuple(MP_ARRAY_SIZE(items), items));
+    }
+
+    return results;
+}
+static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_cobs_decode_obj, 0, pb_module_tools_cobs_decode);
+
+#endif // PYBRICKS_PY_TOOLS_COBS
+
 static const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)                    },
     { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&pb_module_tools_wait_obj)         },
@@ -304,6 +421,10 @@ static const mp_rom_map_elem_t tools_globals_table[] = {
     // Backwards compatibility with Pybricks 3.x, now moved to pybricks.messaging
     { MP_ROM_QSTR(MP_QSTR_AppData),  MP_ROM_PTR(&pb_type_app_data) },
     #endif // PYBRICKS_PY_MESSAGING_APP_DATA
+    #if PYBRICKS_PY_TOOLS_COBS
+    { MP_ROM_QSTR(MP_QSTR_cobs_encode), MP_ROM_PTR(&pb_module_tools_cobs_encode_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_cobs_decode), MP_ROM_PTR(&pb_module_tools_cobs_decode_obj)  },
+    #endif // PYBRICKS_PY_TOOLS_COBS
     #if PYBRICKS_PY_TOOLS_HUB_MENU
     { MP_ROM_QSTR(MP_QSTR_hub_menu),    MP_ROM_PTR(&pb_module_tools_hub_menu_obj)     },
     #endif // PYBRICKS_PY_TOOLS_HUB_MENU
