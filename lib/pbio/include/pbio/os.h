@@ -328,4 +328,24 @@ pbio_error_t pbio_port_process_none_thread(pbio_os_state_t *state, void *context
 
 void pbio_os_process_start(pbio_os_process_t *process, pbio_os_process_func_t func, void *context);
 
+/**
+ * Yields a data generator with data.
+ *
+ * Not used in the standard manner of the processes above. Used for special
+ * protothreads much like Python generator functions, yielding data. Normal
+ * processes do not yield data, since those have nothing to pass it to.
+ *
+ */
+#define PBIO_OS_YIELD_DATA(state, size, return_size) \
+    do {                                             \
+        do_yield_now = 1;                            \
+        *size = (return_size);                       \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);         \
+        if (do_yield_now) {                          \
+            return PBIO_ERROR_AGAIN;                 \
+        }                                            \
+    } while (0)
+
+#define PBIO_OS_YIELD_DATA_INIT(size) ({uint32_t _avail = *size; *size = 0; _avail;})
+
 #endif // _PBIO_OS_H_
