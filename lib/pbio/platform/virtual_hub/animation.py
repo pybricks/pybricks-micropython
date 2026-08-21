@@ -28,9 +28,12 @@ PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY = 3
 # REVISIT: Align with firmware once the telemetry protocol is settled.
 MANUF_ID_LEGO = 0
 FAMILY_POWERED_UP = 0
-FAMILY_EV3 = 1
-DEVICE_EV3_BUILTIN_DISPLAY = 0
-DEVICE_ANY_ENCODED_MOTOR = 94
+FAMILY_EV3_BUILTIN = 2
+# 16-bit device id: family in high byte, type in low byte.
+DEVICE_EV3_BUILTIN_DISPLAY = (FAMILY_EV3_BUILTIN << 8) | 0
+DEVICE_ANY_ENCODED_MOTOR = (FAMILY_POWERED_UP << 8) | 94
+MSG_HEADER_SIZE = 6
+DISPLAY_CHUNK_SIZE = 500
 DISPLAY_FRAME_SIZE = DISPLAY_WIDTH * DISPLAY_HEIGHT
 
 # Incoming events (stdout, status, app data, port view)
@@ -78,30 +81,32 @@ def iter_chunks(data: bytes):
 
 def process_telemetry(message):
     for payload in iter_chunks(message):
-        # Common header: manufacturer, family, device type, port id.
-        if len(payload) < 4:
+        # Common header: manufacturer, device id, location, mode.
+        if len(payload) < MSG_HEADER_SIZE:
             continue
-        manufacturer, family, device, port = payload[:4]
-        if manufacturer != MANUF_ID_LEGO:
+        manufacturer = payload[0]
+        device, location = struct.unpack_from("<HH", payload, 1)
+        mode = payload[5]
+        if manufacturer != MANUF_ID_LEGO or mode != 0:
             continue
-        # Display frame chunk: start offset, then pixels packed 4 per byte,
-        # 2 bits each, LSB first. Offset is in packed bytes.
-        if family == FAMILY_EV3 and device == DEVICE_EV3_BUILTIN_DISPLAY:
-            (offset,) = struct.unpack_from("<I", payload, 4)
-            packed = payload[8:]
+        # Display frame chunk: location is the chunk index, then pixels packed
+        # 4 per byte, 2 bits each, LSB first.
+        if device == DEVICE_EV3_BUILTIN_DISPLAY:
+            packed = payload[MSG_HEADER_SIZE:]
+            chunk_offset = location * DISPLAY_CHUNK_SIZE
             for i, b in enumerate(packed):
-                base = (offset + i) * 4
+                base = (chunk_offset + i) * 4
                 display_frame[base] = b & 3
                 display_frame[base + 1] = (b >> 2) & 3
                 display_frame[base + 2] = (b >> 4) & 3
                 display_frame[base + 3] = (b >> 6) & 3
             # Firmware sends chunks in order, so the last one completes a frame.
-            if (offset + len(packed)) * 4 == DISPLAY_FRAME_SIZE:
+            if (chunk_offset + len(packed)) * 4 == DISPLAY_FRAME_SIZE:
                 update_display(display_frame)
-        # Motor angle sample.
-        elif family == FAMILY_POWERED_UP and device == DEVICE_ANY_ENCODED_MOTOR:
-            (angle,) = struct.unpack_from("<i", payload, 4)
-            angles[port] = angle
+        # Motor angle sample: location is the port index.
+        elif device == DEVICE_ANY_ENCODED_MOTOR:
+            (angle,) = struct.unpack_from("<i", payload, MSG_HEADER_SIZE)
+            angles[location] = angle
 
 
 def update_state():

@@ -386,9 +386,9 @@ pbio_image_t *pbdrv_display_get_image(void) {
     return &pbdrv_display_image;
 }
 
-uint32_t pbdrv_display_get_buffer(uint8_t *buffer, uint32_t offset, uint32_t max_size, uint32_t *update_count) {
+uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location) {
     // Not implemented for this driver.
-    *update_count = 0;
+    *location = 0;
     return 0;
 }
 

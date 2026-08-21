@@ -7,6 +7,7 @@
 
 #if PBDRV_CONFIG_DISPLAY_VIRTUAL
 
+#include <stdbool.h>
 #include <string.h>
 
 #include <pbdrv/display.h>
@@ -60,23 +61,48 @@ pbio_image_t *pbdrv_display_get_image(void) {
     return &display_image;
 }
 
-uint32_t pbdrv_display_get_buffer(uint8_t *buffer, uint32_t offset, uint32_t max_size, uint32_t *update_count) {
-    *update_count = pbdrv_display_update_count;
+uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location) {
+    static uint32_t chunk_index;
+    static uint32_t reading_count;
+    static uint32_t sent_count;
+    static bool frame_just_completed;
 
-    // Pixels are 2 bits each, so packed 4 per byte, LSB first. Offset and
-    // sizes are in packed bytes.
-    const uint8_t *pixels = (const uint8_t *)pbdrv_display_user_frame;
-    uint32_t packed_size = sizeof(pbdrv_display_user_frame) / 4;
-    if (offset >= packed_size) {
+    // Yield once between frames so other telemetry gets a turn.
+    if (frame_just_completed) {
+        frame_just_completed = false;
         return 0;
     }
+
+    if (chunk_index == 0) {
+        if (pbdrv_display_update_count == sent_count) {
+            // Nothing new to send.
+            return 0;
+        }
+        reading_count = pbdrv_display_update_count;
+    }
+
+    // Pixels are 2 bits each, so packed 4 per byte, LSB first.
+    const uint8_t *pixels = (const uint8_t *)pbdrv_display_user_frame;
+    uint32_t packed_size = sizeof(pbdrv_display_user_frame) / 4;
+    uint32_t offset = chunk_index * PBDRV_DISPLAY_TELEMETRY_MAX_SIZE;
     uint32_t copy_size = packed_size - offset;
-    if (copy_size > max_size) {
-        copy_size = max_size;
+    if (copy_size > PBDRV_DISPLAY_TELEMETRY_MAX_SIZE) {
+        copy_size = PBDRV_DISPLAY_TELEMETRY_MAX_SIZE;
     }
     for (uint32_t i = 0; i < copy_size; i++) {
         const uint8_t *p = &pixels[(offset + i) * 4];
         buffer[i] = (p[0] & 0x03) | ((p[1] & 0x03) << 2) | ((p[2] & 0x03) << 4) | ((p[3] & 0x03) << 6);
+    }
+    *location = chunk_index;
+
+    if (offset + copy_size == packed_size) {
+        // Frame complete. If it was updated (torn) while reading, the count
+        // differs from the snapshot, so a fresh frame follows.
+        sent_count = reading_count;
+        chunk_index = 0;
+        frame_just_completed = true;
+    } else {
+        chunk_index++;
     }
     return copy_size;
 }

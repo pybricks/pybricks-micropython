@@ -15,6 +15,7 @@
 
 #include "./storage.h"
 #include "./program_stop.h"
+#include "./telemetry.h"
 
 static pbsys_command_write_app_data_callback_t write_app_data_callback = NULL;
 
@@ -99,6 +100,10 @@ pbio_pybricks_error_t pbsys_handle_command(const uint8_t *data, uint32_t size) {
             const uint8_t *data_to_write = &data[3];
             return pbio_pybricks_error_from_pbio_error(write_app_data_callback(offset, data_size, data_to_write));
         }
+
+        case PBIO_PYBRICKS_COMMAND_WRITE_TELEMETRY:
+            return pbsys_telemetry_write_data(&data[1], size - 1);
+
         default:
             return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
     }

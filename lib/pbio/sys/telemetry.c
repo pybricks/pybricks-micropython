@@ -1,10 +1,12 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2024 The Pybricks Authors
+// Copyright (C) 2026 The Pybricks Authors - All rights reserved
+// To build the firmware without this non-free component, set
+// PBSYS_CONFIG_TELEMETRY to 0 in pbsysconfig.h.
 
 #include <pbsys/config.h>
 
 #if PBSYS_CONFIG_TELEMETRY
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <pbdrv/display.h>
@@ -24,40 +26,22 @@ typedef struct {
 
 static pbsys_telemetry_port_data_t last_data[PBIO_CONFIG_PORT_NUM_DEV];
 
-// REVISIT: Move to shared protocol definitions once the format is settled.
+// Telemetry output level, controlled by the host via the set level command.
+static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_FULL;
 
-/**
- * Manufacturer of a telemetry data source.
- */
-typedef enum {
-    PBSYS_TELEMETRY_MANUFACTURER_LEGO = 0,
-} pbsys_telemetry_manufacturer_t;
+// Pending mode change per port, requested by the host and to be applied by
+// the data generator. Latest request wins.
+typedef struct {
+    uint16_t device_id;
+    uint8_t mode;
+    bool pending;
+} pbsys_telemetry_pending_mode_t;
 
-/**
- * Device family within a manufacturer.
- */
-typedef enum {
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_POWERED_UP_SENSOR = 0,
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_SENSOR = 1,
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN = 2,
-} pbsys_telemetry_device_family_t;
+static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
 
-/**
- * Builtin EV3 devices
- */
-typedef enum {
-    PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY = 0,
-} pbsys_telemetry_device_lego_ev3_t;
+#define MOTOR_DATA_SIZE (PBSYS_TELEMETRY_MSG_HEADER_SIZE + sizeof(uint32_t))
 
-// Common payload header: manufacturer, family, device type, port id.
-#define TELEMETRY_HEADER_SIZE (4)
-
-#define MOTOR_DATA_SIZE (TELEMETRY_HEADER_SIZE + sizeof(uint32_t))
-
-// Display payload: header, start offset, then pixel data in the display
-// driver's packed encoding.
-#define DISPLAY_DATA_HEADER_SIZE (TELEMETRY_HEADER_SIZE + sizeof(uint32_t))
-#define DISPLAY_DATA_MAX_SIZE (500)
+#define DISPLAY_DATA_SIZE (PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBDRV_DISPLAY_TELEMETRY_MAX_SIZE)
 
 // Revisit: Come up with a data encoding protocol. Right now it just sends
 // six motor positions to drive the existing motor animation.
@@ -85,10 +69,11 @@ static pbio_error_t update_port_data(uint8_t index, uint8_t *buf) {
     data->value = degrees;
 
     buf[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-    buf[1] = PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_POWERED_UP_SENSOR;
-    buf[2] = type_id;
-    buf[3] = index;
-    pbio_set_uint32_le(&buf[4], degrees);
+    pbio_set_uint16_le(&buf[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
+        PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_POWERED_UP_SENSOR, type_id));
+    pbio_set_uint16_le(&buf[3], index);
+    buf[5] = 0; // Mode. REVISIT: Use actual device mode.
+    pbio_set_uint32_le(&buf[6], degrees);
     return PBIO_SUCCESS;
 }
 
@@ -114,62 +99,43 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
 
     static uint8_t i = 0;
     static pbio_os_timer_t timer;
-    static uint32_t display_offset;
-    static uint32_t display_count_reading;
-    static uint32_t display_count_sent;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
 
-        // Send display frame in chunks, restarting when it changes mid-frame
-        // so the receiver always gets full frames of a single update count.
-        for (;;) {
+        // Send any new display data, one chunk at a time. The driver tracks
+        // read-out progress and is bounded to one frame before yielding.
+        while (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
 
-            // Can't fit a useful display chunk.
-            if (available <= DISPLAY_DATA_HEADER_SIZE) {
+            // Can't fit a display chunk.
+            if (available < DISPLAY_DATA_SIZE) {
                 return PBIO_ERROR_BUSY;
             }
 
-            uint32_t max_chunk_size = available - DISPLAY_DATA_HEADER_SIZE;
-            if (max_chunk_size > DISPLAY_DATA_MAX_SIZE) {
-                max_chunk_size = DISPLAY_DATA_MAX_SIZE;
-            }
-            uint32_t display_count;
-            uint32_t chunk_size = pbdrv_display_get_buffer(&data[DISPLAY_DATA_HEADER_SIZE],
-                display_offset, max_chunk_size, &display_count);
-
-            if (display_offset == 0) {
-                if (display_count == display_count_sent) {
-                    // Nothing new to send.
-                    break;
-                }
-                display_count_reading = display_count;
-            } else if (display_count != display_count_reading) {
-                // Changed while reading, start over.
-                display_offset = 0;
-                continue;
-            }
-
+            uint32_t location;
+            uint32_t chunk_size = pbdrv_display_get_telemetry_data(
+                &data[PBSYS_TELEMETRY_MSG_HEADER_SIZE], &location);
             if (chunk_size == 0) {
-                // Sent one full frame of the current count.
-                display_count_sent = display_count_reading;
-                display_offset = 0;
+                // Nothing new to send.
                 break;
             }
 
             data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-            data[1] = PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_SENSOR;
-            data[2] = PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY;
-            data[3] = 0;
-            pbio_set_uint32_le(&data[4], display_offset);
-            display_offset += chunk_size;
+            pbio_set_uint16_le(&data[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
+                PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN,
+                PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY));
+            pbio_set_uint16_le(&data[3], location);
+            data[5] = 0; // Mode.
 
             // Yield one display chunk for appending.
-            YIELD_DATA(state, size, DISPLAY_DATA_HEADER_SIZE + chunk_size);
+            YIELD_DATA(state, size, PBSYS_TELEMETRY_MSG_HEADER_SIZE + chunk_size);
         }
 
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
+
+            // REVISIT: Apply pending mode change for this port here.
+            (void)pending_modes;
 
             // Can't fit any more motor samples.
             if (available < MOTOR_DATA_SIZE) {
@@ -200,6 +166,10 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
     static pbio_os_state_t state;
     uint32_t next_index = 1;
 
+    if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_OFF) {
+        return 0;
+    }
+
     data[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
 
     while (next_index < max_size - 2) {
@@ -227,6 +197,46 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
     }
 
     return next_index > 1 ? next_index : 0;
+}
+
+pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t size) {
+
+    // Payload is a single command: id followed by command-specific payload.
+    if (size < 1) {
+        return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+    }
+
+    switch (data[0]) {
+        case PBSYS_TELEMETRY_COMMAND_SET_LEVEL:
+            if (size != 2 || data[1] > PBSYS_TELEMETRY_LEVEL_FULL) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            pbsys_telemetry_level = data[1];
+            return PBIO_PYBRICKS_ERROR_OK;
+        case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
+            // Command id followed by the outgoing message header.
+            if (size != 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            if (data[1] != PBSYS_TELEMETRY_MANUFACTURER_LEGO) {
+                // Unknown manufacturer, ignore.
+                return PBIO_PYBRICKS_ERROR_OK;
+            }
+            uint16_t location = pbio_get_uint16_le(&data[4]);
+            if (location >= PBIO_CONFIG_PORT_NUM_DEV) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            // Latest request wins. Applied by the data generator.
+            pending_modes[location] = (pbsys_telemetry_pending_mode_t) {
+                .device_id = pbio_get_uint16_le(&data[2]),
+                .mode = data[6],
+                .pending = true,
+            };
+            return PBIO_PYBRICKS_ERROR_OK;
+        }
+        default:
+            return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
+    }
 }
 
 #endif // PBSYS_CONFIG_TELEMETRY

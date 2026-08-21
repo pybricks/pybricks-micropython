@@ -205,6 +205,18 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA = 7,
+
+    /**
+     * Requests to write telemetry commands to the hub, such as changing a
+     * sensor mode.
+     *
+     * This is the complement of ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY. The
+     * full payload details are given in telemetry.h.
+     *
+     * Parameters:
+     * - payload: One or more telemetry commands.
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_TELEMETRY = 8,
 } pbio_pybricks_command_t;
 /**
  * Application-specific error codes that are used in ATT_ERROR_RSP.
@@ -277,9 +289,8 @@ typedef enum {
     /**
      * Telemetry data sent from the hub to the host.
      *
-     * The payload is a variable number of bytes that was written to app data.
-     *
-     * Pybricks profile version defines exact encoding of this data.
+     * The payload is one or more telemetry messages. The full payload details
+     * are given in telemetry.h.
      *
      * @since Unreleased. Should not be considered final.
      */
