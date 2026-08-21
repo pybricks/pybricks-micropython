@@ -52,59 +52,52 @@ void pbdrv_display_init(void) {
         PBDRV_CONFIG_DISPLAY_NUM_COLS);
     display_image.print_font = &pbio_font_terminus_normal_16;
     display_image.print_value = 3;
-
-    // Count the initial cleared frame as an update so readers pick it up.
-    pbdrv_display_update_count = 1;
 }
 
 pbio_image_t *pbdrv_display_get_image(void) {
     return &display_image;
 }
 
-uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location) {
-    static uint32_t chunk_index;
-    static uint32_t reading_count;
-    static uint32_t sent_count;
-    static bool frame_just_completed;
+// chunks of 8 packed rows, so we can send the whole screen in fixed size chunks.
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS (8)
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 4)
 
-    // Yield once between frames so other telemetry gets a turn.
-    if (frame_just_completed) {
-        frame_just_completed = false;
-        return 0;
+// Note: verbatim copy of EV3 display.
+pbio_error_t pbdrv_display_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size, uint32_t *progress) {
+
+    // Doesn't fit now.
+    if (PBIO_OS_YIELD_DATA_INIT(size) < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE) {
+        return PBIO_ERROR_BUSY;
     }
 
-    if (chunk_index == 0) {
-        if (pbdrv_display_update_count == sent_count) {
-            // Nothing new to send.
-            return 0;
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Counter of most recent frame that made it over the air in full. Used to
+    // decide if we must skip the request to send another frame.
+    static uint32_t last_started_frame = UINT32_MAX;
+    if (last_started_frame == pbdrv_display_update_count) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Mark current frame as the last one started.
+    last_started_frame = pbdrv_display_update_count;
+
+    // Loop over current frame, accepting that rows may update as we do.
+    // If the frame did change, it will be written out in full next time.
+    static uint32_t chunk;
+    for (chunk = 0; chunk < (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS); chunk++) {
+        for (uint32_t i = 0; i < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE; i++) {
+            // Pack 4 consecutive pixels (2 bits each, LSB first) per byte.
+            const uint8_t *p = (const uint8_t *)pbdrv_display_user_frame + (chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + i) * 4;
+            data[i] = (p[0] & 0x03) | ((p[1] & 0x03) << 2) | ((p[2] & 0x03) << 4) | ((p[3] & 0x03) << 6);
         }
-        reading_count = pbdrv_display_update_count;
+        *progress = chunk;
+        PBIO_OS_YIELD_DATA(state, size, PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE);
     }
 
-    // Pixels are 2 bits each, so packed 4 per byte, LSB first.
-    const uint8_t *pixels = (const uint8_t *)pbdrv_display_user_frame;
-    uint32_t packed_size = sizeof(pbdrv_display_user_frame) / 4;
-    uint32_t offset = chunk_index * PBDRV_DISPLAY_TELEMETRY_MAX_SIZE;
-    uint32_t copy_size = packed_size - offset;
-    if (copy_size > PBDRV_DISPLAY_TELEMETRY_MAX_SIZE) {
-        copy_size = PBDRV_DISPLAY_TELEMETRY_MAX_SIZE;
-    }
-    for (uint32_t i = 0; i < copy_size; i++) {
-        const uint8_t *p = &pixels[(offset + i) * 4];
-        buffer[i] = (p[0] & 0x03) | ((p[1] & 0x03) << 2) | ((p[2] & 0x03) << 4) | ((p[3] & 0x03) << 6);
-    }
-    *location = chunk_index;
-
-    if (offset + copy_size == packed_size) {
-        // Frame complete. If it was updated (torn) while reading, the count
-        // differs from the snapshot, so a fresh frame follows.
-        sent_count = reading_count;
-        chunk_index = 0;
-        frame_just_completed = true;
-    } else {
-        chunk_index++;
-    }
-    return copy_size;
+    // Self-resets so can be called again after reset.
+    PBIO_OS_ASYNC_RESET(state);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 uint8_t pbdrv_display_get_max_value(void) {

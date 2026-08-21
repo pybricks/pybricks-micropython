@@ -11,6 +11,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/image.h>
+#include <pbio/os.h>
 
 #if PBDRV_CONFIG_DISPLAY
 
@@ -61,7 +62,7 @@ void pbdrv_display_update(void);
  * @return  Number of bytes copied. Zero if there is nothing new to send or
  *          if the driver does not provide telemetry data.
  */
-uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location);
+pbio_error_t pbdrv_display_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size, uint32_t *progress);
 
 #else // PBDRV_CONFIG_DISPLAY
 
@@ -80,8 +81,9 @@ static inline uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, ui
 static inline void pbdrv_display_update(void) {
 }
 
-static inline uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location) {
-    *location = 0;
+static inline pbio_error_t pbdrv_display_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size, uint32_t *progress) {
+    *size = 0;
+    *progress = 0;
     return 0;
 }
 

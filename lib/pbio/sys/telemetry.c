@@ -77,12 +77,6 @@ static pbio_error_t update_port_data(uint8_t index, uint8_t *buf) {
     return PBIO_SUCCESS;
 }
 
-#define YIELD_DATA(state, size, return_size) \
-    do {                                     \
-        *size = (return_size);               \
-        PBIO_OS_AWAIT_ONCE(state);           \
-    } while (0)
-
 /**
  * The telemetry "process" is not driven from the main event loop, but serves
  * as a data generator, for the host process to pull when ready to send.
@@ -92,10 +86,12 @@ static pbio_error_t update_port_data(uint8_t index, uint8_t *buf) {
 static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size) {
 
     // Input argument is how much we are free to write.
-    uint32_t available = *size;
+    uint32_t available = PBIO_OS_YIELD_DATA_INIT(size);
 
-    // Resulting yield with 0 means no data, so await.
-    *size = 0;
+    // Should be able to write at least a header.
+    if (available <= PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+        return PBIO_ERROR_BUSY;
+    }
 
     static uint8_t i = 0;
     static pbio_os_timer_t timer;
@@ -106,30 +102,39 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
 
         // Send any new display data, one chunk at a time. The driver tracks
         // read-out progress and is bounded to one frame before yielding.
-        while (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
+        if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
 
-            // Can't fit a display chunk.
-            if (available < DISPLAY_DATA_SIZE) {
-                return PBIO_ERROR_BUSY;
+            for (;;) {
+
+                uint32_t display_write_size = available - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+                uint32_t location;
+
+                static pbio_os_state_t display_state;
+                pbio_error_t err = pbdrv_display_iterate_data(&display_state, data + PBSYS_TELEMETRY_MSG_HEADER_SIZE, &display_write_size, &location);
+
+                if (err == PBIO_ERROR_BUSY) {
+                    // Not enough room now. Send what we had already and come back later.
+                    return err;
+                }
+
+                if (err != PBIO_ERROR_AGAIN) {
+                    // Full frame done or nothing new to send, move on.
+                    break;
+                }
+
+                if (display_write_size) {
+                    // We got a chunk, so queue it for sending.
+                    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+                    pbio_set_uint16_le(&data[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
+                        PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN,
+                        PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY));
+                    pbio_set_uint16_le(&data[3], location);
+                    data[5] = 0; // Mode.
+
+                    // Yield one display chunk for appending.
+                    PBIO_OS_YIELD_DATA(state, size, PBSYS_TELEMETRY_MSG_HEADER_SIZE + display_write_size);
+                }
             }
-
-            uint32_t location;
-            uint32_t chunk_size = pbdrv_display_get_telemetry_data(
-                &data[PBSYS_TELEMETRY_MSG_HEADER_SIZE], &location);
-            if (chunk_size == 0) {
-                // Nothing new to send.
-                break;
-            }
-
-            data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-            pbio_set_uint16_le(&data[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
-                PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN,
-                PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY));
-            pbio_set_uint16_le(&data[3], location);
-            data[5] = 0; // Mode.
-
-            // Yield one display chunk for appending.
-            YIELD_DATA(state, size, PBSYS_TELEMETRY_MSG_HEADER_SIZE + chunk_size);
         }
 
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
@@ -150,7 +155,7 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
             }
 
             // Yield one motor payload for appending.
-            YIELD_DATA(state, size, MOTOR_DATA_SIZE);
+            PBIO_OS_YIELD_DATA(state, size, MOTOR_DATA_SIZE);
         }
 
         // Yields with no data.

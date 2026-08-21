@@ -105,6 +105,12 @@ __attribute__((section(".noinit")));
  */
 static bool pbdrv_display_user_frame_update_requested;
 
+/**
+ * Number of display updates so far. External readers of the frame buffer
+ * compare this to a previously read value to know whether the buffer changed.
+ */
+static uint32_t pbdrv_display_update_count;
+
 /*
  * Buffer to send one page of pixels to the display, using its internal
  * format. Every byte describes a column of 8 pixels, where the least
@@ -326,6 +332,7 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     while (pbdrv_display_nxt_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
         pbdrv_display_user_frame_update_requested = false;
+        pbdrv_display_update_count++;
         for (page = 0; page < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; page++) {
             // Convert pixel format.
             pbdrv_display_nxt_convert_page(page);
@@ -386,10 +393,45 @@ pbio_image_t *pbdrv_display_get_image(void) {
     return &pbdrv_display_image;
 }
 
-uint32_t pbdrv_display_get_telemetry_data(uint8_t *buffer, uint32_t *location) {
-    // Not implemented for this driver.
-    *location = 0;
-    return 0;
+// chunks of 32 packed rows, so we can send the whole screen in fixed size chunks.
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS (32)
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 8)
+
+pbio_error_t pbdrv_display_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size, uint32_t *progress) {
+
+    // Doesn't fit now.
+    if (PBIO_OS_YIELD_DATA_INIT(size) < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Counter of most recent frame that made it over the air in full. Used to
+    // decide if we must skip the request to send another frame.
+    static uint32_t last_started_frame = UINT32_MAX;
+    if (last_started_frame == pbdrv_display_update_count) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Mark current frame as the last one started.
+    last_started_frame = pbdrv_display_update_count;
+
+    // Loop over current frame, accepting that rows may update as we do.
+    // If the frame did change, it will be written out in full next time.
+    static uint32_t chunk;
+    for (chunk = 0; chunk < (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS); chunk++) {
+        for (uint32_t i = 0; i < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE; i++) {
+            // Pack 8 consecutive pixels, 1 bit per byte.
+            const uint8_t *p = (const uint8_t *)pbdrv_display_user_frame + (chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + i) * 4;
+            data[i] = p[0] | p[1] << 1 | p[2] << 2 | p[3] << 3 | p[4] << 4 | p[5] << 5 | p[6] << 6 | p[7] << 7;
+        }
+        *progress = chunk;
+        PBIO_OS_YIELD_DATA(state, size, PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE);
+    }
+
+    // Self-resets so can be called again after reset.
+    PBIO_OS_ASYNC_RESET(state);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 uint8_t pbdrv_display_get_max_value(void) {
