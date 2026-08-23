@@ -11,7 +11,6 @@
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)
 #define PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE           (512)
-#define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (64)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (0)
 #define PBSYS_CONFIG_MAIN                           (0)

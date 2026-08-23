@@ -24,7 +24,8 @@ static lwrb_t pbsys_host_stdout_ring_buf;
 static bool pbsys_host_event_stdout_busy;
 
 void pbsys_host_init(void) {
-    static uint8_t stdin_buf[PBSYS_CONFIG_HOST_STDIN_BUF_SIZE];
+    // Buffer needs 1 byte of headroom, but command drops 1 command.
+    static uint8_t stdin_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1 - 1];
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
 
     static uint8_t stdout_buf[PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE];

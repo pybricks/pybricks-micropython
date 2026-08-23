@@ -15,7 +15,6 @@
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)
 #define PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE           (512)
-#define PBSYS_CONFIG_HOST_STDIN_BUF_SIZE            (64)
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (0) // TODO ?
 #define PBSYS_CONFIG_STORAGE_NUM_SLOTS              (1)

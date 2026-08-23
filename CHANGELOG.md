@@ -4,7 +4,14 @@
 
 ## [Unreleased]
 
+### Changed
+- Combined USB and BLE data flows for faster throughput with less resources.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b2...HEAD
+
+### Fixed
+- Fixed stdin buffer being less than nett MTU size, which caused larger stdin
+  values to be rejected ([support#2788]).
 
 ## [4.1.0b2] - 2026-07-14
 
@@ -16,6 +23,7 @@
 
 [support#2762]: https://github.com/pybricks/support/issues/2762
 [support#2764]: https://github.com/pybricks/support/issues/2764
+[support#2788]: https://github.com/pybricks/support/issues/2788
 [4.1.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b1...v4.1.0b2
 
 ## [4.1.0b1] - 2026-07-13
