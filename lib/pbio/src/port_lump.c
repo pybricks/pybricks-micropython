@@ -178,6 +178,8 @@ struct _pbio_port_lump_dev_t {
     bool data_rec;
     /** Angle reported by the device. */
     pbio_angle_t angle;
+    /** Cached sensor calibration data. */
+    int16_t calibration_data[3];
     #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
     /** Mode value used to keep track of mode in INFO messages while syncing. */
     uint8_t new_mode;
@@ -298,6 +300,51 @@ static void pbio_port_lump_handle_known_data(pbio_port_lump_dev_t *lump_dev) {
         lump_dev->angle.millidegrees = (degrees % 360) * 1000;
         lump_dev->angle.rotations = degrees / 360;
     }
+
+    // Only the force sensor currently caches calibration constants to
+    // preprocess values. Could be enlarged to cover other sensors.
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR &&
+        lump_dev->mode == LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__CALIB) {
+        lump_dev->calibration_data[0] = ((int16_t)pbio_get_uint16_le(lump_dev->bin_data + 2)); // Raw offset.
+        lump_dev->calibration_data[1] = ((int16_t)pbio_get_uint16_le(lump_dev->bin_data + 4)); // Raw released.
+        lump_dev->calibration_data[2] = ((int16_t)pbio_get_uint16_le(lump_dev->bin_data + 12)); // Raw end.
+        pbio_port_lump_request_mode(lump_dev, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW);
+    }
+}
+
+pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance) {
+    // Need to be up and running so we don't return stale data.
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Only available on force sensor.
+    if (lump_dev->type_id != LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR ||
+        lump_dev->mode != LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    int16_t offset = lump_dev->calibration_data[0];
+    int16_t released = lump_dev->calibration_data[1];
+    int16_t end = lump_dev->calibration_data[2];
+
+    // Fail on bad calibration data (released >= end)
+    if (released >= end) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    int16_t raw = (int16_t)pbio_get_uint16_le(lump_dev->bin_data);
+
+    // micrometers
+    *distance = (6670 * (raw - released)) / (end - released);
+
+    // millinewtons, counting from calibrated offset.
+    *force = (10000 * (raw - released - offset)) / (end - released);
+    if (*force < 0) {
+        *force = 0;
+    }
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle) {
@@ -885,6 +932,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_REL_MOTOR__POS;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__CALIB;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);

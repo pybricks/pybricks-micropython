@@ -19,11 +19,6 @@
 // Class structure for ForceSensor
 typedef struct _pupdevices_ForceSensor_obj_t {
     pb_type_device_obj_base_t device_base;
-    int32_t raw_released;
-    int32_t raw_offset;
-    int32_t raw_start;
-    int32_t raw_end;
-    int32_t pressed_threshold;
 } pupdevices_ForceSensor_obj_t;
 
 // pybricks.pupdevices.ForceSensor.__init__
@@ -32,70 +27,48 @@ static mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
         PB_ARG_REQUIRED(port));
 
     pupdevices_ForceSensor_obj_t *self = mp_obj_malloc(pupdevices_ForceSensor_obj_t, type);
+
+    // This device only ever uses one mode at runtime, but this class was
+    // historically async, so each method returns an awaitable constant in
+    // async mode.
     pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR);
-
-    // Read scaling factors.
-    int16_t *calib = pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__CALIB);
-    self->raw_offset = calib[1];
-    self->raw_released = calib[2];
-    self->raw_end = calib[6];
-    self->pressed_threshold = 0;
-
-    // Do sanity check on values to verify calibration read succeeded
-    if (self->raw_released >= self->raw_end) {
-        pb_assert(PBIO_ERROR_FAILED);
-    }
-
-    // Do one measurement to set up mode used for all methods.
-    pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW);
-
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.pupdevices.ForceSensor._raw
-static int32_t get_raw(mp_obj_t self_in) {
-    int16_t *raw = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW);
-    return *raw;
-}
-
-// pybricks.pupdevices.ForceSensor._force
-static int32_t get_force_mN(mp_obj_t self_in) {
-    // Get force in millinewtons
-    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t force = (10000 * (get_raw(self_in) - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
-    // With LEGO scaling, initial section is negative, so mask it and return
-    return force < 0 ? 0 : force;
 }
 
 // pybricks.pupdevices.ForceSensor.touched
 static mp_obj_t get_touched(mp_obj_t self_in) {
-    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Return true if raw value is just above detectable change, with a small
     // margin to account for small calibration tolerances.
-    return mp_obj_new_bool(get_raw(self_in) > self->raw_released + 4);
+    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t force;
+    int32_t distance;
+    pb_assert(pbio_port_lump_get_force(self->device_base.lump_dev, &force, &distance));
+    mp_obj_t result = mp_obj_new_bool(distance > 100);
+    return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_touched_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_touched);
 
 // pybricks.pupdevices.ForceSensor.force
 static mp_obj_t get_force(mp_obj_t self_in) {
-    return pb_obj_new_fraction(get_force_mN(self_in), 1000);
+    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t force;
+    int32_t distance;
+    pb_assert(pbio_port_lump_get_force(self->device_base.lump_dev, &force, &distance));
+    mp_obj_t result = pb_obj_new_fraction(force, 1000);
+    return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_force_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_force);
 
 // pybricks.pupdevices.ForceSensor.distance
 static mp_obj_t get_distance(mp_obj_t self_in) {
     pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t distance_um = (6670 * (get_raw(self_in) - self->raw_released)) / (self->raw_end - self->raw_released);
-    return pb_obj_new_fraction(distance_um, 1000);
+    int32_t force;
+    int32_t distance;
+    pb_assert(pbio_port_lump_get_force(self->device_base.lump_dev, &force, &distance));
+    mp_obj_t result = pb_obj_new_fraction(distance, 1000);
+    return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_distance);
-
-// pybricks.pupdevices.ForceSensor.pressed(force=default)
-static mp_obj_t get_pressed_simple(mp_obj_t self_in) {
-    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(get_force_mN(self_in) >= self->pressed_threshold);
-}
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_pressed_simple_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_pressed_simple);
 
 // pybricks.pupdevices.ForceSensor.pressed
 static mp_obj_t get_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -104,12 +77,16 @@ static mp_obj_t get_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *k
         PB_ARG_DEFAULT_INT(force, 3));
 
     #if MICROPY_PY_BUILTINS_FLOAT
-    self->pressed_threshold = (int32_t)(mp_obj_get_float(force_in) * 1000);
+    int32_t pressed_threshold = (int32_t)(mp_obj_get_float(force_in) * 1000);
     #else
-    self->pressed_threshold = pb_obj_get_int(force_in) * 1000;
+    int32_t pressed_threshold = pb_obj_get_int(force_in) * 1000;
     #endif
 
-    return pb_type_device_method_call(MP_OBJ_FROM_PTR(&get_pressed_simple_obj), 1, 0, pos_args);
+    int32_t force;
+    int32_t distance;
+    pb_assert(pbio_port_lump_get_force(self->device_base.lump_dev, &force, &distance));
+    mp_obj_t result = mp_obj_new_bool(force > pressed_threshold);
+    return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(get_pressed_obj, 1, get_pressed);
 
