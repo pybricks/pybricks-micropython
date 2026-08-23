@@ -28,7 +28,10 @@ void pbsys_host_init(void) {
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1 - 1];
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
 
-    static uint8_t stdout_buf[PBSYS_CONFIG_HOST_STDOUT_BUF_SIZE];
+    // There is no technical constraint on this one. Can be reduced to save on
+    // bss size. Heuristically, this gives users about two outgoing frames
+    // worth of buffering before print pauses the user program.
+    static uint8_t stdout_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE * 2 + 1];
     lwrb_init(&pbsys_host_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
 }
 
