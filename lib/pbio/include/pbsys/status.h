@@ -21,7 +21,6 @@ void pbsys_status_clear(pbio_pybricks_status_flags_t status);
 bool pbsys_status_test(pbio_pybricks_status_flags_t status);
 bool pbsys_status_test_debounce(pbio_pybricks_status_flags_t status, bool state, uint32_t ms);
 uint32_t pbsys_status_get_flags(void);
-uint32_t pbsys_status_get_status_report(uint8_t *buf);
 void pbsys_status_increment_selected_slot(bool increment);
 void pbsys_status_set_selected_slot(uint8_t slot);
 pbio_pybricks_user_program_id_t pbsys_status_get_selected_slot(void);
