@@ -266,6 +266,11 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     static uint32_t usb_size;
     static uint8_t *current_buf;
 
+    // Re-send status occasionally for if missed on flaky connection.
+    static pbio_os_timer_t status_timer = {
+        .duration = 500,
+    };
+
     // Returns the relevant busy state for the requested transport.
     *len = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ? &bluetooth_size : &usb_size;
 
@@ -298,7 +303,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     // Prepare a new transmission if any, prioritizing events by type, status first.
 
     // Prepare status.
-    if (pbsys_host_status_data_pending) {
+    if (pbsys_host_status_data_pending || pbio_os_timer_is_expired(&status_timer)) {
         // When a status is pending, drain it here while we write it out,
         // so a new status can be set in the mean time without losing it.
         // The status already starts with the event type.
@@ -306,6 +311,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         memcpy(&pbsys_host_event_out_buf[0], pbsys_host_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
         usb_size = bluetooth_size = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
         pbsys_host_status_data_pending = false;
+        pbio_os_timer_reset(&status_timer);
 
         // Initiatiate transfer.
         current_buf = *buf = pbsys_host_event_out_buf;
