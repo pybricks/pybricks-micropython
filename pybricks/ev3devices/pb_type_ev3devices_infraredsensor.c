@@ -176,7 +176,7 @@ static mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
         pressed[len++] = pb_type_button_new(MP_QSTR_RIGHT_DOWN);
     }
 
-    return mp_obj_new_list(len, pressed);
+    return mp_obj_new_set(len, pressed);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(ev3devices_InfraredSensor_keypad_obj, LEGO_DEVICE_MODE_EV3_INFRARED_SENSOR__REM_A, ev3devices_InfraredSensor_keypad);
 

@@ -6,6 +6,7 @@
 
 ### Changed
 - Combined USB and BLE data flows for faster throughput with less resources.
+- `pybricks.ev3devices.InfraredSensor.keypad` returns a set instead of a list.
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b2...HEAD
 
