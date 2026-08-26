@@ -1215,20 +1215,34 @@ static struct {
     bool inquiry_complete;
 } classic_events;
 
-static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *packet, pbio_bluetooth_inquiry_result_t *result) {
+static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_classic_task_context_t *task) {
 
-    gap_event_inquiry_result_get_bd_addr(packet, result->bdaddr);
-    if (gap_event_inquiry_result_get_rssi_available(packet)) {
-        result->rssi = gap_event_inquiry_result_get_rssi(packet);
+    bd_addr_t bdaddr;
+    gap_event_inquiry_result_get_bd_addr(event_packet, bdaddr);
+
+    // Exit if already seen this.
+    for (uint32_t i = 0; i < *task->inq_count; i++) {
+        if (memcmp(task->inq_results[i].bdaddr, bdaddr, sizeof(bd_addr_t)) == 0) {
+            return;
+        }
     }
 
-    if (gap_event_inquiry_result_get_name_available(packet)) {
-        const uint8_t *name = gap_event_inquiry_result_get_name(packet);
-        const size_t name_len = gap_event_inquiry_result_get_name_len(packet);
+    // Unpack new device.
+    pbio_bluetooth_inquiry_result_t *result = &task->inq_results[(*task->inq_count)++];
+    memcpy(result->bdaddr, bdaddr, sizeof(bd_addr_t));
+
+    if (gap_event_inquiry_result_get_rssi_available(event_packet)) {
+        result->rssi = gap_event_inquiry_result_get_rssi(event_packet);
+    }
+    if (gap_event_inquiry_result_get_name_available(event_packet)) {
+        const uint8_t *name = gap_event_inquiry_result_get_name(event_packet);
+        const size_t name_len = gap_event_inquiry_result_get_name_len(event_packet);
         snprintf(result->name, sizeof(result->name), "%.*s", (int)name_len, name);
     }
+    result->class_of_device = gap_event_inquiry_result_get_class_of_device(event_packet);
 
-    result->class_of_device = gap_event_inquiry_result_get_class_of_device(packet);
+    DEBUG_PRINT("Received new scan result with name %s and type %d and rssi %d\n", result->name, result->class_of_device, result->rssi);
+
 }
 
 /**
@@ -1246,10 +1260,7 @@ static void inquiry_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
     switch (hci_event_packet_get_type(packet)) {
         case GAP_EVENT_INQUIRY_RESULT: {
             pbdrv_bluetooth_classic_task_context_t *task = classic_events.inquiry_task;
-            if (task && *task->inq_count < *task->inq_count_max) {
-                DEBUG_PRINT("Received scan result.\n");
-                pbdrv_bluetooth_inquiry_unpack_scan_event(packet, &task->inq_results[(*task->inq_count)++]);
-            }
+            pbdrv_bluetooth_inquiry_unpack_scan_event(packet, task);
             break;
         }
         case GAP_EVENT_INQUIRY_COMPLETE:
@@ -1516,6 +1527,8 @@ void pbdrv_bluetooth_init(void) {
     hci_add_event_handler(&hci_event_callback_registration);
 
     #ifdef ENABLE_CLASSIC
+    // Needed to get device names.
+    hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);
     static btstack_packet_callback_registration_t inquiry_event_callback_registration;
     inquiry_event_callback_registration.callback = &inquiry_packet_handler;
     hci_add_event_handler(&inquiry_event_callback_registration);
