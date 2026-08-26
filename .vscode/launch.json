@@ -108,7 +108,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
 {
-            "name": "virtualhub with menu (no bluetooth)",
+            "name": "virtualhub with menu and bluetooth",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -122,6 +122,10 @@
                 {
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
+                },
+                {
+                    "name": "UB500_INDEX",
+                    "value": "0"
                 },
                 {
                     "name": "PATH",
