@@ -468,6 +468,52 @@ pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *sta
  */
 pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
 
+/**
+ * Registers the persisted bonding record for the gamepad, called by pbsys
+ * once on boot after loading stored settings.
+ *
+ * @param [in]  record  Pointer to the persisted bonding record.
+ */
+void pbio_bluetooth_classic_apply_loaded_link_key(pbio_bluetooth_classic_link_key_t *record);
+
+/**
+ * Gets the stored link key for a remote device, called by the Bluetooth
+ * stack on (re)connect.
+ *
+ * @param [in]  bdaddr         Bluetooth address of the remote device (6 bytes).
+ * @param [out] link_key       Buffer to receive the 16-byte link key.
+ * @param [out] link_key_type  The stored link key type.
+ * @returns                    True if a key was found, false otherwise.
+ */
+bool pbio_bluetooth_classic_link_key_get(const uint8_t *bdaddr, uint8_t *link_key, uint16_t *link_key_type);
+
+/**
+ * Stores the link key negotiated during pairing, called by the Bluetooth
+ * stack. Only stored if the device was first registered by the user, which
+ * fills the record with the address, name, and device type.
+ *
+ * @param [in]  bdaddr         Bluetooth address of the remote device (6 bytes).
+ * @param [in]  link_key       The 16-byte link key.
+ * @param [in]  link_key_type  The link key type.
+ */
+void pbio_bluetooth_classic_link_key_put(const uint8_t *bdaddr, const uint8_t *link_key, uint16_t link_key_type);
+
+/**
+ * Deletes the stored link key for a remote device (e.g. when it turned
+ * stale), keeping the user's device registration.
+ *
+ * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
+ */
+void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr);
+
+/**
+ * Gets the bonding record if it holds a valid link key, used to enumerate
+ * stored bonds.
+ *
+ * @returns  The record, or NULL if there is no valid key.
+ */
+const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(void);
+
 #else // PBIO_CONFIG_BLUETOOTH
 
 static inline void pbio_bluetooth_deinit(void) {

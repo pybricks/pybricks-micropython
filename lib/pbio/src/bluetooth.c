@@ -8,6 +8,7 @@
 #if PBIO_CONFIG_BLUETOOTH
 
 #include <stdint.h>
+#include <string.h>
 
 #include <pbio/bluetooth.h>
 
@@ -23,6 +24,7 @@
 
 #include <pbsys/command.h>
 #include <pbsys/host.h>
+#include <pbsys/storage.h>
 
 #define DEBUG 0
 
@@ -568,5 +570,84 @@ void pbio_bluetooth_deinit(void) {
     pbio_busy_count_up();
     pbio_os_request_poll();
 }
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+
+// Stack-agnostic Bluetooth Classic link key store, backed by the persisted
+// bonding record in pbsys storage settings. The user registers the device
+// (address, name, type) via the UI before pairing; the stack then fills in
+// the key here when pairing completes, and reads it back on reconnect.
+
+static pbio_bluetooth_classic_link_key_t *gamepad_link_key;
+
+void pbio_bluetooth_classic_apply_loaded_link_key(pbio_bluetooth_classic_link_key_t *record) {
+    gamepad_link_key = record;
+}
+
+static bool link_key_matches(const uint8_t *bdaddr) {
+    return gamepad_link_key &&
+           gamepad_link_key->device_type != PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_NONE &&
+           memcmp(gamepad_link_key->bdaddr, bdaddr, sizeof(gamepad_link_key->bdaddr)) == 0;
+}
+
+/**
+ * Whether the record holds a key. The device is registered before pairing
+ * completes, so the key may still be all zeros.
+ */
+static bool link_key_is_set(void) {
+    for (size_t i = 0; i < sizeof(gamepad_link_key->link_key); i++) {
+        if (gamepad_link_key->link_key[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool pbio_bluetooth_classic_link_key_get(const uint8_t *bdaddr, uint8_t *link_key, uint16_t *link_key_type) {
+    if (!link_key_matches(bdaddr) || !link_key_is_set()) {
+        return false;
+    }
+    memcpy(link_key, gamepad_link_key->link_key, sizeof(gamepad_link_key->link_key));
+    *link_key_type = gamepad_link_key->link_key_type;
+    return true;
+}
+
+void pbio_bluetooth_classic_link_key_put(const uint8_t *bdaddr, const uint8_t *link_key, uint16_t link_key_type) {
+    // Only keys for the user-registered device are persisted.
+    if (!link_key_matches(bdaddr)) {
+        return;
+    }
+    // Devices notify the same key again on every reconnect, so skip
+    // unnecessary writes.
+    if (gamepad_link_key->link_key_type == link_key_type &&
+        memcmp(gamepad_link_key->link_key, link_key, sizeof(gamepad_link_key->link_key)) == 0) {
+        return;
+    }
+    memcpy(gamepad_link_key->link_key, link_key, sizeof(gamepad_link_key->link_key));
+    gamepad_link_key->link_key_type = link_key_type;
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr) {
+    if (!link_key_matches(bdaddr) || !link_key_is_set()) {
+        return;
+    }
+    // Clear only the key, keeping the device registration so that a new
+    // pairing can store a fresh key.
+    memset(gamepad_link_key->link_key, 0, sizeof(gamepad_link_key->link_key));
+    gamepad_link_key->link_key_type = 0;
+    pbsys_storage_request_write();
+}
+
+const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(void) {
+    if (!gamepad_link_key ||
+        gamepad_link_key->device_type == PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_NONE ||
+        !link_key_is_set()) {
+        return NULL;
+    }
+    return gamepad_link_key;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 #endif // PBIO_CONFIG_BLUETOOTH

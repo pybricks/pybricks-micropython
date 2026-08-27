@@ -24,7 +24,6 @@
 #include "ble/le_device_db_tlv.h"
 #include "btstack_chipset_realtek.h"
 #include "btstack_tlv_posix.h"
-#include "classic/btstack_link_key_db_tlv.h"
 #include "hci.h"
 #include "hci_transport_usb.h"
 #include "hci_dump_posix_stdout.h"
@@ -287,9 +286,8 @@ void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16
                     printf("\n");
                     tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
                     btstack_tlv_set_instance(tlv_impl, &tlv_context);
-                    #ifdef ENABLE_CLASSIC
-                    hci_set_link_key_db(btstack_link_key_db_tlv_get_instance(tlv_impl, &tlv_context));
-                    #endif
+                    // NB: Classic link keys are persisted in pbsys storage
+                    // via the link key db set by the main btstack driver.
                     #ifdef ENABLE_BLE
                     le_device_db_tlv_configure(tlv_impl, &tlv_context);
                     #endif

@@ -473,7 +473,6 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/,\
 	platform/libusb/hci_transport_h2_libusb.c \
 	platform/posix/hci_dump_posix_stdout.c \
 	platform/posix/btstack_tlv_posix.c \
-	src/classic/btstack_link_key_db_tlv.c \
 	src/ble/le_device_db_tlv.c \
 	chipset/zephyr/btstack_chipset_zephyr.c \
 	chipset/realtek/btstack_chipset_realtek.c \

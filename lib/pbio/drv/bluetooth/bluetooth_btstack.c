@@ -1540,6 +1540,71 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
 }
 
+// Adapts BTstack's link key DB interface to the stack-agnostic pbio store,
+// which is backed by pbsys persistent storage.
+
+static void link_key_db_open(void) {
+}
+
+static void link_key_db_set_local_bd_addr(bd_addr_t bd_addr) {
+    (void)bd_addr;
+}
+
+static void link_key_db_close(void) {
+}
+
+static int link_key_db_get_link_key(bd_addr_t bd_addr, link_key_t link_key, link_key_type_t *link_key_type) {
+    uint16_t stored_type;
+    if (!pbio_bluetooth_classic_link_key_get(bd_addr, link_key, &stored_type)) {
+        return 0;
+    }
+    *link_key_type = (link_key_type_t)stored_type;
+    return 1;
+}
+
+static void link_key_db_put_link_key(bd_addr_t bd_addr, link_key_t link_key, link_key_type_t link_key_type) {
+    DEBUG_PRINT("Storing link key for %s.\n", bd_addr_to_str(bd_addr));
+    pbio_bluetooth_classic_link_key_put(bd_addr, link_key, link_key_type);
+}
+
+static void link_key_db_delete_link_key(bd_addr_t bd_addr) {
+    pbio_bluetooth_classic_link_key_delete(bd_addr);
+}
+
+static int link_key_db_iterator_init(btstack_link_key_iterator_t *it) {
+    it->context = NULL;
+    return 1;
+}
+
+static int link_key_db_iterator_get_next(btstack_link_key_iterator_t *it, bd_addr_t bd_addr, link_key_t link_key, link_key_type_t *link_key_type) {
+    const pbio_bluetooth_classic_link_key_t *record = pbio_bluetooth_classic_link_key_get_record();
+    if (it->context || !record) {
+        return 0;
+    }
+    // There is only one record, so mark iteration as done.
+    it->context = (void *)1;
+    memcpy(bd_addr, record->bdaddr, sizeof(record->bdaddr));
+    memcpy(link_key, record->link_key, sizeof(record->link_key));
+    *link_key_type = (link_key_type_t)record->link_key_type;
+    return 1;
+}
+
+static void link_key_db_iterator_done(btstack_link_key_iterator_t *it) {
+    (void)it;
+}
+
+static const btstack_link_key_db_t pbdrv_bluetooth_btstack_link_key_db = {
+    link_key_db_open,
+    link_key_db_set_local_bd_addr,
+    link_key_db_close,
+    link_key_db_get_link_key,
+    link_key_db_put_link_key,
+    link_key_db_delete_link_key,
+    link_key_db_iterator_init,
+    link_key_db_iterator_get_next,
+    link_key_db_iterator_done,
+};
+
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
@@ -1839,6 +1904,9 @@ void pbdrv_bluetooth_init(void) {
     static btstack_packet_callback_registration_t hid_event_callback_registration;
     hid_event_callback_registration.callback = &hid_host_packet_handler;
     hci_add_event_handler(&hid_event_callback_registration);
+
+    // Persist pairing link keys in pbsys storage instead of the stack default.
+    hci_set_link_key_db(&pbdrv_bluetooth_btstack_link_key_db);
     #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;

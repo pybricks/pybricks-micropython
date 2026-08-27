@@ -263,8 +263,8 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
         }
         if (button == PBIO_BUTTON_CENTER && gamepad_ui.selected_scan < num_results) {
             // Register the selected device and start connecting to it. The
-            // link key itself is stored by BTstack; persisting it in the
-            // stored settings comes later.
+            // link key negotiated during pairing is stored into this same
+            // record by the driver via the pbio link key store.
             pbio_bluetooth_inquiry_result_t *result = &results[gamepad_ui.selected_scan];
             pbdrv_bluetooth_inquiry_stop();
             pbdrv_bluetooth_classic_hid_connect(result->bdaddr);
