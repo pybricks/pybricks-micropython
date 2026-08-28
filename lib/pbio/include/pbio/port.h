@@ -115,15 +115,15 @@ typedef enum {
      */
     PBIO_PORT_MODE_UART = 1 << 2,
     /**
-     * The port is in I2C mode. No port process is running. User code may access
-     * the I2C device directly.
+     * The port is in I2C mode, NXT wiring convention. No port process is
+     * running. User code may access the I2C device directly.
      */
-    PBIO_PORT_MODE_I2C = 1 << 3,
+    PBIO_PORT_MODE_I2C_NXT = 1 << 3,
     /**
      * The port is in GPIO mode and ADC. No port process is running. User code
      * may access GPIOs on P5 and P6 and read the ADC on P1 and P6.
      */
-    PBIO_PORT_MODE_GPIO_ADC = 1 << 4,
+    PBIO_PORT_MODE_GPIO_ADC = 1 << 5,
 } pbio_port_mode_t;
 
 /**

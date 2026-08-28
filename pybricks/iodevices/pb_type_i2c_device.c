@@ -60,7 +60,7 @@ typedef struct {
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, pbio_port_power_requirements_t power_pin, bool nxt_quirk) {
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, pbio_port_power_requirements_t power_pin, bool nxt_quirk, pbio_port_mode_t mode) {
 
     pb_module_tools_assert_blocking();
 
@@ -70,7 +70,7 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint
     pb_assert(pbio_port_get_port(port_id, &port));
 
     // Set the port mode to LEGO DCM or raw I2C mode.
-    pbio_error_t err = pbio_port_set_mode(port, custom ? PBIO_PORT_MODE_I2C : PBIO_PORT_MODE_LEGO_DCM);
+    pbio_error_t err = pbio_port_set_mode(port, custom ? mode : PBIO_PORT_MODE_LEGO_DCM);
     if (err == PBIO_ERROR_AGAIN) {
         // If coming from a different mode, give port some time to get started.
         // This happens when the user has a custom device and decides to switch
@@ -101,7 +101,8 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_REQUIRED(address),
         PB_ARG_DEFAULT_FALSE(custom),
         PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
-        PB_ARG_DEFAULT_FALSE(nxt_quirk)
+        PB_ARG_DEFAULT_FALSE(nxt_quirk),
+        PB_ARG_DEFAULT_INT(sda, 6)
         );
 
     return pb_type_i2c_device_make_new(
@@ -110,7 +111,8 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         mp_obj_get_int(address_in),
         mp_obj_is_true(custom_in),
         pb_module_iodevices_get_requested_power_pin(power_pin_in),
-        mp_obj_is_true(nxt_quirk_in)
+        mp_obj_is_true(nxt_quirk_in),
+        mp_obj_get_int(sda_in) == 6 ? PBIO_PORT_MODE_I2C_NXT : 0
         );
 }
 

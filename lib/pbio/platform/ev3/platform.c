@@ -320,7 +320,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
         #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
         .supported_modes = PBIO_PORT_MODE_UART,
         #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
         #endif
     },
     {
@@ -345,7 +345,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = 8,
             .adc_p6 = 7,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_3,
@@ -369,7 +369,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = 10,
             .adc_p6 = 9,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_4,
@@ -393,7 +393,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = 12,
             .adc_p6 = 11,
         },
-        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
 

@@ -77,7 +77,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(0),
             .adc_p6 = 1,
         },
-        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_2,
@@ -92,7 +92,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(1),
             .adc_p6 = 2,
         },
-        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_3,
@@ -107,7 +107,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(2),
             .adc_p6 = 3,
         },
-        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
     {
         .port_id = PBIO_PORT_ID_4,
@@ -123,7 +123,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             // Pin 6 of port 4 is also wired to the dedicated AD7 input.
             .adc_p6 = 7,
         },
-        .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
+        .supported_modes = PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
 

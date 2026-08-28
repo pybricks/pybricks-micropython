@@ -9,9 +9,11 @@
 #ifndef _PBDRV_I2C_H_
 #define _PBDRV_I2C_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 
@@ -27,6 +29,17 @@ typedef struct _pbdrv_i2c_dev_t pbdrv_i2c_dev_t;
  * @param [out] i2c_dev         The I2C device.
  */
 pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev);
+
+/**
+ * Configures the I/O port pins for I2C use in a platform specific way.
+ *
+ * Called when the port switches to I2C mode.
+ *
+ * @param [in]  i2c_dev     The I2C device.
+ * @param [in]  scl         The SCL gpio.
+ * @param [in]  sda         The SDA gpio.
+ */
+void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl, const pbdrv_gpio_t *sda);
 
 /**
  * Does an I2C operation. To be integrated with higher-level code.
@@ -67,6 +80,9 @@ pbio_error_t pbdrv_i2c_write_then_read(
 static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
     *i2c_dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl, const pbdrv_gpio_t *sda) {
 }
 
 static inline pbio_error_t pbdrv_i2c_write_then_read(

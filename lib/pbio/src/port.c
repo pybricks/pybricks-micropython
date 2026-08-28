@@ -154,15 +154,17 @@ static pbio_error_t pbio_port_p5p6_pin_reset(const pbio_port_pins_t *pins) {
  * same mode was already set. For example, setting to GPIO mode will reset all
  * pins to inputs even if GPIO mode is already active.
  *
- * @param [in]  pins          The pins to set the mode for.
+ * @param [in]  port          The port.
  * @param [in]  mode          The mode state to set.
  * @return                    ::PBIO_SUCCESS on success, otherwise
  *                            ::PBIO_ERROR_NOT_SUPPORTED if the mode is not supported.
  *                            ::PBIO_ERROR_INVALID_OP if changing the mode is not permitted in the current state.
  */
-static pbio_error_t pbio_port_p5p6_set_mode(const pbio_port_pins_t *pins, pbio_port_mode_t mode) {
+static pbio_error_t pbio_port_p5p6_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
 
     pbio_error_t err;
+
+    const pbio_port_pins_t *pins = port->pdata->pins;
 
     if (mode == PBIO_PORT_MODE_UART) {
         #if PBIO_CONFIG_PORT_HAS_UART
@@ -178,16 +180,16 @@ static pbio_error_t pbio_port_p5p6_set_mode(const pbio_port_pins_t *pins, pbio_p
         #else // PBIO_CONFIG_PORT_HAS_UART
         return PBIO_ERROR_NOT_SUPPORTED;
         #endif // PBIO_CONFIG_PORT_HAS_UART
-    } else if (mode == PBIO_PORT_MODE_I2C) {
+    } else if (mode == PBIO_PORT_MODE_I2C_NXT) {
         err = pbio_port_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        // Required for EV3 I2C implementation.
-        pbdrv_gpio_out_low(&pins->p5);
-        pbdrv_gpio_input(&pins->p5);
-        pbdrv_gpio_out_low(&pins->p6);
-        pbdrv_gpio_input(&pins->p6);
+        // Remaining pin setup is specific to the I2C driver implementation.
+        pbdrv_i2c_configure_port(port->i2c_dev,
+            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p5 : NULL, // scl
+            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p6 : NULL  // sda
+            );
         return PBIO_SUCCESS;
     } else if (mode == PBIO_PORT_MODE_QUADRATURE) {
         // Ports with this mode support only this mode and nothing else. The
@@ -232,7 +234,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
 
     for (;;) {
         // Run passive device connection manager until smart device is detected.
-        pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_GPIO_ADC);
+        pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_GPIO_ADC);
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
@@ -240,7 +242,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
         if (pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
 
             // Synchronize with LUMP data stream from sensor and parse device info.
-            pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_UART);
+            pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_UART);
             PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
             if (err != PBIO_SUCCESS) {
                 // Synchronization failed. Retry.
@@ -358,9 +360,9 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
     }
 
     // In case of direct access without device type checks, start right away.
-    if (port->mode == PBIO_PORT_MODE_I2C) {
+    if (port->mode == PBIO_PORT_MODE_I2C_NXT) {
         *i2c_dev = port->i2c_dev;
-        return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
+        return PBIO_SUCCESS;
     }
 
     // Otherwise we must be in LEGO mode.
@@ -375,7 +377,7 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
         return err;
     }
     *i2c_dev = port->i2c_dev;
-    return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
+    return pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_I2C_NXT);
 }
 
 /**
@@ -800,7 +802,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
         case PBIO_PORT_MODE_GPIO_ADC:
-            pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_GPIO_ADC);
+            pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_GPIO_ADC);
             pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
             return PBIO_SUCCESS;
         case PBIO_PORT_MODE_LEGO_DCM:
@@ -814,12 +816,12 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_UART:
             // Enable UART on the port. No process needed here. User can
             // access UART from their own event loop.
-            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_UART);
-        case PBIO_PORT_MODE_I2C:
+            return pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_UART);
+        case PBIO_PORT_MODE_I2C_NXT:
             // Enable I2C on the port. User controlled; no process needed here.
-            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
+            return pbio_port_p5p6_set_mode(port, mode);
         case PBIO_PORT_MODE_QUADRATURE:
-            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_QUADRATURE);
+            return pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_QUADRATURE);
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
@@ -878,9 +880,9 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     }
 
     // Allows visualizer to mark port as custom port mode.
-    if (port->mode == PBIO_PORT_MODE_I2C || port->mode == PBIO_PORT_MODE_UART) {
+    if (port->mode == PBIO_PORT_MODE_I2C_NXT || port->mode == PBIO_PORT_MODE_UART) {
         tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_UKNOWN;
-        tel->id = port->mode == PBIO_PORT_MODE_I2C ? PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C : PBSYS_TELEMETRY_DEVICE_UKNOWN_UART;
+        tel->id = port->mode == PBIO_PORT_MODE_I2C_NXT ? PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C : PBSYS_TELEMETRY_DEVICE_UKNOWN_UART;
         tel->mode = 0;
         *size = 0;
         return PBSYS_TELEMETRY_SUCCESS;

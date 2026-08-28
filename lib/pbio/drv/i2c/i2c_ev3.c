@@ -22,6 +22,7 @@
 #include <pbio/util.h>
 
 #include <pbdrv/cache.h>
+#include <pbdrv/gpio.h>
 #include <pbdrv/i2c.h>
 
 #include "../drv/rproc/rproc.h"
@@ -77,6 +78,15 @@ pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
     }
     *i2c_dev = dev;
     return PBIO_SUCCESS;
+}
+
+void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl, const pbdrv_gpio_t *sda) {
+    // Latch outputs low so the PRU can emulate open drain by toggling the
+    // pin direction.
+    pbdrv_gpio_out_low(scl);
+    pbdrv_gpio_input(scl);
+    pbdrv_gpio_out_low(sda);
+    pbdrv_gpio_input(sda);
 }
 
 static void pbdrv_i2c_irq_0(void) {
