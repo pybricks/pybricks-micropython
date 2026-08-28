@@ -12,7 +12,7 @@
 #include <pbio/imu.h>
 #include <pbio/light_animation.h>
 #include <pbio/motor_process.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/serial.h>
 
 #define DEBUG 0

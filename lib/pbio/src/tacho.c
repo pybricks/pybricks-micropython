@@ -15,7 +15,6 @@
 #include <pbio/int_math.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
-#include <pbio/port_interface.h>
 
 /**
  * Gets the tacho angle.

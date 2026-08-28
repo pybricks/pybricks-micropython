@@ -5,7 +5,7 @@
 
 #include <pbdrv/clock.h>
 #include <pbdrv/ioport.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/battery/battery_adc.h"

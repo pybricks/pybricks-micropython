@@ -11,7 +11,7 @@
 #include <pbio/os.h>
 #include <pbio/util.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_lump.h>
 
 #include <pbdrv/clock.h>

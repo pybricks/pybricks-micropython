@@ -15,7 +15,7 @@
 
 #include "pbio_os_config.h"
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 

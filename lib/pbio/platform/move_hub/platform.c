@@ -6,7 +6,7 @@
 #include <pbdrv/gpio.h>
 #include <pbdrv/ioport.h>
 #include <pbio/button.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/counter/counter_stm32f0_gpio_quad_enc.h"

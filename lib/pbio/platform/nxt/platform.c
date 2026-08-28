@@ -16,7 +16,7 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include <pbsys/core.h>
 #include <pbsys/main.h>

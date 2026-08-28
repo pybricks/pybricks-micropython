@@ -10,7 +10,7 @@
 #include <pbdrv/clock.h>
 
 #include <pbio/int_math.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/util.h>
 #include <pbio/port_dcm.h>
 

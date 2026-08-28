@@ -12,7 +12,8 @@
 #include <pbio/battery.h>
 #include <pbio/busy_count.h>
 #include <pbio/observer.h>
-#include <pbio/port_interface.h>
+#include <pbio/os.h>
+#include <pbio/port.h>
 #include <pbio/util.h>
 
 #include "motor_driver_virtual_simulation.h"

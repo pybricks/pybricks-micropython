@@ -15,7 +15,6 @@
 #include <pbdrv/config.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
-#include <pbio/port.h>
 
 typedef struct _pbdrv_uart_dev_t pbdrv_uart_dev_t;
 

@@ -8,7 +8,7 @@
 #include "py/mphal.h"
 
 #include <pbdrv/i2c.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/util.h>
 
 #include <pybricks/common.h>

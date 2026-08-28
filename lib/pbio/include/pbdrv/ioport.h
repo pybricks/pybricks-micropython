@@ -15,6 +15,8 @@
 #include <pbdrv/uart.h>
 #include <pbdrv/motor_driver.h>
 
+#include <pbio/port.h>
+
 #include <stdbool.h>
 
 /**

@@ -3,7 +3,7 @@
 
 #include <pbio/config.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_dcm.h>
 #include <pbio/int_math.h>
 

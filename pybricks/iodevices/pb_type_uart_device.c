@@ -10,7 +10,7 @@
 #include "py/runtime.h"
 
 #include <pbdrv/uart.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include <pybricks/common.h>
 #include <pybricks/iodevices/iodevices.h>

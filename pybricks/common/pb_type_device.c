@@ -6,7 +6,7 @@
 #if PYBRICKS_PY_DEVICES
 
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_lump.h>
 
 #include <pybricks/common.h>

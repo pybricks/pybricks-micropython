@@ -12,7 +12,7 @@
 #include <pbdrv/display.h>
 
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/util.h>
 
 #include <pbsys/host.h>

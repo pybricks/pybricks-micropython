@@ -4,8 +4,10 @@
 #ifndef _PBIO_PORT_DCM_H_
 #define _PBIO_PORT_DCM_H_
 
+#include <lego/device.h>
+
 #include <pbio/config.h>
-#include <pbio/port.h>
+#include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbdrv/ioport.h>
 
@@ -14,7 +16,7 @@ typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 /**
  * Cached analog values when a particular light color is active.
  */
-typedef struct {
+typedef struct _pbio_port_dcm_analog_rgba_t {
     /** Red analog value. */
     uint32_t r;
     /** Green analog value. */

@@ -16,7 +16,7 @@
 #include <pbio/util.h>
 
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_dcm.h>
 #include <pbio/port_lump.h>
 

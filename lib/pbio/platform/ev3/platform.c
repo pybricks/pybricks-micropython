@@ -59,7 +59,7 @@
 
 #include <umm_malloc.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/button.h>
 
 #include <pbdrv/cache.h>

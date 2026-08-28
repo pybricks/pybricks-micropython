@@ -6,7 +6,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
 #include <pbdrv/ioport.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"

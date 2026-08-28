@@ -8,7 +8,7 @@
 
 #include <lego/lump.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_lump.h>
 
 #include <tinytest.h>

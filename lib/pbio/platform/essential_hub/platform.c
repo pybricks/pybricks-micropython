@@ -11,7 +11,7 @@
 #include <pbdrv/ioport.h>
 #include "pbio/light_matrix.h"
 #include "pbio/version.h"
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/block_device/block_device_w25qxx_stm32.h"
