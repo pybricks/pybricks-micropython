@@ -12,6 +12,7 @@
 #define PBIO_CONFIG_MOTOR_PROCESS           (1)
 #define PBIO_CONFIG_IMU                     (0)
 #define PBIO_CONFIG_PORT                    (1)
+#define PBIO_CONFIG_PORT_HAS_VCC_PIN        (0)
 #define PBIO_CONFIG_PORT_NUM_DEV            (6)
 #define PBIO_CONFIG_PORT_DCM                (0)
 #define PBIO_CONFIG_PORT_DCM_PUP            (0)

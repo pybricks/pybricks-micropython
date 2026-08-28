@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2023 The Pybricks Authors
 
-#include <pbdrv/ioport.h>
 #include <pbio/port.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 #include "../../drv/led/led_array_pwm.h"
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
-    .bank = NULL,
-    .pin = 0,
-};
-
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,

@@ -8,7 +8,6 @@
 
 #include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
-#include <pbdrv/ioport.h>
 
 #if PBIO_CONFIG_PORT_DCM_EV3
 
@@ -154,7 +153,7 @@ static pbio_port_dcm_category_t pbio_port_dcm_get_category(pbio_port_dcm_pin_sta
  * @param [in]  pins        The ioport pins.
  * @return                  The state.
  */
-static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins_t *pins) {
+static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbio_port_pins_t *pins) {
     pbio_port_dcm_pin_state_t state = 0;
 
     // Get the ADC value state for pin 1.
@@ -222,7 +221,7 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
 
     pbio_error_t err;
 
@@ -296,7 +295,6 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         debug_pr("NXT Touch Sensor released or disconnected\n");
         return PBIO_SUCCESS;
     }
-
     // For everything else, disconnection is detected by just one pin going
     // high rather than all pins going back to the none state. This is
     // because other pins are used for data transfer and may vary between
@@ -379,7 +377,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 }
 
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, bool active) {
 
     // This category measures analog on pin 6.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
@@ -401,7 +399,7 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
 #define DCM_TOUCH_EV3_PRESS_MV (3000)
 #define DCM_TOUCH_EV3_RELEASE_MV (1000)
 
-bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
 
     // EV3 touch sensor on pin 6 is high when pressed.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
@@ -437,7 +435,7 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *r
     return pbio_port_dcm_nxt_get_light_intensity(&dcm->optical, pbio_port_dcm_get_optical_type(dcm), reflected, ambient, id, mode);
 }
 
-pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     // Best-effort display for useful info despite device limitations:
     // - The only EV3 analog sensor ever known is a touch sensor.

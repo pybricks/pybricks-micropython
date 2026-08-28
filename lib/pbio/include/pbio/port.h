@@ -16,6 +16,7 @@
 #include <lego/device.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/gpio.h>
 
 #include <pbio/angle.h>
 #include <pbio/color_map.h>
@@ -125,9 +126,96 @@ typedef enum {
     PBIO_PORT_MODE_GPIO_ADC = 1 << 4,
 } pbio_port_mode_t;
 
+/**
+ * The GPIO pins of an I/O port.
+ */
+typedef struct {
+    /**
+     * Pin 5 input.
+     */
+    pbdrv_gpio_t p5;
+    /**
+     * Pin 6 input or output.
+     */
+    pbdrv_gpio_t p6;
+    #if PBIO_CONFIG_PORT_HAS_UART
+    /**
+     * GPIO to enable (set low) or mark (set high) access to the UART pins.
+     */
+    pbdrv_gpio_t uart_buf;
+    /**
+     * Pin 5 output or UART TX when buffer enabled.
+     */
+    pbdrv_gpio_t uart_tx;
+    /**
+     * Pin 5 alt mode index for UART usage.
+     */
+    uint8_t uart_tx_alt_uart;
+    /**
+     * Pin 6 input or UART RX when buffer enabled.
+     */
+    pbdrv_gpio_t uart_rx;
+    /**
+     * Pin 6 alt mode index for UART usage.
+     */
+    uint8_t uart_rx_alt_uart;
+    #endif // PBIO_CONFIG_PORT_HAS_UART
+    #if PBIO_CONFIG_PORT_HAS_ADC
+    /**
+     * ADC channel for pin 1.
+     */
+    uint8_t adc_p1;
+    /**
+     * ADC channel for pin 6,
+     */
+    uint8_t adc_p6;
+    #endif // PBIO_CONFIG_PORT_HAS_ADC
+    #if  PBIO_CONFIG_PORT_HAS_GPIO_P1
+    /**
+     * Pin 1 I/O,
+     */
+    pbdrv_gpio_t p1;
+    #endif // PBIO_CONFIG_PORT_HAS_GPIO_P1
+    #if PBIO_CONFIG_PORT_HAS_GPIO_P2
+    /**
+     * Pin 2 I/O.
+     */
+    pbdrv_gpio_t p2;
+    #endif // PBIO_CONFIG_PORT_HAS_GPIO_P2
+} pbio_port_pins_t;
+
+#define PBDRV_IOPORT_INDEX_NOT_AVAILABLE (0xFF)
+
+typedef struct {
+    /** The I/O pins of the port. Can be NULL if this port has no GPIO pins */
+    const pbio_port_pins_t *pins;
+    /** The I/O port identifier this port is associated with. */
+    pbio_port_id_t port_id;
+    /** Index of associated motor driver. */
+    uint8_t motor_driver_index;
+    /** Index of external port */
+    uint8_t external_port_index;
+    /** Counter driver index */
+    uint8_t counter_driver_index;
+    /** Index of associated UART driver. */
+    uint8_t uart_driver_index;
+    /** Index of associated I2C driver. */
+    uint8_t i2c_driver_index;
+    /** Supported high level modes */
+    uint32_t supported_modes;
+} pbio_port_platform_data_t;
+
+extern const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV];
+
+#if PBIO_CONFIG_PORT_HAS_VCC_PIN
+extern const pbdrv_gpio_t pbio_port_platform_data_vcc_pin;
+#endif
+
 #if PBIO_CONFIG_PORT
 
 void pbio_port_init(void);
+
+void pbio_port_enable_vcc(bool enable);
 
 void pbio_port_power_off(void);
 
@@ -172,6 +260,9 @@ pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_teleme
 #else // PBIO_CONFIG_PORT
 
 static inline void pbio_port_init(void) {
+}
+
+static inline void pbio_port_enable_vcc(bool enable) {
 }
 
 static inline void pbio_port_power_off(void) {

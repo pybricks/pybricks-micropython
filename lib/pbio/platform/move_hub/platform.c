@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include <pbdrv/gpio.h>
-#include <pbdrv/ioport.h>
 #include <pbio/button.h>
 #include <pbio/port.h>
 
@@ -58,12 +57,12 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
     },
 };
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOB,
     .pin = 2
 };
 
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -91,7 +90,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = UART_ID_0,
         .external_port_index = 0,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOB, .pin = 7  },
             .p6 = { .bank = GPIOC, .pin = 15 },
             .uart_buf = { .bank = GPIOB, .pin = 4  },
@@ -113,7 +112,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = UART_ID_1,
         .external_port_index = 1,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOB, .pin = 10 },
             .p6 = { .bank = GPIOA, .pin = 12 },
             .uart_buf = { .bank = GPIOB, .pin = 0  },
@@ -297,7 +296,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 void pbdrv_reset_power_off(void) {
     // This hub turns itself back on if VCC is off during power off.
-    pbdrv_ioport_enable_vcc(true);
+    pbio_port_enable_vcc(true);
 
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;

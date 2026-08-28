@@ -20,7 +20,6 @@
 #include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
-#include <pbdrv/ioport.h>
 
 #if PBIO_CONFIG_PORT_DCM_NXT
 
@@ -133,7 +132,7 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
  * @param [in]  pins        The ioport pins.
  * @return                  True if the device pulls pin 5 low.
  */
-static bool pbio_port_dcm_p5_release_is_pulled_low(const pbdrv_ioport_pins_t *pins) {
+static bool pbio_port_dcm_p5_release_is_pulled_low(const pbio_port_pins_t *pins) {
     // Each read also makes sure that the pin is an input, so the first one
     // releases the pin.
     for (uint32_t i = 0; i < DCM_P5_PULLED_LOW_READS; i++) {
@@ -154,7 +153,7 @@ static bool pbio_port_dcm_p5_release_is_pulled_low(const pbdrv_ioport_pins_t *pi
  * @param [in]  pins        The ioport pins.
  * @return                  The category type.
  */
-static pbio_port_dcm_category_t pbio_port_dcm_get_category(const pbdrv_ioport_pins_t *pins) {
+static pbio_port_dcm_category_t pbio_port_dcm_get_category(const pbio_port_pins_t *pins) {
 
     uint32_t adc1 = pbio_port_dcm_get_mv(pins, 1);
     bool p5 = pbdrv_gpio_input(&pins->p5);
@@ -184,7 +183,7 @@ static pbio_port_dcm_category_t pbio_port_dcm_get_category(const pbdrv_ioport_pi
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
 
     pbio_error_t err;
 
@@ -367,7 +366,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 }
 
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, bool active) {
 
     // Some NXT sensors have an active mode by setting P5 high.
     if (active) {
@@ -379,7 +378,7 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return pbio_port_dcm_get_mv(pins, 1);
 }
 
-bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
     return pbio_port_dcm_nxt_touch_get_pressed(&dcm->touch, pins);
 }
 
@@ -407,7 +406,7 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *r
     return pbio_port_dcm_nxt_get_light_intensity(&dcm->optical, pbio_port_dcm_get_optical_type(dcm), reflected, ambient, id, mode);
 }
 
-pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     // Touch sensors only show while pressed, so show pressed state.
     if (dcm->category == DCM_CATEGORY_NXT_TOUCH_PRESSED) {

@@ -25,9 +25,6 @@
 #define PBDRV_CONFIG_GPIO                                   (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                           (1)
 
-#define PBDRV_CONFIG_IOPORT                                 (1)
-#define PBDRV_CONFIG_IOPORT_NUM_DEV                         (6)
-
 #define PBDRV_CONFIG_LED                                    (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                            (0)
 
@@ -52,4 +49,3 @@
 #define PBDRV_CONFIG_HAS_PORT_D                             (1)
 #define PBDRV_CONFIG_HAS_PORT_E                             (1)
 #define PBDRV_CONFIG_HAS_PORT_F                             (1)
-#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)

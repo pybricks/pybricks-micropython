@@ -45,11 +45,6 @@
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32                     (1)
 
-#define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
-#define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
-#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (2)
-
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (1)
 #define PBDRV_CONFIG_LED_PWM                        (1)
@@ -85,7 +80,6 @@
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
-#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL           (1)
 
 #define PBDRV_CONFIG_SYS_CLOCK_RATE 48000000
 #define PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM     (1)

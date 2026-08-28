@@ -3,7 +3,6 @@
 
 #include <pbdrv/counter.h>
 #include <pbdrv/i2c.h>
-#include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 #include <pbdrv/motor_driver.h>
 
@@ -43,7 +42,7 @@ struct _pbio_port_t {
     /**
      * The IO port platform data.
      */
-    const pbdrv_ioport_platform_data_t *pdata;
+    const pbio_port_platform_data_t *pdata;
     /**
      * High level dc motor motor driver.
      */
@@ -102,6 +101,110 @@ static bool pbio_port_dcm_test_type_id(pbio_port_t *port, lego_device_type_id_t 
 }
 
 /**
+ * Enables or disables VCC on pin 4 of all ioports.
+ *
+ * @param [in]  enable        Choose true to enable VCC, false to disable.
+ */
+void pbio_port_enable_vcc(bool enable) {
+    #if PBIO_CONFIG_PORT_HAS_VCC_PIN
+    if (enable) {
+        pbdrv_gpio_out_high(&pbio_port_platform_data_vcc_pin);
+    } else {
+        pbdrv_gpio_out_low(&pbio_port_platform_data_vcc_pin);
+    }
+    #endif
+}
+
+/**
+ * Resets pins to the default state, which is input with the buffer disabled.
+ */
+static pbio_error_t pbio_port_p5p6_pin_reset(const pbio_port_pins_t *pins) {
+
+    if (!pins) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    pbdrv_gpio_input(&pins->p5);
+    pbdrv_gpio_input(&pins->p6);
+    #if PBIO_CONFIG_PORT_HAS_UART
+    pbdrv_gpio_input(&pins->uart_tx);
+    pbdrv_gpio_input(&pins->uart_rx);
+    pbdrv_gpio_out_high(&pins->uart_buf);
+    #endif
+
+    // These should be set by default already, but it seems that the
+    // bootloader on the Technic hub changes these and causes wrong
+    // detection if we don't make sure pull is disabled.
+    pbdrv_gpio_set_pull(&pins->p5, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->p6, PBDRV_GPIO_PULL_NONE);
+
+    #if PBIO_CONFIG_PORT_HAS_UART
+    pbdrv_gpio_set_pull(&pins->uart_buf, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->uart_tx, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pins->uart_rx, PBDRV_GPIO_PULL_NONE);
+    #endif
+
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Sets the mode of the P5P6 pins on this port.
+ *
+ * This will disable the current mode and re-activate the new mode, even if the
+ * same mode was already set. For example, setting to GPIO mode will reset all
+ * pins to inputs even if GPIO mode is already active.
+ *
+ * @param [in]  pins          The pins to set the mode for.
+ * @param [in]  mode          The mode state to set.
+ * @return                    ::PBIO_SUCCESS on success, otherwise
+ *                            ::PBIO_ERROR_NOT_SUPPORTED if the mode is not supported.
+ *                            ::PBIO_ERROR_INVALID_OP if changing the mode is not permitted in the current state.
+ */
+static pbio_error_t pbio_port_p5p6_set_mode(const pbio_port_pins_t *pins, pbio_port_mode_t mode) {
+
+    pbio_error_t err;
+
+    if (mode == PBIO_PORT_MODE_UART) {
+        #if PBIO_CONFIG_PORT_HAS_UART
+        err = pbio_port_p5p6_pin_reset(pins);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        // Sets up alt mode and enables the buffer for UART use.
+        pbdrv_gpio_alt(&pins->uart_rx, pins->uart_rx_alt_uart);
+        pbdrv_gpio_alt(&pins->uart_tx, pins->uart_tx_alt_uart);
+        pbdrv_gpio_out_low(&pins->uart_buf);
+        return PBIO_SUCCESS;
+        #else // PBIO_CONFIG_PORT_HAS_UART
+        return PBIO_ERROR_NOT_SUPPORTED;
+        #endif // PBIO_CONFIG_PORT_HAS_UART
+    } else if (mode == PBIO_PORT_MODE_I2C) {
+        err = pbio_port_p5p6_pin_reset(pins);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        // Required for EV3 I2C implementation.
+        pbdrv_gpio_out_low(&pins->p5);
+        pbdrv_gpio_input(&pins->p5);
+        pbdrv_gpio_out_low(&pins->p6);
+        pbdrv_gpio_input(&pins->p6);
+        return PBIO_SUCCESS;
+    } else if (mode == PBIO_PORT_MODE_QUADRATURE) {
+        // Ports with this mode support only this mode and nothing else. The
+        // counter drivers are automatically started on boot. This mode is only
+        // set at port init when default ports are set, for which the return
+        // value is not checked. This mode should never change at runtime
+        // either, so always just return an error.
+        return PBIO_ERROR_NOT_SUPPORTED;
+    } else {
+        // Default or generic GPIO/ADC mode equals reset.
+        return pbio_port_p5p6_pin_reset(pins);
+    }
+
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+/**
  * This is the high level process that monitors and drives official LEGO
  * devices that support some form of automatic detection. There is one process
  * for each port, running in parallel.
@@ -129,7 +232,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
 
     for (;;) {
         // Run passive device connection manager until smart device is detected.
-        pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+        pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_GPIO_ADC);
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
@@ -137,7 +240,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
         if (pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
 
             // Synchronize with LUMP data stream from sensor and parse device info.
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
+            pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_UART);
             PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_lump_sync_thread(&port->child1, port->lump_dev, port->uart_dev, &port->timer));
             if (err != PBIO_SUCCESS) {
                 // Synchronization failed. Retry.
@@ -257,7 +360,7 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
     // In case of direct access without device type checks, start right away.
     if (port->mode == PBIO_PORT_MODE_I2C) {
         *i2c_dev = port->i2c_dev;
-        return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
+        return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
     }
 
     // Otherwise we must be in LEGO mode.
@@ -272,7 +375,7 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
         return err;
     }
     *i2c_dev = port->i2c_dev;
-    return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
+    return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
 }
 
 /**
@@ -582,7 +685,7 @@ void pbio_port_init(void) {
 
     for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *port = &ports[i];
-        port->pdata = &pbdrv_ioport_platform_data[i];
+        port->pdata = &pbio_port_platform_data[i];
         pbio_port_init_one_port(port);
 
         #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
@@ -660,7 +763,7 @@ void pbio_port_power_off(void) {
     }
 
     // This turns off any sensor lights that run on VCC.
-    pbdrv_ioport_enable_vcc(false);
+    pbio_port_enable_vcc(false);
 }
 
 /**
@@ -697,7 +800,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     switch (mode) {
         case PBIO_PORT_MODE_NONE:
         case PBIO_PORT_MODE_GPIO_ADC:
-            pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_GPIO_ADC);
+            pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_GPIO_ADC);
             pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
             return PBIO_SUCCESS;
         case PBIO_PORT_MODE_LEGO_DCM:
@@ -711,12 +814,12 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         case PBIO_PORT_MODE_UART:
             // Enable UART on the port. No process needed here. User can
             // access UART from their own event loop.
-            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_UART);
+            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_UART);
         case PBIO_PORT_MODE_I2C:
             // Enable I2C on the port. User controlled; no process needed here.
-            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_I2C);
+            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_I2C);
         case PBIO_PORT_MODE_QUADRATURE:
-            return pbdrv_ioport_p5p6_set_mode(port->pdata->pins, PBDRV_IOPORT_P5P6_MODE_QUADRATURE);
+            return pbio_port_p5p6_set_mode(port->pdata->pins, PBIO_PORT_MODE_QUADRATURE);
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }

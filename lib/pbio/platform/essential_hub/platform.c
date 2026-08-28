@@ -8,7 +8,6 @@
 #include <stm32f4xx_hal.h>
 
 #include <pbdrv/clock.h>
-#include <pbdrv/ioport.h>
 #include "pbio/light_matrix.h"
 #include "pbio/version.h"
 #include <pbio/port.h>
@@ -212,12 +211,12 @@ void EXTI15_10_IRQHandler(void) {
 
 // I/O ports
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOC,
     .pin = 7,
 };
 
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -225,7 +224,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_PORT_A,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 1 },
             .p6 = { .bank = GPIOC, .pin = 0 },
             .uart_buf = { .bank = GPIOB, .pin = 9 },
@@ -247,7 +246,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .motor_driver_index = 1,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 5 },
             .p6 = { .bank = GPIOA, .pin = 4 },
             .uart_buf = { .bank = GPIOB, .pin = 8 },

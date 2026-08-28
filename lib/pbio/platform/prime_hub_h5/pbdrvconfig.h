@@ -86,11 +86,6 @@
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Y    (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_Z    (-1)
 
-#define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)
-#define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
-#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (6)
-
 #define PBDRV_CONFIG_LED                            (1)
 #define PBDRV_CONFIG_LED_NUM_DEV                    (5)
 #define PBDRV_CONFIG_LED_DUAL                       (1)
@@ -152,7 +147,6 @@
 #define PBDRV_CONFIG_HAS_PORT_D (1)
 #define PBDRV_CONFIG_HAS_PORT_E (1)
 #define PBDRV_CONFIG_HAS_PORT_F (1)
-#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL           (1)
 
 #define PBDRV_CONFIG_SYS_CLOCK_RATE                 250000000
 #define PBDRV_CONFIG_INIT_ENABLE_INTERRUPTS_ARM     (1)

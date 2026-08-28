@@ -16,7 +16,7 @@ enum {
     LED_DEV_0_STATUS,
 };
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .pin = 17,
 };
 

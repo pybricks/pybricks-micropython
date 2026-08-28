@@ -22,16 +22,11 @@
 #include "pbio_os_config.h"
 
 #include <pbio/port.h>
-#include <pbdrv/ioport.h>
+#include <pbdrv/config.h>
 
 #include <umm_malloc.h>
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
-    .bank = NULL,
-    .pin = 0,
-};
-
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,

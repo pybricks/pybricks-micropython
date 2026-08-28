@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/ioport.h>
 
 #include <umm_malloc.h>
 
@@ -34,12 +33,7 @@
 
 #include "../../drv/adc/adc_nxt.h"
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
-    .bank = NULL,
-    .pin = 0,
-};
-
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -77,7 +71,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = {.pin = 23},
             .p6 = {.pin = 18},
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(0),
@@ -92,7 +86,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = {.pin = 28},
             .p6 = {.pin = 19},
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(1),
@@ -107,7 +101,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = {.pin = 29},
             .p6 = {.pin = 20},
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(2),
@@ -122,7 +116,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = {.pin = 30},
             .p6 = {.pin = 2},
             .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(3),
@@ -148,8 +142,8 @@ void SystemInit(void) {
     pbdrv_clock_init();
 
     // Initialize sensor GPIO.
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_ioport_platform_data); i++) {
-        const pbdrv_ioport_pins_t *pins = pbdrv_ioport_platform_data[i].pins;
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbio_port_platform_data); i++) {
+        const pbio_port_pins_t *pins = pbio_port_platform_data[i].pins;
         pbdrv_gpio_alt(&pins->p5, false);
         pbdrv_gpio_input(&pins->p5);
         pbdrv_gpio_alt(&pins->p6, false);

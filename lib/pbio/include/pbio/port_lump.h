@@ -9,7 +9,6 @@
 #include <pbio/port.h>
 #include <pbio/os.h>
 
-#include <pbdrv/ioport.h>
 #include <pbdrv/uart.h>
 
 #include <lego/lump.h>

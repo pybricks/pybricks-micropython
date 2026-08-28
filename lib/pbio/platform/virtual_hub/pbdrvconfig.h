@@ -54,9 +54,6 @@
 #define PBDRV_CONFIG_GPIO                                   (1)
 #define PBDRV_CONFIG_GPIO_VIRTUAL                           (1)
 
-#define PBDRV_CONFIG_IOPORT                                 (1)
-#define PBDRV_CONFIG_IOPORT_NUM_DEV                         (6)
-
 #define PBDRV_CONFIG_MOTOR_DRIVER                           (1)
 #define PBDRV_CONFIG_MOTOR_DRIVER_NUM_DEV                   (6)
 #define PBDRV_CONFIG_MOTOR_DRIVER_VIRTUAL_SIMULATION        (1)
@@ -67,7 +64,6 @@
 #define PBDRV_CONFIG_HAS_PORT_D (1)
 #define PBDRV_CONFIG_HAS_PORT_E (1)
 #define PBDRV_CONFIG_HAS_PORT_F (1)
-#define PBDRV_CONFIG_HAS_PORT_VCC_CONTROL                   (1)
 
 #define PBDRV_CONFIG_RPROC                                  (1)
 #define PBDRV_CONFIG_RPROC_VIRTUAL                          (1)

@@ -5,7 +5,6 @@
 
 #include <pbio/port.h>
 #include <pbio/port_dcm.h>
-#include <pbdrv/ioport.h>
 
 #if PBIO_CONFIG_PORT_DCM_PUP
 
@@ -82,7 +81,7 @@ static const lego_device_type_id_t legodev_pup_type_id_lookup[3][3] = {
  * @param [in]  dcm         The device connection manager.
  * @param [in]  pins        The ioport pins.
  */
-pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -340,12 +339,12 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     }
 }
 
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, bool active) {
     // This platform does not have any analog sensors.
     return 0;
 }
 
-bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
     return dcm->sensor_data;
 }
 
@@ -359,7 +358,7 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *r
     return PBIO_ERROR_NO_DEV;
 }
 
-pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     // Only pass through known motors and lights.
     lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;

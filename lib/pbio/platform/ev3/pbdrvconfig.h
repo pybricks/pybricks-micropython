@@ -35,13 +35,6 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_EV3_SIZE_USER     (512)
 #define PBDRV_CONFIG_BLOCK_DEVICE_EV3_START_ADDRESS (10 * 1024 * 1024)
 
-#define PBDRV_CONFIG_IOPORT                         (1)
-#define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
-#define PBDRV_CONFIG_IOPORT_HAS_UART                (1)
-#define PBDRV_CONFIG_IOPORT_HAS_GPIO_P1             (1)
-#define PBDRV_CONFIG_IOPORT_HAS_GPIO_P2             (1)
-#define PBDRV_CONFIG_IOPORT_NUM_DEV                 (8)
-
 #define PBDRV_CONFIG_I2C                            (1)
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 

@@ -15,8 +15,7 @@
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
-
-#include <pbdrv/ioport.h>
+#include <pbio/port.h>
 
 /**
  * Calibration data sent by the NXT Color Sensor.
@@ -75,13 +74,13 @@ typedef struct {
 
 uint32_t pbio_port_dcm_adc_to_mv(uint32_t adc_10bit);
 
-uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pin);
+uint32_t pbio_port_dcm_get_mv(const pbio_port_pins_t *pins, uint8_t pin);
 
-pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
+pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer);
 
-pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
+pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer);
 
-pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
+pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer);
 
 pbio_error_t pbio_port_dcm_nxt_get_color(pbio_port_dcm_nxt_optical_t *optical, lego_device_type_id_t type_id, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode);
 
@@ -89,6 +88,6 @@ pbio_error_t pbio_port_dcm_nxt_get_light_intensity(pbio_port_dcm_nxt_optical_t *
 
 bool pbio_port_dcm_update_touch(pbio_port_dcm_touch_t *touch, bool past_press, bool past_release);
 
-bool pbio_port_dcm_nxt_touch_get_pressed(pbio_port_dcm_touch_t *touch, const pbdrv_ioport_pins_t *pins);
+bool pbio_port_dcm_nxt_touch_get_pressed(pbio_port_dcm_touch_t *touch, const pbio_port_pins_t *pins);
 
 #endif // _PBIO_SRC_PORT_DCM_NXT_SENSORS_H_

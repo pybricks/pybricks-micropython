@@ -3,7 +3,6 @@
 
 #include <pbio/bluetooth.h>
 #include <pbdrv/config.h>
-#include <pbdrv/ioport.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/os.h>
@@ -30,6 +29,7 @@
 #include "uart/uart_debug_first_port.h"
 #include "watchdog/watchdog.h"
 
+#include <pbio/port.h>
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/usb.h>
 
@@ -76,7 +76,7 @@ void pbdrv_init(void) {
         pbio_os_run_processes_and_wait_for_event();
     }
 
-    pbdrv_ioport_enable_vcc(true);
+    pbio_port_enable_vcc(true);
 }
 
 /**

@@ -10,7 +10,6 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
-#include <pbdrv/ioport.h>
 
 #include <pbsys/telemetry.h>
 
@@ -18,7 +17,7 @@ typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 
 #if PBIO_CONFIG_PORT_DCM
 
-pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins);
+pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins);
 
 /**
  * Gets device connection manager state.
@@ -45,7 +44,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
  * @param [in]  pins        The ioport pins.
  * @param [in]  active      Whether to get activate active mode.
  */
-uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active);
+uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, bool active);
 
 /**
  * Gets the pressed state of a touch sensor connected to the port.
@@ -57,7 +56,7 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
  * @param [in]  pins        The ioport pins.
  * @return                  True if pressed, false if released.
  */
-bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins);
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins);
 
 /**
  * Gets the color measured by an analog color sensor on the port, in a device
@@ -98,7 +97,7 @@ pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_h
  */
 pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode);
 
-pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size);
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 #else // PBIO_CONFIG_PORT_DCM
 
@@ -114,11 +113,11 @@ static inline pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, le
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
+static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, bool active) {
     return 0;
 }
 
-static inline bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+static inline bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
     return false;
 }
 
@@ -130,11 +129,11 @@ static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dc
     return PBIO_ERROR_NO_DEV;
 }
 
-static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+static inline pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
     return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 

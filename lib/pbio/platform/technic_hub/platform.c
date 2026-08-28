@@ -4,7 +4,6 @@
 #include <stdbool.h>
 
 #include <pbdrv/clock.h>
-#include <pbdrv/ioport.h>
 #include <pbio/port.h>
 
 #include "../../drv/adc/adc_stm32_hal.h"
@@ -242,12 +241,12 @@ void EXTI9_5_IRQHandler(void) {
 
 // I/O ports
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOB,
     .pin = 12
 };
 
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -255,7 +254,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_PORT_A,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 5  },
             .p6 = { .bank = GPIOB, .pin = 2  },
             .uart_buf = { .bank = GPIOH, .pin = 0  },
@@ -277,7 +276,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_PORT_B,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 3  },
             .p6 = { .bank = GPIOC, .pin = 0  },
             .uart_buf = { .bank = GPIOH, .pin = 1  },
@@ -295,7 +294,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_PORT_C,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOC, .pin = 4  },
             .p6 = { .bank = GPIOA, .pin = 7  },
             .uart_buf = { .bank = GPIOC, .pin = 8  },
@@ -313,7 +312,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_PORT_D,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 4  },
             .p6 = { .bank = GPIOA, .pin = 5  },
             .uart_buf = { .bank = GPIOC, .pin = 7  },

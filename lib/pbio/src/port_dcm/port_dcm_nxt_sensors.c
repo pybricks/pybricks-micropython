@@ -44,7 +44,7 @@ uint32_t pbio_port_dcm_adc_to_mv(uint32_t adc_10bit) {
  * @param [in]  pin         The pin number (1 or 6). Everything else is invalid.
  * @return                  The voltage in mV.
  */
-uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pin) {
+uint32_t pbio_port_dcm_get_mv(const pbio_port_pins_t *pins, uint8_t pin) {
     uint16_t adc;
     pbdrv_adc_get_ch(pin == 1 ? pins->adc_p1 : pins->adc_p6, &adc);
     // ADC returns a 10-bit value. Convert to 0--5000mV.
@@ -65,7 +65,7 @@ uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pin) {
  * @param [in]  timer         The timer to use for timing.
  * @param [out] msg           The message byte.
  */
-static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t *msg) {
+static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer, uint8_t *msg) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -98,7 +98,7 @@ static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_
  * @param [in]  timer         The timer to use for timing.
  * @param [in]  msg           The message byte.
  */
-static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t msg) {
+static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer, uint8_t msg) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -165,7 +165,7 @@ static uint16_t pbio_port_dcm_nxt_color_crc(const pbio_port_dcm_nxt_color_sensor
  * @return                    ::PBIO_SUCCESS on success.
  *                            ::PBIO_ERROR_IO if the checksum did not match.
  */
-pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer) {
+pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -209,7 +209,7 @@ pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_
  * @param [in]  pins          The ioport pins.
  * @param [in]  timer         The timer to use for timing.
  */
-pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer) {
+pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -272,7 +272,7 @@ pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dc
  * @param [in]  pins          The ioport pins.
  * @param [in]  timer         The timer to use for timing.
  */
-pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer) {
+pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbio_port_pins_t *pins, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -557,7 +557,7 @@ bool pbio_port_dcm_update_touch(pbio_port_dcm_touch_t *touch, bool past_press, b
  * @param [in]  pins          The ioport pins.
  * @return                    The updated pressed state.
  */
-bool pbio_port_dcm_nxt_touch_get_pressed(pbio_port_dcm_touch_t *touch, const pbdrv_ioport_pins_t *pins) {
+bool pbio_port_dcm_nxt_touch_get_pressed(pbio_port_dcm_touch_t *touch, const pbio_port_pins_t *pins) {
     uint32_t mv = pbio_port_dcm_get_mv(pins, 1);
     return pbio_port_dcm_update_touch(touch, mv < DCM_TOUCH_NXT_PRESS_MV, mv > DCM_TOUCH_NXT_RELEASE_MV);
 }

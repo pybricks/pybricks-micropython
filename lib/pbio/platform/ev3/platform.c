@@ -65,7 +65,6 @@
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
 #include <pbdrv/hardware.h>
-#include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 
 #include "exceptionhandler.h"
@@ -255,7 +254,7 @@ const pbdrv_uart_ev3_platform_data_t
     },
 };
 
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -303,9 +302,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART1,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 31, 28, 8, 10),
-            #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+            #if PBIO_CONFIG_PORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(6, 23, 20, 2, 2),
             #endif
             .p5 = PBDRV_GPIO_EV3_PIN(1, 23, 20, 0, 2),
@@ -331,9 +330,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART0,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 23, 20, 8, 12),
-            #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+            #if PBIO_CONFIG_PORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(18, 11, 8, 8, 15),
             #endif
             .p5 = PBDRV_GPIO_EV3_PIN(0, 7, 4, 0, 14),
@@ -355,9 +354,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE1,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 3, 0, 8, 9),
-            #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+            #if PBIO_CONFIG_PORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(16, 27, 24, 7, 11),
             #endif
             .p5 = PBDRV_GPIO_EV3_PIN(0, 15, 12, 0, 12),
@@ -379,9 +378,9 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE0,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 11, 8, 6, 4),
-            #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+            #if PBIO_CONFIG_PORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(17, 7, 4, 7, 8),
             #endif
             .p5 = PBDRV_GPIO_EV3_PIN(1, 27, 24, 0, 1),

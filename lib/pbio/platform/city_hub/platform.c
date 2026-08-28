@@ -5,7 +5,6 @@
 
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
-#include <pbdrv/ioport.h>
 #include <pbio/port.h>
 
 #include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
@@ -156,12 +155,12 @@ void EXTI2_3_IRQHandler(void) {
     EXTI->PR = EXTI_PR_PR2;
 }
 
-const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
+const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOB,
     .pin = 2
 };
 
-const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPORT_NUM_DEV] = {
+const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV] = {
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
@@ -169,7 +168,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_ID_0,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 1  },
             .p6 = { .bank = GPIOA, .pin = 3  },
             .uart_buf = { .bank = GPIOB, .pin = 5  },
@@ -191,7 +190,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART_ID_1,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(const pbdrv_ioport_pins_t) {
+        .pins = &(const pbio_port_pins_t) {
             .p5 = { .bank = GPIOA, .pin = 0  },
             .p6 = { .bank = GPIOA, .pin = 2  },
             .uart_buf = { .bank = GPIOB, .pin = 4  },
@@ -332,7 +331,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 void pbdrv_reset_power_off(void) {
     // This hub turns itself back on if VCC is off during power off.
-    pbdrv_ioport_enable_vcc(true);
+    pbio_port_enable_vcc(true);
 
     // Setting PB11 low cuts the power.
     GPIOB->BRR = GPIO_BRR_BR_11;
