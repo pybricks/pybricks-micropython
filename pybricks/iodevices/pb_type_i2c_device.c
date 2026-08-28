@@ -60,7 +60,7 @@ typedef struct {
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint8_t address, bool custom, pbio_port_power_requirements_t power_pin, bool nxt_quirk, pbio_port_mode_t mode) {
+mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio_port_mode_t mode, uint8_t address, pbio_port_power_requirements_t power_pin, bool nxt_quirk) {
 
     pb_module_tools_assert_blocking();
 
@@ -70,8 +70,8 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint
     pb_assert(pbio_port_get_port(port_id, &port));
 
     // Set the port mode to LEGO DCM or raw I2C mode.
-    pbio_error_t err = pbio_port_set_mode(port, custom ? mode : PBIO_PORT_MODE_LEGO_DCM);
-    if (err == PBIO_ERROR_AGAIN) {
+    pbio_error_t err = pbio_port_set_mode(port, mode);
+    if (mode == PBIO_PORT_MODE_LEGO_DCM && err == PBIO_ERROR_AGAIN) {
         // If coming from a different mode, give port some time to get started.
         // This happens when the user has a custom device and decides to switch
         // back to LEGO mode. This should be rare, so we can afford to wait.
@@ -99,20 +99,22 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address),
-        PB_ARG_DEFAULT_FALSE(custom),
-        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
-        PB_ARG_DEFAULT_FALSE(nxt_quirk),
-        PB_ARG_DEFAULT_INT(sda, 6)
+        PB_ARG_DEFAULT_INT(mode, PBIO_PORT_MODE_LEGO_DCM),
+        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE)
         );
+
+    pbio_port_mode_t mode = mp_obj_get_int(mode_in);
+    if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
 
     return pb_type_i2c_device_make_new(
         MP_OBJ_NULL, // Not associated with any particular sensor instance.
         port_in,
+        mode,
         mp_obj_get_int(address_in),
-        mp_obj_is_true(custom_in),
         pb_module_iodevices_get_requested_power_pin(power_pin_in),
-        mp_obj_is_true(nxt_quirk_in),
-        mp_obj_get_int(sda_in) == 6 ? PBIO_PORT_MODE_I2C_NXT : 0
+        false
         );
 }
 
@@ -299,6 +301,8 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 static const mp_rom_map_elem_t locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_AUTOMATIC), MP_ROM_INT(PBIO_PORT_MODE_LEGO_DCM)},
+    { MP_ROM_QSTR(MP_QSTR_CUSTOM_NXT), MP_ROM_INT(PBIO_PORT_MODE_I2C_NXT)},
 };
 static MP_DEFINE_CONST_DICT(locals_dict, locals_dict_table);
 
