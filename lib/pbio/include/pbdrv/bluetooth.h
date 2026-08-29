@@ -39,6 +39,16 @@ typedef void (*pbdrv_bluetooth_send_done_t)(void);
 typedef pbio_pybricks_error_t (*pbdrv_bluetooth_receive_handler_t)(const uint8_t *data, uint32_t size);
 
 /**
+ * Callback that is called when Nordic UART Service RX is written.
+ *
+ * Each write overwrites the previous payload. @p data is only valid during the call.
+ *
+ * @param [in]  data        The data that was received.
+ * @param [in]  size        The size of @p data in bytes.
+ */
+typedef void (*pbdrv_bluetooth_nus_receive_handler_t)(const uint8_t *data, uint32_t size);
+
+/**
  * Callback to match an advertisement or scan response.
  *
  * @param [in]  user        The user of this peripheral, usually a high-level object.
@@ -307,6 +317,35 @@ void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_util_void_callbac
  * @param [in]  handler     The function that will be called.
  */
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler);
+
+/**
+ * Registers a callback that will be called when Nordic UART Service RX is written.
+ *
+ * @param [in]  handler     The function that will be called, or NULL to unregister.
+ */
+void pbdrv_bluetooth_set_nus_receive_handler(pbdrv_bluetooth_nus_receive_handler_t handler);
+
+/**
+ * Tests if a central is subscribed to Nordic UART Service TX notifications.
+ *
+ * @return                  True if NUS TX notifications are enabled, otherwise false.
+ */
+bool pbdrv_bluetooth_nus_is_connected(void);
+
+/**
+ * Sends a Nordic UART Service TX notification and awaits it.
+ *
+ * Does not use a ring buffer. Await completion before sending more.
+ *
+ * @param [in] state    Protothread state.
+ * @param [in] data     Data to send. Must remain valid until the call completes.
+ * @param [in] size     Data size. Payloads larger than ::PBDRV_BLUETOOTH_MAX_CHAR_SIZE are sent in successive notifications.
+ * @return              ::PBIO_SUCCESS on completion.
+ *                      ::PBIO_ERROR_INVALID_OP if NUS TX notifications are not enabled.
+ *                      ::PBIO_ERROR_AGAIN while awaiting.
+ *                      ::PBIO_ERROR_NOT_SUPPORTED if this platform does not support NUS.
+ */
+pbio_error_t pbdrv_bluetooth_send_nus_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size);
 
 
 //
@@ -637,6 +676,17 @@ static inline void pbdrv_bluetooth_set_host_connection_changed_callback(pbio_uti
 }
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
+}
+
+static inline void pbdrv_bluetooth_set_nus_receive_handler(pbdrv_bluetooth_nus_receive_handler_t handler) {
+}
+
+static inline bool pbdrv_bluetooth_nus_is_connected(void) {
+    return false;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_send_nus_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline void pbdrv_bluetooth_schedule_status_update(const uint8_t *status_msg) {

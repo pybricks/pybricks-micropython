@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <btstack.h>
 
@@ -89,7 +90,64 @@ static pbio_error_t test_bluetooth(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+static uint8_t nus_rx[20];
+static uint32_t nus_rx_size;
+
+static void test_nus_handler(const uint8_t *data, uint32_t size) {
+    if (size > sizeof(nus_rx)) {
+        size = sizeof(nus_rx);
+    }
+    memcpy(nus_rx, data, size);
+    nus_rx_size = size;
+}
+
+static pbio_error_t test_bluetooth_nus(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_state_t sub;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbdrv_bluetooth_start_advertising(true);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    pbio_test_bluetooth_connect();
+    PBIO_OS_AWAIT_UNTIL(state, pbio_test_bluetooth_is_connected());
+
+    pbdrv_bluetooth_set_nus_receive_handler(test_nus_handler);
+
+    pbio_test_bluetooth_enable_uart_service_notifications();
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_bluetooth_nus_is_connected());
+
+    static const uint8_t rx[] = { 1, 2, 3, 4 };
+    pbio_test_bluetooth_send_uart_data(rx, sizeof(rx));
+    PBIO_OS_AWAIT_UNTIL(state, nus_rx_size == sizeof(rx));
+    tt_want_int_op(memcmp(nus_rx, rx, sizeof(rx)), ==, 0);
+
+    static uint32_t count;
+    count = pbio_test_bluetooth_get_uart_service_notification_count();
+
+    static const uint8_t tx[] = { 9, 8, 7 };
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_nus_notification(&sub, tx, sizeof(tx)));
+
+    PBIO_OS_AWAIT_UNTIL(state, pbio_test_bluetooth_get_uart_service_notification_count() != count);
+    tt_want_int_op(pbio_test_bluetooth_get_uart_service_notification_count(), ==, count + 1);
+
+    static const uint8_t tx_long[25] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23, 24,
+    };
+    count = pbio_test_bluetooth_get_uart_service_notification_count();
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_nus_notification(&sub, tx_long, sizeof(tx_long)));
+    tt_want_int_op(pbio_test_bluetooth_get_uart_service_notification_count(), ==, count + 2);
+
+    pbdrv_bluetooth_set_nus_receive_handler(NULL);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 struct testcase_t pbdrv_bluetooth_tests[] = {
     PBIO_THREAD_TEST(test_bluetooth),
+    PBIO_THREAD_TEST(test_bluetooth_nus),
     END_OF_TESTCASES
 };

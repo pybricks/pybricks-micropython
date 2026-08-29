@@ -149,6 +149,10 @@ bool pbdrv_bluetooth_host_is_connected(void) {
     return pybricks_notify_en && !busy_disconnecting;
 }
 
+bool pbdrv_bluetooth_nus_is_connected(void) {
+    return uart_tx_notify_en;
+}
+
 bool pbdrv_bluetooth_hci_is_enabled(void) {
     return true;
 }
@@ -357,6 +361,42 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
         ATT_HandleValueNoti(conn_handle, &notification);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     } while ((HCI_StatusCodes_t)read_buf[8] == blePending);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbdrv_bluetooth_send_nus_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
+
+    static attHandleValueNoti_t notification;
+    static uint16_t offset;
+    static uint16_t chunk;
+
+    if (!uart_tx_notify_en) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (size == 0) {
+        return PBIO_SUCCESS;
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (offset = 0; offset < size; offset += chunk) {
+        chunk = size - offset;
+        if (chunk > PBDRV_BLUETOOTH_MAX_CHAR_SIZE) {
+            chunk = PBDRV_BLUETOOTH_MAX_CHAR_SIZE;
+        }
+
+        notification.handle = uart_tx_char_handle;
+        notification.pValue = data + offset;
+        notification.len = chunk;
+
+        do {
+            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+            ATT_HandleValueNoti(conn_handle, &notification);
+            PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+        } while ((HCI_StatusCodes_t)read_buf[8] == blePending);
+    }
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
@@ -1246,7 +1286,8 @@ static void handle_event(uint8_t *packet) {
                         DBG("noti: %d", pybricks_notify_en);
                         pbdrv_bluetooth_host_connection_changed();
                     } else if (char_handle == uart_rx_char_handle) {
-                        // Not implemented
+                        pbdrv_bluetooth_nus_data_received(&data[10], pdu_len - 4);
+                        err = PBIO_PYBRICKS_ERROR_OK;
                     } else if (char_handle == uart_tx_char_handle + 1) {
                         uart_tx_notify_en = data[10];
                         err = PBIO_PYBRICKS_ERROR_OK;

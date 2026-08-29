@@ -325,6 +325,14 @@ retry:
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+pbio_error_t pbdrv_bluetooth_send_nus_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+bool pbdrv_bluetooth_nus_is_connected(void) {
+    return false;
+}
+
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
     pbdrv_bluetooth_peripheral_t *peri = context;
 

@@ -41,6 +41,11 @@ void pbdrv_bluetooth_host_connection_changed(void);
 
 extern pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
 
+/**
+ * Forwards a Nordic UART Service RX write to the registered handler, if any.
+ */
+void pbdrv_bluetooth_nus_data_received(const uint8_t *data, uint32_t size);
+
 extern uint8_t pbdrv_bluetooth_broadcast_data[PBDRV_BLUETOOTH_MAX_ADV_SIZE];
 extern uint8_t pbdrv_bluetooth_broadcast_data_size;
 

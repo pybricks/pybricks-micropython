@@ -8,6 +8,8 @@
 #if PBDRV_CONFIG_BLUETOOTH
 
 #include <stdint.h>
+// Drive-by: this file already used memcpy/memset; the include was missing.
+#include <string.h>
 
 #include <pbdrv/bluetooth.h>
 
@@ -31,9 +33,20 @@
 #endif
 
 pbdrv_bluetooth_receive_handler_t pbdrv_bluetooth_receive_handler;
+static pbdrv_bluetooth_nus_receive_handler_t pbdrv_bluetooth_nus_receive_handler;
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
     pbdrv_bluetooth_receive_handler = handler;
+}
+
+void pbdrv_bluetooth_set_nus_receive_handler(pbdrv_bluetooth_nus_receive_handler_t handler) {
+    pbdrv_bluetooth_nus_receive_handler = handler;
+}
+
+void pbdrv_bluetooth_nus_data_received(const uint8_t *data, uint32_t size) {
+    if (pbdrv_bluetooth_nus_receive_handler) {
+        pbdrv_bluetooth_nus_receive_handler(data, size);
+    }
 }
 
 //
@@ -724,6 +737,9 @@ pbio_error_t pbdrv_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_ti
         return PBIO_SUCCESS;
     }
 
+    // Drop the NUS RX callback before GC: a late write must not enter Python.
+    pbdrv_bluetooth_set_nus_receive_handler(NULL);
+
     static pbio_os_state_t sub;
 
     // For looping over peripherals.
@@ -779,4 +795,5 @@ void pbdrv_bluetooth_deinit(void) {
     pbio_os_request_poll();
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_STM32_CC2640
+// Drive-by: this file is gated on PBDRV_CONFIG_BLUETOOTH (comment previously said STM32_CC2640).
+#endif // PBDRV_CONFIG_BLUETOOTH

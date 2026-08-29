@@ -485,7 +485,7 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                                 case 0x000d:
                                     pybricks_service_notification_count++;
                                     break;
-                                case 0x0013:
+                                case 0x0015:
                                     uart_service_notification_count++;
                                     break;
                             }

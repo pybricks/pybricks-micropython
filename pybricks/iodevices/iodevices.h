@@ -10,6 +10,9 @@
 
 #include "py/obj.h"
 
+// Drive-by: I2C helpers below use pbio_port_power_requirements_t. Not NUS-related.
+#include <pbio/port.h>
+
 #include <pybricks/tools/pb_type_async.h>
 
 #if PYBRICKS_PY_IODEVICES_PUP_DEVICE
@@ -18,6 +21,10 @@ extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 
 #if PYBRICKS_PY_IODEVICES_UART_DEVICE
 extern const mp_obj_type_t pb_type_uart_device;
+#endif
+
+#if PYBRICKS_PY_IODEVICES_NUS_DEVICE
+extern const mp_obj_type_t pb_type_nus_device;
 #endif
 
 #if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
