@@ -68,13 +68,26 @@ static mp_obj_t pb_type_nus_device_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
+static void pb_type_nus_device_raise_not_connected(void) {
+    mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+        "\n\n"
+        "No connected device has NUS TX notifications enabled:\n"
+        "--> Enable Notify on the TX characteristic (nRF Connect or similar).\n"
+        "--> Check nd.is_connected() before write().\n"
+        "\n"));
+}
+
 static pbio_error_t pb_type_nus_device_write_iter_once(pbio_os_state_t *state, mp_obj_t self_in) {
     pb_type_nus_device_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GET_STR_DATA_LEN(self->write_obj, data, data_len);
     if (data_len > UINT16_MAX) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    return pbdrv_bluetooth_send_nus_notification(state, data, (uint16_t)data_len);
+    pbio_error_t err = pbdrv_bluetooth_send_nus_notification(state, data, (uint16_t)data_len);
+    if (err == PBIO_ERROR_INVALID_OP) {
+        pb_type_nus_device_raise_not_connected();
+    }
+    return err;
 }
 
 static mp_obj_t pb_type_nus_device_write_return_map(mp_obj_t self_in) {
@@ -90,6 +103,10 @@ static mp_obj_t pb_type_nus_device_write(size_t n_args, const mp_obj_t *pos_args
 
     if (!(mp_obj_is_str_or_bytes(data_in) || mp_obj_is_type(data_in, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    if (!pbdrv_bluetooth_nus_is_connected()) {
+        pb_type_nus_device_raise_not_connected();
     }
 
     self->write_obj = data_in;
