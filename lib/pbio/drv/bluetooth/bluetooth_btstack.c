@@ -251,6 +251,18 @@ bool pbdrv_bluetooth_host_is_connected(void) {
     return false;
 }
 
+bool pbdrv_bluetooth_nus_is_connected(void) {
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    for (size_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+        pbdrv_bluetooth_btstack_host_connection_t *host = &host_connections[i];
+        if (host->con_handle != HCI_CON_HANDLE_INVALID && host->uart_configured) {
+            return true;
+        }
+    }
+    #endif
+    return false;
+}
+
 bool pbdrv_bluetooth_hci_is_enabled(void) {
     return bluetooth_thread_err == PBIO_ERROR_AGAIN;
 }
@@ -285,7 +297,7 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
             break;
         case RFCOMM_DATA_PACKET:
-            // Not implemented.
+            pbdrv_bluetooth_nus_data_received(packet, size);
             break;
         default:
             break;
@@ -641,6 +653,67 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
     for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
         host = &host_connections[i];
         PBIO_OS_AWAIT_UNTIL(state, host->notification_done || host->con_handle == HCI_CON_HANDLE_INVALID);
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    #else
+    return PBIO_ERROR_NOT_SUPPORTED;
+    #endif
+}
+
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+static btstack_context_callback_registration_t nus_send_request;
+static const uint8_t *nus_tx_data;
+static uint16_t nus_tx_size;
+static bool nus_tx_done;
+
+static void nus_on_ready_to_send(void *context) {
+    pbdrv_bluetooth_btstack_host_connection_t *host = context;
+    nordic_spp_service_server_send(host->con_handle, nus_tx_data, nus_tx_size);
+    nus_tx_done = true;
+    pbio_os_request_poll();
+}
+#endif
+
+pbio_error_t pbdrv_bluetooth_send_nus_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
+    if (!pbdrv_bluetooth_btstack_ble_supported()) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    if (size == 0) {
+        return PBIO_SUCCESS;
+    }
+
+    if (!pbdrv_bluetooth_nus_is_connected()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
+    static uint16_t offset;
+    static uint16_t chunk;
+    static size_t i;
+    static pbdrv_bluetooth_btstack_host_connection_t *host;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (offset = 0; offset < size; offset += chunk) {
+        chunk = size - offset;
+        if (chunk > PBDRV_BLUETOOTH_MAX_CHAR_SIZE) {
+            chunk = PBDRV_BLUETOOTH_MAX_CHAR_SIZE;
+        }
+        nus_tx_data = data + offset;
+        nus_tx_size = chunk;
+
+        for (i = 0; i < PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS; i++) {
+            host = &host_connections[i];
+            if (host->con_handle != HCI_CON_HANDLE_INVALID && host->uart_configured) {
+                nus_tx_done = false;
+                nus_send_request.callback = nus_on_ready_to_send;
+                nus_send_request.context = host;
+                nordic_spp_service_server_request_can_send_now(&nus_send_request, host->con_handle);
+                PBIO_OS_AWAIT_UNTIL(state, nus_tx_done || host->con_handle == HCI_CON_HANDLE_INVALID);
+            }
+        }
     }
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

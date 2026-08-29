@@ -6,6 +6,18 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b2...HEAD
 
+### Added
+- Added `pybricks.iodevices.NUSDevice` to use the hub as a Nordic UART Service
+  peripheral.
+
+<!--
+Internal / PR notes (not user-facing):
+- bluetooth.c: include <string.h> for existing memcpy/memset; #endif comment now
+  matches PBDRV_CONFIG_BLUETOOTH (was labeled STM32_CC2640).
+- iodevices.h: include <pbio/port.h> for existing I2C helper types
+  (pbio_port_power_requirements_t). Not NUS-related.
+-->
+
 ## [4.1.0b2] - 2026-07-14
 
 ### Fixed

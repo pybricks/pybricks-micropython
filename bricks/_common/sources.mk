@@ -50,6 +50,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_type_iodevices_pupdevice.c \
 	iodevices/pb_type_iodevices_xbox_controller.c \
 	iodevices/pb_type_uart_device.c \
+	iodevices/pb_type_nus_device.c \
 	messaging/pb_module_messaging.c \
 	messaging/pb_type_app_data.c \
 	messaging/pb_type_ble_radio.c \
