@@ -229,7 +229,8 @@ static struct {
 
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button) {
 
-    pbio_bluetooth_classic_link_key_t *link_key = pbsys_storage_settings_get_gamepad_link_key();
+    const pbio_bluetooth_classic_link_key_t *link_key =
+        pbio_bluetooth_classic_link_key_get_registered(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
 
     switch (gamepad_ui.phase) {
 
@@ -257,7 +258,7 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
             // Erase accepted. Drop the connection, delete the key, and scan
             // for a new device.
             pbdrv_bluetooth_classic_hid_disconnect();
-            pbsys_storage_settings_reset_link_key(link_key);
+            pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
             gamepad_ui.phase = PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_SCAN;
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
         }
@@ -336,7 +337,7 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
 
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open(void) {
     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD;
-    gamepad_ui.phase = pbsys_storage_settings_get_gamepad_link_key() ?
+    gamepad_ui.phase = pbio_bluetooth_classic_link_key_get_registered(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD) ?
         PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_INFO : PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_SCAN;
     gamepad_ui.accept_erase = false;
     gamepad_ui.selected_scan = 0;
@@ -595,7 +596,8 @@ static void pbsys_hmi_ev3_ui_draw_activity_status(const char *text) {
 
 static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
 
-    pbio_bluetooth_classic_link_key_t *link_key = pbsys_storage_settings_get_gamepad_link_key();
+    const pbio_bluetooth_classic_link_key_t *link_key =
+        pbio_bluetooth_classic_link_key_get_registered(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
 
     char buf[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE + 4];
 

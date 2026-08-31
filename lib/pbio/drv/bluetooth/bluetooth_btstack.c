@@ -1529,7 +1529,7 @@ static void hid_pair_end(pbio_error_t err) {
     hid_connection.pair_err = err;
     if (err != PBIO_SUCCESS) {
         pbdrv_bluetooth_classic_hid_disconnect();
-        pbio_bluetooth_classic_link_key_unregister();
+        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
     }
 }
 
@@ -1555,7 +1555,7 @@ pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char 
 
     // Provisional bonding record; the stack stores the negotiated link key
     // into it via the pbio link key store.
-    pbio_bluetooth_classic_link_key_register(bdaddr, name);
+    pbio_bluetooth_classic_link_key_register(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD, bdaddr, name);
 
     memcpy(hid_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_PAIRING;
@@ -1573,7 +1573,7 @@ pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char 
         DEBUG_PRINT("HID host connect failed, status 0x%02x.\n", btstack_error);
         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
         hid_connection.pair_err = PBIO_ERROR_FAILED;
-        pbio_bluetooth_classic_link_key_unregister();
+        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
         return PBIO_ERROR_FAILED;
     }
 
@@ -1657,21 +1657,23 @@ static void link_key_db_delete_link_key(bd_addr_t bd_addr) {
 }
 
 static int link_key_db_iterator_init(btstack_link_key_iterator_t *it) {
-    it->context = NULL;
+    it->context = 0;
     return 1;
 }
 
 static int link_key_db_iterator_get_next(btstack_link_key_iterator_t *it, bd_addr_t bd_addr, link_key_t link_key, link_key_type_t *link_key_type) {
-    const pbio_bluetooth_classic_link_key_t *record = pbio_bluetooth_classic_link_key_get_record();
-    if (it->context || !record) {
-        return 0;
+    for (uintptr_t index = (uintptr_t)it->context; index < PBIO_BLUETOOTH_CLASSIC_SLOT_NUM; index++) {
+        const pbio_bluetooth_classic_link_key_t *record = pbio_bluetooth_classic_link_key_get_record(index);
+        if (!record) {
+            continue;
+        }
+        it->context = (void *)(index + 1);
+        memcpy(bd_addr, record->bdaddr, sizeof(record->bdaddr));
+        memcpy(link_key, record->link_key, sizeof(record->link_key));
+        *link_key_type = (link_key_type_t)record->link_key_type;
+        return 1;
     }
-    // There is only one record, so mark iteration as done.
-    it->context = (void *)1;
-    memcpy(bd_addr, record->bdaddr, sizeof(record->bdaddr));
-    memcpy(link_key, record->link_key, sizeof(record->link_key));
-    *link_key_type = (link_key_type_t)record->link_key_type;
-    return 1;
+    return 0;
 }
 
 static void link_key_db_iterator_done(btstack_link_key_iterator_t *it) {
