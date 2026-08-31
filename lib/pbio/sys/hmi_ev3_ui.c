@@ -53,6 +53,8 @@ typedef enum {
     PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES,
     /** Shutdown. No highlighted. */
     PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_NO,
+    /** Gamepad overview. */
+    PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD,
 } pbsys_hmi_ev3_ui_overlay_type_t;
 
 typedef struct {
@@ -94,6 +96,7 @@ static const char *apps[] = {
  */
 static const char *settings[] = {
     " Version",
+    " Gamepad",
 };
 
 // -----------------------------------------------------------------------------
@@ -199,6 +202,20 @@ static void pbsys_hmi_ev3_ui_increment_entry_on_current_tab(bool increment) {
     }
 }
 
+pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button, uint8_t *payload) {
+    // Cancel dialog.
+    if (button == PBIO_BUTTON_LEFT_UP) {
+        state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
+        return PBSYS_HMI_EV3_UI_ACTION_NONE;
+    }
+    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+}
+
+pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open(void) {
+    state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD;
+    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+}
+
 /**
  * Handles one button press to updates the state.
  *
@@ -245,6 +262,8 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
                 state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES;
             }
             return PBSYS_HMI_EV3_UI_ACTION_NONE;
+        case PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD:
+            return pbsys_hmi_ev3_ui_handle_gamepad_button(button, payload);
         case PBSYS_HMI_EV3_UI_OVERLAY_NONE:
         // fallthrough
         default:
@@ -296,8 +315,16 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
                     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON;
                     return PBSYS_HMI_EV3_UI_ACTION_NONE;
             }
+        } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_SETTINGS) {
+            switch (state.selection[PBSYS_HMI_EV3_UI_TAB_SETTINGS]) {
+                case 1:
+                    return pbsys_hmi_ev3_ui_handle_gamepad_open();
+                default:
+                    // Other settings have no info.
+                    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+            }
         } else {
-            // Settings don't currently do anything, just displays info.
+            // Other tabs not enabled.
             return PBSYS_HMI_EV3_UI_ACTION_NONE;
         }
     }
@@ -333,6 +360,46 @@ static void pbsys_hmi_ev3_ui_draw_centered_text(const pbio_font_t *font, const c
     pbio_image_draw_text(display, font, x, y, text, strlen(text), BLACK);
 }
 
+static uint8_t pbsys_hmi_ev3_ui_draw_overlay_box(uint8_t width, uint8_t height, bool divider) {
+    pbio_image_t *display = pbdrv_display_get_image();
+
+    // Centered horizontally, slightly more down.
+    uint8_t x = (178 - width) / 2;
+    uint8_t y = (128 - height) * 3 / 4;
+
+    // White rectangle, black border and white margin.
+    pbio_image_fill_rect(display, x, y, width, height, WHITE);
+    for (uint8_t i = 1; i < 4; i++) {
+        pbio_image_draw_rect(display, x - i, y - i, width + i * 2, height + i * 2, i == 1 ? BLACK: WHITE);
+    }
+
+    if (!divider) {
+        return 0;
+    }
+
+    // Horizontal divider.
+    uint8_t bar_y = y + height - 21;
+    pbio_image_draw_hline(display, x, bar_y, width, BLACK);
+    return bar_y;
+}
+
+static void pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(uint8_t separator_y) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__accept24_fill, 76, separator_y + 3, BLACK);
+}
+
+static void pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept_and_reject(uint8_t separator_y, bool accept_active) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    const pbio_image_monochrome_t *accept = accept_active ? &pbio_image_media__accept24_fill : &pbio_image_media__accept24;
+    const pbio_image_monochrome_t *reject = accept_active ? &pbio_image_media__reject24 : &pbio_image_media__reject24_fill;
+    pbio_image_draw_image_transparent_from_monochrome(display, reject, 56, separator_y + 3, BLACK);
+    pbio_image_draw_image_transparent_from_monochrome(display, accept, 96, separator_y + 3, BLACK);
+}
+
+static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
+    pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, true);
+}
+
 /**
  * Draws the overlay.
  *
@@ -345,41 +412,28 @@ static void pbsys_hmi_ev3_ui_draw_overlay(pbsys_hmi_ev3_ui_overlay_type_t overla
         return;
     }
 
-    // Currently all notifications fit on a single size.
-    pbio_image_t *display = pbdrv_display_get_image();
-    uint8_t width = 120;
-    uint8_t height = 60;
-
-    // Centered horizontally, slightly more down.
-    uint8_t x = (178 - width) / 2;
-    uint8_t y = (128 - height) * 3 / 4;
-
-    // White rectangle, black border and white margin.
-    pbio_image_fill_rect(display, x, y, width, height, WHITE);
-    for (uint8_t i = 1; i < 4; i++) {
-        pbio_image_draw_rect(display, x - i, y - i, width + i * 2, height + i * 2, i == 1 ? BLACK: WHITE);
+    if (overlay == PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD) {
+        pbsys_hmi_ev3_ui_draw_gamepad_overlay();
+        return;
     }
 
-    // Horizontal divider.
-    uint8_t bar_y = y + height - 21;
-    pbio_image_draw_hline(display, x, bar_y, width, BLACK);
+    // All following basic notifications fit on a single size.
+    uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(120, 60, true);
 
     // Add content specific to the overlay type.
     switch (overlay) {
         case PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES:
         case PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_NO:
-            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__off20, 79, bar_y - 32, BLACK);
-            bool accept_active = overlay == PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES;
-            const pbio_image_monochrome_t *accept = accept_active ? &pbio_image_media__accept24_fill : &pbio_image_media__accept24;
-            const pbio_image_monochrome_t *reject = accept_active ? &pbio_image_media__reject24 : &pbio_image_media__reject24_fill;
-            pbio_image_draw_image_transparent_from_monochrome(display, reject, 56, bar_y + 3, BLACK);
-            pbio_image_draw_image_transparent_from_monochrome(display, accept, 96, bar_y + 3, BLACK);
+            pbio_image_draw_image_transparent_from_monochrome(pbdrv_display_get_image(), &pbio_image_media__off20, 79, separator_y - 32, BLACK);
+            pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept_and_reject(separator_y, overlay == PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES);
             break;
         case PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM:
-        case PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON:
-            pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__accept24_fill, 76, bar_y + 3, BLACK);
+        case PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON: {
             const char *text = overlay == PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM ? "No program!" : "Coming soon!";
-            pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, text, 0, bar_y - 16);
+            pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, text, 0, separator_y - 16);
+            pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
+            break;
+        }
         default:
             break;
     }
