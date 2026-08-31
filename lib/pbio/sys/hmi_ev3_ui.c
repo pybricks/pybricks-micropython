@@ -232,7 +232,9 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
         if (button != PBIO_BUTTON_CENTER) {
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
         }
-        // Erase accepted. Delete the key and proceed to scanning below.
+        // Erase accepted. Drop the connection, delete the key, and proceed
+        // to scanning below.
+        pbdrv_bluetooth_classic_hid_disconnect();
         pbsys_storage_settings_reset_link_key(link_key);
     }
 
@@ -259,10 +261,26 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
         if (button == PBIO_BUTTON_RIGHT) {
             gamepad_ui.selected_scan = (gamepad_ui.selected_scan + 1) % num_results;
         }
+        if (button == PBIO_BUTTON_CENTER && gamepad_ui.selected_scan < num_results) {
+            // Register the selected device and start connecting to it. The
+            // link key itself is stored by BTstack; persisting it in the
+            // stored settings comes later.
+            pbio_bluetooth_inquiry_result_t *result = &results[gamepad_ui.selected_scan];
+            pbdrv_bluetooth_inquiry_stop();
+            pbdrv_bluetooth_classic_hid_connect(result->bdaddr);
+
+            pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+            if (settings) {
+                pbio_bluetooth_classic_link_key_t *key = &settings->bluetooth_gamepad_link_key;
+                key->device_type = PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD;
+                memcpy(key->bdaddr, result->bdaddr, sizeof(key->bdaddr));
+                snprintf(key->name, sizeof(key->name), "%s", result->name);
+                pbsys_storage_request_write();
+            }
+            gamepad_ui.accept_erase = false;
+        }
     }
 
-    // REVISIT: On center, select the active scan result and proceed to
-    // connecting. This will be added in a next commit.
     return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
 
@@ -270,17 +288,6 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open() {
     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD;
     gamepad_ui.accept_erase = false;
     gamepad_ui.selected_scan = 0;
-
-    // HACK: populate dummy link key to preview the linked visual. Remove.
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
-    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
-    if (settings) {
-        pbio_bluetooth_classic_link_key_t *key = &settings->bluetooth_gamepad_link_key;
-        key->device_type = PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD;
-        memcpy(key->bdaddr, (uint8_t []) {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC}, sizeof(key->bdaddr));
-        snprintf(key->name, sizeof(key->name), "Wireless 1");
-    }
-    #endif
 
     return pbsys_hmi_ev3_ui_handle_gamepad_button(0);
 }
@@ -540,9 +547,8 @@ static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
             link_key->bdaddr[0], link_key->bdaddr[1], link_key->bdaddr[2],
             link_key->bdaddr[3], link_key->bdaddr[4], link_key->bdaddr[5]);
         pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, buf, 0, 64);
-        // REVISIT: Show actual connection state once classic HID connections
-        // are implemented.
-        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Not connected", 0, 78);
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14,
+            pbdrv_bluetooth_classic_hid_is_connected() ? "Connected" : "Not connected", 0, 78);
         pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Delete connection?", 0, separator_y - 8);
         pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept_and_reject(separator_y, gamepad_ui.accept_erase);
         return;

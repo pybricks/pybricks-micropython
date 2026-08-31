@@ -168,6 +168,35 @@ void pbdrv_bluetooth_inquiry_stop(void);
  */
 pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results);
 
+/**
+ * Initiates a connection to a Bluetooth Classic HID device such as a gamepad.
+ *
+ * This is non-blocking. The driver handles the remaining steps, including
+ * pairing if the device is in pairing mode. Poll
+ * pbdrv_bluetooth_classic_hid_is_connected() for the result.
+ *
+ * @param [in] bdaddr  6-byte Bluetooth address of the device, as found with
+ *                     an inquiry scan.
+ * @return             ::PBIO_SUCCESS if the connection was initiated.
+ *                     ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on.
+ *                     ::PBIO_ERROR_BUSY if a connection is already in progress.
+ *                     ::PBIO_ERROR_FAILED if the connection could not be started.
+ */
+pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr);
+
+/**
+ * Tests whether a Bluetooth Classic HID device is connected.
+ *
+ * @return  True if connected.
+ */
+bool pbdrv_bluetooth_classic_hid_is_connected(void);
+
+/**
+ * Disconnects the Bluetooth Classic HID device or aborts an ongoing
+ * connection attempt, if any.
+ */
+void pbdrv_bluetooth_classic_hid_disconnect(void);
+
 #else // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
@@ -179,6 +208,17 @@ static inline void pbdrv_bluetooth_inquiry_stop(void) {
 
 static inline pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
+    return false;
+}
+
+static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC

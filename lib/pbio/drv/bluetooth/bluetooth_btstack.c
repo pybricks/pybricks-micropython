@@ -47,7 +47,17 @@
 static void btstack_hci_dump_reset(void) {
 }
 static void btstack_hci_dump_log_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len) {
-    pbio_debug("HCI %s packet type: %02x, len: %u\n", in ? "in" : "out", packet_type, len);
+    pbio_debug("HCI %s packet type: %02x, len: %u :", in ? "in" : "out", packet_type, len);
+    // Dump the bytes so L2CAP/signaling contents can be decoded. Cap to keep
+    // the log readable; ACL signaling packets are small anyway.
+    uint16_t dump_len = len > 32 ? 32 : len;
+    for (uint16_t i = 0; i < dump_len; i++) {
+        pbio_debug(" %02x", packet[i]);
+    }
+    if (dump_len < len) {
+        pbio_debug(" ...");
+    }
+    pbio_debug("\n");
 }
 static void btstack_hci_dump_log_message(int log_level, const char *format, va_list argptr) {
     pbio_debug_va(format, argptr);
@@ -391,7 +401,7 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             }
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE: {
-            DEBUG_PRINT("HCI_EVENT_DISCONNECTION_COMPLETE\n");
+            DEBUG_PRINT("HCI_EVENT_DISCONNECTION_COMPLETE reason=0x%02x\n", hci_event_disconnection_complete_get_reason(packet));
             uint16_t handle = hci_event_disconnection_complete_get_connection_handle(packet);
             pbdrv_bluetooth_btstack_host_connection_t *host = pbdrv_bluetooth_btstack_get_host_connection(handle);
             if (host) {
@@ -1340,6 +1350,196 @@ pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_i
     return PBIO_SUCCESS;
 }
 
+// Storage for the HID descriptor of the connected device, managed by hid_host.
+static uint8_t hid_descriptor_storage[512];
+
+typedef enum {
+    PBDRV_BLUETOOTH_HID_STATE_IDLE,
+    PBDRV_BLUETOOTH_HID_STATE_CONNECTING,
+    PBDRV_BLUETOOTH_HID_STATE_CONNECTED,
+} pbdrv_bluetooth_hid_state_t;
+
+/**
+ * The one supported Bluetooth Classic HID device connection, such as a gamepad.
+ */
+static struct {
+    /** HID channel ID. Valid while connecting or connected. */
+    uint16_t hid_cid;
+    /** Bluetooth address of the device. */
+    bd_addr_t bdaddr;
+    /** Connection state. */
+    pbdrv_bluetooth_hid_state_t state;
+} hid_connection;
+
+/**
+ * Handles Bluetooth Classic HID events. Registered both as a general HCI
+ * event handler (for pairing/security events) and as the hid_host packet
+ * handler (for HID meta events).
+ */
+static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    UNUSED(channel);
+    UNUSED(size);
+
+    if (packet_type != HCI_EVENT_PACKET) {
+        return;
+    }
+
+    bd_addr_t event_addr;
+    uint8_t status;
+
+    switch (hci_event_packet_get_type(packet)) {
+        case BTSTACK_EVENT_STATE:
+            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
+                // Allow already-paired classic HID devices (e.g. PS5) to
+                // initiate reconnection by paging the hub.
+                gap_connectable_control(1);
+            }
+            break;
+
+        case HCI_EVENT_PIN_CODE_REQUEST:
+            // Legacy pairing fallback for devices without SSP.
+            DEBUG_PRINT("Pin code request - using '0000'\n");
+            hci_event_pin_code_request_get_bd_addr(packet, event_addr);
+            gap_pin_code_response(event_addr, "0000");
+            break;
+
+        case HCI_EVENT_USER_CONFIRMATION_REQUEST:
+            // SSP numeric comparison. Auto-accept since gamepads have no display.
+            DEBUG_PRINT("SSP user confirmation auto accept\n");
+            hci_event_user_confirmation_request_get_bd_addr(packet, event_addr);
+            hci_send_cmd(&hci_user_confirmation_request_reply, event_addr);
+            break;
+
+        case HCI_EVENT_HID_META:
+            switch (hci_event_hid_meta_get_subevent_code(packet)) {
+
+                case HID_SUBEVENT_INCOMING_CONNECTION:
+                    // An already-paired device reconnecting, or a device we
+                    // just paired with reinitiating the HID channels itself
+                    // after rejecting the hub-initiated attempt. Either way
+                    // we must not race it with hid_host_connect().
+                    if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED) {
+                        DEBUG_PRINT("HID connection in use, declining.\n");
+                        hid_host_decline_connection(hid_subevent_incoming_connection_get_hid_cid(packet));
+                        break;
+                    }
+                    hid_connection.hid_cid = hid_subevent_incoming_connection_get_hid_cid(packet);
+                    hid_subevent_incoming_connection_get_address(packet, hid_connection.bdaddr);
+                    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTING;
+                    DEBUG_PRINT("Incoming HID connection from %s.\n", bd_addr_to_str(hid_connection.bdaddr));
+                    hid_host_accept_connection(hid_connection.hid_cid, HID_PROTOCOL_MODE_REPORT_WITH_FALLBACK_TO_BOOT);
+                    break;
+
+                case HID_SUBEVENT_CONNECTION_OPENED:
+                    if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_IDLE ||
+                        hid_connection.hid_cid != hid_subevent_connection_opened_get_hid_cid(packet)) {
+                        break;
+                    }
+                    status = hid_subevent_connection_opened_get_status(packet);
+                    if (status != ERROR_CODE_SUCCESS) {
+                        // For a hub-initiated pairing attempt this is expected
+                        // (e.g. PS5 rejects with 0x11); the device then pages
+                        // back and opens the channels itself, handled above.
+                        DEBUG_PRINT("HID connection failed, status 0x%02x.\n", status);
+                        hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+                        break;
+                    }
+                    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
+                    DEBUG_PRINT("HID connection to %s opened.\n", bd_addr_to_str(hid_connection.bdaddr));
+                    break;
+
+                case HID_SUBEVENT_DESCRIPTOR_AVAILABLE:
+                    // Delayed for incoming connections; reports may arrive first.
+                    DEBUG_PRINT("HID descriptor available, status 0x%02x.\n",
+                        hid_subevent_descriptor_available_get_status(packet));
+                    break;
+
+                case HID_SUBEVENT_REPORT: {
+                    #if DEBUG
+                    // BTstack quirk: report points at the DATA|INPUT header
+                    // byte (0xa1) but report_len excludes it, so the report
+                    // payload is at report + 1 with report_len bytes. Reading
+                    // len bytes from report itself would drop the last byte.
+                    const uint8_t *report = hid_subevent_report_get_report(packet);
+                    uint16_t report_len = hid_subevent_report_get_report_len(packet);
+                    if (report_len && report[0] == 0xa1) {
+                        report++;
+                    }
+                    DEBUG_PRINT("HID report (%u):", report_len);
+                    for (uint16_t i = 0; i < report_len; i++) {
+                        DEBUG_PRINT(" %02x", report[i]);
+                    }
+                    DEBUG_PRINT("\n");
+                    #endif
+                    break;
+                }
+
+                case HID_SUBEVENT_CONNECTION_CLOSED:
+                    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_IDLE &&
+                        hid_connection.hid_cid == hid_subevent_connection_closed_get_hid_cid(packet)) {
+                        DEBUG_PRINT("HID connection to %s closed.\n", bd_addr_to_str(hid_connection.bdaddr));
+                        hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+            break;
+
+        default:
+            return;
+    }
+
+    pbio_os_request_poll();
+}
+
+pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_IDLE) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    memcpy(hid_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
+    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTING;
+
+    DEBUG_PRINT("Start HID connection to %s.\n", bd_addr_to_str(hid_connection.bdaddr));
+
+    // For a device in pairing mode, the hub pages it and initiates the HID
+    // channels. Pairing (SSP) happens along the way. The remaining steps,
+    // including the device closing this attempt and reinitiating the HID
+    // channels itself (e.g. PS5), are driven by hid_host_packet_handler().
+    uint8_t btstack_error = hid_host_connect(hid_connection.bdaddr,
+        HID_PROTOCOL_MODE_REPORT_WITH_FALLBACK_TO_BOOT, &hid_connection.hid_cid);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
+        DEBUG_PRINT("HID host connect failed, status 0x%02x.\n", btstack_error);
+        hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+        return PBIO_ERROR_FAILED;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+bool pbdrv_bluetooth_classic_hid_is_connected(void) {
+    return hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
+}
+
+void pbdrv_bluetooth_classic_hid_disconnect(void) {
+
+    if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_IDLE) {
+        return;
+    }
+
+    DEBUG_PRINT("Disconnect HID connection to %s.\n", bd_addr_to_str(hid_connection.bdaddr));
+
+    hid_host_disconnect(hid_connection.hid_cid);
+    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
@@ -1608,6 +1808,38 @@ void pbdrv_bluetooth_init(void) {
     (void)nordic_spp_packet_handler;
     (void)sm_packet_handler;
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
+
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    // Run an SDP server. When a paired classic HID device (e.g. PS5) pages
+    // the hub to reconnect, it is the L2CAP initiator and performs its own
+    // SDP query against the hub. Without an SDP server the hub rejects that
+    // incoming SDP connection with "PSM not supported" and the device drops
+    // the link. Registering a Device ID record gives it a valid response so
+    // it proceeds to open the HID channels.
+    sdp_init();
+    static uint8_t device_id_sdp_record[100];
+    device_id_create_sdp_record(device_id_sdp_record, 0x10001,
+        DEVICE_ID_VENDOR_ID_SOURCE_BLUETOOTH, LWP3_LEGO_COMPANY_ID, PBDRV_CONFIG_HUB_KIND, 0x00);
+    sdp_register_service(device_id_sdp_record);
+
+    hid_host_init(hid_descriptor_storage, sizeof(hid_descriptor_storage));
+    hid_host_register_packet_handler(hid_host_packet_handler);
+
+    // Allow sniff mode requests by HID devices and support role switch.
+    gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_SNIFF_MODE | LM_LINK_POLICY_ENABLE_ROLE_SWITCH);
+
+    // PlayStation/Nintendo HID controllers page the hub on reconnect (so they
+    // connect as master) and then open the HID L2CAP channels themselves.
+    // Forcing a role switch on the incoming connection makes them terminate
+    // the link, so let the connecting device decide the role (1) instead of
+    // attempting to become master (0).
+    hci_set_master_slave_policy(1);
+
+    // Also register for general HCI events for pairing/security requests.
+    static btstack_packet_callback_registration_t hid_event_callback_registration;
+    hid_event_callback_registration.callback = &hid_host_packet_handler;
+    hci_add_event_handler(&hid_event_callback_registration);
+    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;

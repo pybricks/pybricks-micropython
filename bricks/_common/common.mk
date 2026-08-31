@@ -455,6 +455,18 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 	btstack_chipset_cc256x.c \
 	)
 
+# Bluetooth Classic profiles (HID host etc.). Requires ENABLE_CLASSIC in the
+# platform btstack_config.h.
+ifeq ($(PB_LIB_BTSTACK_CLASSIC),1)
+BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
+	device_id_server.c \
+	hid_host.c \
+	sdp_client.c \
+	sdp_server.c \
+	sdp_util.c \
+	)
+endif
+
 # libusb-specific BTStack sources for virtual_hub
 ifeq ($(PB_MCU_FAMILY),native)
 BTSTACK_SRC_C += $(addprefix lib/btstack/,\
