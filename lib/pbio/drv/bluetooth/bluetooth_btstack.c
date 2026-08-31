@@ -1640,6 +1640,264 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
 }
 
+/**
+ * RFCOMM server channel for the serial connection from a host computer (PC).
+ */
+#define RFCOMM_SERVER_CHANNEL (1)
+
+/**
+ * Maximum RFCOMM frame size, also sizing the temporary echo buffer.
+ */
+#define RFCOMM_SERVER_MTU (512)
+
+/**
+ * Pairing needs the user to accept a prompt on the host computer, so allow
+ * ample time before giving up.
+ */
+#define HOST_PAIR_TIMEOUT_MS (30000)
+
+/**
+ * The one supported connection to a host computer.
+ *
+ * Pairing uses GAP dedicated bonding: the hub connects only to establish the
+ * bond and the link is dropped when done. The bonded host initiates the
+ * actual RFCOMM connection itself later.
+ */
+static struct {
+    /** RFCOMM channel ID. Valid while connected. */
+    uint16_t rfcomm_cid;
+    /** Bluetooth address of the host. */
+    bd_addr_t bdaddr;
+    /** Whether the RFCOMM channel is open. */
+    bool connected;
+    /** Whether a dedicated bonding session is in progress. */
+    bool pairing;
+    /** SSP numeric comparison passkey, valid while pair_passkey_valid. */
+    uint32_t pair_passkey;
+    bool pair_passkey_valid;
+    /** Result of the last pairing session. */
+    pbio_error_t pair_err;
+    /** Ends the pairing session if bonding never completes. */
+    btstack_timer_source_t pair_timeout;
+    /** Received data pending echo, until a real consumer is hooked up. */
+    uint8_t echo_data[RFCOMM_SERVER_MTU];
+    uint16_t echo_size;
+} host_connection;
+
+static void host_pair_end(pbio_error_t err);
+
+/**
+ * Handles host computer events. Registered both as a general HCI event
+ * handler (for dedicated bonding results) and as the RFCOMM service packet
+ * handler (for RFCOMM events and data).
+ */
+static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    UNUSED(channel);
+
+    bd_addr_t event_addr;
+    uint8_t status;
+
+    switch (packet_type) {
+        case HCI_EVENT_PACKET:
+            switch (hci_event_packet_get_type(packet)) {
+
+                case GAP_EVENT_DEDICATED_BONDING_COMPLETED:
+                    gap_event_dedicated_bonding_completed_get_address(packet, event_addr);
+                    if (!host_connection.pairing ||
+                        memcmp(event_addr, host_connection.bdaddr, sizeof(bd_addr_t)) != 0) {
+                        break;
+                    }
+                    status = gap_event_dedicated_bonding_completed_get_status(packet);
+                    DEBUG_PRINT("Dedicated bonding completed, status 0x%02x.\n", status);
+                    host_pair_end(status == ERROR_CODE_SUCCESS ? PBIO_SUCCESS : PBIO_ERROR_FAILED);
+                    break;
+
+                case HCI_EVENT_USER_CONFIRMATION_REQUEST:
+                    // Reply is sent by the shared handler; only capture the
+                    // passkey here so the UI can show it during pairing.
+                    hci_event_user_confirmation_request_get_bd_addr(packet, event_addr);
+                    if (host_connection.pairing &&
+                        memcmp(event_addr, host_connection.bdaddr, sizeof(bd_addr_t)) == 0) {
+                        host_connection.pair_passkey = hci_event_user_confirmation_request_get_numeric_value(packet);
+                        host_connection.pair_passkey_valid = true;
+                    }
+                    break;
+
+                case RFCOMM_EVENT_INCOMING_CONNECTION:
+                    if (host_connection.connected) {
+                        DEBUG_PRINT("RFCOMM channel in use, declining.\n");
+                        rfcomm_decline_connection(rfcomm_event_incoming_connection_get_rfcomm_cid(packet));
+                        break;
+                    }
+                    host_connection.rfcomm_cid = rfcomm_event_incoming_connection_get_rfcomm_cid(packet);
+                    rfcomm_event_incoming_connection_get_bd_addr(packet, host_connection.bdaddr);
+                    DEBUG_PRINT("Incoming RFCOMM connection from %s.\n", bd_addr_to_str(host_connection.bdaddr));
+                    rfcomm_accept_connection(host_connection.rfcomm_cid);
+                    break;
+
+                case RFCOMM_EVENT_CHANNEL_OPENED:
+                    status = rfcomm_event_channel_opened_get_status(packet);
+                    if (status != ERROR_CODE_SUCCESS) {
+                        DEBUG_PRINT("RFCOMM channel failed, status 0x%02x.\n", status);
+                        break;
+                    }
+                    host_connection.rfcomm_cid = rfcomm_event_channel_opened_get_rfcomm_cid(packet);
+                    host_connection.connected = true;
+                    DEBUG_PRINT("RFCOMM channel to %s opened.\n", bd_addr_to_str(host_connection.bdaddr));
+                    break;
+
+                case RFCOMM_EVENT_CAN_SEND_NOW:
+                    if (host_connection.connected && host_connection.echo_size) {
+                        rfcomm_send(host_connection.rfcomm_cid, host_connection.echo_data, host_connection.echo_size);
+                        host_connection.echo_size = 0;
+                    }
+                    break;
+
+                case RFCOMM_EVENT_CHANNEL_CLOSED:
+                    if (host_connection.connected &&
+                        host_connection.rfcomm_cid == rfcomm_event_channel_closed_get_rfcomm_cid(packet)) {
+                        DEBUG_PRINT("RFCOMM channel to %s closed.\n", bd_addr_to_str(host_connection.bdaddr));
+                        host_connection.connected = false;
+                        host_connection.echo_size = 0;
+                    }
+                    break;
+
+                default:
+                    return;
+            }
+            break;
+
+        case RFCOMM_DATA_PACKET: {
+            #if DEBUG
+            DEBUG_PRINT("RFCOMM data (%u):", size);
+            for (uint16_t i = 0; i < size; i++) {
+                DEBUG_PRINT(" %02x", packet[i]);
+            }
+            DEBUG_PRINT("\n");
+            #endif
+            // Echo the data back until a real consumer is hooked up.
+            if (size > sizeof(host_connection.echo_data)) {
+                size = sizeof(host_connection.echo_data);
+            }
+            memcpy(host_connection.echo_data, packet, size);
+            host_connection.echo_size = size;
+            rfcomm_request_can_send_now_event(host_connection.rfcomm_cid);
+            break;
+        }
+
+        default:
+            return;
+    }
+
+    pbio_os_request_poll();
+}
+
+/**
+ * Ends the host pairing session with the given result. On failure, drops the
+ * bonding link and forgets the provisional bonding record, whose link key
+ * was never (fully) negotiated.
+ */
+static void host_pair_end(pbio_error_t err) {
+    btstack_run_loop_remove_timer(&host_connection.pair_timeout);
+    host_connection.pairing = false;
+    host_connection.pair_passkey_valid = false;
+    host_connection.pair_err = err;
+    if (err != PBIO_SUCCESS) {
+        // There is no API to abort dedicated bonding, so drop the link.
+        hci_connection_t *acl = hci_connection_for_bd_addr_and_type(host_connection.bdaddr, BD_ADDR_TYPE_ACL);
+        if (acl && acl->con_handle != HCI_CON_HANDLE_INVALID) {
+            gap_disconnect(acl->con_handle);
+        }
+        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER);
+    }
+}
+
+static void host_pair_timeout_handler(btstack_timer_source_t *ts) {
+    UNUSED(ts);
+    if (!host_connection.pairing) {
+        return;
+    }
+    DEBUG_PRINT("Host pairing timed out.\n");
+    host_pair_end(PBIO_ERROR_TIMEDOUT);
+    pbio_os_request_poll();
+}
+
+pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (host_connection.pairing || host_connection.connected) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Provisional bonding record; the stack stores the negotiated link key
+    // into it via the pbio link key store.
+    pbio_bluetooth_classic_link_key_register(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER, bdaddr, name);
+
+    memcpy(host_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
+    host_connection.pairing = true;
+    host_connection.pair_err = PBIO_ERROR_AGAIN;
+
+    DEBUG_PRINT("Start host pairing with %s.\n", bd_addr_to_str(host_connection.bdaddr));
+
+    // Dedicated bonding connects only to establish the bond and disconnects
+    // when done. The host initiates the RFCOMM connection itself later.
+    // Requiring MITM forces numeric comparison so the host shows a prompt.
+    if (gap_dedicated_bonding(host_connection.bdaddr, 1) != ERROR_CODE_SUCCESS) {
+        DEBUG_PRINT("Dedicated bonding failed to start.\n");
+        host_connection.pairing = false;
+        host_connection.pair_err = PBIO_ERROR_FAILED;
+        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER);
+        return PBIO_ERROR_FAILED;
+    }
+
+    btstack_run_loop_set_timer_handler(&host_connection.pair_timeout, host_pair_timeout_handler);
+    btstack_run_loop_set_timer(&host_connection.pair_timeout, HOST_PAIR_TIMEOUT_MS);
+    btstack_run_loop_add_timer(&host_connection.pair_timeout);
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void) {
+    if (host_connection.pairing) {
+        return PBIO_ERROR_AGAIN;
+    }
+    return host_connection.pair_err;
+}
+
+bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey) {
+    if (!host_connection.pairing || !host_connection.pair_passkey_valid) {
+        return false;
+    }
+    *passkey = host_connection.pair_passkey;
+    return true;
+}
+
+void pbdrv_bluetooth_classic_host_pair_cancel(void) {
+    if (!host_connection.pairing) {
+        return;
+    }
+    DEBUG_PRINT("Host pairing cancelled.\n");
+    host_pair_end(PBIO_ERROR_CANCELED);
+}
+
+bool pbdrv_bluetooth_classic_host_is_connected(void) {
+    return host_connection.connected;
+}
+
+void pbdrv_bluetooth_classic_host_disconnect(void) {
+
+    if (!host_connection.connected) {
+        return;
+    }
+
+    DEBUG_PRINT("Disconnect RFCOMM connection to %s.\n", bd_addr_to_str(host_connection.bdaddr));
+
+    rfcomm_disconnect(host_connection.rfcomm_cid);
+}
+
 // Adapts BTstack's link key DB interface to the stack-agnostic pbio store,
 // which is backed by pbsys persistent storage.
 
@@ -1663,8 +1921,14 @@ static int link_key_db_get_link_key(bd_addr_t bd_addr, link_key_t link_key, link
 }
 
 static void link_key_db_put_link_key(bd_addr_t bd_addr, link_key_t link_key, link_key_type_t link_key_type) {
-    DEBUG_PRINT("Storing link key for %s.\n", bd_addr_to_str(bd_addr));
     pbio_bluetooth_classic_link_key_put(bd_addr, link_key, link_key_type);
+    #if DEBUG
+    link_key_t stored;
+    link_key_type_t stored_type;
+    DEBUG_PRINT("%s link key for %s.\n",
+        link_key_db_get_link_key(bd_addr, stored, &stored_type) ? "Stored" : "Dropped",
+        bd_addr_to_str(bd_addr));
+    #endif
 }
 
 static void link_key_db_delete_link_key(bd_addr_t bd_addr) {
@@ -1991,6 +2255,24 @@ void pbdrv_bluetooth_init(void) {
     hid_host_init(hid_descriptor_storage, sizeof(hid_descriptor_storage));
     hid_host_register_packet_handler(hid_host_packet_handler);
 
+    // RFCOMM serial server for the host computer connection. The paired host
+    // initiates the connection.
+    rfcomm_init();
+    rfcomm_register_service(host_packet_handler, RFCOMM_SERVER_CHANNEL, RFCOMM_SERVER_MTU);
+    static uint8_t spp_sdp_record[150];
+    spp_create_sdp_record(spp_sdp_record, 0x10002, RFCOMM_SERVER_CHANNEL, "Pybricks");
+    sdp_register_service(spp_sdp_record);
+
+    // Identify with the hub name and as a toy robot instead.
+    gap_set_local_name(pbdrv_bluetooth_hub_name);
+    gap_set_class_of_device(0x000804);
+
+    // Claim yes/no capability (auto-accepted below) so that pairing with a
+    // host uses numeric comparison, which shows a confirmation prompt on the
+    // host. Silent "just works" pairing is ignored by some hosts. Pairing
+    // with display-less gamepads still falls back to "just works".
+    gap_ssp_set_io_capability(SSP_IO_CAPABILITY_DISPLAY_YES_NO);
+
     // Allow sniff mode requests by HID devices and support role switch.
     gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_SNIFF_MODE | LM_LINK_POLICY_ENABLE_ROLE_SWITCH);
 
@@ -2005,6 +2287,11 @@ void pbdrv_bluetooth_init(void) {
     static btstack_packet_callback_registration_t hid_event_callback_registration;
     hid_event_callback_registration.callback = &hid_host_packet_handler;
     hci_add_event_handler(&hid_event_callback_registration);
+
+    // Dedicated bonding results arrive as general HCI events.
+    static btstack_packet_callback_registration_t host_event_callback_registration;
+    host_event_callback_registration.callback = &host_packet_handler;
+    hci_add_event_handler(&host_event_callback_registration);
 
     // Persist pairing link keys in pbsys storage instead of the stack default.
     hci_set_link_key_db(&pbdrv_bluetooth_btstack_link_key_db);

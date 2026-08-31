@@ -554,6 +554,7 @@ pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_tim
     // Cancel Bluetooth Classic pairing and scanning, if ongoing. Established
     // classic connections are kept.
     pbdrv_bluetooth_classic_hid_pair_cancel();
+    pbdrv_bluetooth_classic_host_pair_cancel();
     pbdrv_bluetooth_inquiry_stop();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);

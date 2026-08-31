@@ -461,9 +461,11 @@ ifeq ($(PB_LIB_BTSTACK_CLASSIC),1)
 BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
 	device_id_server.c \
 	hid_host.c \
+	rfcomm.c \
 	sdp_client.c \
 	sdp_server.c \
 	sdp_util.c \
+	spp_server.c \
 	)
 endif
 

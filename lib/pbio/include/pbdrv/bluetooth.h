@@ -214,6 +214,64 @@ bool pbdrv_bluetooth_classic_hid_is_connected(void);
  */
 void pbdrv_bluetooth_classic_hid_disconnect(void);
 
+/**
+ * Starts pairing with a host computer (PC).
+ *
+ * Uses dedicated bonding: the hub connects only to establish the bond and
+ * drops the link when done. The bonded host then initiates the actual
+ * serial (RFCOMM) connection itself, e.g. from a web browser via the serial
+ * port the OS exposes for the hub.
+ *
+ * This is non-blocking. Poll pbdrv_bluetooth_classic_host_pair_status() for
+ * the result.
+ *
+ * @param [in] bdaddr  6-byte Bluetooth address of the host, as found with
+ *                     an inquiry scan.
+ * @param [in] name    Host name for the bonding record.
+ * @return             ::PBIO_SUCCESS if pairing was initiated.
+ *                     ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on.
+ *                     ::PBIO_ERROR_BUSY if pairing or already connected.
+ *                     ::PBIO_ERROR_FAILED if pairing could not be started.
+ */
+pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name);
+
+/**
+ * Gets the status of pairing started with pbdrv_bluetooth_classic_host_pair().
+ *
+ * @return  ::PBIO_ERROR_AGAIN while pairing is in progress, ::PBIO_SUCCESS
+ *          if the last attempt succeeded, ::PBIO_ERROR_TIMEDOUT or
+ *          ::PBIO_ERROR_CANCELED if it timed out or was cancelled.
+ */
+pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void);
+
+/**
+ * Gets the numeric comparison passkey of the ongoing host pairing, once
+ * available, so it can be shown for the user to verify against the
+ * confirmation prompt on the host.
+ *
+ * @param [out] passkey  The 6-digit passkey.
+ * @return               True if a passkey is currently available.
+ */
+bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey);
+
+/**
+ * Cancels an ongoing host pairing attempt, if any, forgetting the
+ * provisional bonding record.
+ */
+void pbdrv_bluetooth_classic_host_pair_cancel(void);
+
+/**
+ * Tests whether a host computer is connected over RFCOMM.
+ *
+ * @return  True if connected.
+ */
+bool pbdrv_bluetooth_classic_host_is_connected(void);
+
+/**
+ * Disconnects the host computer RFCOMM connection, if any.
+ */
+void pbdrv_bluetooth_classic_host_disconnect(void);
+
 #else // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
@@ -243,6 +301,28 @@ static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
 }
 
 static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey) {
+    return false;
+}
+
+static inline void pbdrv_bluetooth_classic_host_pair_cancel(void) {
+}
+
+static inline bool pbdrv_bluetooth_classic_host_is_connected(void) {
+    return false;
+}
+
+static inline void pbdrv_bluetooth_classic_host_disconnect(void) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
