@@ -15,7 +15,9 @@
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 7) // center
 #define PBSYS_CONFIG_HMI_VIRTUAL                    (1)
+#ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBSYS_CONFIG_HMI_EV3_UI                     (1)
+#endif // PBDRV_CONFIG_RUN_ON_CI
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (4)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (0)
 #define PBSYS_CONFIG_MAIN                           (1)

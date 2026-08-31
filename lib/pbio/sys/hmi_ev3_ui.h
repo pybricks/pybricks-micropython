@@ -31,6 +31,8 @@ typedef enum {
     PBSYS_HMI_EV3_UI_ACTION_SHUTDOWN,
 } pbsys_hmi_ev3_ui_action_t;
 
+#if PBSYS_CONFIG_HMI_EV3_UI
+
 void pbsys_hmi_ev3_ui_initialize(void);
 
 void pbsys_hmi_ev3_ui_handle_error(pbio_error_t err);
@@ -44,5 +46,32 @@ void pbsys_hmi_ev3_ui_run_animation_start(void);
 void pbsys_hmi_ev3_ui_run_animation_stop(void);
 
 pbio_error_t pbsys_hmi_ev3_ui_closing_credits(pbio_os_state_t *state, void *context);
+
+#else // PBSYS_CONFIG_HMI_EV3_UI
+
+static inline void pbsys_hmi_ev3_ui_initialize(void) {
+}
+
+static inline void pbsys_hmi_ev3_ui_handle_error(pbio_error_t err) {
+}
+
+static inline pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t button, uint8_t *payload) {
+    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+}
+
+static inline void pbsys_hmi_ev3_ui_draw(void) {
+}
+
+static inline void pbsys_hmi_ev3_ui_run_animation_start(void) {
+}
+
+static inline void pbsys_hmi_ev3_ui_run_animation_stop(void) {
+}
+
+pbio_error_t pbsys_hmi_ev3_ui_closing_credits(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif // PBSYS_CONFIG_HMI_EV3_UI
 
 #endif // _PBSYS_SYS_HMI_EV3_UI_H_
