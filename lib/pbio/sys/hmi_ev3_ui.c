@@ -212,24 +212,9 @@ static struct {
     uint32_t selected_scan;
 } gamepad_ui;
 
-/**
- * Gets the stored gamepad bonding record.
- *
- * @return  The record, or NULL if no gamepad is registered.
- */
-static pbio_bluetooth_classic_link_key_t *pbsys_hmi_ev3_ui_get_gamepad_link_key(void) {
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
-    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
-    if (settings && settings->bluetooth_gamepad_link_key.device_type == PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD) {
-        return &settings->bluetooth_gamepad_link_key;
-    }
-    #endif
-    return NULL;
-}
-
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button) {
 
-    pbio_bluetooth_classic_link_key_t *link_key = pbsys_hmi_ev3_ui_get_gamepad_link_key();
+    pbio_bluetooth_classic_link_key_t *link_key = pbsys_storage_settings_get_gamepad_link_key();
 
     if (link_key) {
         // A gamepad is registered, so the overlay asks whether to delete it.
@@ -248,8 +233,7 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
         }
         // Erase accepted. Delete the key and proceed to scanning below.
-        memset(link_key, 0, sizeof(*link_key));
-        pbsys_storage_request_write();
+        pbsys_storage_settings_reset_link_key(link_key);
     }
 
     // No gamepad registered, so we are in the scanning phase.
@@ -542,7 +526,7 @@ static void pbsys_hmi_ev3_ui_draw_device_name(const pbio_font_t *font, const cha
 
 static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
 
-    pbio_bluetooth_classic_link_key_t *link_key = pbsys_hmi_ev3_ui_get_gamepad_link_key();
+    pbio_bluetooth_classic_link_key_t *link_key = pbsys_storage_settings_get_gamepad_link_key();
 
     bool display_device = link_key;
 

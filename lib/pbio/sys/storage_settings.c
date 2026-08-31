@@ -91,4 +91,31 @@ void pbsys_storage_settings_set_flag(pbsys_storage_settings_flags_t flag, bool v
     pbsys_storage_request_write();
 }
 
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+
+/**
+ * Gets the stored gamepad bonding record.
+ *
+ * @return  The record, or NULL if no gamepad is registered.
+ */
+pbio_bluetooth_classic_link_key_t *pbsys_storage_settings_get_gamepad_link_key(void) {
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+    if (settings && settings->bluetooth_gamepad_link_key.device_type == PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD) {
+        return &settings->bluetooth_gamepad_link_key;
+    }
+    return NULL;
+}
+
+/**
+ * Erases a stored bonding record and requests saving on poweroff.
+ *
+ * @param [in]  link_key  The record to erase.
+ */
+void pbsys_storage_settings_reset_link_key(pbio_bluetooth_classic_link_key_t *link_key) {
+    memset(link_key, 0, sizeof(*link_key));
+    pbsys_storage_request_write();
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+
 #endif // PBSYS_CONFIG_STORAGE
