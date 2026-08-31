@@ -382,47 +382,6 @@ pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *sta
     return advertising_or_scan_err;
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
-static pbdrv_bluetooth_classic_task_context_t pbdrv_bluetooth_classic_task_context;
-
-pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
-
-    if (!pbdrv_bluetooth_hci_is_enabled()) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    pbdrv_bluetooth_classic_task_context_t *task = &pbdrv_bluetooth_classic_task_context;
-
-    if (task->func) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    // Initialize newly given task.
-    task->inq_results = results;
-    task->inq_count = results_count;
-    task->inq_count_max = results_count_max;
-    task->inq_duration = pbio_int_math_bind((duration_ms + 640) / 1280, 1, 255);
-
-    // Request handling on the main loop.
-    task->err = PBIO_ERROR_AGAIN;
-    task->func = pbdrv_bluetooth_inquiry_scan_func;
-    task->cancel = false;
-    pbio_os_request_poll();
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
-
-    pbdrv_bluetooth_classic_task_context_t *task = &pbdrv_bluetooth_classic_task_context;
-
-    // If the user is no longer calling this then the operation is no longer
-    // of interest and will be cancelled if the active function supports it.
-    pbio_os_timer_set(&task->watchdog, 10);
-
-    return task->err;
-}
-#endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
-
 static bool pbdrv_bluetooth_shutting_down;
 static pbio_os_timer_t pbdrv_bluetooth_shutting_down_watchdog;
 
@@ -520,17 +479,6 @@ init:
             PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_start_observing_func(&sub, NULL));
             observe_restart_requested = false;
         }
-
-        #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
-        // Handle pending Bluetooth classic task, if any.
-        static pbdrv_bluetooth_classic_task_context_t *task;
-        task = &pbdrv_bluetooth_classic_task_context;
-        if (task->func) {
-            PBIO_OS_AWAIT(state, &sub, task->err = task->func(&sub, task));
-            task->func = NULL;
-            task->cancel = false;
-        }
-        #endif // PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS
     }
 
     DEBUG_PRINT("Shutdown requested.\n");

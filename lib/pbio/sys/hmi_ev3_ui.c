@@ -10,7 +10,9 @@
 
 #include <pbsys/main.h>
 #include <pbsys/status.h>
+#include <pbsys/storage.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/display.h>
 
@@ -80,7 +82,10 @@ typedef struct {
  *
  * On change, the whole UI is drawn.
  */
-static pbsys_hmi_ev3_ui_t state;
+static pbsys_hmi_ev3_ui_t state = {
+    .tab = PBSYS_HMI_EV3_UI_TAB_SETTINGS, // during testing, so it auto opens here...
+    .selection = {0, 0, 1},
+};
 
 /**
  * Available apps on app tab.
@@ -202,17 +207,97 @@ static void pbsys_hmi_ev3_ui_increment_entry_on_current_tab(bool increment) {
     }
 }
 
+static struct {
+    bool accept_erase;
+    uint32_t selected_scan;
+} gamepad_ui;
+
+/**
+ * Gets the stored gamepad bonding record.
+ *
+ * @return  The record, or NULL if no gamepad is registered.
+ */
+static pbio_bluetooth_classic_link_key_t *pbsys_hmi_ev3_ui_get_gamepad_link_key(void) {
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+    if (settings && settings->bluetooth_gamepad_link_key.device_type == PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD) {
+        return &settings->bluetooth_gamepad_link_key;
+    }
+    #endif
+    return NULL;
+}
+
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button) {
-    // Cancel dialog.
+
+    pbio_bluetooth_classic_link_key_t *link_key = pbsys_hmi_ev3_ui_get_gamepad_link_key();
+
+    if (link_key) {
+        // A gamepad is registered, so the overlay asks whether to delete it.
+        if (button == PBIO_BUTTON_LEFT) {
+            gamepad_ui.accept_erase = false;
+        }
+        if (button == PBIO_BUTTON_RIGHT) {
+            gamepad_ui.accept_erase = true;
+        }
+        // Left up is equivalent to rejecting, so just close.
+        if (button == PBIO_BUTTON_LEFT_UP || (button == PBIO_BUTTON_CENTER && !gamepad_ui.accept_erase)) {
+            state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
+            return PBSYS_HMI_EV3_UI_ACTION_NONE;
+        }
+        if (button != PBIO_BUTTON_CENTER) {
+            return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
+        }
+        // Erase accepted. Delete the key and proceed to scanning below.
+        memset(link_key, 0, sizeof(*link_key));
+        pbsys_storage_request_write();
+    }
+
+    // No gamepad registered, so we are in the scanning phase.
     if (button == PBIO_BUTTON_LEFT_UP) {
+        pbdrv_bluetooth_inquiry_stop();
         state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
         return PBSYS_HMI_EV3_UI_ACTION_NONE;
     }
+
+    uint32_t num_results;
+    pbio_bluetooth_inquiry_result_t *results;
+    if (pbdrv_bluetooth_inquiry_get_results(&num_results, &results) != PBIO_SUCCESS) {
+        // Not scanning yet or previous scan completed, so (re)start. This
+        // gets called again soon, so no need to handle errors here.
+        pbdrv_bluetooth_inquiry_start();
+        return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
+    }
+
+    if (num_results) {
+        if (button == PBIO_BUTTON_LEFT) {
+            gamepad_ui.selected_scan = (gamepad_ui.selected_scan + num_results - 1) % num_results;
+        }
+        if (button == PBIO_BUTTON_RIGHT) {
+            gamepad_ui.selected_scan = (gamepad_ui.selected_scan + 1) % num_results;
+        }
+    }
+
+    // REVISIT: On center, select the active scan result and proceed to
+    // connecting. This will be added in a next commit.
     return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
 
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open() {
     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD;
+    gamepad_ui.accept_erase = false;
+    gamepad_ui.selected_scan = 0;
+
+    // HACK: populate dummy link key to preview the linked visual. Remove.
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
+    if (settings) {
+        pbio_bluetooth_classic_link_key_t *key = &settings->bluetooth_gamepad_link_key;
+        key->device_type = PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD;
+        memcpy(key->bdaddr, (uint8_t []) {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC}, sizeof(key->bdaddr));
+        snprintf(key->name, sizeof(key->name), "Wireless 1");
+    }
+    #endif
+
     return pbsys_hmi_ev3_ui_handle_gamepad_button(0);
 }
 
@@ -396,8 +481,123 @@ static void pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept_and_reject(uint8_t sep
     pbio_image_draw_image_transparent_from_monochrome(display, accept, 96, separator_y + 3, BLACK);
 }
 
+/**
+ * Draws one centered line of a device name, optionally as a selection with
+ * white text on a black box.
+ */
+static void pbsys_hmi_ev3_ui_draw_device_name_line(const pbio_font_t *font, const char *text, int y, bool selected) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_rect_t rect;
+    size_t len = strlen(text);
+    pbio_image_bbox_text(font, text, len, &rect);
+    int x = (display->width - rect.width) / 2;
+    pbio_image_draw_text(display, font, x, y, text, len, selected ? WHITE : BLACK);
+}
+
+/**
+ * Draws a device name centered, split across two lines if needed.
+ *
+ * Prefers to split on a space. Text that still does not fit is cut off.
+ */
+static void pbsys_hmi_ev3_ui_draw_device_name(const pbio_font_t *font, const char *name, int y1, int y2, int max_width, bool selected) {
+    pbio_image_rect_t rect;
+    size_t len = strlen(name);
+
+    pbio_image_bbox_text(font, name, len, &rect);
+    if (rect.width <= max_width) {
+        // Single line, so center it vertically between the two lines.
+        pbsys_hmi_ev3_ui_draw_device_name_line(font, name, (y1 + y2) / 2, selected);
+        return;
+    }
+
+    // Find the longest prefix that fits on the first line.
+    size_t fit = len;
+    do {
+        pbio_image_bbox_text(font, name, --fit, &rect);
+    } while (fit > 1 && rect.width > max_width);
+
+    // Prefer to split on a space, if there is one.
+    size_t split = fit;
+    while (split > 1 && name[split] != ' ') {
+        split--;
+    }
+    if (name[split] != ' ') {
+        split = fit;
+    }
+
+    char line[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE];
+    snprintf(line, sizeof(line), "%.*s", (int)split, name);
+    pbsys_hmi_ev3_ui_draw_device_name_line(font, line, y1, selected);
+
+    // Second line is cut off at whatever fits.
+    const char *rest = name + split + (name[split] == ' ' ? 1 : 0);
+    size_t rest_fit = strlen(rest);
+    pbio_image_bbox_text(font, rest, rest_fit, &rect);
+    while (rest_fit > 1 && rect.width > max_width) {
+        pbio_image_bbox_text(font, rest, --rest_fit, &rect);
+    }
+    snprintf(line, sizeof(line), "%.*s", (int)rest_fit, rest);
+    pbsys_hmi_ev3_ui_draw_device_name_line(font, line, y2, selected);
+}
+
 static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
-    pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, true);
+
+    pbio_bluetooth_classic_link_key_t *link_key = pbsys_hmi_ev3_ui_get_gamepad_link_key();
+
+    bool display_device = link_key;
+
+    uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, display_device);
+
+    char buf[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE + 4];
+
+    if (display_device) {
+        pbsys_hmi_ev3_ui_draw_device_name(&pbio_font_liberationsans_regular_14, link_key->name, 36, 50, 150, false);
+        snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
+            link_key->bdaddr[0], link_key->bdaddr[1], link_key->bdaddr[2],
+            link_key->bdaddr[3], link_key->bdaddr[4], link_key->bdaddr[5]);
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, buf, 0, 64);
+        // REVISIT: Show actual connection state once classic HID connections
+        // are implemented.
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Not connected", 0, 78);
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Delete connection?", 0, separator_y - 8);
+        pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept_and_reject(separator_y, gamepad_ui.accept_erase);
+        return;
+    }
+
+    // Nothing registered, so we are scanning.
+    uint32_t num_results;
+    pbio_bluetooth_inquiry_result_t *results;
+    if (pbdrv_bluetooth_inquiry_get_results(&num_results, &results) != PBIO_SUCCESS) {
+        num_results = 0;
+    }
+    if (gamepad_ui.selected_scan >= num_results) {
+        gamepad_ui.selected_scan = 0;
+    }
+
+    // Scan animation.
+    static uint8_t counter;
+    counter = counter > 60 ? 0 : counter + 1;
+    pbio_image_draw_hline(pbdrv_display_get_image(), 178 / 2 - counter, 44, counter * 2, BLACK);
+
+    // Show scanning action or number of results if any.
+    if (num_results == 0) {
+        pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Scanning...", 0, 40);
+        return;
+    }
+    snprintf(buf, sizeof(buf), "Showing %d of %d.", (int)gamepad_ui.selected_scan + 1, (int)num_results);
+    pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, buf, 0, 40);
+
+    // Selection arrows with the name in between and the address below.
+    pbio_bluetooth_inquiry_result_t *result = &results[gamepad_ui.selected_scan];
+    pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "<", -70, 72);
+    pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, ">", 70, 72);
+    pbio_image_fill_rect(pbdrv_display_get_image(), 24, 52, 130, 33, BLACK);
+    const char *name = result->name[0] ? result->name : "Unknown device";
+    pbsys_hmi_ev3_ui_draw_device_name(&pbio_font_liberationsans_regular_14, name, 64, 80, 120, true);
+    snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
+        result->bdaddr[0], result->bdaddr[1], result->bdaddr[2],
+        result->bdaddr[3], result->bdaddr[4], result->bdaddr[5]);
+    pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, buf, 0, 106);
 }
 
 /**

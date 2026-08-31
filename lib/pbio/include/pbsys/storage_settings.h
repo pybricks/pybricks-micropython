@@ -46,8 +46,9 @@ typedef struct _pbsys_storage_settings_t {
     #if PBIO_CONFIG_IMU
     pbio_imu_persistent_settings_t imu_settings;
     #endif
-    #if PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_LINK_KEYS
-    pbio_bluetooth_classic_link_key_t bluetooth_link_keys[PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_LINK_KEYS];
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    /** Bonding record for the one gamepad managed via the hub UI. */
+    pbio_bluetooth_classic_link_key_t bluetooth_gamepad_link_key;
     #endif
 } pbsys_storage_settings_t;
 

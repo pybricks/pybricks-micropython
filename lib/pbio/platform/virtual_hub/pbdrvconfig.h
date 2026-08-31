@@ -12,9 +12,8 @@
 // Use Bluetooth simulation locally.
 #ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE                 515
-#define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_LINK_KEYS        (4)
-#define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS      (2)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS         (1)

@@ -186,6 +186,12 @@ typedef enum {
 typedef void (*pbio_bluetooth_start_observing_callback_t)(pbio_bluetooth_ad_type_t type, const uint8_t *data, uint8_t length, int8_t rssi);
 
 /**
+ * Size of device name buffers for Bluetooth Classic devices, including the
+ * zero terminator. Longer names are truncated.
+ */
+#define PBIO_BLUETOOTH_CLASSIC_NAME_SIZE (32)
+
+/**
  * A single result from an inquiry scan.
  */
 typedef struct {
@@ -194,7 +200,7 @@ typedef struct {
     /** Received signal strength indicator. */
     int8_t rssi;
     /** Device name. */
-    char name[249];
+    char name[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE];
     /** Class of device. */
     uint32_t class_of_device;
 } pbio_bluetooth_inquiry_result_t;
@@ -241,6 +247,8 @@ typedef struct {
     uint16_t link_key_type;
     /** Type of device this record belongs to. NONE means slot is empty. */
     pbio_bluetooth_classic_device_type_t device_type;
+    /** Device name, for display purposes. */
+    char name[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE];
 } pbio_bluetooth_classic_link_key_t;
 
 #if PBIO_CONFIG_BLUETOOTH
@@ -460,30 +468,6 @@ pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *sta
  */
 pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
 
-/**
- * Starts a classic Bluetooth inquiry scan.
- *
- * @param [in] results                Array to store results.
- * @param [in] results_count          Number of results found.
- * @param [in] results_count_max      Maximum number of results to find. Will
- *                                    stop if externally reset to 0.
- * @param [in] duration_ms            Duration of the inquiry scan in milliseconds.
- *                                    It will be internally rounded to the nearest
- *                                    supported nonzero value.
- */
-pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms);
-
-/**
- * Awaits for the classic Bluetooth inquiry scan to complete.
- *
- * @param [in]  state          Protothread state.
- * @param [in]  context        Not used.
- * @return                     ::PBIO_SUCCESS on completion.
- *                             ::PBIO_ERROR_AGAIN while awaiting.
- *                             or an thread specific error code if the operation failed.
- */
-pbio_error_t pbio_bluetooth_await_classic_task(pbio_os_state_t *state, void *context);
-
 #else // PBIO_CONFIG_BLUETOOTH
 
 static inline void pbio_bluetooth_deinit(void) {
@@ -558,14 +542,6 @@ static inline pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_o
 static inline pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     // Don't hold up anything since Bluetooth is not used.
     return PBIO_SUCCESS;
-}
-
-static inline pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_await_classic_task(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBIO_CONFIG_BLUETOOTH

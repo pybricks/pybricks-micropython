@@ -1204,35 +1204,51 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-#ifdef ENABLE_CLASSIC
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 /**
- * Bluetooth Classic event outcomes recorded for the driver thread to consume.
+ * Duration of one inquiry scan in units of 1.28 seconds. This is the maximum
+ * allowed by the spec (0x30), about a minute. Callers poll for results and
+ * can simply start a new scan when the previous one has completed.
+ */
+#define INQUIRY_DURATION (0x30)
+
+/**
+ * Inquiry scan state. The packet handler records results here as they come in.
  */
 static struct {
-    /**
-     * Inquiry scan destination registered by the thread. Inquiry results are
-     * recorded here. NULL when not scanning.
-     */
-    pbdrv_bluetooth_classic_task_context_t *inquiry_task;
-    /** Inquiry scan completed. */
-    bool inquiry_complete;
-} classic_events;
+    /** Whether an inquiry scan is in progress. */
+    bool busy;
+    /** Number of results found so far. */
+    uint32_t count;
+    /** Inquiry scan results. */
+    pbio_bluetooth_inquiry_result_t results[PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS];
+} inquiry;
 
-static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbdrv_bluetooth_classic_task_context_t *task) {
+static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet) {
 
     bd_addr_t bdaddr;
     gap_event_inquiry_result_get_bd_addr(event_packet, bdaddr);
 
-    // Exit if already seen this.
-    for (uint32_t i = 0; i < *task->inq_count; i++) {
-        if (memcmp(task->inq_results[i].bdaddr, bdaddr, sizeof(bd_addr_t)) == 0) {
+    // Exit if already seen this, but update the name since it sometimes
+    // only becomes available in a later event.
+    for (uint32_t i = 0; i < inquiry.count; i++) {
+        if (memcmp(inquiry.results[i].bdaddr, bdaddr, sizeof(bd_addr_t)) == 0) {
+            if (gap_event_inquiry_result_get_name_available(event_packet)) {
+                const uint8_t *name = gap_event_inquiry_result_get_name(event_packet);
+                const size_t name_len = gap_event_inquiry_result_get_name_len(event_packet);
+                snprintf(inquiry.results[i].name, sizeof(inquiry.results[i].name), "%.*s", (int)name_len, name);
+            }
             return;
         }
     }
 
+    if (inquiry.count == PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS) {
+        return;
+    }
+
     // Unpack new device.
-    pbio_bluetooth_inquiry_result_t *result = &task->inq_results[(*task->inq_count)++];
+    pbio_bluetooth_inquiry_result_t *result = &inquiry.results[inquiry.count++];
     memcpy(result->bdaddr, bdaddr, sizeof(bd_addr_t));
 
     if (gap_event_inquiry_result_get_rssi_available(event_packet)) {
@@ -1250,8 +1266,7 @@ static void pbdrv_bluetooth_inquiry_unpack_scan_event(uint8_t *event_packet, pbd
 }
 
 /**
- * Handles inquiry scan events, recording results into the registered task
- * for the driver thread to consume.
+ * Handles inquiry scan events, recording results into the static store.
  */
 static void inquiry_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     UNUSED(channel);
@@ -1262,13 +1277,14 @@ static void inquiry_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
     }
 
     switch (hci_event_packet_get_type(packet)) {
-        case GAP_EVENT_INQUIRY_RESULT: {
-            pbdrv_bluetooth_classic_task_context_t *task = classic_events.inquiry_task;
-            pbdrv_bluetooth_inquiry_unpack_scan_event(packet, task);
+        case GAP_EVENT_INQUIRY_RESULT:
+            if (inquiry.busy) {
+                pbdrv_bluetooth_inquiry_unpack_scan_event(packet);
+            }
             break;
-        }
         case GAP_EVENT_INQUIRY_COMPLETE:
-            classic_events.inquiry_complete = true;
+            DEBUG_PRINT("Inquiry scan ended with %d results.\n", inquiry.count);
+            inquiry.busy = false;
             break;
         default:
             return;
@@ -1277,42 +1293,54 @@ static void inquiry_packet_handler(uint8_t packet_type, uint16_t channel, uint8_
     pbio_os_request_poll();
 }
 
-pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context) {
+pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
 
-    pbdrv_bluetooth_classic_task_context_t *task = context;
-
-    if (!task->cancel) {
-        task->cancel = pbio_os_timer_is_expired(&task->watchdog);
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
     }
 
-    PBIO_OS_ASYNC_BEGIN(state);
+    if (inquiry.busy) {
+        return PBIO_ERROR_BUSY;
+    }
 
     DEBUG_PRINT("Start inquiry scan.\n");
 
-    classic_events.inquiry_task = task;
-    classic_events.inquiry_complete = false;
-    gap_inquiry_start(task->inq_duration);
+    inquiry.count = 0;
+    inquiry.busy = true;
 
-    // Wait until scan complete or the number of devices are found. The
-    // handler records the results as they come in.
-    PBIO_OS_AWAIT_UNTIL(state, task->cancel || *task->inq_count_max == 0 ||
-        *task->inq_count == *task->inq_count_max || classic_events.inquiry_complete);
-
-    classic_events.inquiry_task = NULL;
-
-    if (task->cancel || *task->inq_count_max == 0) {
-        // Cancelled or the external data no longer available.
-        DEBUG_PRINT("Inquiry scan canceled.\n");
-        gap_inquiry_stop();
-        return PBIO_ERROR_CANCELED;
+    if (gap_inquiry_start(INQUIRY_DURATION) != ERROR_CODE_SUCCESS) {
+        inquiry.busy = false;
+        return PBIO_ERROR_FAILED;
     }
 
-    DEBUG_PRINT("Inquiry scan ended with %d results.\n", *task->inq_count);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    return PBIO_SUCCESS;
 }
 
-#endif // ENABLE_CLASSIC
+void pbdrv_bluetooth_inquiry_stop(void) {
+
+    if (!inquiry.busy) {
+        return;
+    }
+
+    DEBUG_PRINT("Stop inquiry scan.\n");
+
+    inquiry.busy = false;
+    gap_inquiry_stop();
+}
+
+pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
+
+    if (!inquiry.busy) {
+        // Not started or already completed. Caller may start a new scan.
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    *num = inquiry.count;
+    *results = inquiry.results;
+    return PBIO_SUCCESS;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 const char *pbdrv_bluetooth_get_hub_name(void) {
     return pbdrv_bluetooth_hub_name;
@@ -1530,7 +1558,7 @@ void pbdrv_bluetooth_init(void) {
     hci_event_callback_registration.callback = &main_packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
 
-    #ifdef ENABLE_CLASSIC
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
     // Needed to get device names.
     hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);
     static btstack_packet_callback_registration_t inquiry_event_callback_registration;

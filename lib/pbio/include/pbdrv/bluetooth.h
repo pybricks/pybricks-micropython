@@ -106,48 +106,6 @@ extern pbio_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callbac
 
 pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context);
 
-/**
- * Context for an ongoing classic Bluetooth task.
- *
- * Not all fields are used by all functions. Only one function runs at a time.
- */
-typedef struct {
-    /**
-     * The currently active function.
-     */
-    pbio_os_process_func_t func;
-    /**
-     * The most recent result of calling above function from main process.
-     */
-    pbio_error_t err;
-    /**
-     * Cancellation requested.
-     */
-    bool cancel;
-    /**
-     *  Watchdog for above operation so it can be cancelled on inactivity.
-     */
-    pbio_os_timer_t watchdog;
-    /**
-     * Inquiry scan results.
-     */
-    pbio_bluetooth_inquiry_result_t *inq_results;
-    /**
-     * Number of scan results found so far.
-     */
-    uint32_t *inq_count;
-    /**
-     * Maximum number of scan results to find.
-     */
-    uint32_t *inq_count_max;
-    /**
-     * Inquiry duration in units of 1.28 seconds.
-     */
-    uint8_t inq_duration;
-} pbdrv_bluetooth_classic_task_context_t;
-
-pbio_error_t pbdrv_bluetooth_inquiry_scan_func(pbio_os_state_t *state, void *context);
-
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void pbdrv_bluetooth_init(void) {
@@ -174,5 +132,55 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH
+
+/**
+ * Maximum number of inquiry scan results stored by the driver.
+ */
+#define PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS (20)
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+
+/**
+ * Starts an inquiry scan for Bluetooth Classic devices.
+ *
+ * Resets previously found results. The scan runs for a fixed duration and
+ * then stops on its own. Callers can start a new scan to keep scanning.
+ *
+ * @return  ::PBIO_SUCCESS on success.
+ *          ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on.
+ *          ::PBIO_ERROR_BUSY if a scan is already in progress.
+ *          ::PBIO_ERROR_FAILED if the scan could not be started.
+ */
+pbio_error_t pbdrv_bluetooth_inquiry_start(void);
+
+/**
+ * Stops an ongoing inquiry scan, if any.
+ */
+void pbdrv_bluetooth_inquiry_stop(void);
+
+/**
+ * Gets the results of the ongoing inquiry scan.
+ *
+ * @param [out] num      Number of results found so far.
+ * @param [out] results  The results.
+ * @return               ::PBIO_SUCCESS on success.
+ *                       ::PBIO_ERROR_INVALID_OP if no scan is in progress.
+ */
+pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results);
+
+#else // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+
+static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_inquiry_stop(void) {
+}
+
+static inline pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_H_
