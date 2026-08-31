@@ -1537,6 +1537,16 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
     DEBUG_PRINT("Disconnect HID connection to %s.\n", bd_addr_to_str(hid_connection.bdaddr));
 
     hid_host_disconnect(hid_connection.hid_cid);
+
+    // hid_host_disconnect() only closes the HID L2CAP channels. The baseband
+    // (ACL) link would linger until BTstack's idle timeout, during which the
+    // device stays awake and may even re-open the HID channels. Drop it now
+    // so the device sees the disconnect immediately (e.g. gamepad powers off).
+    hci_connection_t *acl = hci_connection_for_bd_addr_and_type(hid_connection.bdaddr, BD_ADDR_TYPE_ACL);
+    if (acl && acl->con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(acl->con_handle);
+    }
+
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
 }
 
