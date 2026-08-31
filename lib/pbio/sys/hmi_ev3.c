@@ -80,6 +80,8 @@ void pbsys_hmi_stop_animation(void) {
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
+    static pbio_os_timer_t refresh_timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     pbsys_hmi_ev3_ui_initialize();
@@ -120,7 +122,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             }
 
             // Wait for button press, external program start, or connection change.
-            pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested() || pbsys_hmi_handle_connection_change;
+            pbdrv_button_get_pressed() ||
+            pbsys_main_program_start_is_requested() ||
+            pbio_os_timer_is_expired(&refresh_timer) ||
+            pbsys_hmi_handle_connection_change;
         }));
 
         // On setting or closing a connection, start from a clean slate.
@@ -138,6 +143,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         // Update UI state for buttons.
         uint8_t payload;
         pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
 
         if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
             pbsys_status_set_selected_slot(payload);
