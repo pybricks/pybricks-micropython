@@ -23,6 +23,8 @@
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 
+#include "pbio_version_hash.h"
+
 /**
  * State of incoming program data.
  */
@@ -140,7 +142,8 @@ void pbsys_storage_reset_storage(void) {
     pbsys_storage_settings_set_defaults(&map->settings);
 
     // Set firmware version used to create current storage map.
-    strncpy(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash));
+    _Static_assert(sizeof(PBIO_VERSION_HASH) >= sizeof(map->stored_firmware_hash), "git hash too short");
+    memcpy(map->stored_firmware_hash, PBIO_VERSION_HASH, sizeof(map->stored_firmware_hash));
 }
 
 /**
@@ -392,7 +395,7 @@ void pbsys_storage_init(void) {
 
     // Test that storage successfully loaded and matches current firmware,
     // otherwise reset storage.
-    if (err != PBIO_SUCCESS || strncmp(map->stored_firmware_hash, pbsys_main_get_application_version_hash(), sizeof(map->stored_firmware_hash))) {
+    if (err != PBIO_SUCCESS || strncmp(map->stored_firmware_hash, PBIO_VERSION_HASH, sizeof(map->stored_firmware_hash))) {
         pbsys_storage_reset_storage();
     }
 

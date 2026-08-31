@@ -24,6 +24,7 @@
 #include <pbio/light_animation.h>
 #include <pbio/version.h>
 
+#include "pbio_version_hash.h"
 #include "hmi_ev3_ui.h"
 #include "pbio_image_media.h"
 #include "storage.h"
@@ -180,7 +181,7 @@ static const char *pbsys_hmi_ev3_ui_get_tab_entry_text(pbsys_hmi_ev3_ui_tab_t ta
                     snprintf(version, sizeof(version), " Version %d.%d.%d%x%d-%.6s",
                         PBIO_VERSION_MAJOR, PBIO_VERSION_MINOR, PBIO_VERSION_MICRO,
                         PBIO_VERSION_LEVEL_HEX,
-                        PBIO_VERSION_SERIAL, pbsys_main_get_application_version_hash());
+                        PBIO_VERSION_SERIAL, PBIO_VERSION_HASH);
                 }
                 return version;
             }

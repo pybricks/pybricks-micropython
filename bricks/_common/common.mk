@@ -767,12 +767,23 @@ $(BUILD)/genhdr/%.h: $(PBTOP)/lib/pbio/drv/bluetooth/%.gatt
 
 endif
 
+# Short git hash of this repository (pybricks-micropython, not the MicroPython
+# submodule), made available to pbio code via a generated header.
+PYBRICKS_GIT_HASH := $(shell $(GIT) rev-parse --short HEAD)
+
 ifeq ($(MICROPY_GIT_TAG),)
 # CI builds use build number + git hash as tag/firmware version
 export MICROPY_GIT_TAG := local-build-$(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
-export MICROPY_GIT_HASH :=$(shell $(GIT) rev-parse --short HEAD)
+export MICROPY_GIT_HASH := $(PYBRICKS_GIT_HASH)
 endif
 FW_VERSION := $(MICROPY_GIT_TAG)
+
+$(BUILD)/pbio_version_hash.h: FORCE
+	$(Q)$(MKDIR) -p $(dir $@)
+	$(Q)echo '#define PBIO_VERSION_HASH "$(PYBRICKS_GIT_HASH)"' > $@.tmp
+	$(Q)if cmp -s $@.tmp $@ 2>/dev/null; then rm $@.tmp; else echo "GEN $@"; mv $@.tmp $@; fi
+
+$(OBJ): | $(BUILD)/pbio_version_hash.h
 
 $(info PLATFORM: $(PBIO_PLATFORM) VERSION: $(FW_VERSION))
 

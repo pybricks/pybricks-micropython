@@ -55,11 +55,7 @@ static const uint8_t _program_data[] = {
     0x63,
 };
 
-// Information from MicroPython should not be used in the pbdrv drivers but it
-// is permissible for this test. It ensures we can place the expected git
-// version at the right place. FIXME: Move the git version to pybricks build
-// system, since it isn't actually the micropython git version.
-#include "genhdr/mpversion.h"
+#include "pbio_version_hash.h"
 
 
 static struct {
@@ -82,7 +78,7 @@ pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
 
 void pbdrv_block_device_init(void) {
     ramdisk.data_map.slot_info[0].size = sizeof(_program_data);
-    memcpy(ramdisk.data_map.stored_firmware_hash, MICROPY_GIT_HASH, sizeof(ramdisk.data_map.stored_firmware_hash));
+    memcpy(ramdisk.data_map.stored_firmware_hash, PBIO_VERSION_HASH, sizeof(ramdisk.data_map.stored_firmware_hash));
     memcpy(ramdisk.data_map.program_data, _program_data, sizeof(_program_data));
 }
 
