@@ -35,6 +35,8 @@ typedef enum {
 
 void pbsys_hmi_ev3_ui_initialize(void);
 
+void pbsys_hmi_ev3_ui_stop_bluetooth_activity(void);
+
 void pbsys_hmi_ev3_ui_handle_error(pbio_error_t err);
 
 pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t button, uint8_t *payload);
@@ -50,6 +52,9 @@ pbio_error_t pbsys_hmi_ev3_ui_closing_credits(pbio_os_state_t *state, void *cont
 #else // PBSYS_CONFIG_HMI_EV3_UI
 
 static inline void pbsys_hmi_ev3_ui_initialize(void) {
+}
+
+static inline void pbsys_hmi_ev3_ui_stop_bluetooth_activity(void) {
 }
 
 static inline void pbsys_hmi_ev3_ui_handle_error(pbio_error_t err) {

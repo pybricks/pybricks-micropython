@@ -240,6 +240,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         }
     }
 
+    // A program is about to start, so stop scanning and connecting if we
+    // were doing that. Established connections are kept.
+    pbsys_hmi_ev3_ui_stop_bluetooth_activity();
+
     // Wait for all buttons to be released so the user doesn't accidentally
     // push their robot off course.
     DEBUG_PRINT("Waiting for final button release.\n");
