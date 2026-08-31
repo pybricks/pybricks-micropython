@@ -25,6 +25,7 @@
 #include <pbio/version.h>
 
 #include <pbdrv/bluetooth.h>
+#include "bluetooth_address.h"
 #include "bluetooth_btstack.h"
 
 #include "genhdr/pybricks_service.h"
@@ -340,6 +341,20 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
     pbdrv_bluetooth_btstack_platform_packet_handler(packet_type, channel, packet, size);
 
     switch (hci_event_packet_get_type(packet)) {
+        case BTSTACK_EVENT_STATE:
+            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
+                // Set a static random address derived from the chip address
+                // and firmware version, so it persists across reboots but
+                // changes on firmware update. Bluetooth Classic is unaffected
+                // as it always uses the chip's public address.
+                bd_addr_t static_addr;
+                uint8_t derived[6];
+                gap_local_bd_addr(static_addr);
+                pbdrv_bluetooth_derive_static_address(derived, static_addr);
+                reverse_48(derived, static_addr);
+                gap_random_address_set(static_addr);
+            }
+            break;
         case HCI_EVENT_COMMAND_COMPLETE: {
             const uint8_t *rp = hci_event_command_complete_get_return_parameters(packet);
             switch (hci_event_command_complete_get_command_opcode(packet)) {
@@ -1933,7 +1948,6 @@ void pbdrv_bluetooth_init(void) {
     sm_event_callback_registration.callback = &sm_packet_handler;
     sm_add_event_handler(&sm_event_callback_registration);
 
-    gap_random_address_set_mode(GAP_RANDOM_ADDRESS_NON_RESOLVABLE);
     gap_set_max_number_peripheral_connections(2);
 
     // GATT Client setup

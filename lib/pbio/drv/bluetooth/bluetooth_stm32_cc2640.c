@@ -20,7 +20,6 @@
 #include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
-#include <pbdrv/random.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -41,6 +40,7 @@
 #include <util.h>
 
 #include <pbdrv/bluetooth.h>
+#include "./bluetooth_address.h"
 #include "./bluetooth_stm32_cc2640.h"
 
 #define DEBUG 0
@@ -1656,19 +1656,13 @@ static pbio_error_t gap_init(pbio_os_state_t *state, void *context) {
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // ignoring response data
 
-    // This sets the device address to a new random value each time we reset
-    // the Bluetooth chip.
+    // Set a static random address derived from the chip address and firmware
+    // version, so it persists across reboots but changes on firmware update.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
-        // NB: there doesn't seem to be a way to get random bytes from the
-        // Bluetooth chip itself.
-        uint32_t random[2];
-        pbdrv_random_get(random);
-        // REVISIT: should check return value and use second call to get more
-        // randomness
-        random[1] = ~random[0];
-
-        GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, (uint8_t *)random);
+        uint8_t addr[6];
+        pbdrv_bluetooth_derive_static_address(addr, pdata->bd_addr);
+        GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_STATIC, addr);
     }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     // ignoring response data

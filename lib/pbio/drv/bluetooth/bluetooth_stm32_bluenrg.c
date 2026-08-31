@@ -35,6 +35,8 @@
 #include <hci_le.h>
 #include <hci_tl.h>
 
+#include "./bluetooth_address.h"
+
 #define DEBUG 0
 
 #if DEBUG
@@ -1298,12 +1300,6 @@ static const hci_const_cmd_t cmd_gap_init = {
     .params = { GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name) },
 };
 
-// Equivalent of hci_le_rand_begin().
-static const hci_const_cmd_t cmd_le_rand = {
-    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_RAND),
-    .plen = 0,
-};
-
 // Initializes the Bluetooth chip
 // this function is largely inspired by the LEGO bootloader
 static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
@@ -1373,21 +1369,15 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // aci_gatt_update_char_value_end();
 
-    // The chip always uses the same random address, so we have to generate
-    // an actually random one to get a new address each time. This must be
-    // called after aci_gap_init to take effect.
-
-    // STM32F0 doesn't have a random number generator, so we use the bluetooth
-    // chip to get some random bytes.
-    hci_send_const_cmd(&cmd_le_rand);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    // The chip always uses the same random address, so we set our own,
+    // derived from the chip address and firmware version. It persists across
+    // reboots but changes on firmware update. This must be called after
+    // aci_gap_init to take effect.
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
-        uint8_t rand_buf[8];
-        hci_le_rand_end(rand_buf);
-
-        // clear two msb to meet requirements of nonresolvable private address
-        rand_buf[5] &= 0x3F;
-        hci_le_set_random_address_begin(rand_buf);
+        uint8_t addr[6];
+        pbdrv_bluetooth_derive_static_address(addr, FLASH_BD_ADDR);
+        hci_le_set_random_address_begin(addr);
     }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // hci_le_set_random_address_end();

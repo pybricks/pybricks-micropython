@@ -40,10 +40,6 @@ static const btstack_tlv_t *tlv_impl;
 static btstack_tlv_posix_t tlv_context;
 static bd_addr_t local_addr;
 
-static const uint8_t read_static_address_command_complete_prefix[] = { 0x0e, 0x1b, 0x01, 0x09, 0xfc };
-static bd_addr_t static_address;
-static int using_static_address;
-
 // We should not get here since we filtered device earlier, but this
 // asserts that BTstack has discovered the same device from the port ID.
 static void assert_vendor_and_product_id(uint16_t vendor_id, uint16_t product_id) {
@@ -269,13 +265,6 @@ void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16
             assert_vendor_and_product_id(usb_vendor_id, usb_product_id);
             break;
         }
-        case HCI_EVENT_COMMAND_COMPLETE:
-            if (memcmp(packet, read_static_address_command_complete_prefix, sizeof(read_static_address_command_complete_prefix)) == 0) {
-                reverse_48(&packet[7], static_address);
-                gap_random_address_set(static_address);
-                using_static_address = 1;
-            }
-            break;
         case BTSTACK_EVENT_STATE:
             switch (btstack_event_state_get_state(packet)) {
                 case HCI_STATE_WORKING:
