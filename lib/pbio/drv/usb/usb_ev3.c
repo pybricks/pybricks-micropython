@@ -895,7 +895,9 @@ static void usb_device_intr(void) {
     HWREG(USB_0_OTGBASE + USB_0_END_OF_INTR) = 0;
 }
 
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
+static uint32_t usb_rx_pos;
+
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
 
     if (!usb_rx_is_ready) {
         return 0;
@@ -908,17 +910,27 @@ uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
 
     uint32_t usb_rx_sz = PBDRV_UNCACHED(cppi_descriptors[CPPI_DESC_RX].word0).pktLength;
 
-    // Skip empty commands.
-    if (usb_rx_sz) {
+    if (usb_rx_pos == 0 && usb_rx_sz) {
         pbdrv_cache_prepare_after_dma(ep1_rx_buf, sizeof(ep1_rx_buf));
-        memcpy(data, ep1_rx_buf, usb_rx_sz);
     }
 
-    // Re-queue RX buffer after processing is complete
+    uint32_t count = usb_rx_sz - usb_rx_pos;
+    if (count > size) {
+        count = size;
+    }
+    memcpy(data, &ep1_rx_buf[usb_rx_pos], count);
+    usb_rx_pos += count;
+
+    if (usb_rx_pos < usb_rx_sz) {
+        return count;
+    }
+
+    // Packet fully drained (or empty), re-queue the RX buffer.
+    usb_rx_pos = 0;
     usb_rx_is_ready = false;
     usb_setup_rx_dma_desc();
 
-    return usb_rx_sz;
+    return count;
 }
 
 void pbdrv_usb_deinit(void) {

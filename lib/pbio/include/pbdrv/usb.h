@@ -49,19 +49,21 @@ void pbdrv_usb_init(void);
 void pbdrv_usb_deinit(void);
 
 /**
- * Gets bytes most recently received on the data OUT endpoint and copies them
- * to the provided buffer.
- *
- * The driver's receive buffer is then cleared and prepared to receive again.
+ * Reads up to @p size bytes from the incoming raw byte stream received on the
+ * data OUT endpoint.
  *
  * The host to hub direction is a raw byte stream (the message framing is
  * handled by the common driver), so the returned bytes are an arbitrary slice
  * of that stream, not necessarily a whole message.
  *
- * @param [in] data     Buffer to copy the bytes to.
+ * Reading frees up driver buffer space to receive more data, which is what
+ * provides flow control. Call repeatedly until it returns 0 to drain.
+ *
+ * @param [out] data    Buffer to copy the bytes to.
+ * @param [in]  size    Maximum number of bytes to copy.
  * @return              Number of bytes copied. Zero means nothing was available.
  */
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data);
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size);
 
 /**
  * Sends and awaits an arbitrarily sized message on the data IN endpoint.
@@ -118,7 +120,7 @@ static inline void pbdrv_usb_init(void) {
 static inline void pbdrv_usb_deinit(void) {
 }
 
-static inline uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
+static inline uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
     return 0;
 }
 

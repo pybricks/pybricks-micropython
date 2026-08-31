@@ -323,6 +323,7 @@ static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t le
 
 static uint8_t pbdrv_usb_rx_buf[MAX_RCV_SIZE];
 static volatile uint32_t pbdrv_usb_rx_len;
+static uint32_t pbdrv_usb_rx_pos;
 
 /*
  * Read one data packet from the USB controller.
@@ -867,23 +868,32 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     return PBIO_SUCCESS;
 }
 
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
 
     if (!pbdrv_usb_rx_len) {
         return 0;
     }
 
     // Copy data saved during interrupt to usb process.
-    memcpy(data, pbdrv_usb_rx_buf, pbdrv_usb_rx_len);
-    uint32_t result = pbdrv_usb_rx_len;
-    pbdrv_usb_rx_len = 0;
+    uint32_t count = pbdrv_usb_rx_len - pbdrv_usb_rx_pos;
+    if (count > size) {
+        count = size;
+    }
+    memcpy(data, &pbdrv_usb_rx_buf[pbdrv_usb_rx_pos], count);
+    pbdrv_usb_rx_pos += count;
 
-    // Get ready to receive the next message.
+    if (pbdrv_usb_rx_pos < pbdrv_usb_rx_len) {
+        return count;
+    }
+
+    // Packet fully drained, get ready to receive the next one.
+    pbdrv_usb_rx_pos = 0;
+    pbdrv_usb_rx_len = 0;
     if (pbdrv_usb_nxt_configured) {
         AT91C_UDP_CSR[EP_BULK_OUT] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
     }
 
-    return result;
+    return count;
 }
 
 #endif // PBDRV_CONFIG_USB_NXT

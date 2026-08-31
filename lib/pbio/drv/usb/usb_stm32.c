@@ -35,6 +35,7 @@
 // to/from FIFOs in 32-bit chunks.
 static uint8_t usb_in_buf[USBD_PYBRICKS_MAX_PACKET_SIZE] __aligned(4);
 static volatile uint32_t usb_in_sz;
+static uint32_t usb_in_pos;
 static volatile bool transmitting;
 
 static USBD_HandleTypeDef husbd;
@@ -230,6 +231,7 @@ static void pbdrv_usb_stm32_reset_tx_state(void) {
 static USBD_StatusTypeDef Pybricks_Itf_Init(void) {
     USBD_Pybricks_SetRxBuffer(&husbd, usb_in_buf);
     usb_in_sz = 0;
+    usb_in_pos = 0;
     pbdrv_usb_stm32_reset_tx_state();
 
     return USBD_OK;
@@ -321,20 +323,29 @@ pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, u
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
 
     if (!usb_in_sz) {
         return 0;
     }
 
-    uint32_t size = usb_in_sz;
-    memcpy(data, usb_in_buf, size);
+    uint32_t count = usb_in_sz - usb_in_pos;
+    if (count > size) {
+        count = size;
+    }
+    memcpy(data, &usb_in_buf[usb_in_pos], count);
+    usb_in_pos += count;
 
-    // Prepare to receive the next packet
+    if (usb_in_pos < usb_in_sz) {
+        return count;
+    }
+
+    // Packet fully drained, prepare to receive the next one.
+    usb_in_pos = 0;
     usb_in_sz = 0;
     USBD_Pybricks_ReceivePacket(&husbd);
 
-    return size;
+    return count;
 }
 
 void pbdrv_usb_init(void) {

@@ -208,67 +208,70 @@ static bool pbio_usb_read_reply_pending;
  */
 static void pbio_usb_handle_data_in(void) {
 
-    // Bytes are copied here so the driver can immediately queue the next
-    // receive. Only the single USB process thread runs this, so a static
-    // scratch buffer is safe and keeps the worst-case packet off the stack.
+    // Bytes are copied here so the driver can immediately free up buffer
+    // space to receive more. Only the single USB process thread runs this, so
+    // a static scratch buffer is safe and keeps the worst-case read off the
+    // stack.
     static uint8_t data_in[PBSYS_USB_MAX_ENCODED_PACKET_SIZE];
     static uint8_t msg[PBSYS_USB_MAX_DECODED_MESSAGE_SIZE];
-    uint32_t size = pbdrv_usb_get_data_and_start_receive(data_in);
+    uint32_t size;
 
-    for (uint32_t i = 0; i < size; i++) {
-        uint8_t byte = data_in[i];
+    while ((size = pbdrv_usb_rx_read(data_in, sizeof(data_in))) > 0) {
+        for (uint32_t i = 0; i < size; i++) {
+            uint8_t byte = data_in[i];
 
-        if (byte != PBIO_COBS_DELIMITER) {
-            if (pbio_usb_rx_frame_len < sizeof(pbio_usb_rx_frame)) {
-                pbio_usb_rx_frame[pbio_usb_rx_frame_len++] = byte;
-            } else {
-                // Frame too big. Discard until the next delimiter resyncs us.
-                pbio_usb_rx_overflow = true;
+            if (byte != PBIO_COBS_DELIMITER) {
+                if (pbio_usb_rx_frame_len < sizeof(pbio_usb_rx_frame)) {
+                    pbio_usb_rx_frame[pbio_usb_rx_frame_len++] = byte;
+                } else {
+                    // Frame too big. Discard until the next delimiter resyncs us.
+                    pbio_usb_rx_overflow = true;
+                }
+                continue;
             }
-            continue;
-        }
 
-        // Delimiter reached: end of frame.
-        if (!pbio_usb_rx_overflow && pbio_usb_rx_frame_len > 0) {
-            uint8_t msg_type;
-            uint32_t msg_size = pbio_cobs_decode_prefixed(
-                pbio_usb_rx_frame, pbio_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
+            // Delimiter reached: end of frame.
+            if (!pbio_usb_rx_overflow && pbio_usb_rx_frame_len > 0) {
+                uint8_t msg_type;
+                uint32_t msg_size = pbio_cobs_decode_prefixed(
+                    pbio_usb_rx_frame, pbio_usb_rx_frame_len, &msg_type, msg, sizeof(msg));
 
-            // The decoded prefix is the host-to-hub message type and the rest
-            // is its payload.
-            if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
-                // Subscribe or unsubscribe to event notifications. The payload
-                // is a single byte: 1 to subscribe, 0 to unsubscribe.
-                pbio_usb_set_subscribed(msg[0]);
-            } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
-                // The command payload is [tag, ...payload]. The tag is opaque
-                // to us: echo it back in the response so the host can correlate
-                // a late response with the command that produced it. The
-                // payload after the tag is the same as a BLE command write.
-                pbio_usb_command_response_buf[0] = msg[0];
-                pbio_set_uint32_le(&pbio_usb_command_response_buf[1],
-                    pbsys_handle_command(&msg[1], msg_size - 1));
-                pbio_usb_command_response_pending = true;
-                pbio_os_request_poll();
-            } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
-                // A read request payload is [service, char_id_lo, char_id_hi].
-                // Read the value synchronously and queue the reply, echoing the
-                // selector so the host can correlate it.
-                uint8_t service = msg[0];
-                uint16_t char_id = pbio_get_uint16_le(&msg[1]);
-                pbio_usb_read_reply_buf[0] = service;
-                pbio_usb_read_reply_buf[1] = msg[1];
-                pbio_usb_read_reply_buf[2] = msg[2];
-                uint32_t value_size = pbio_usb_read_characteristic(
-                    service, char_id, &pbio_usb_read_reply_buf[pbio_usb_READ_REPLY_HEADER_SIZE]);
-                pbio_usb_read_reply_len = pbio_usb_READ_REPLY_HEADER_SIZE + value_size;
-                pbio_usb_read_reply_pending = true;
-                pbio_os_request_poll();
+                // The decoded prefix is the host-to-hub message type and the rest
+                // is its payload.
+                if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
+                    // Subscribe or unsubscribe to event notifications. The payload
+                    // is a single byte: 1 to subscribe, 0 to unsubscribe.
+                    pbio_usb_set_subscribed(msg[0]);
+                } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
+                    // The command payload is [tag, ...payload]. The tag is opaque
+                    // to us: echo it back in the response so the host can correlate
+                    // a late response with the command that produced it. The
+                    // payload after the tag is the same as a BLE command write.
+                    pbio_usb_command_response_buf[0] = msg[0];
+                    pbio_set_uint32_le(&pbio_usb_command_response_buf[1],
+                        pbsys_handle_command(&msg[1], msg_size - 1));
+                    pbio_usb_command_response_pending = true;
+                    pbio_os_request_poll();
+                } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
+                    // A read request payload is [service, char_id_lo, char_id_hi].
+                    // Read the value synchronously and queue the reply, echoing the
+                    // selector so the host can correlate it.
+                    uint8_t service = msg[0];
+                    uint16_t char_id = pbio_get_uint16_le(&msg[1]);
+                    pbio_usb_read_reply_buf[0] = service;
+                    pbio_usb_read_reply_buf[1] = msg[1];
+                    pbio_usb_read_reply_buf[2] = msg[2];
+                    uint32_t value_size = pbio_usb_read_characteristic(
+                        service, char_id, &pbio_usb_read_reply_buf[pbio_usb_READ_REPLY_HEADER_SIZE]);
+                    pbio_usb_read_reply_len = pbio_usb_READ_REPLY_HEADER_SIZE + value_size;
+                    pbio_usb_read_reply_pending = true;
+                    pbio_os_request_poll();
+                }
             }
-        }
 
-        pbio_usb_rx_frame_len = 0;
-        pbio_usb_rx_overflow = false;
+            pbio_usb_rx_frame_len = 0;
+            pbio_usb_rx_overflow = false;
+        }
     }
 }
 

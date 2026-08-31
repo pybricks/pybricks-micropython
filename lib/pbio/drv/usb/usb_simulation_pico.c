@@ -86,27 +86,31 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 
 static uint8_t pbdrv_usb_simulation_pico_in_buf[BUFFER_SIZE];
 static uint32_t pbdrv_usb_simulation_pico_in_size;
+static uint32_t pbdrv_usb_simulation_pico_in_pos;
 
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
-    uint32_t size = pbdrv_usb_simulation_pico_in_size;
-
-    // Invalid size.
-    if (size > sizeof(pbdrv_usb_simulation_pico_in_buf)) {
-        pbdrv_usb_simulation_pico_in_size = 0;
-        return 0;
-    }
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
 
     // Nothing received yet.
-    if (size == 0) {
+    if (pbdrv_usb_simulation_pico_in_size == 0) {
         return 0;
     }
 
-    memcpy(data, pbdrv_usb_simulation_pico_in_buf, size);
+    uint32_t count = pbdrv_usb_simulation_pico_in_size - pbdrv_usb_simulation_pico_in_pos;
+    if (count > size) {
+        count = size;
+    }
+    memcpy(data, &pbdrv_usb_simulation_pico_in_buf[pbdrv_usb_simulation_pico_in_pos], count);
+    pbdrv_usb_simulation_pico_in_pos += count;
 
-    // Reset to indicate we wait for new data.
+    if (pbdrv_usb_simulation_pico_in_pos < pbdrv_usb_simulation_pico_in_size) {
+        return count;
+    }
+
+    // Fully drained, reset to indicate we wait for new data.
+    pbdrv_usb_simulation_pico_in_pos = 0;
     pbdrv_usb_simulation_pico_in_size = 0;
 
-    return size;
+    return count;
 }
 
 // Simulates incoming USB data by reading from native host stdin. In

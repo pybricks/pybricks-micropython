@@ -67,26 +67,31 @@ pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
 
 static uint8_t usb_in_buf[BUFFER_SIZE];
 static uint32_t usb_in_size;
+static uint32_t usb_in_pos;
 
-uint32_t pbdrv_usb_get_data_and_start_receive(uint8_t *data) {
-
-    // Invalid size.
-    if (usb_in_size > sizeof(usb_in_buf)) {
-        usb_in_size = 0;
-    }
+uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
 
     // Nothing received yet.
     if (usb_in_size == 0) {
         return 0;
     }
 
-    uint32_t size = usb_in_size;
-    memcpy(data, usb_in_buf, size);
+    uint32_t count = usb_in_size - usb_in_pos;
+    if (count > size) {
+        count = size;
+    }
+    memcpy(data, &usb_in_buf[usb_in_pos], count);
+    usb_in_pos += count;
 
-    // Reset to indicate we wait for new data.
+    if (usb_in_pos < usb_in_size) {
+        return count;
+    }
+
+    // Fully drained, reset to indicate we wait for new data.
+    usb_in_pos = 0;
     usb_in_size = 0;
 
-    return size;
+    return count;
 }
 
 // Simulates incoming USB data by reading the raw byte stream from native host
