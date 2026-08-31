@@ -202,18 +202,18 @@ static void pbsys_hmi_ev3_ui_increment_entry_on_current_tab(bool increment) {
     }
 }
 
-pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button, uint8_t *payload) {
+static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button) {
     // Cancel dialog.
     if (button == PBIO_BUTTON_LEFT_UP) {
         state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
         return PBSYS_HMI_EV3_UI_ACTION_NONE;
     }
-    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+    return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
 
-pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open(void) {
+static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open() {
     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD;
-    return PBSYS_HMI_EV3_UI_ACTION_NONE;
+    return pbsys_hmi_ev3_ui_handle_gamepad_button(0);
 }
 
 /**
@@ -263,7 +263,7 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
             }
             return PBSYS_HMI_EV3_UI_ACTION_NONE;
         case PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD:
-            return pbsys_hmi_ev3_ui_handle_gamepad_button(button, payload);
+            return pbsys_hmi_ev3_ui_handle_gamepad_button(button);
         case PBSYS_HMI_EV3_UI_OVERLAY_NONE:
         // fallthrough
         default:

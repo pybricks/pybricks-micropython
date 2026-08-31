@@ -13,6 +13,11 @@ typedef enum {
      */
     PBSYS_HMI_EV3_UI_ACTION_NONE,
     /**
+     * No action required, but refresh the UI again soon. Can be used to
+     * update Bluetooth scan result UIs for example.
+     */
+    PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON,
+    /**
      * Sets active code slot (payload: slot id).
      */
     PBSYS_HMI_EV3_UI_ACTION_SET_SLOT,
