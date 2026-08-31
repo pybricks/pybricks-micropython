@@ -169,20 +169,37 @@ void pbdrv_bluetooth_inquiry_stop(void);
 pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results);
 
 /**
- * Initiates a connection to a Bluetooth Classic HID device such as a gamepad.
+ * Starts pairing with a Bluetooth Classic HID device such as a gamepad.
  *
- * This is non-blocking. The driver handles the remaining steps, including
- * pairing if the device is in pairing mode. Poll
- * pbdrv_bluetooth_classic_hid_is_connected() for the result.
+ * This is non-blocking. The driver registers a provisional bonding record
+ * for the device and handles the remaining steps, storing the negotiated
+ * link key into the record on success or forgetting it again on failure.
+ * Poll pbdrv_bluetooth_classic_hid_pair_status() for the result.
  *
  * @param [in] bdaddr  6-byte Bluetooth address of the device, as found with
  *                     an inquiry scan.
- * @return             ::PBIO_SUCCESS if the connection was initiated.
+ * @param [in] name    Device name for the bonding record.
+ * @return             ::PBIO_SUCCESS if pairing was initiated.
  *                     ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on.
- *                     ::PBIO_ERROR_BUSY if a connection is already in progress.
- *                     ::PBIO_ERROR_FAILED if the connection could not be started.
+ *                     ::PBIO_ERROR_BUSY if connecting or already connected.
+ *                     ::PBIO_ERROR_FAILED if pairing could not be started.
  */
-pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr);
+pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name);
+
+/**
+ * Gets the status of pairing started with pbdrv_bluetooth_classic_hid_pair().
+ *
+ * @return  ::PBIO_ERROR_AGAIN while pairing is in progress, ::PBIO_SUCCESS
+ *          if the last attempt succeeded, ::PBIO_ERROR_TIMEDOUT or
+ *          ::PBIO_ERROR_CANCELED if it timed out or was cancelled.
+ */
+pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void);
+
+/**
+ * Cancels an ongoing pairing attempt, if any, forgetting the provisional
+ * bonding record.
+ */
+void pbdrv_bluetooth_classic_hid_pair_cancel(void);
 
 /**
  * Tests whether a Bluetooth Classic HID device is connected.
@@ -210,8 +227,15 @@ static inline pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pb
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
+static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
 }
 
 static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {

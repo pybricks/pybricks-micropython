@@ -8,6 +8,7 @@
 #if PBIO_CONFIG_BLUETOOTH
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <pbio/bluetooth.h>
@@ -550,7 +551,10 @@ pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_tim
     pbio_bluetooth_start_broadcasting(NULL, 0);
     PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_advertise_or_scan_command(&sub, NULL));
 
-    // TODO: Close Bluetooth classic tasks.
+    // Cancel Bluetooth Classic pairing and scanning, if ongoing. Established
+    // classic connections are kept.
+    pbdrv_bluetooth_classic_hid_pair_cancel();
+    pbdrv_bluetooth_inquiry_stop();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -582,6 +586,25 @@ static pbio_bluetooth_classic_link_key_t *gamepad_link_key;
 
 void pbio_bluetooth_classic_apply_loaded_link_key(pbio_bluetooth_classic_link_key_t *record) {
     gamepad_link_key = record;
+}
+
+void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name) {
+    if (!gamepad_link_key) {
+        return;
+    }
+    memset(gamepad_link_key, 0, sizeof(*gamepad_link_key));
+    gamepad_link_key->device_type = PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD;
+    memcpy(gamepad_link_key->bdaddr, bdaddr, sizeof(gamepad_link_key->bdaddr));
+    snprintf(gamepad_link_key->name, sizeof(gamepad_link_key->name), "%s", name);
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_unregister(void) {
+    if (!gamepad_link_key || gamepad_link_key->device_type == PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_NONE) {
+        return;
+    }
+    memset(gamepad_link_key, 0, sizeof(*gamepad_link_key));
+    pbsys_storage_request_write();
 }
 
 static bool link_key_matches(const uint8_t *bdaddr) {

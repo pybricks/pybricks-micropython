@@ -221,31 +221,11 @@ typedef enum {
     PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_FAILED,
 } pbsys_hmi_ev3_ui_gamepad_phase_t;
 
-/**
- * Generous connection timeout: some devices (e.g. PS5) reject the
- * hub-initiated attempt while pairing and then page back to connect on
- * their own, so a briefly idle driver does not mean failure.
- */
-#define GAMEPAD_CONNECT_TIMEOUT_MS (10000)
-
 static struct {
     pbsys_hmi_ev3_ui_gamepad_phase_t phase;
     bool accept_erase;
     uint32_t selected_scan;
-    pbio_os_timer_t connect_timer;
 } gamepad_ui;
-
-/**
- * Aborts a connection attempt in progress and forgets the provisional
- * bonding record, whose link key was never (fully) negotiated.
- */
-static void pbsys_hmi_ev3_ui_gamepad_abort_connect(void) {
-    pbdrv_bluetooth_classic_hid_disconnect();
-    pbio_bluetooth_classic_link_key_t *link_key = pbsys_storage_settings_get_gamepad_link_key();
-    if (link_key) {
-        pbsys_storage_settings_reset_link_key(link_key);
-    }
-}
 
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_button_flags_t button) {
 
@@ -309,40 +289,31 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_button(pbio_but
                 gamepad_ui.selected_scan = (gamepad_ui.selected_scan + 1) % num_results;
             }
             if (button == PBIO_BUTTON_CENTER && gamepad_ui.selected_scan < num_results) {
-                // Register the selected device and start connecting to it. The
-                // link key negotiated during pairing is stored into this same
-                // record by the driver via the pbio link key store.
+                // Start pairing with the selected device. The driver
+                // registers the bonding record and stores the negotiated
+                // link key into it.
                 pbio_bluetooth_inquiry_result_t *result = &results[gamepad_ui.selected_scan];
                 pbdrv_bluetooth_inquiry_stop();
-                pbdrv_bluetooth_classic_hid_connect(result->bdaddr);
-
-                pbsys_storage_settings_t *settings = pbsys_storage_settings_get_settings();
-                if (settings) {
-                    pbio_bluetooth_classic_link_key_t *key = &settings->bluetooth_gamepad_link_key;
-                    key->device_type = PBIO_BLUETOOTH_CLASSIC_DEVICE_TYPE_HID_GAMEPAD;
-                    memcpy(key->bdaddr, result->bdaddr, sizeof(key->bdaddr));
-                    snprintf(key->name, sizeof(key->name), "%s", result->name);
-                    pbsys_storage_request_write();
-                }
+                pbdrv_bluetooth_classic_hid_pair(result->bdaddr, result->name);
                 gamepad_ui.accept_erase = false;
                 gamepad_ui.phase = PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_CONNECT;
-                pbio_os_timer_set(&gamepad_ui.connect_timer, GAMEPAD_CONNECT_TIMEOUT_MS);
             }
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
         }
 
         case PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_CONNECT: {
-            if (pbdrv_bluetooth_classic_hid_is_connected()) {
+            pbio_error_t err = pbdrv_bluetooth_classic_hid_pair_status();
+            if (err == PBIO_SUCCESS) {
                 gamepad_ui.phase = PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_INFO;
                 return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
             }
-            if (button == PBIO_BUTTON_LEFT_UP) {
-                pbsys_hmi_ev3_ui_gamepad_abort_connect();
+            if (button == PBIO_BUTTON_LEFT_UP || err == PBIO_ERROR_CANCELED) {
+                // Cancelled here or externally (e.g. a program started).
+                pbdrv_bluetooth_classic_hid_pair_cancel();
                 state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
                 return PBSYS_HMI_EV3_UI_ACTION_NONE;
             }
-            if (pbio_os_timer_is_expired(&gamepad_ui.connect_timer)) {
-                pbsys_hmi_ev3_ui_gamepad_abort_connect();
+            if (err != PBIO_ERROR_AGAIN) {
                 gamepad_ui.phase = PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_FAILED;
             }
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
@@ -371,21 +342,6 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_gamepad_open(void) {
     gamepad_ui.selected_scan = 0;
 
     return pbsys_hmi_ev3_ui_handle_gamepad_button(0);
-}
-
-/**
- * Stops Bluetooth Classic scanning or a pending connection attempt started
- * from this UI. An established connection is kept. Called before handing
- * control to a user program.
- */
-void pbsys_hmi_ev3_ui_stop_bluetooth_activity(void) {
-    pbdrv_bluetooth_inquiry_stop();
-    if (gamepad_ui.phase == PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_CONNECT &&
-        !pbdrv_bluetooth_classic_hid_is_connected()) {
-        pbsys_hmi_ev3_ui_gamepad_abort_connect();
-        gamepad_ui.phase = PBSYS_HMI_EV3_UI_GAMEPAD_PHASE_SCAN;
-        state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
-    }
 }
 
 /**

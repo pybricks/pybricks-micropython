@@ -477,6 +477,22 @@ pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_tim
 void pbio_bluetooth_classic_apply_loaded_link_key(pbio_bluetooth_classic_link_key_t *record);
 
 /**
+ * Registers a provisional bonding record for a device about to be paired,
+ * clearing any previously stored key. Called by the Bluetooth stack driver
+ * when pairing starts.
+ *
+ * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
+ * @param [in]  name    Device name.
+ */
+void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name);
+
+/**
+ * Forgets the bonding record. Called by the Bluetooth stack driver when
+ * pairing is cancelled or times out.
+ */
+void pbio_bluetooth_classic_link_key_unregister(void);
+
+/**
  * Gets the stored link key for a remote device, called by the Bluetooth
  * stack on (re)connect.
  *

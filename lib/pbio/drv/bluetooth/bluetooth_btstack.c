@@ -1356,8 +1356,16 @@ static uint8_t hid_descriptor_storage[512];
 typedef enum {
     PBDRV_BLUETOOTH_HID_STATE_IDLE,
     PBDRV_BLUETOOTH_HID_STATE_CONNECTING,
+    PBDRV_BLUETOOTH_HID_STATE_PAIRING,
     PBDRV_BLUETOOTH_HID_STATE_CONNECTED,
 } pbdrv_bluetooth_hid_state_t;
+
+/**
+ * Generous pairing timeout: some devices (e.g. PS5) reject the hub-initiated
+ * attempt while pairing and then page back to connect on their own, so a
+ * briefly idle connection does not mean failure.
+ */
+#define HID_PAIR_TIMEOUT_MS (10000)
 
 /**
  * The one supported Bluetooth Classic HID device connection, such as a gamepad.
@@ -1369,7 +1377,13 @@ static struct {
     bd_addr_t bdaddr;
     /** Connection state. */
     pbdrv_bluetooth_hid_state_t state;
+    /** Result of the last pairing session. */
+    pbio_error_t pair_err;
+    /** Ends the pairing session if the device never connects. */
+    btstack_timer_source_t pair_timeout;
 } hid_connection;
+
+static void hid_pair_end(pbio_error_t err);
 
 /**
  * Handles Bluetooth Classic HID events. Registered both as a general HCI
@@ -1425,7 +1439,9 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     }
                     hid_connection.hid_cid = hid_subevent_incoming_connection_get_hid_cid(packet);
                     hid_subevent_incoming_connection_get_address(packet, hid_connection.bdaddr);
-                    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTING;
+                    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+                        hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTING;
+                    }
                     DEBUG_PRINT("Incoming HID connection from %s.\n", bd_addr_to_str(hid_connection.bdaddr));
                     hid_host_accept_connection(hid_connection.hid_cid, HID_PROTOCOL_MODE_REPORT_WITH_FALLBACK_TO_BOOT);
                     break;
@@ -1437,12 +1453,17 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     }
                     status = hid_subevent_connection_opened_get_status(packet);
                     if (status != ERROR_CODE_SUCCESS) {
-                        // For a hub-initiated pairing attempt this is expected
-                        // (e.g. PS5 rejects with 0x11); the device then pages
-                        // back and opens the channels itself, handled above.
+                        // While pairing this is expected (e.g. PS5 rejects
+                        // with 0x11); keep the session going until the device
+                        // pages back and connects, or the session times out.
                         DEBUG_PRINT("HID connection failed, status 0x%02x.\n", status);
-                        hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+                        if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+                            hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+                        }
                         break;
+                    }
+                    if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+                        hid_pair_end(PBIO_SUCCESS);
                     }
                     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
                     DEBUG_PRINT("HID connection to %s opened.\n", bd_addr_to_str(hid_connection.bdaddr));
@@ -1475,7 +1496,11 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                 }
 
                 case HID_SUBEVENT_CONNECTION_CLOSED:
-                    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_IDLE &&
+                    // While pairing, closure of the rejected attempt is
+                    // expected; that session ends by success, cancel, or
+                    // timeout instead.
+                    if ((hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTING ||
+                         hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED) &&
                         hid_connection.hid_cid == hid_subevent_connection_closed_get_hid_cid(packet)) {
                         DEBUG_PRINT("HID connection to %s closed.\n", bd_addr_to_str(hid_connection.bdaddr));
                         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
@@ -1494,7 +1519,31 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
     pbio_os_request_poll();
 }
 
-pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
+/**
+ * Ends the pairing session with the given result. On failure, aborts the
+ * connection attempt and forgets the provisional bonding record, whose link
+ * key was never (fully) negotiated.
+ */
+static void hid_pair_end(pbio_error_t err) {
+    btstack_run_loop_remove_timer(&hid_connection.pair_timeout);
+    hid_connection.pair_err = err;
+    if (err != PBIO_SUCCESS) {
+        pbdrv_bluetooth_classic_hid_disconnect();
+        pbio_bluetooth_classic_link_key_unregister();
+    }
+}
+
+static void hid_pair_timeout_handler(btstack_timer_source_t *ts) {
+    UNUSED(ts);
+    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+        return;
+    }
+    DEBUG_PRINT("HID pairing timed out.\n");
+    hid_pair_end(PBIO_ERROR_TIMEDOUT);
+    pbio_os_request_poll();
+}
+
+pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name) {
 
     if (!pbdrv_bluetooth_hci_is_enabled()) {
         return PBIO_ERROR_INVALID_OP;
@@ -1504,10 +1553,15 @@ pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
         return PBIO_ERROR_BUSY;
     }
 
-    memcpy(hid_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
-    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTING;
+    // Provisional bonding record; the stack stores the negotiated link key
+    // into it via the pbio link key store.
+    pbio_bluetooth_classic_link_key_register(bdaddr, name);
 
-    DEBUG_PRINT("Start HID connection to %s.\n", bd_addr_to_str(hid_connection.bdaddr));
+    memcpy(hid_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
+    hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_PAIRING;
+    hid_connection.pair_err = PBIO_ERROR_AGAIN;
+
+    DEBUG_PRINT("Start HID pairing with %s.\n", bd_addr_to_str(hid_connection.bdaddr));
 
     // For a device in pairing mode, the hub pages it and initiates the HID
     // channels. Pairing (SSP) happens along the way. The remaining steps,
@@ -1518,10 +1572,31 @@ pbio_error_t pbdrv_bluetooth_classic_hid_connect(const uint8_t *bdaddr) {
     if (btstack_error != ERROR_CODE_SUCCESS) {
         DEBUG_PRINT("HID host connect failed, status 0x%02x.\n", btstack_error);
         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+        hid_connection.pair_err = PBIO_ERROR_FAILED;
+        pbio_bluetooth_classic_link_key_unregister();
         return PBIO_ERROR_FAILED;
     }
 
+    btstack_run_loop_set_timer_handler(&hid_connection.pair_timeout, hid_pair_timeout_handler);
+    btstack_run_loop_set_timer(&hid_connection.pair_timeout, HID_PAIR_TIMEOUT_MS);
+    btstack_run_loop_add_timer(&hid_connection.pair_timeout);
+
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void) {
+    if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+        return PBIO_ERROR_AGAIN;
+    }
+    return hid_connection.pair_err;
+}
+
+void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
+    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
+        return;
+    }
+    DEBUG_PRINT("HID pairing cancelled.\n");
+    hid_pair_end(PBIO_ERROR_CANCELED);
 }
 
 bool pbdrv_bluetooth_classic_hid_is_connected(void) {
