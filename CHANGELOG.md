@@ -11,6 +11,11 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 
+### Fixed
+- Fixed output missing on Technic Hub and City Hub ([support#2814]).
+
+[support#2812]: https://github.com/pybricks/support/issues/2814
+
 ## [4.1.0b3] - 2026-08-25
 
 ### Changed

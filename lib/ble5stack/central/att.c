@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -91,7 +92,10 @@ bStatus_t ATT_ExecuteWriteRsp(uint16_t connHandle) {
 }
 
 bStatus_t ATT_HandleValueNoti(uint16_t connHandle, attHandleValueNoti_t *pNoti) {
-    uint8_t buf[32];
+    // Payload can be up to negotiated MTU minus 3-byte ATT header.
+    uint8_t buf[5 + ATT_MAX_MTU_SIZE - 3];
+
+    assert(sizeof(buf) >= 5 + pNoti->len);
 
     buf[0] = connHandle & 0xFF;
     buf[1] = (connHandle >> 8) & 0xFF;
