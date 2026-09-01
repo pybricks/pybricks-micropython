@@ -2297,7 +2297,10 @@ void pbdrv_bluetooth_init(void) {
     rfcomm_register_service(host_packet_handler, RFCOMM_SERVER_CHANNEL, RFCOMM_SERVER_MTU);
     lwrb_init(&host_connection.rx_ring, host_connection.rx_buf, sizeof(host_connection.rx_buf));
     static uint8_t spp_sdp_record[150];
-    spp_create_sdp_record(spp_sdp_record, 0x10002, RFCOMM_SERVER_CHANNEL, "Pybricks");
+    // Advertise the Pybricks service UUID as the service class (the profile
+    // descriptor list still declares SPP). Host apps filter serial ports on
+    // this UUID; the generic SPP UUID would match every paired headset/GPS.
+    spp_create_custom_sdp_record(spp_sdp_record, 0x10002, pbio_pybricks_service_uuid, RFCOMM_SERVER_CHANNEL, "Pybricks");
     sdp_register_service(spp_sdp_record);
 
     // Identify with the hub name and as a toy robot instead. The decorated
