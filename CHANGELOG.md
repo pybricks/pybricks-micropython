@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Support for setting a custom hub name when flashing NXT firmware.
+
 ### Changed
 - Updated MicroPython to v1.29.0.
 - On the Move Hub, `bytes()` and `bytes.find()` now truncate out-of-range

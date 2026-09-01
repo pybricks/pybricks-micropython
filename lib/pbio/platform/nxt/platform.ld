@@ -18,7 +18,7 @@
  */
 
 MEMORY {
-rom : ORIGIN = 1M, LENGTH =256k
+FLASH_FIRMWARE : ORIGIN = 1M, LENGTH =256k
 vector_ram : ORIGIN = 2M, LENGTH = 64
 ram : ORIGIN = 2M + 64, LENGTH = 64K - 64
 }
@@ -40,7 +40,7 @@ SECTIONS {
   .vectors : ALIGN(4) {
     KEEP(*(.isr_vector))
   } > vector_ram
-  AT> rom
+  AT> FLASH_FIRMWARE
 
 
   /*
@@ -55,7 +55,7 @@ SECTIONS {
     . = ALIGN(4);
     *.oram (*.rodata *.rodata.*)
   } > ram
-  AT> rom
+  AT> FLASH_FIRMWARE
 
 
   /*
@@ -65,7 +65,7 @@ SECTIONS {
   .data : ALIGN(4) {
     * (*.data *.data.*)
   } > ram
-  AT> rom
+  AT> FLASH_FIRMWARE
 
 
   /*
@@ -76,7 +76,7 @@ SECTIONS {
     * (*.text *.text.* *.glue*)
     . = ALIGN(4);
     * (*.rodata *.rodata.*)
-  } > rom
+  } > FLASH_FIRMWARE
 
 
   /*
@@ -126,7 +126,7 @@ SECTIONS {
   .name :
   {
       *(.name) /* customizable hub name */
-  } > rom
+  } > FLASH_FIRMWARE
 
   /*
    * The magic metadata struct is tacked onto the start of the kernel binary.
@@ -146,7 +146,7 @@ SECTIONS {
     LONG(ROM_BASE);
     /* SAM-BA kernel? */
     BYTE(0);
-  } > rom
+  } > FLASH_FIRMWARE
 
   /* Discard anything not mapped at this point. */
   /DISCARD/ : {

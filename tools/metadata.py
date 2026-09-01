@@ -107,8 +107,8 @@ def generate(
         "checksum-type": platform_info["checksum-type"],
     }
 
-    if (device_id & 0xE0) == 0xE0:
-        # legacy hubs don't support these features
+    if device_id in (0xE0, 0xE2):
+        # these legacy hubs don't (yet) support these features
         variant["checksum-size"] = 0
         variant["hub-name-offset"] = 0
         variant["hub-name-size"] = 0
@@ -165,13 +165,18 @@ def generate(
             print("Failed to find '.name' start address", file=sys.stderr)
             exit(1)
 
-        if user_start is None:
-            print("Failed to find '.user' start address", file=sys.stderr)
-            exit(1)
-
-        variant["checksum-size"] = flash_firmware_size + flash_user_0_size
         variant["hub-name-offset"] = name_start - flash_origin
         variant["hub-name-size"] = name_size
+
+        if device_id == 0xE1:
+            # NXT firmware has no checksum or appended user program
+            variant["checksum-size"] = 0
+        else:
+            if user_start is None:
+                print("Failed to find '.user' start address", file=sys.stderr)
+                exit(1)
+
+            variant["checksum-size"] = flash_firmware_size + flash_user_0_size
 
     metadata["variants"] = [variant]
 
