@@ -36,7 +36,7 @@ extern const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg;
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t str[PBSYS_HOST_HUB_NAME_SIZE - 1];
+    uint16_t str[PBSYS_HOST_HUB_DISPLAY_NAME_SIZE - 1];
 } pbdrv_usb_str_prod_t;
 PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_str_prod);
 

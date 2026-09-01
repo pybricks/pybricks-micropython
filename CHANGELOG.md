@@ -8,8 +8,10 @@
 - Updated MicroPython to v1.29.0.
 - On the Move Hub, `bytes()` and `bytes.find()` now truncate out-of-range
   values instead of raising `ValueError`.
-- The USB product string now reports the hub name instead of a fixed product
-  name, matching the name already used for Bluetooth.
+- The USB product string now reports the hub name and hub type,
+  e.g. "robot (SPIKE Prime)", instead of a fixed product name. The EV3
+  Bluetooth Classic device name uses the same format. The BLE device name
+  remains just the hub name ([support#2630]).
 
 ### Fixed
 - Fixed slow broadcasting while observing at the same time ([support#2822]).
@@ -25,7 +27,10 @@
 ### Fixed
 - Fixed output missing on Technic Hub and City Hub ([support#2814]).
 
+[support#2630]: https://github.com/pybricks/support/issues/2630
 [support#2812]: https://github.com/pybricks/support/issues/2814
+
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 
 ## [4.1.0b3] - 2026-08-25
 

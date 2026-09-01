@@ -30,13 +30,13 @@ const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg = {
 };
 
 /**
- * Gets the product string descriptor, built at runtime from the hub name so
- * that the USB device name matches the Bluetooth device name.
+ * Gets the product string descriptor, built at runtime from the hub display
+ * name so that the hub is recognizable in host OS device pickers.
  */
 const pbdrv_usb_str_prod_union_t *pbdrv_usb_get_str_desc_prod(void) {
     static pbdrv_usb_str_prod_union_t desc;
 
-    const char *hub_name = pbsys_host_get_hub_name();
+    const char *hub_name = pbsys_host_get_hub_display_name(PBSYS_HOST_TRANSPORT_TYPE_USB);
     size_t len = strlen(hub_name);
 
     desc.s.bLength = 2 + 2 * len;

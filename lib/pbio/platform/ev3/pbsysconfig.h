@@ -19,6 +19,7 @@
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (4)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)
+#define PBSYS_CONFIG_HUB_TYPE_STR                   "MINDSTORMS EV3"
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (1)
 #define PBSYS_CONFIG_STORAGE_NUM_SLOTS              (PBSYS_CONFIG_HMI_NUM_SLOTS)

@@ -19,6 +19,7 @@
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX_LED_ARRAY     (1)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)
+#define PBSYS_CONFIG_HUB_TYPE_STR                   "SPIKE Prime"
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (1)
 #define PBSYS_CONFIG_STORAGE_NUM_SLOTS              (5)

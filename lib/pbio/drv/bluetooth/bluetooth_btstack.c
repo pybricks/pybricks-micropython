@@ -2255,8 +2255,10 @@ void pbdrv_bluetooth_init(void) {
     spp_create_sdp_record(spp_sdp_record, 0x10002, RFCOMM_SERVER_CHANNEL, "Pybricks");
     sdp_register_service(spp_sdp_record);
 
-    // Identify with the hub name and as a toy robot instead.
-    gap_set_local_name(pbsys_host_get_hub_name());
+    // Identify with the hub name and as a toy robot instead. The decorated
+    // name distinguishes this from the same hub connected over USB in host
+    // OS device pickers.
+    gap_set_local_name(pbsys_host_get_hub_display_name(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH));
     gap_set_class_of_device(0x000804);
 
     // Claim yes/no capability (auto-accepted below) so that pairing with a

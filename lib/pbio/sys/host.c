@@ -33,16 +33,37 @@ static bool pbsys_host_event_stdout_busy;
 #ifdef __ELF__
 __attribute__((section(".name")))
 #endif
-static char pbsys_host_hub_name[PBSYS_HOST_HUB_NAME_SIZE] = "Pybricks Hub";
+static char pbsys_host_hub_name[PBSYS_HOST_HUB_NAME_SIZE] = "Pybricks";
 
 /**
- * Gets the hub name, reported to hosts on all transports (BLE advertisement
- * and GATT device name, USB product string, Pybricks Profile reads).
+ * Gets the hub name, reported to hosts where space is limited (BLE
+ * advertisement) or where the bare name is expected (GATT device name and
+ * Pybricks Profile reads, which hosts round-trip when renaming the hub).
  *
  * @return  The hub name as a null-terminated string.
  */
 const char *pbsys_host_get_hub_name(void) {
     return pbsys_host_hub_name;
+}
+
+/**
+ * Gets the hub name decorated with the hub type and transport, e.g.
+ * "myhub (SPIKE Prime, usb)".
+ *
+ * Unlike the bare name from pbsys_host_get_hub_name(), this is used on
+ * transports where the hub appears in host OS device pickers alongside
+ * other devices and transports, so it needs to be self-describing.
+ *
+ * @param [in] transport    The transport whose name to include.
+ * @return                  The display name as a null-terminated string.
+ */
+const char *pbsys_host_get_hub_display_name(pbsys_host_transport_type_t transport) {
+    static char display_name[PBSYS_HOST_HUB_DISPLAY_NAME_SIZE];
+    strcpy(display_name, pbsys_host_hub_name);
+    strcat(display_name, " (" PBSYS_CONFIG_HUB_TYPE_STR ", ");
+    strcat(display_name, transport == PBSYS_HOST_TRANSPORT_TYPE_USB ? "usb" : "bluetooth");
+    strcat(display_name, ")");
+    return display_name;
 }
 
 void pbsys_host_init(void) {
