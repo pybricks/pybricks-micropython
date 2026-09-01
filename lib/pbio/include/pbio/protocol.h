@@ -554,7 +554,7 @@ extern const uint8_t pbio_nus_rx_char_uuid[];
 extern const uint8_t pbio_nus_tx_char_uuid[];
 
 /**
- * Characteristic namespace for ::PBIO_PYBRICKS_OUT_EP_MSG_READ requests.
+ * Characteristic namespace for characteristic read requests.
  *
  * Selects which group the 16-bit characteristic id in a read request belongs
  * to, mirroring how a BLE host distinguishes standard GATT characteristics
@@ -564,9 +564,9 @@ extern const uint8_t pbio_nus_tx_char_uuid[];
  */
 enum {
     /** Retrieve GATT characteristics */
-    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT = 0x01,
+    PBIO_PYBRICKS_READ_SERVICE_GATT = 0x01,
     /** Retrieve Pybricks characteristics */
-    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
+    PBIO_PYBRICKS_READ_SERVICE_PYBRICKS = 0x02,
 };
 
 // The Pybricks USB interface uses a CDC ACM data pipe (Web Serial on the
@@ -642,7 +642,7 @@ typedef enum {
     /**
      * A characteristic read request. The payload is
      * `[service, char_id_lo, char_id_hi]`, where service is one of the
-     * ::PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT values. The hub
+     * ::PBIO_PYBRICKS_READ_SERVICE_GATT values. The hub
      * replies with a ::PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY.
      *
      * Analog of a BLE host reading a characteristic by UUID.

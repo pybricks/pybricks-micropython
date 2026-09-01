@@ -5,16 +5,22 @@
 
 #if PBSYS_CONFIG_HOST
 
+#include <string.h>
+
 #include <lwrb/lwrb.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/config.h>
 #include <pbio/bluetooth.h>
 #include <pbio/int_math.h>
+#include <pbio/protocol.h>
 #include <pbio/usb.h>
+#include <pbio/version.h>
 
 #include <pbsys/command.h>
 #include <pbsys/host.h>
 #include <pbsys/hmi.h>
+#include <pbsys/storage.h>
 
 #include "telemetry.h"
 
@@ -73,6 +79,88 @@ void pbsys_host_schedule_status_update(const uint8_t *status_msg) {
 bool pbsys_host_is_connected(void) {
     return pbdrv_bluetooth_host_is_connected() ||
            pbio_usb_connection_is_active();
+}
+
+/**
+ * Fills @p buf with the Pybricks hub capabilities characteristic value.
+ *
+ * Single source of truth for the feature flags, maximum program size and
+ * number of program slots, shared by USB and all BLE drivers.
+ *
+ * @param [out] buf         Buffer of at least
+ *                          ::PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE bytes.
+ * @param [in]  transport   The transport the host is reading this value on,
+ *                          which determines the reported maximum write size.
+ */
+void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport) {
+
+    uint32_t max_receive_size = transport == PBSYS_HOST_TRANSPORT_TYPE_USB ?
+        PBSYS_CONFIG_HOST_EVENT_OUT_SIZE - 1:
+        pbdrv_bluetooth_get_max_message_size();
+
+    pbio_pybricks_hub_capabilities(buf, max_receive_size,
+        PBSYS_CONFIG_APP_FEATURE_FLAGS,
+        pbsys_storage_get_maximum_program_size(),
+        PBSYS_CONFIG_HMI_NUM_SLOTS);
+}
+
+static uint32_t pbsys_host_copy_str(uint8_t *buf, uint32_t buf_size, const char *str) {
+    uint32_t size = strlen(str);
+    if (size > buf_size) {
+        size = buf_size;
+    }
+    memcpy(buf, str, size);
+    return size;
+}
+
+/**
+ * Provides characteristic values when a host requests a read by identifier,
+ * used on transports without a GATT server of their own (currently serial).
+ *
+ * BLE drivers serve the same values through their own GATT servers, sourced
+ * the from the same values.
+ *
+ * @param [in]  service             Which service to read.
+ * @param [in]  char_id             16-bit characteristic id within @p service.
+ * @param [in]  transport           The transport the request came in on.
+ * @param [out] buf                 Buffer to receive the value.
+ * @param [in]  buf_size            Size of @p buf. String values are truncated to fit.
+ * @return                          Number of bytes written, or 0 if the
+ *                                  characteristic is unknown or does not fit.
+ */
+uint32_t pbsys_host_read_characteristic(uint8_t service, uint16_t char_id, pbsys_host_transport_type_t transport, uint8_t *buf, uint32_t buf_size) {
+    switch (service) {
+        case PBIO_PYBRICKS_READ_SERVICE_GATT:
+            switch (char_id) {
+                case PBIO_GATT_DEVICE_NAME_CHAR_UUID:
+                    return pbsys_host_copy_str(buf, buf_size, pbdrv_bluetooth_get_hub_name());
+                case PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID:
+                    return pbsys_host_copy_str(buf, buf_size, PBIO_VERSION_STR);
+                case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:
+                    return pbsys_host_copy_str(buf, buf_size, PBIO_PROTOCOL_VERSION_STR);
+                case PBIO_GATT_PNP_ID_CHAR_UUID:
+                    if (buf_size < PBIO_PYBRICKS_PNP_ID_SIZE) {
+                        return 0;
+                    }
+                    pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+                    return PBIO_PYBRICKS_PNP_ID_SIZE;
+                default:
+                    return 0;
+            }
+        case PBIO_PYBRICKS_READ_SERVICE_PYBRICKS:
+            switch (char_id) {
+                case 0x0003: // Hub capabilities
+                    if (buf_size < PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE) {
+                        return 0;
+                    }
+                    pbsys_host_get_hub_capabilities(buf, transport);
+                    return PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
+                default:
+                    return 0;
+            }
+        default:
+            return 0;
+    }
 }
 
 // Publisher APIs. Pybricks Profile connections call these to push data to

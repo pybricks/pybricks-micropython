@@ -49,11 +49,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbio/int_math.h>
 #include <pbio/protocol.h>
 
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbsys/host.h>
 
 #include "btstack_defines.h"
 #include "ble/att_db.h"
@@ -88,9 +86,7 @@ static uint16_t pybricks_service_read_callback(hci_con_handle_t con_handle, uint
 
     if (attribute_handle == pybricks_hub_capabilities_value_handle) {
         if (buffer && buffer_size >= PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE) {
-            pbio_pybricks_hub_capabilities(buffer,
-                pbio_int_math_min(att_server_get_mtu(con_handle), PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE) - PBIO_BLUETOOTH_ATT_HEADER_SIZE,
-                PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), PBSYS_CONFIG_HMI_NUM_SLOTS);
+            pbsys_host_get_hub_capabilities(buffer, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
         }
         return PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
     }

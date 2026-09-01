@@ -24,12 +24,7 @@
 
 #include <string.h>
 
-#include <pbio/bluetooth.h>
-
-#include <pbio/version.h>
-
 #include <pbsys/config.h>
-#include <pbsys/storage.h>
 #include <pbsys/command.h>
 
 #include <pbsys/host.h>
@@ -60,58 +55,6 @@ static bool pbio_usb_subscribed;
 
 bool pbio_usb_connection_is_active(void) {
     return pbdrv_usb_is_ready() && pbio_usb_dtr && pbio_usb_subscribed;
-}
-
-static uint32_t pbio_usb_copy_str(uint8_t *buf, const char *str) {
-    uint32_t size = strlen(str);
-
-    // Data with 4 byte header must fit in the unencoded frame.
-    if (size > PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 4) {
-        size = PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 4;
-    }
-    memcpy(buf, str, size);
-    return size;
-}
-
-/**
- * Provides characteristic values when a USB host requests a read. This is the
- * USB analog of a BLE host reading the device info or Pybricks characteristics.
- *
- * REVISIT: this reaches up into pbsys for the value sources, much like each BLE
- * driver still does today. We should invert this so pbsys registers a single read
- * handler shared by USB and all BLE drivers.
- */
-static uint32_t pbio_usb_read_characteristic(uint8_t service, uint16_t char_id, uint8_t *buf) {
-    switch (service) {
-        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT:
-            switch (char_id) {
-                case PBIO_GATT_DEVICE_NAME_CHAR_UUID:
-                    return pbio_usb_copy_str(buf, pbdrv_bluetooth_get_hub_name());
-                case PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID:
-                    return pbio_usb_copy_str(buf, PBIO_VERSION_STR);
-                case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:
-                    return pbio_usb_copy_str(buf, PBIO_PROTOCOL_VERSION_STR);
-                case PBIO_GATT_PNP_ID_CHAR_UUID:
-                    pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
-                    return PBIO_PYBRICKS_PNP_ID_SIZE;
-                default:
-                    return 0;
-            }
-        case PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS:
-            switch (char_id) {
-                case 0x0003: // Hub capabilities
-                    pbio_pybricks_hub_capabilities(buf,
-                        PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 2,
-                        PBSYS_CONFIG_APP_FEATURE_FLAGS,
-                        pbsys_storage_get_maximum_program_size(),
-                        PBSYS_CONFIG_HMI_NUM_SLOTS);
-                    return PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE;
-                default:
-                    return 0;
-            }
-        default:
-            return 0;
-    }
 }
 
 /**
@@ -261,8 +204,11 @@ static void pbio_usb_handle_data_in(void) {
                     pbio_usb_read_reply_buf[0] = service;
                     pbio_usb_read_reply_buf[1] = msg[1];
                     pbio_usb_read_reply_buf[2] = msg[2];
-                    uint32_t value_size = pbio_usb_read_characteristic(
-                        service, char_id, &pbio_usb_read_reply_buf[pbio_usb_READ_REPLY_HEADER_SIZE]);
+                    // The value bound excludes the EP type byte and the reply header.
+                    uint32_t value_size = pbsys_host_read_characteristic(
+                        service, char_id, PBSYS_HOST_TRANSPORT_TYPE_USB,
+                        &pbio_usb_read_reply_buf[pbio_usb_READ_REPLY_HEADER_SIZE],
+                        PBSYS_USB_MAX_DECODED_MESSAGE_SIZE - 1 - pbio_usb_READ_REPLY_HEADER_SIZE);
                     pbio_usb_read_reply_len = pbio_usb_READ_REPLY_HEADER_SIZE + value_size;
                     pbio_usb_read_reply_pending = true;
                     pbio_os_request_poll();

@@ -23,8 +23,7 @@
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbsys/host.h>
 
 
 #include <lego/lwp3.h>
@@ -1011,8 +1010,7 @@ static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbio_pybricks_hub_capabilities(hub_capabilities, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS,
-        pbsys_storage_get_maximum_program_size(), 0);
+    pbsys_host_get_hub_capabilities(hub_capabilities, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
 
     for (idx = 0; idx < PBIO_ARRAY_SIZE(gatt_attrs); idx++) {
 

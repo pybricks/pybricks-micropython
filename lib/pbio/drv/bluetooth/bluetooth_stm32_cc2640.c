@@ -25,8 +25,7 @@
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbsys/host.h>
 
 #include <lego/lwp3.h>
 
@@ -1140,8 +1139,7 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
-                        // REVISIT: this assumes connection_handle == conn_handle
-                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
+                        pbsys_host_get_hub_capabilities(buf, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);

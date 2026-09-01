@@ -24,7 +24,7 @@ OUT_EP_MSG_READ = 3
 IN_EP_MSG_READ_REPLY = 3
 
 # Characteristic namespace for read requests
-# (see PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_* in protocol.h).
+# (see PBIO_PYBRICKS_READ_SERVICE_* in protocol.h).
 READ_CHARACTERISTIC_GATT = 0x01
 
 

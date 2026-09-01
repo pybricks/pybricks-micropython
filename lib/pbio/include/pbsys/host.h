@@ -33,6 +33,8 @@ typedef enum {
 
 void pbsys_host_debug_print(const char *data, size_t len);
 bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
+void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport);
+uint32_t pbsys_host_read_characteristic(uint8_t service, uint16_t char_id, pbsys_host_transport_type_t transport, uint8_t *buf, uint32_t buf_size);
 void pbsys_host_init(void);
 bool pbsys_host_is_connected(void);
 void pbsys_host_schedule_status_update(const uint8_t *buf);
