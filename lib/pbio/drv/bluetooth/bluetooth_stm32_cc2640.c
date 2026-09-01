@@ -52,10 +52,6 @@
 #define DBG(...)
 #define DEBUG_PRINT(...)
 #endif
-// hub name goes in special section so that it can be modified when flashing firmware
-__attribute__((section(".name")))
-char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
-
 static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 
 
@@ -235,10 +231,6 @@ static void spi_set_mrdy(bool mrdy) {
     }
 }
 
-const char *pbdrv_bluetooth_get_hub_name(void) {
-    return pbdrv_bluetooth_hub_name;
-}
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
@@ -298,11 +290,12 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     data[1] = GAP_ADTYPE_SERVICE_DATA;
     pbio_set_uint16_le(&data[2], PBIO_GATT_PNP_ID_CHAR_UUID);
     pbio_pybricks_pnp_id(&data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
-    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    const char *hub_name = pbsys_host_get_hub_name();
+    uint8_t hub_name_len = strlen(hub_name);
     data[11] = hub_name_len + 1;
     data[12] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
-    memcpy(&data[13], pbdrv_bluetooth_hub_name, hub_name_len);
-    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max\n");
+    memcpy(&data[13], hub_name, hub_name_len);
+    _Static_assert(13 + PBSYS_HOST_HUB_NAME_SIZE - 1 <= 31, "scan response is 31 octet max\n");
 
     GAP_updateAdvertisingData(GAP_AD_TYPE_SCAN_RSP_DATA, 13 + hub_name_len, data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
@@ -1042,10 +1035,11 @@ static void handle_event(uint8_t *packet) {
                         case DEVICE_NAME_UUID: {
                             attReadByTypeRsp_t rsp;
                             uint8_t buf[ATT_MTU_SIZE - 2];
-                            uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+                            const char *hub_name = pbsys_host_get_hub_name();
+                            uint8_t hub_name_len = strlen(hub_name);
 
                             pbio_set_uint16_le(&buf[0], gap_service_handle + 2);
-                            memcpy(&buf[2], pbdrv_bluetooth_hub_name, hub_name_len);
+                            memcpy(&buf[2], hub_name, hub_name_len);
                             rsp.pDataList = buf;
                             rsp.dataLen = hub_name_len + 2;
                             ATT_ReadByTypeRsp(connection_handle, &rsp);
@@ -1077,8 +1071,9 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
-                        memcpy(&buf[0], pbdrv_bluetooth_hub_name, hub_name_len);
+                        const char *hub_name = pbsys_host_get_hub_name();
+                        uint8_t hub_name_len = strlen(hub_name);
+                        memcpy(&buf[0], hub_name, hub_name_len);
                         rsp.len = hub_name_len;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);

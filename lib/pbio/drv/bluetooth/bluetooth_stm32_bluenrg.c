@@ -45,10 +45,6 @@
 #define DEBUG_PRINT(...)
 #endif
 
-// hub name goes in special section so that it can be modified when flashing firmware
-__attribute__((section(".name")))
-char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
-
 static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 
 
@@ -229,10 +225,6 @@ static void spi_init(void) {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-const char *pbdrv_bluetooth_get_hub_name(void) {
-    return pbdrv_bluetooth_hub_name;
-}
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
@@ -325,10 +317,10 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // Do we need these?
     uint8_t response_data[25];
     memcpy(response_data, response_data_template, sizeof(response_data_template));
+    const char *pbdrv_bluetooth_hub_name = pbsys_host_get_hub_name();
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
     memcpy(&response_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
-    _Static_assert(sizeof(response_data_template) == 13, "hub name must follow the 13 byte template");
     _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
 
     hci_le_set_scan_response_data_begin(13 + hub_name_len, response_data);
@@ -1295,7 +1287,7 @@ static const hci_const_cmd_t cmd_gatt_init = {
 static const hci_const_cmd_t cmd_gap_init = {
     .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT),
     .plen = 3,
-    .params = { GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name) },
+    .params = { GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, PBSYS_HOST_HUB_NAME_SIZE },
 };
 
 // Initializes the Bluetooth chip
@@ -1363,7 +1355,7 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     // set the device name
 
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
-        0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
+        0, strlen(pbsys_host_get_hub_name()), pbsys_host_get_hub_name());
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // aci_gatt_update_char_value_end();
 

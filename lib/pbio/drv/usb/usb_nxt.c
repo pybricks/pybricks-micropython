@@ -449,10 +449,12 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
                             desc = &pbdrv_usb_str_desc_mfg;
                             size = sizeof(pbdrv_usb_str_desc_mfg.s);
                             break;
-                        case STRING_DESC_PRODUCT:
-                            desc = &pbdrv_usb_str_desc_prod;
-                            size = sizeof(pbdrv_usb_str_desc_prod.s);
+                        case STRING_DESC_PRODUCT: {
+                            const pbdrv_usb_str_prod_union_t *prod_desc = pbdrv_usb_get_str_desc_prod();
+                            desc = prod_desc;
+                            size = prod_desc->s.bLength;
                             break;
+                        }
                         case STRING_DESC_SERIAL:
                             desc = &pbdrv_usb_str_desc_serial;
                             size = sizeof(pbdrv_usb_str_desc_serial);

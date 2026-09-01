@@ -262,11 +262,6 @@ typedef struct {
  */
 void pbio_bluetooth_deinit(void);
 
-/**
- * Gets the bluetooth hub name. REVISIT: Move to sys/host.
- */
-const char *pbdrv_bluetooth_get_hub_name(void);
-
 //
 // Functions related to connections to peripherals.
 //
@@ -546,10 +541,6 @@ const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_rec
 #else // PBIO_CONFIG_BLUETOOTH
 
 static inline void pbio_bluetooth_deinit(void) {
-}
-
-static inline const char *pbdrv_bluetooth_get_hub_name(void) {
-    return "";
 }
 
 static inline pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user) {

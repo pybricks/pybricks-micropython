@@ -9,6 +9,7 @@
 #include <pbio/util.h>
 
 #include <lego/usb.h>
+#include <pbsys/host.h>
 #include "pbdrvconfig.h"
 
 #include "usb_ch9.h"
@@ -35,10 +36,10 @@ extern const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg;
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t str[PBIO_ARRAY_SIZE(PBDRV_CONFIG_USB_PROD_STR) - 1];
+    uint16_t str[PBSYS_HOST_HUB_NAME_SIZE - 1];
 } pbdrv_usb_str_prod_t;
 PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_str_prod);
 
-extern const pbdrv_usb_str_prod_union_t pbdrv_usb_str_desc_prod;
+const pbdrv_usb_str_prod_union_t *pbdrv_usb_get_str_desc_prod(void);
 
 #endif // _INTERNAL_PBDRV_USB_COMMON_DESC_H_

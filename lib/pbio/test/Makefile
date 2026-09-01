@@ -152,7 +152,6 @@ $(BUILD_PREFIX)/font_mono_8x5_8.c: $(PBIO_DIR)/src/image/fonts/mono_8x5.png $(FO
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
 CFLAGS += $(TINY_TEST_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
-CFLAGS += -DPBIO_TEST_BUILD=1
 
 # Parallelize permutation-heavy tests (e.g. the trajectory tests) across all
 # available CPU cores. Coverage may be inaccurate for that one test, but that's

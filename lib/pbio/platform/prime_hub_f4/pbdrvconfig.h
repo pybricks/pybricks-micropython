@@ -124,7 +124,6 @@
 #define PBDRV_CONFIG_USB_PID_0                      LEGO_USB_PID_SPIKE_PRIME
 #define PBDRV_CONFIG_USB_PID_1                      LEGO_USB_PID_ROBOT_INVENTOR
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
-#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_STM32F4_HUB_VARIANT_ADDR   0x08007d80
 #define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)

@@ -125,7 +125,6 @@
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_SPIKE_PRIME
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
-#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_LARGE_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)
 

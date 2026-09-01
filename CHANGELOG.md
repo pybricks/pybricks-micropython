@@ -8,6 +8,8 @@
 - Updated MicroPython to v1.29.0.
 - On the Move Hub, `bytes()` and `bytes.find()` now truncate out-of-range
   values instead of raising `ValueError`.
+- The USB product string now reports the hub name instead of a fixed product
+  name, matching the name already used for Bluetooth.
 
 ### Fixed
 - Fixed slow broadcasting while observing at the same time ([support#2822]).

@@ -11,7 +11,6 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/config.h>
-#include <pbio/bluetooth.h>
 #include <pbio/int_math.h>
 #include <pbio/protocol.h>
 #include <pbio/usb.h>
@@ -28,6 +27,23 @@ static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;
 static lwrb_t pbsys_host_stdout_ring_buf;
 static bool pbsys_host_event_stdout_busy;
+
+// Hub name goes in a special section so that it can be modified when flashing
+// firmware. The attribute syntax is only valid on ELF targets.
+#ifdef __ELF__
+__attribute__((section(".name")))
+#endif
+static char pbsys_host_hub_name[PBSYS_HOST_HUB_NAME_SIZE] = "Pybricks Hub";
+
+/**
+ * Gets the hub name, reported to hosts on all transports (BLE advertisement
+ * and GATT device name, USB product string, Pybricks Profile reads).
+ *
+ * @return  The hub name as a null-terminated string.
+ */
+const char *pbsys_host_get_hub_name(void) {
+    return pbsys_host_hub_name;
+}
 
 void pbsys_host_init(void) {
     // Buffer needs 1 byte of headroom, but command drops 1 command.
@@ -133,7 +149,7 @@ uint32_t pbsys_host_read_characteristic(uint8_t service, uint16_t char_id, pbsys
         case PBIO_PYBRICKS_READ_SERVICE_GATT:
             switch (char_id) {
                 case PBIO_GATT_DEVICE_NAME_CHAR_UUID:
-                    return pbsys_host_copy_str(buf, buf_size, pbdrv_bluetooth_get_hub_name());
+                    return pbsys_host_copy_str(buf, buf_size, pbsys_host_get_hub_name());
                 case PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID:
                     return pbsys_host_copy_str(buf, buf_size, PBIO_VERSION_STR);
                 case PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID:

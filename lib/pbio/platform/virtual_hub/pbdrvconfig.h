@@ -64,4 +64,3 @@
 #define PBDRV_CONFIG_USB                                    (1)
 #define PBDRV_CONFIG_USB_SIMULATION                         (1)
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Pybricks"
-#define PBDRV_CONFIG_USB_PROD_STR                           u"Virtual Hub"

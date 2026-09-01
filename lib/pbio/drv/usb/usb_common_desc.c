@@ -7,6 +7,10 @@
 
 #if PBDRV_CONFIG_USB
 
+#include <string.h>
+
+#include <pbsys/host.h>
+
 #include "usb_common_desc.h"
 
 const pbdrv_usb_langid_union_t pbdrv_usb_str_desc_langid = {
@@ -25,12 +29,23 @@ const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg = {
     }
 };
 
-const pbdrv_usb_str_prod_union_t pbdrv_usb_str_desc_prod = {
-    .s = {
-        .bLength = sizeof(pbdrv_usb_str_prod_t),
-        .bDescriptorType = DESC_TYPE_STRING,
-        .str = PBDRV_CONFIG_USB_PROD_STR,
+/**
+ * Gets the product string descriptor, built at runtime from the hub name so
+ * that the USB device name matches the Bluetooth device name.
+ */
+const pbdrv_usb_str_prod_union_t *pbdrv_usb_get_str_desc_prod(void) {
+    static pbdrv_usb_str_prod_union_t desc;
+
+    const char *hub_name = pbsys_host_get_hub_name();
+    size_t len = strlen(hub_name);
+
+    desc.s.bLength = 2 + 2 * len;
+    desc.s.bDescriptorType = DESC_TYPE_STRING;
+    for (size_t i = 0; i < len; i++) {
+        desc.s.str[i] = hub_name[i];
     }
-};
+
+    return &desc;
+}
 
 #endif // PBDRV_CONFIG_USB

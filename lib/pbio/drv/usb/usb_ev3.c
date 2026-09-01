@@ -517,10 +517,12 @@ static bool usb_get_descriptor(uint16_t wValue) {
                     pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_mfg.s);
                     return true;
 
-                case STRING_DESC_PRODUCT:
-                    pbdrv_usb_setup_data_to_send = pbdrv_usb_str_desc_prod.u;
-                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_prod.s);
+                case STRING_DESC_PRODUCT: {
+                    const pbdrv_usb_str_prod_union_t *prod_desc = pbdrv_usb_get_str_desc_prod();
+                    pbdrv_usb_setup_data_to_send = prod_desc->u;
+                    pbdrv_usb_setup_data_to_send_sz = prod_desc->s.bLength;
                     return true;
+                }
 
                 case STRING_DESC_SERIAL:
                     pbdrv_usb_ev3_ep0_buffer.b[0] = 2 * 2 * 6 + 2;

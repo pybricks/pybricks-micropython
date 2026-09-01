@@ -25,6 +25,7 @@
 #include <pbio/version.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbsys/host.h>
 #include "bluetooth_address.h"
 #include "bluetooth_btstack.h"
 
@@ -108,12 +109,6 @@ pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t ind
     }
     return &_peripherals[index];
 }
-
-// hub name goes in special section so that it can be modified when flashing firmware
-#if !PBIO_TEST_BUILD
-__attribute__((section(".name")))
-#endif
-char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
@@ -604,9 +599,9 @@ static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t attribut
 
     switch (attribute_handle) {
         case ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE:
-            att_value_len = strlen(pbdrv_bluetooth_hub_name);
+            att_value_len = strlen(pbsys_host_get_hub_name());
             if (buffer) {
-                memcpy(buffer, pbdrv_bluetooth_hub_name, att_value_len);
+                memcpy(buffer, pbsys_host_get_hub_name(), att_value_len);
             }
             return att_value_len;
 
@@ -643,10 +638,11 @@ static void init_advertising_data(void) {
 
     pbio_pybricks_pnp_id(&scan_resp_data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
 
-    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    const char *hub_name = pbsys_host_get_hub_name();
+    uint8_t hub_name_len = strlen(hub_name);
     scan_resp_data[11] = hub_name_len + 1;
-    memcpy(&scan_resp_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
-    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
+    memcpy(&scan_resp_data[13], hub_name, hub_name_len);
+    _Static_assert(13 + PBSYS_HOST_HUB_NAME_SIZE - 1 <= 31, "scan response is 31 octet max");
 
     gap_scan_response_set_data(13 + hub_name_len, scan_resp_data);
 }
@@ -1973,10 +1969,6 @@ static const btstack_link_key_db_t pbdrv_bluetooth_btstack_link_key_db = {
 
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
-const char *pbdrv_bluetooth_get_hub_name(void) {
-    return pbdrv_bluetooth_hub_name;
-}
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     // REVISIT: this should be linked to the init script as it can be updated in software
     // init script version
@@ -2264,7 +2256,7 @@ void pbdrv_bluetooth_init(void) {
     sdp_register_service(spp_sdp_record);
 
     // Identify with the hub name and as a toy robot instead.
-    gap_set_local_name(pbdrv_bluetooth_hub_name);
+    gap_set_local_name(pbsys_host_get_hub_name());
     gap_set_class_of_device(0x000804);
 
     // Claim yes/no capability (auto-accepted below) so that pairing with a

@@ -54,7 +54,6 @@
 #define PBDRV_CONFIG_HUB_KIND                               0
 #define PBDRV_CONFIG_HUB_VARIANT                            0x0000
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Raspberry Pi"
-#define PBDRV_CONFIG_USB_PROD_STR                           u"Build HAT"
 
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
