@@ -25,8 +25,14 @@
 typedef bool (*pbsys_host_stdin_event_callback_t)(uint8_t c);
 
 typedef enum {
+    /** Bluetooth Low Energy (GATT notifications). */
     PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH,
+    /** USB serial (CDC). */
     PBSYS_HOST_TRANSPORT_TYPE_USB,
+    /** Bluetooth Classic serial (RFCOMM). */
+    PBSYS_HOST_TRANSPORT_TYPE_RFCOMM,
+    /** The number of transport types. */
+    PBSYS_HOST_TRANSPORT_TYPE_COUNT,
 } pbsys_host_transport_type_t;
 
 /**

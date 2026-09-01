@@ -13,7 +13,7 @@
 #include <pbdrv/config.h>
 #include <pbio/int_math.h>
 #include <pbio/protocol.h>
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 #include <pbio/version.h>
 
 #include <pbsys/command.h>
@@ -106,7 +106,25 @@ void pbsys_host_schedule_status_update(const uint8_t *status_msg) {
 }
 
 /**
- * Tests if the hub is connected to the host with BLE or USB.
+ * Tests if the given transport has an active connection to a Pybricks app.
+ *
+ * @param [in] transport    The transport to test.
+ * @return                  @c true if the connection is active, else @c false.
+ */
+static bool pbsys_host_transport_is_connected(pbsys_host_transport_type_t transport) {
+    switch (transport) {
+        case PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH:
+            return pbdrv_bluetooth_host_is_connected();
+        case PBSYS_HOST_TRANSPORT_TYPE_USB:
+        case PBSYS_HOST_TRANSPORT_TYPE_RFCOMM:
+            return pbio_serial_connection_is_active(transport);
+        default:
+            return false;
+    }
+}
+
+/**
+ * Tests if the hub is connected to the host on any transport.
  *
  * Connected implies an active connection to a Pybricks app, not just
  * physically plugged in.
@@ -114,8 +132,12 @@ void pbsys_host_schedule_status_update(const uint8_t *status_msg) {
  * @return              @c true if connection is active, else @c false.
  */
 bool pbsys_host_is_connected(void) {
-    return pbdrv_bluetooth_host_is_connected() ||
-           pbio_usb_connection_is_active();
+    for (pbsys_host_transport_type_t transport = 0; transport < PBSYS_HOST_TRANSPORT_TYPE_COUNT; transport++) {
+        if (pbsys_host_transport_is_connected(transport)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -131,9 +153,11 @@ bool pbsys_host_is_connected(void) {
  */
 void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport) {
 
-    uint32_t max_receive_size = transport == PBSYS_HOST_TRANSPORT_TYPE_USB ?
-        PBSYS_CONFIG_HOST_EVENT_OUT_SIZE - 1:
-        pbdrv_bluetooth_get_max_message_size();
+    // Serial transports are configured to allow the configured host event
+    // size, while BLE is limited by the negotiated MTU.
+    uint32_t max_receive_size = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ?
+        pbdrv_bluetooth_get_max_message_size():
+        PBSYS_CONFIG_HOST_EVENT_OUT_SIZE - 1;
 
     pbio_pybricks_hub_capabilities(buf, max_receive_size,
         PBSYS_CONFIG_APP_FEATURE_FLAGS,
@@ -306,7 +330,7 @@ pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size) {
  */
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size) {
     // Fail if no one is listening.
-    if (!pbdrv_bluetooth_host_is_connected() && !pbio_usb_connection_is_active()) {
+    if (!pbsys_host_is_connected()) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -359,6 +383,23 @@ static uint8_t pbsys_host_event_out_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
 static bool pbsys_host_event_out_busy;
 
 /**
+ * Per-transport size latch: how much of the current transmission each
+ * transport still has to send. Zero when done (or not connected).
+ */
+static uint32_t pbsys_host_event_out_sizes[PBSYS_HOST_TRANSPORT_TYPE_COUNT];
+
+/**
+ * Marks the staged event of given @p size for transmission by all transports,
+ * guarding the current transmission. Disconnected transports are cleared
+ * again on their next pickup attempt.
+ */
+static void pbsys_host_event_out_set_size_all(uint32_t size) {
+    for (pbsys_host_transport_type_t t = 0; t < PBSYS_HOST_TRANSPORT_TYPE_COUNT; t++) {
+        pbsys_host_event_out_sizes[t] = size;
+    }
+}
+
+/**
  * App data message staged for transmission (NULL if none). The data is owned
  * by the sender, which must keep it valid until it is copied out at
  * transmission time, or call pbsys_host_app_data_clear_pending() when it
@@ -387,8 +428,6 @@ bool pbsys_host_tx_is_idle(void) {
 
 bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
 
-    static uint32_t bluetooth_size;
-    static uint32_t usb_size;
     static uint8_t *current_buf;
 
     // Re-send status occasionally for if missed on flaky connection.
@@ -397,18 +436,19 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     };
 
     // Returns the relevant busy state for the requested transport.
-    *len = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ? &bluetooth_size : &usb_size;
+    *len = &pbsys_host_event_out_sizes[transport];
 
     // Handle possible completion on ongoing transmission.
     if (pbsys_host_event_out_busy) {
-        // Clear locks if disconnected.
-        if (!pbdrv_bluetooth_host_is_connected()) {
-            bluetooth_size = 0;
+        // Clear locks if disconnected and check if any transport still going.
+        bool any_transport_busy = false;
+        for (pbsys_host_transport_type_t t = 0; t < PBSYS_HOST_TRANSPORT_TYPE_COUNT; t++) {
+            if (!pbsys_host_transport_is_connected(t)) {
+                pbsys_host_event_out_sizes[t] = 0;
+            }
+            any_transport_busy = any_transport_busy || pbsys_host_event_out_sizes[t] != 0;
         }
-        if (!pbio_usb_connection_is_active()) {
-            usb_size = 0;
-        }
-        if (bluetooth_size || usb_size) {
+        if (any_transport_busy) {
             // At least one transport is still going, so keep referencing
             // current data, no matter which transport initiated first. Only
             // resume the caller if it still has data itself, else it would
@@ -434,7 +474,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         // The status already starts with the event type.
         //
         memcpy(&pbsys_host_event_out_buf[0], pbsys_host_status_data, PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
-        usb_size = bluetooth_size = PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
+        pbsys_host_event_out_set_size_all(PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE);
         pbsys_host_status_data_pending = false;
         pbio_os_timer_reset(&status_timer);
 
@@ -454,7 +494,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         uint32_t drained_size = lwrb_read(&pbsys_host_stdout_ring_buf, &pbsys_host_event_out_buf[1], pbsys_host_get_max_message_size());
 
         // All transports are marked to send the same size, guarding current transmission.
-        usb_size = bluetooth_size = drained_size + 1;
+        pbsys_host_event_out_set_size_all(drained_size + 1);
 
         // Initiatiate transfer, marking stdout busy.
         current_buf = *buf = pbsys_host_event_out_buf;
@@ -468,7 +508,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     if (pbsys_host_app_data_size) {
         pbsys_host_event_out_buf[0] = PBIO_PYBRICKS_EVENT_WRITE_APP_DATA;
         memcpy(&pbsys_host_event_out_buf[1], pbsys_host_app_data, pbsys_host_app_data_size);
-        usb_size = bluetooth_size = pbsys_host_app_data_size + 1;
+        pbsys_host_event_out_set_size_all(pbsys_host_app_data_size + 1);
         // Keep the pointer latched until transmitted; zero size marks pickup.
         pbsys_host_app_data_size = 0;
 
@@ -481,7 +521,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
     // Telemetry, if pending, is sent from its own buffer without copying.
     uint32_t telemetry_size = pbsys_telemetry_get_data(pbsys_host_event_out_buf, pbsys_host_get_max_message_size());
     if (telemetry_size) {
-        usb_size = bluetooth_size = telemetry_size;
+        pbsys_host_event_out_set_size_all(telemetry_size);
         current_buf = *buf = pbsys_host_event_out_buf;
         pbsys_host_event_out_busy = true;
         return true;

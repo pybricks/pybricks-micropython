@@ -11,7 +11,7 @@
 
 #include <lwrb/lwrb.h>
 
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 #include <pbio/error.h>
 #include <pbio/int_math.h>
 #include <pbio/os.h>
@@ -178,7 +178,7 @@ void pbdrv_usb_init(void) {
 
     // No physical port to detect, so assert DTR right away. The process thread
     // also fakes a subscribe message, so the connection becomes active.
-    pbio_usb_on_dtr_changed(true);
+    pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_USB, true);
 }
 
 void pbdrv_usb_deinit(void) {

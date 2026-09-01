@@ -15,8 +15,10 @@
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
 #include <btstack_run_loop.h>
+#include <lwrb/lwrb.h>
 
 #include <pbio/bluetooth.h>
+#include <pbio/serial.h>
 #include <pbdrv/clock.h>
 
 #include <pbio/os.h>
@@ -1642,7 +1644,7 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
 #define RFCOMM_SERVER_CHANNEL (1)
 
 /**
- * Maximum RFCOMM frame size, also sizing the temporary echo buffer.
+ * Maximum RFCOMM frame size.
  */
 #define RFCOMM_SERVER_MTU (512)
 
@@ -1675,9 +1677,12 @@ static struct {
     pbio_error_t pair_err;
     /** Ends the pairing session if bonding never completes. */
     btstack_timer_source_t pair_timeout;
-    /** Received data pending echo, until a real consumer is hooked up. */
-    uint8_t echo_data[RFCOMM_SERVER_MTU];
-    uint16_t echo_size;
+    /** Incoming byte stream, drained by the pbio serial process. */
+    lwrb_t rx_ring;
+    uint8_t rx_buf[RFCOMM_SERVER_MTU * 2 + 1];
+    /** Outgoing message in flight. tx_size is what remains to be sent. */
+    const uint8_t *tx_data;
+    uint32_t tx_size;
 } host_connection;
 
 static void host_pair_end(pbio_error_t err);
@@ -1739,13 +1744,27 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                     }
                     host_connection.rfcomm_cid = rfcomm_event_channel_opened_get_rfcomm_cid(packet);
                     host_connection.connected = true;
+                    // Drop stale bytes from a previous connection so they
+                    // can't corrupt the first frame of this one.
+                    lwrb_reset(&host_connection.rx_ring);
                     DEBUG_PRINT("RFCOMM channel to %s opened.\n", bd_addr_to_str(host_connection.bdaddr));
+                    pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_RFCOMM, true);
                     break;
 
                 case RFCOMM_EVENT_CAN_SEND_NOW:
-                    if (host_connection.connected && host_connection.echo_size) {
-                        rfcomm_send(host_connection.rfcomm_cid, host_connection.echo_data, host_connection.echo_size);
-                        host_connection.echo_size = 0;
+                    if (host_connection.connected && host_connection.tx_size) {
+                        // RFCOMM is a stream, so messages larger than the
+                        // negotiated frame size are sent in chunks.
+                        uint32_t chunk = rfcomm_get_max_frame_size(host_connection.rfcomm_cid);
+                        if (chunk > host_connection.tx_size) {
+                            chunk = host_connection.tx_size;
+                        }
+                        rfcomm_send(host_connection.rfcomm_cid, (uint8_t *)host_connection.tx_data, chunk);
+                        host_connection.tx_data += chunk;
+                        host_connection.tx_size -= chunk;
+                        if (host_connection.tx_size) {
+                            rfcomm_request_can_send_now_event(host_connection.rfcomm_cid);
+                        }
                     }
                     break;
 
@@ -1754,7 +1773,7 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                         host_connection.rfcomm_cid == rfcomm_event_channel_closed_get_rfcomm_cid(packet)) {
                         DEBUG_PRINT("RFCOMM channel to %s closed.\n", bd_addr_to_str(host_connection.bdaddr));
                         host_connection.connected = false;
-                        host_connection.echo_size = 0;
+                        pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_RFCOMM, false);
                     }
                     break;
 
@@ -1771,13 +1790,10 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
             }
             DEBUG_PRINT("\n");
             #endif
-            // Echo the data back until a real consumer is hooked up.
-            if (size > sizeof(host_connection.echo_data)) {
-                size = sizeof(host_connection.echo_data);
-            }
-            memcpy(host_connection.echo_data, packet, size);
-            host_connection.echo_size = size;
-            rfcomm_request_can_send_now_event(host_connection.rfcomm_cid);
+            // Buffer for the pbio serial process to drain. If the ring is
+            // full, excess bytes are dropped and the COBS framing in the
+            // serial process resyncs on the next frame delimiter.
+            lwrb_write(&host_connection.rx_ring, packet, size);
             break;
         }
 
@@ -1881,6 +1897,34 @@ void pbdrv_bluetooth_classic_host_pair_cancel(void) {
 
 bool pbdrv_bluetooth_classic_host_is_connected(void) {
     return host_connection.connected;
+}
+
+uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size) {
+    return lwrb_read(&host_connection.rx_ring, data, size);
+}
+
+pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (!host_connection.connected) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    host_connection.tx_data = data;
+    host_connection.tx_size = size;
+    rfcomm_request_can_send_now_event(host_connection.rfcomm_cid);
+
+    // The can-send-now handler sends the message in chunks as the stack
+    // allows, requesting the poll that resumes this thread when done.
+    PBIO_OS_AWAIT_UNTIL(state, !host_connection.connected || host_connection.tx_size == 0);
+
+    if (!host_connection.connected) {
+        host_connection.tx_size = 0;
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 void pbdrv_bluetooth_classic_host_disconnect(void) {
@@ -2251,6 +2295,7 @@ void pbdrv_bluetooth_init(void) {
     // initiates the connection.
     rfcomm_init();
     rfcomm_register_service(host_packet_handler, RFCOMM_SERVER_CHANNEL, RFCOMM_SERVER_MTU);
+    lwrb_init(&host_connection.rx_ring, host_connection.rx_buf, sizeof(host_connection.rx_buf));
     static uint8_t spp_sdp_record[150];
     spp_create_sdp_record(spp_sdp_record, 0x10002, RFCOMM_SERVER_CHANNEL, "Pybricks");
     sdp_register_service(spp_sdp_record);

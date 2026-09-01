@@ -15,7 +15,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbio/bluetooth.h>
 #include <pbdrv/led.h>
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 
 #include <pbio/button.h>
 #include <pbio/busy_count.h>
@@ -137,7 +137,7 @@ static pbio_error_t boot_animation_process_shutdown_thread(pbio_os_state_t *stat
 
 static void pbsys_hmi_host_update_indications(void) {
     // Update USB light indication.
-    if (pbio_usb_connection_is_active()) {
+    if (pbio_serial_connection_is_active(PBSYS_HOST_TRANSPORT_TYPE_USB)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);

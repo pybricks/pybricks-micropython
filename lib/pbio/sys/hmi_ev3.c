@@ -15,7 +15,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/button.h>
@@ -43,7 +43,7 @@
 #endif
 
 static void pbsys_hmi_host_update_indications(void) {
-    if (pbio_usb_connection_is_active()) {
+    if (pbio_serial_connection_is_active(PBSYS_HOST_TRANSPORT_TYPE_USB)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);

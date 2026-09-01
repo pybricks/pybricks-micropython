@@ -17,7 +17,7 @@
 #include <usbd_pybricks.h>
 
 #include <pbio/bluetooth.h>
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 #include <pbio/protocol.h>
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -284,7 +284,7 @@ static USBD_StatusTypeDef Pybricks_Itf_TransmitCplt(uint8_t *Buf, uint32_t Len, 
 static USBD_StatusTypeDef Pybricks_Itf_SetControlLineState(bool dtr) {
     // The DTR signal indicates whether a host application has opened the serial
     // port. This is the USB analog of a BLE host subscribing to notifications.
-    pbio_usb_on_dtr_changed(dtr);
+    pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_USB, dtr);
     return USBD_OK;
 }
 

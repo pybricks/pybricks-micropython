@@ -272,6 +272,34 @@ bool pbdrv_bluetooth_classic_host_is_connected(void);
  */
 void pbdrv_bluetooth_classic_host_disconnect(void);
 
+/**
+ * Reads bytes received on the host computer RFCOMM connection.
+ *
+ * The host to hub direction is a raw byte stream (message framing is handled
+ * by the pbio serial process), so this returns an arbitrary slice of that
+ * stream. Call repeatedly until it returns 0 to drain.
+ *
+ * @param [out] data    Buffer to copy the bytes to.
+ * @param [in]  size    Maximum number of bytes to copy.
+ * @return              Number of bytes copied. Zero if none are available.
+ */
+uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size);
+
+/**
+ * Sends a message on the host computer RFCOMM connection, chunked to the
+ * negotiated frame size as needed. The caller ensures only one message is
+ * in flight at a time and that @p data stays valid until completion.
+ *
+ * @param [in] state    Protothread state.
+ * @param [in] data     Data to send.
+ * @param [in] size     Data size.
+ * @return              ::PBIO_SUCCESS when the message has been sent.
+ *                      ::PBIO_ERROR_AGAIN while sending is in progress.
+ *                      ::PBIO_ERROR_INVALID_OP if there is no connection or
+ *                      it was lost while sending.
+ */
+pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
+
 #else // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
@@ -323,6 +351,14 @@ static inline bool pbdrv_bluetooth_classic_host_is_connected(void) {
 }
 
 static inline void pbdrv_bluetooth_classic_host_disconnect(void) {
+}
+
+static inline uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size) {
+    return 0;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC

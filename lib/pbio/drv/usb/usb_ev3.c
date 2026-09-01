@@ -14,7 +14,7 @@
 
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 #include <pbio/os.h>
 
 #include <pbdrv/usb.h>
@@ -774,7 +774,7 @@ static void usb_device_intr(void) {
                         case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
                             // DTR asserted means a host app opened the serial
                             // port (analogous to a BLE host subscribing).
-                            pbio_usb_on_dtr_changed(
+                            pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_USB,
                                 (setup_pkt.s.wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
                             handled = true;
                             break;

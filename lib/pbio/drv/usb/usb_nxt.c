@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <pbio/usb.h>
+#include <pbio/serial.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -540,7 +540,7 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_setup_packet_t *packet)
             // DTR asserted means a host app opened the serial port. This is
             // the USB analog of a BLE host subscribing to notifications, and
             // is how we detect connect/disconnect.
-            pbio_usb_on_dtr_changed(
+            pbio_serial_port_changed(PBSYS_HOST_TRANSPORT_TYPE_USB,
                 (packet->wValue & USB_CDC_CONTROL_LINE_STATE_DTR) != 0);
             pbdrv_usb_nxt_send_null();
             break;
