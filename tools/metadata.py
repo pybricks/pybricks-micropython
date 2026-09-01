@@ -55,6 +55,7 @@ import io
 import json
 import os
 import re
+import struct
 import sys
 
 # Path to repo top-level dir.
@@ -81,11 +82,38 @@ PLATFORM_INFO = {
 }
 
 
+def elf_section_location(elf_file: io.FileIO, section_name: str) -> tuple[int, int]:
+    """Gets the file offset and size of a named section in an ELF32 LSB file."""
+    elf_header = elf_file.read(52)
+    if elf_header[:4] != b"\x7fELF" or elf_header[4] != 1 or elf_header[5] != 1:
+        raise ValueError("not a little-endian ELF32 file")
+
+    (e_shoff,) = struct.unpack_from("<I", elf_header, 32)
+    e_shentsize, e_shnum, e_shstrndx = struct.unpack_from("<3H", elf_header, 46)
+
+    def read_section_header(index):
+        elf_file.seek(e_shoff + index * e_shentsize)
+        # sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, ...
+        return struct.unpack("<10I", elf_file.read(40))
+
+    shstrtab_offset = read_section_header(e_shstrndx)[4]
+    target = section_name.encode() + b"\0"
+
+    for index in range(e_shnum):
+        section_header = read_section_header(index)
+        elf_file.seek(shstrtab_offset + section_header[0])
+        if elf_file.read(len(target)) == target:
+            return section_header[4], section_header[5]
+
+    raise ValueError(f"section '{section_name}' not found")
+
+
 def generate(
     fw_version: str,
     platform: str,
     map_file: io.FileIO,
     out_file: io.FileIO,
+    elf_file: io.FileIO = None,
 ):
     if platform not in PLATFORM_INFO:
         print("Unknown platform", file=sys.stderr)
@@ -107,11 +135,27 @@ def generate(
         "checksum-type": platform_info["checksum-type"],
     }
 
-    if device_id in (0xE0, 0xE2):
-        # these legacy hubs don't (yet) support these features
+    if device_id == 0xE0:
+        # Not supported. Setting to 0 ignores name on flashing.
         variant["checksum-size"] = 0
         variant["hub-name-offset"] = 0
         variant["hub-name-size"] = 0
+    elif device_id == 0xE2:
+        # EV3 firmware-base.bin is u-boot plus the firmware ELF at a fixed
+        # offset, so the name is patched at the .name file offset within
+        # that ELF. There is no checksum or appended user program.
+        if elf_file is None:
+            print("EV3 requires the firmware ELF file (--elf)", file=sys.stderr)
+            exit(1)
+
+        # Offset of the embedded firmware ELF in the EV3 firmware image. Must match
+        # UIMAGE_OFFSET in bricks/ev3/make_bootable_image.py.
+        EV3_UIMAGE_OFFSET = 0x50000
+
+        name_offset, name_size = elf_section_location(elf_file, ".name")
+        variant["checksum-size"] = 0
+        variant["hub-name-offset"] = EV3_UIMAGE_OFFSET + name_offset
+        variant["hub-name-size"] = name_size
     else:
         # scrape info from map file
 
@@ -209,6 +253,12 @@ if __name__ == "__main__":
         type=argparse.FileType("w"),
         help="output file name",
     )
+    parser.add_argument(
+        "--elf",
+        metavar="<elf-file>",
+        type=argparse.FileType("rb"),
+        help="firmware ELF file embedded in the firmware image (EV3 only)",
+    )
 
     args = parser.parse_args()
     generate(
@@ -216,4 +266,5 @@ if __name__ == "__main__":
         args.platform,
         args.map_file,
         args.out_file,
+        args.elf,
     )

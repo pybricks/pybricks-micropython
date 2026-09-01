@@ -59,6 +59,12 @@ SECTIONS
         *(.data.*)
     } > DDR
 
+    .name :
+    {
+        . = ALIGN(4);
+        *(.name) /* customizable hub name */
+    } > DDR
+
     .bss (NOLOAD) :
     {
         . = ALIGN(4);

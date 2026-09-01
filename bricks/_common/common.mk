@@ -867,6 +867,10 @@ MAKE_BOOTABLE_IMAGE = $(PBTOP)/bricks/ev3/make_bootable_image.py
 $(BUILD)/firmware-base.bin: $(MAKE_BOOTABLE_IMAGE) $(PBTOP)/lib/pbio/platform/ev3/u-boot.bin $(BUILD)/firmware.stripped.elf
 	$(Q)$^ $@
 
+# The hub name offset is scraped from the ELF embedded in the firmware image.
+$(BUILD)/firmware.metadata.json: METADATA_ARGS = --elf $(BUILD)/firmware.stripped.elf
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware.stripped.elf
+
 else
 # For embeded systems, the firmware is just the base file.
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-obj.bin
@@ -882,7 +886,7 @@ endif
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
-	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@ $(METADATA_ARGS)
 
 # firmware.zip file
 ZIP_FILES := \

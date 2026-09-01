@@ -5,7 +5,8 @@
 ## [Unreleased]
 
 ### Added
-- Support for setting a custom hub name when flashing NXT firmware.
+- Support for setting a custom hub name when flashing NXT and EV3
+  firmware ([support#2342]).
 
 ### Changed
 - Updated MicroPython to v1.29.0.
@@ -30,6 +31,7 @@
 ### Fixed
 - Fixed output missing on Technic Hub and City Hub ([support#2814]).
 
+[support#2342]: https://github.com/pybricks/support/issues/2342
 [support#2630]: https://github.com/pybricks/support/issues/2630
 [support#2812]: https://github.com/pybricks/support/issues/2814
 
