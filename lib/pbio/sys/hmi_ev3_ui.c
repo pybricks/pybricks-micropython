@@ -219,6 +219,8 @@ typedef enum {
     PBSYS_HMI_EV3_UI_DEVICE_PHASE_SCAN,
     /** Connecting to the selected device. */
     PBSYS_HMI_EV3_UI_DEVICE_PHASE_CONNECT,
+    /** Pairing succeeded, waiting for acknowledgement. */
+    PBSYS_HMI_EV3_UI_DEVICE_PHASE_SUCCESS,
     /** Connection attempt timed out. */
     PBSYS_HMI_EV3_UI_DEVICE_PHASE_FAILED,
 } pbsys_hmi_ev3_ui_device_phase_t;
@@ -350,10 +352,18 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_device_button(pbio_butt
             return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
         }
 
+        case PBSYS_HMI_EV3_UI_DEVICE_PHASE_SUCCESS: {
+            if (button == PBIO_BUTTON_LEFT_UP || button == PBIO_BUTTON_CENTER) {
+                state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
+                return PBSYS_HMI_EV3_UI_ACTION_NONE;
+            }
+            return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
+        }
+
         case PBSYS_HMI_EV3_UI_DEVICE_PHASE_CONNECT: {
             pbio_error_t err = config->pair_status();
             if (err == PBIO_SUCCESS) {
-                device_ui.phase = PBSYS_HMI_EV3_UI_DEVICE_PHASE_INFO;
+                device_ui.phase = PBSYS_HMI_EV3_UI_DEVICE_PHASE_SUCCESS;
                 return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
             }
             if (button == PBIO_BUTTON_LEFT_UP || err == PBIO_ERROR_CANCELED) {
@@ -656,7 +666,8 @@ static void pbsys_hmi_ev3_ui_draw_device_overlay(void) {
 
     switch (device_ui.phase) {
 
-        case PBSYS_HMI_EV3_UI_DEVICE_PHASE_INFO: {
+        case PBSYS_HMI_EV3_UI_DEVICE_PHASE_INFO:
+        case PBSYS_HMI_EV3_UI_DEVICE_PHASE_SUCCESS: {
             uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, true);
             if (!link_key) {
                 // Erased in the background. Handler switches to scanning soon.
@@ -667,6 +678,14 @@ static void pbsys_hmi_ev3_ui_draw_device_overlay(void) {
                 link_key->bdaddr[0], link_key->bdaddr[1], link_key->bdaddr[2],
                 link_key->bdaddr[3], link_key->bdaddr[4], link_key->bdaddr[5]);
             pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, buf, 0, 64);
+
+            // Right after pairing, don't show the connection status or the
+            // delete option yet, since the host may still (re)connect.
+            if (device_ui.phase == PBSYS_HMI_EV3_UI_DEVICE_PHASE_SUCCESS) {
+                pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Ready for use", 0, 78);
+                pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
+                return;
+            }
             pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14,
                 config->is_connected() ? "Connected" : "Not connected", 0, 78);
             pbsys_hmi_ev3_ui_draw_centered_text(&pbio_font_liberationsans_regular_14, "Delete connection?", 0, separator_y - 8);
