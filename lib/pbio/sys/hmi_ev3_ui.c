@@ -83,10 +83,7 @@ typedef struct {
  *
  * On change, the whole UI is drawn.
  */
-static pbsys_hmi_ev3_ui_t state = {
-    .tab = PBSYS_HMI_EV3_UI_TAB_SETTINGS, // during testing, so it auto opens here...
-    .selection = {0, 0, 1},
-};
+static pbsys_hmi_ev3_ui_t state;
 
 /**
  * Available apps on app tab.
@@ -102,8 +99,8 @@ static const char *apps[] = {
  */
 static const char *settings[] = {
     " Version",
-    " Gamepad",
-    " PC",
+    " Add new computer",
+    " Add new gamepad",
 };
 
 // -----------------------------------------------------------------------------
@@ -242,7 +239,7 @@ typedef struct {
 } pbsys_hmi_ev3_ui_device_config_t;
 
 static const pbsys_hmi_ev3_ui_device_config_t gamepad_config = {
-    .scan_text = "Scanning gamepad",
+    .scan_text = "Scanning: Gamepad",
     .connect_text = "Connecting...",
     .pair = pbdrv_bluetooth_classic_hid_pair,
     .pair_status = pbdrv_bluetooth_classic_hid_pair_status,
@@ -252,8 +249,8 @@ static const pbsys_hmi_ev3_ui_device_config_t gamepad_config = {
 };
 
 static const pbsys_hmi_ev3_ui_device_config_t host_config = {
-    .scan_text = "Scanning PC",
-    .connect_text = "Confirm on PC",
+    .scan_text = "Scanning: Computer",
+    .connect_text = "Confirm on computer",
     .pair = pbdrv_bluetooth_classic_host_pair,
     .pair_status = pbdrv_bluetooth_classic_host_pair_status,
     .pair_passkey = pbdrv_bluetooth_classic_host_pair_passkey,
@@ -478,9 +475,9 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
         } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_SETTINGS) {
             switch (state.selection[PBSYS_HMI_EV3_UI_TAB_SETTINGS]) {
                 case 1:
-                    return pbsys_hmi_ev3_ui_handle_device_open(&gamepad_config);
-                case 2:
                     return pbsys_hmi_ev3_ui_handle_device_open(&host_config);
+                case 2:
+                    return pbsys_hmi_ev3_ui_handle_device_open(&gamepad_config);
                 default:
                     // Other settings have no info.
                     return PBSYS_HMI_EV3_UI_ACTION_NONE;
@@ -814,17 +811,20 @@ void pbsys_hmi_ev3_ui_draw(void) {
     pbio_image_fill_rect(display, 162, 3, bars, 4, BLACK);
 
     // USB if connected.
+    uint8_t right_align = 160;
     if (pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED)) {
-        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__usb_host, 130, 2, BLACK);
+        right_align -= pbio_image_media__usb_host.width + 2;
+        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__usb_host, right_align, 2, BLACK);
     }
 
     // Bluetooth Classic host computer and gamepad if connected.
-    // REVISIT: use dedicated icons instead of the USB placeholder.
     if (pbdrv_bluetooth_classic_host_is_connected()) {
-        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__usb_host, 112, 2, BLACK);
+        right_align -= pbio_image_media__bt_host.width + 2;
+        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__bt_host, right_align, 2, BLACK);
     }
     if (pbdrv_bluetooth_classic_hid_is_connected()) {
-        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__usb_host, 94, 2, BLACK);
+        right_align -= pbio_image_media__gamepad_small.width + 2;
+        pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__gamepad_small, right_align, 2, BLACK);
     }
 
     // Draw the overlay on top of everything else.

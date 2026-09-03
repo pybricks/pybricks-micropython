@@ -640,7 +640,9 @@ MEDIA_SRC = $(sort $(addprefix lib/pbio/src/image/media/,\
 	lms2012/_port_view_pd.bmp \
 	ui/_accept24.svg \
 	ui/_accept24_fill.svg \
+	ui/_bt_host.svg \
 	ui/_off20.svg \
+	ui/_gamepad_small.svg \
 	ui/_port_view_nxt_color_ambient.svg \
 	ui/_port_view_nxt_color_color.svg \
 	ui/_port_view_nxt_color_reflection.svg \
