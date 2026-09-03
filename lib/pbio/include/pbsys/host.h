@@ -43,16 +43,16 @@ typedef enum {
 /**
  * Buffer size for the hub display name composed by
  * pbsys_host_get_hub_display_name(), including null terminator. Sized for
- * the longest form: "<name> (<hub type>, bluetooth)".
+ * the longest form: "<name> (<hub type>)".
  */
-#define PBSYS_HOST_HUB_DISPLAY_NAME_SIZE (PBSYS_HOST_HUB_NAME_SIZE + sizeof(PBSYS_CONFIG_HUB_TYPE_STR) + 13)
+#define PBSYS_HOST_HUB_DISPLAY_NAME_SIZE (PBSYS_HOST_HUB_NAME_SIZE + sizeof(PBSYS_CONFIG_HUB_TYPE_STR) + 3)
 
 #if PBSYS_CONFIG_HOST
 
 void pbsys_host_debug_print(const char *data, size_t len);
 bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
 void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport);
-const char *pbsys_host_get_hub_display_name(pbsys_host_transport_type_t transport);
+const char *pbsys_host_get_hub_display_name(void);
 const char *pbsys_host_get_hub_name(void);
 uint32_t pbsys_host_read_characteristic(uint8_t service, uint16_t char_id, pbsys_host_transport_type_t transport, uint8_t *buf, uint32_t buf_size);
 void pbsys_host_init(void);

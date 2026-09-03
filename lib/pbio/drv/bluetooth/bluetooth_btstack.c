@@ -2306,7 +2306,7 @@ void pbdrv_bluetooth_init(void) {
     // Identify with the hub name and as a toy robot instead. The decorated
     // name distinguishes this from the same hub connected over USB in host
     // OS device pickers.
-    gap_set_local_name(pbsys_host_get_hub_display_name(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH));
+    gap_set_local_name(pbsys_host_get_hub_display_name());
     gap_set_class_of_device(0x000804);
 
     // Claim yes/no capability (auto-accepted below) so that pairing with a

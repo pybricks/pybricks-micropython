@@ -47,22 +47,20 @@ const char *pbsys_host_get_hub_name(void) {
 }
 
 /**
- * Gets the hub name decorated with the hub type and transport, e.g.
- * "myhub (SPIKE Prime, usb)".
+ * Gets the hub name decorated with the hub type, e.g.
+ * "myhub (SPIKE Prime)".
  *
  * Unlike the bare name from pbsys_host_get_hub_name(), this is used on
  * transports where the hub appears in host OS device pickers alongside
- * other devices and transports, so it needs to be self-describing.
+ * other devices, so it needs to be self-describing.
  *
  * @param [in] transport    The transport whose name to include.
  * @return                  The display name as a null-terminated string.
  */
-const char *pbsys_host_get_hub_display_name(pbsys_host_transport_type_t transport) {
+const char *pbsys_host_get_hub_display_name(void) {
     static char display_name[PBSYS_HOST_HUB_DISPLAY_NAME_SIZE];
     strcpy(display_name, pbsys_host_hub_name);
-    strcat(display_name, " (" PBSYS_CONFIG_HUB_TYPE_STR ", ");
-    strcat(display_name, transport == PBSYS_HOST_TRANSPORT_TYPE_USB ? "usb" : "bluetooth");
-    strcat(display_name, ")");
+    strcat(display_name, " (" PBSYS_CONFIG_HUB_TYPE_STR ")");
     return display_name;
 }
 

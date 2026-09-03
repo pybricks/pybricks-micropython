@@ -36,7 +36,7 @@ const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg = {
 const pbdrv_usb_str_prod_union_t *pbdrv_usb_get_str_desc_prod(void) {
     static pbdrv_usb_str_prod_union_t desc;
 
-    const char *hub_name = pbsys_host_get_hub_display_name(PBSYS_HOST_TRANSPORT_TYPE_USB);
+    const char *hub_name = pbsys_host_get_hub_display_name();
     size_t len = strlen(hub_name);
 
     desc.s.bLength = 2 + 2 * len;
