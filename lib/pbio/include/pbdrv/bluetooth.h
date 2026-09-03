@@ -209,6 +209,14 @@ void pbdrv_bluetooth_classic_hid_pair_cancel(void);
 bool pbdrv_bluetooth_classic_hid_is_connected(void);
 
 /**
+ * Gets the name of the connected Bluetooth Classic HID device.
+ *
+ * @return  The name, or NULL if nothing is connected or the device is not in
+ *          the bonding store (it can connect without being registered).
+ */
+const char *pbdrv_bluetooth_classic_hid_get_connected_name(void);
+
+/**
  * Disconnects the Bluetooth Classic HID device or aborts an ongoing
  * connection attempt, if any.
  */
@@ -266,6 +274,14 @@ void pbdrv_bluetooth_classic_host_pair_cancel(void);
  * @return  True if connected.
  */
 bool pbdrv_bluetooth_classic_host_is_connected(void);
+
+/**
+ * Gets the name of the connected host computer.
+ *
+ * @return  The name, or NULL if nothing is connected or the host is not in
+ *          the bonding store (it can connect without being registered).
+ */
+const char *pbdrv_bluetooth_classic_host_get_connected_name(void);
 
 /**
  * Disconnects the host computer RFCOMM connection, if any.
@@ -328,6 +344,10 @@ static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return false;
 }
 
+static inline const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
+    return NULL;
+}
+
 static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
 }
 
@@ -348,6 +368,10 @@ static inline void pbdrv_bluetooth_classic_host_pair_cancel(void) {
 
 static inline bool pbdrv_bluetooth_classic_host_is_connected(void) {
     return false;
+}
+
+static inline const char *pbdrv_bluetooth_classic_host_get_connected_name(void) {
+    return NULL;
 }
 
 static inline void pbdrv_bluetooth_classic_host_disconnect(void) {

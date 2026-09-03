@@ -1479,6 +1479,7 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                         hid_pair_end(PBIO_SUCCESS);
                     }
                     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
+                    pbio_bluetooth_host_connection_changed();
                     DEBUG_PRINT("HID connection to %s opened.\n", bd_addr_to_str(hid_connection.bdaddr));
                     break;
 
@@ -1517,6 +1518,7 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                         hid_connection.hid_cid == hid_subevent_connection_closed_get_hid_cid(packet)) {
                         DEBUG_PRINT("HID connection to %s closed.\n", bd_addr_to_str(hid_connection.bdaddr));
                         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
+                        pbio_bluetooth_host_connection_changed();
                     }
                     break;
 
@@ -1542,7 +1544,7 @@ static void hid_pair_end(pbio_error_t err) {
     hid_connection.pair_err = err;
     if (err != PBIO_SUCCESS) {
         pbdrv_bluetooth_classic_hid_disconnect();
-        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
+        pbio_bluetooth_classic_link_key_unregister(hid_connection.bdaddr);
     }
 }
 
@@ -1568,7 +1570,7 @@ pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char 
 
     // Provisional bonding record; the stack stores the negotiated link key
     // into it via the pbio link key store.
-    pbio_bluetooth_classic_link_key_register(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD, bdaddr, name);
+    pbio_bluetooth_classic_link_key_register(bdaddr, name);
 
     memcpy(hid_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_PAIRING;
@@ -1586,7 +1588,7 @@ pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char 
         DEBUG_PRINT("HID host connect failed, status 0x%02x.\n", btstack_error);
         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
         hid_connection.pair_err = PBIO_ERROR_FAILED;
-        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD);
+        pbio_bluetooth_classic_link_key_unregister(hid_connection.bdaddr);
         return PBIO_ERROR_FAILED;
     }
 
@@ -1614,6 +1616,13 @@ void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
 
 bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
+}
+
+const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
+    if (!pbdrv_bluetooth_classic_hid_is_connected()) {
+        return NULL;
+    }
+    return pbio_bluetooth_classic_link_key_get_name(hid_connection.bdaddr);
 }
 
 void pbdrv_bluetooth_classic_hid_disconnect(void) {
@@ -1725,7 +1734,9 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                     break;
 
                 case RFCOMM_EVENT_INCOMING_CONNECTION:
-                    if (host_connection.connected) {
+                    // Also declined while pairing, since that session owns
+                    // the address and timer state of this struct.
+                    if (host_connection.connected || host_connection.pairing) {
                         DEBUG_PRINT("RFCOMM channel in use, declining.\n");
                         rfcomm_decline_connection(rfcomm_event_incoming_connection_get_rfcomm_cid(packet));
                         break;
@@ -1820,7 +1831,7 @@ static void host_pair_end(pbio_error_t err) {
         if (acl && acl->con_handle != HCI_CON_HANDLE_INVALID) {
             gap_disconnect(acl->con_handle);
         }
-        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER);
+        pbio_bluetooth_classic_link_key_unregister(host_connection.bdaddr);
     }
 }
 
@@ -1846,7 +1857,7 @@ pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char
 
     // Provisional bonding record; the stack stores the negotiated link key
     // into it via the pbio link key store.
-    pbio_bluetooth_classic_link_key_register(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER, bdaddr, name);
+    pbio_bluetooth_classic_link_key_register(bdaddr, name);
 
     memcpy(host_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
     host_connection.pairing = true;
@@ -1861,7 +1872,7 @@ pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char
         DEBUG_PRINT("Dedicated bonding failed to start.\n");
         host_connection.pairing = false;
         host_connection.pair_err = PBIO_ERROR_FAILED;
-        pbio_bluetooth_classic_link_key_unregister(PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER);
+        pbio_bluetooth_classic_link_key_unregister(host_connection.bdaddr);
         return PBIO_ERROR_FAILED;
     }
 
@@ -1897,6 +1908,13 @@ void pbdrv_bluetooth_classic_host_pair_cancel(void) {
 
 bool pbdrv_bluetooth_classic_host_is_connected(void) {
     return host_connection.connected;
+}
+
+const char *pbdrv_bluetooth_classic_host_get_connected_name(void) {
+    if (!host_connection.connected) {
+        return NULL;
+    }
+    return pbio_bluetooth_classic_link_key_get_name(host_connection.bdaddr);
 }
 
 uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size) {
@@ -1981,7 +1999,7 @@ static int link_key_db_iterator_init(btstack_link_key_iterator_t *it) {
 }
 
 static int link_key_db_iterator_get_next(btstack_link_key_iterator_t *it, bd_addr_t bd_addr, link_key_t link_key, link_key_type_t *link_key_type) {
-    for (uintptr_t index = (uintptr_t)it->context; index < PBIO_BLUETOOTH_CLASSIC_SLOT_NUM; index++) {
+    for (uintptr_t index = (uintptr_t)it->context; index < PBIO_BLUETOOTH_CLASSIC_NUM_BONDS; index++) {
         const pbio_bluetooth_classic_link_key_t *record = pbio_bluetooth_classic_link_key_get_record(index);
         if (!record) {
             continue;

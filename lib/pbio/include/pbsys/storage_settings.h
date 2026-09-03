@@ -48,8 +48,8 @@ typedef struct _pbsys_storage_settings_t {
     pbio_imu_persistent_settings_t imu_settings;
     #endif
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
-    /** Bonding records for Bluetooth Classic devices, one per connection slot. */
-    pbio_bluetooth_classic_link_key_t bluetooth_bonds[PBIO_BLUETOOTH_CLASSIC_SLOT_NUM];
+    /** Bonding records for Bluetooth Classic devices, most recent first. */
+    pbio_bluetooth_classic_link_key_t bluetooth_bonds[PBIO_BLUETOOTH_CLASSIC_NUM_BONDS];
     #endif
 } pbsys_storage_settings_t;
 

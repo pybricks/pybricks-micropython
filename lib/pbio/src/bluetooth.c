@@ -579,10 +579,9 @@ void pbio_bluetooth_deinit(void) {
 #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 // Stack-agnostic Bluetooth Classic link key store, backed by the persisted
-// bonding records in pbsys storage settings, one per connection slot. A
-// record is registered (address, name) when the user starts pairing; the
-// stack then fills in the key here when pairing completes, and reads it back
-// on reconnect.
+// bonding records in pbsys storage settings. A record is registered (address,
+// name) when the user starts pairing; the stack then fills in the key here
+// when pairing completes, and reads it back on reconnect.
 
 static pbio_bluetooth_classic_link_key_t *link_key_records;
 
@@ -622,8 +621,8 @@ static pbio_bluetooth_classic_link_key_t *link_key_find(const uint8_t *bdaddr) {
     if (!link_key_records) {
         return NULL;
     }
-    for (uint32_t slot = 0; slot < PBIO_BLUETOOTH_CLASSIC_SLOT_NUM; slot++) {
-        pbio_bluetooth_classic_link_key_t *record = &link_key_records[slot];
+    for (uint32_t i = 0; i < PBIO_BLUETOOTH_CLASSIC_NUM_BONDS; i++) {
+        pbio_bluetooth_classic_link_key_t *record = &link_key_records[i];
         if (link_key_is_registered(record) &&
             memcmp(record->bdaddr, bdaddr, sizeof(record->bdaddr)) == 0) {
             return record;
@@ -632,31 +631,45 @@ static pbio_bluetooth_classic_link_key_t *link_key_find(const uint8_t *bdaddr) {
     return NULL;
 }
 
-const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_registered(pbio_bluetooth_classic_slot_t slot) {
-    if (!link_key_records || slot >= PBIO_BLUETOOTH_CLASSIC_SLOT_NUM) {
-        return NULL;
-    }
-    const pbio_bluetooth_classic_link_key_t *record = &link_key_records[slot];
-    return link_key_is_registered(record) ? record : NULL;
+const char *pbio_bluetooth_classic_link_key_get_name(const uint8_t *bdaddr) {
+    const pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    return record ? record->name : NULL;
 }
 
-void pbio_bluetooth_classic_link_key_register(pbio_bluetooth_classic_slot_t slot, const uint8_t *bdaddr, const char *name) {
-    if (!link_key_records || slot >= PBIO_BLUETOOTH_CLASSIC_SLOT_NUM) {
+void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name) {
+    if (!link_key_records) {
         return;
     }
-    pbio_bluetooth_classic_link_key_t *record = &link_key_records[slot];
+
+    // Records are ordered most recently registered first. Shift down from the
+    // device's own record if it has one, else from the first free record, else
+    // from the last one, which forgets the least recently registered device.
+    uint32_t start = PBIO_BLUETOOTH_CLASSIC_NUM_BONDS - 1;
+    pbio_bluetooth_classic_link_key_t *existing = link_key_find(bdaddr);
+    if (existing) {
+        start = (uint32_t)(existing - link_key_records);
+    } else {
+        for (uint32_t i = 0; i < PBIO_BLUETOOTH_CLASSIC_NUM_BONDS; i++) {
+            if (!link_key_is_registered(&link_key_records[i])) {
+                start = i;
+                break;
+            }
+        }
+    }
+    for (uint32_t i = start; i > 0; i--) {
+        link_key_records[i] = link_key_records[i - 1];
+    }
+
+    pbio_bluetooth_classic_link_key_t *record = &link_key_records[0];
     memset(record, 0, sizeof(*record));
     memcpy(record->bdaddr, bdaddr, sizeof(record->bdaddr));
     snprintf(record->name, sizeof(record->name), "%s", name);
     pbsys_storage_request_write();
 }
 
-void pbio_bluetooth_classic_link_key_unregister(pbio_bluetooth_classic_slot_t slot) {
-    if (!link_key_records || slot >= PBIO_BLUETOOTH_CLASSIC_SLOT_NUM) {
-        return;
-    }
-    pbio_bluetooth_classic_link_key_t *record = &link_key_records[slot];
-    if (!link_key_is_registered(record)) {
+void pbio_bluetooth_classic_link_key_unregister(const uint8_t *bdaddr) {
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record) {
         return;
     }
     memset(record, 0, sizeof(*record));
@@ -703,7 +716,7 @@ void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr) {
 }
 
 const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(uint32_t index) {
-    if (!link_key_records || index >= PBIO_BLUETOOTH_CLASSIC_SLOT_NUM) {
+    if (!link_key_records || index >= PBIO_BLUETOOTH_CLASSIC_NUM_BONDS) {
         return NULL;
     }
     const pbio_bluetooth_classic_link_key_t *record = &link_key_records[index];

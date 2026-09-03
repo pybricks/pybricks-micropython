@@ -206,20 +206,12 @@ typedef struct {
 } pbio_bluetooth_inquiry_result_t;
 
 /**
- * Bluetooth Classic connection slots.
+ * Number of persisted Bluetooth Classic bonding records.
  *
- * Each slot represents one supported connection of a given role and maps 1:1
- * to a persisted bonding record, so the role of a record is implicit in its
- * position.
+ * Records are not tied to a role: the stack looks them up by address, and
+ * what a bonded device is used for follows from the channel it opens.
  */
-typedef enum {
-    /** HID gamepad (e.g. PlayStation DualSense/DualShock). */
-    PBIO_BLUETOOTH_CLASSIC_SLOT_HID_GAMEPAD = 0,
-    /** Host computer (RFCOMM serial; e.g. PC running Pybricks Code). */
-    PBIO_BLUETOOTH_CLASSIC_SLOT_HOST_COMPUTER,
-    /** Number of slots and persisted bonding records. */
-    PBIO_BLUETOOTH_CLASSIC_SLOT_NUM,
-} pbio_bluetooth_classic_slot_t;
+#define PBIO_BLUETOOTH_CLASSIC_NUM_BONDS (8)
 
 /**
  * A Classic Bluetooth bonding record (link key) for one remote device.
@@ -467,37 +459,37 @@ pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_tim
  * Registers the persisted bonding records, called by pbsys once on boot
  * after loading stored settings.
  *
- * @param [in]  records  Array of ::PBIO_BLUETOOTH_CLASSIC_SLOT_NUM records.
+ * @param [in]  records  Array of ::PBIO_BLUETOOTH_CLASSIC_NUM_BONDS records.
  */
 void pbio_bluetooth_classic_apply_loaded_link_keys(pbio_bluetooth_classic_link_key_t *records);
 
 /**
- * Gets the bonding record registered for a slot, e.g. for display purposes.
- * The record may not hold a valid key yet while pairing is in progress.
+ * Gets the name of a registered device, for display purposes.
  *
- * @param [in]  slot  The connection slot.
- * @returns           The record, or NULL if none is registered.
+ * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
+ * @returns             The name, or NULL if the device is not registered.
  */
-const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_registered(pbio_bluetooth_classic_slot_t slot);
+const char *pbio_bluetooth_classic_link_key_get_name(const uint8_t *bdaddr);
 
 /**
  * Registers a provisional bonding record for a device about to be paired,
- * clearing any previously stored key for that slot. Called by the Bluetooth
- * stack driver when pairing starts.
+ * making it the most recently used one. Called by the Bluetooth stack driver
+ * when pairing starts. If the pool is full, the least recently registered
+ * device is forgotten.
  *
- * @param [in]  slot    The connection slot.
  * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
  * @param [in]  name    Device name.
  */
-void pbio_bluetooth_classic_link_key_register(pbio_bluetooth_classic_slot_t slot, const uint8_t *bdaddr, const char *name);
+void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name);
 
 /**
- * Forgets the bonding record of a slot, e.g. when pairing was cancelled or
- * timed out, or when the user deletes the device.
+ * Forgets a bonding record entirely, e.g. when pairing was cancelled or
+ * timed out. Unlike pbio_bluetooth_classic_link_key_delete(), this also drops
+ * the user's registration, so no new key will be stored for the device.
  *
- * @param [in]  slot  The connection slot.
+ * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
  */
-void pbio_bluetooth_classic_link_key_unregister(pbio_bluetooth_classic_slot_t slot);
+void pbio_bluetooth_classic_link_key_unregister(const uint8_t *bdaddr);
 
 /**
  * Gets the stored link key for a remote device, called by the Bluetooth
@@ -530,10 +522,10 @@ void pbio_bluetooth_classic_link_key_put(const uint8_t *bdaddr, const uint8_t *l
 void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr);
 
 /**
- * Gets the bonding record at the given slot index if it holds a valid link
- * key, used to enumerate stored bonds.
+ * Gets the bonding record at the given index if it holds a valid link key,
+ * used to enumerate stored bonds.
  *
- * @param [in]  index  Slot index, up to ::PBIO_BLUETOOTH_CLASSIC_SLOT_NUM.
+ * @param [in]  index  Record index, up to ::PBIO_BLUETOOTH_CLASSIC_NUM_BONDS.
  * @returns            The record, or NULL if there is no valid key at this index.
  */
 const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(uint32_t index);
