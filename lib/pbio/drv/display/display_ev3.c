@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include <pbdrv/cache.h>
+#include <pbdrv/clock.h>
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
 
@@ -151,6 +152,12 @@ static bool pbdrv_display_user_frame_update_requested;
  * compare this to a previously read value to know whether the buffer changed.
  */
 static uint32_t pbdrv_display_update_count;
+
+/**
+ * Time of the most recent update request, so readers can tell whether the
+ * application is done drawing.
+ */
+static uint32_t pbdrv_display_update_time;
 
 /**
  * Display buffer in the format ready for sending to the st7586s display driver.
@@ -494,11 +501,19 @@ pbio_image_t *pbdrv_display_get_image(void) {
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 4)
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS)
 
+// Time without drawing after which a frame is considered done, and time after
+// which a frame is sent anyway if drawing never settles.
+#define PBDRV_DISPLAY_TELEMETRY_SETTLE_MS (20)
+#define PBDRV_DISPLAY_TELEMETRY_INTERVAL_MAX_MS (200)
+
 pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size) {
 
     // Counter of most recent frame that made it over the air in full. Used to
     // decide if we must skip the request to send another frame.
     static uint32_t last_started_frame = UINT32_MAX;
+
+    // Time at which that frame started going out.
+    static uint32_t last_started_time;
 
     // Starts out as if a frame just completed.
     static uint32_t chunk = PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM;
@@ -515,9 +530,19 @@ pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size
             return PBSYS_TELEMETRY_ERROR_NO_REPORT;
         }
 
+        // User applications including the builtin Python programs often clear
+        // the screen before drawing, so wait for drawing to settle instead of
+        // sending those intermediate states, which would show up as flicker.
+        uint32_t now = pbdrv_clock_get_ms();
+        if (now - pbdrv_display_update_time < PBDRV_DISPLAY_TELEMETRY_SETTLE_MS &&
+            now - last_started_time < PBDRV_DISPLAY_TELEMETRY_INTERVAL_MAX_MS) {
+            return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+
         // Time to start a new frame.
         chunk = 0;
         last_started_frame = pbdrv_display_update_count;
+        last_started_time = now;
     }
 
     // Compress one chunk for sending, accepting that the frame may have updated
@@ -587,6 +612,7 @@ uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
 
 void pbdrv_display_update(void) {
     pbdrv_display_user_frame_update_requested = true;
+    pbdrv_display_update_time = pbdrv_clock_get_ms();
     pbio_os_request_poll();
 }
 
