@@ -20,7 +20,7 @@
 #include "light.h"
 #include "storage.h"
 #include "program_stop.h"
-#include "telemetry.h"
+#include <pbsys/telemetry.h>
 
 static pbio_os_process_t pbsys_system_poll_process;
 

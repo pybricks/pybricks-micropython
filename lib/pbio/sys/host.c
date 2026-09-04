@@ -21,7 +21,7 @@
 #include <pbsys/hmi.h>
 #include <pbsys/storage.h>
 
-#include "telemetry.h"
+#include <pbsys/telemetry.h>
 
 static pbsys_host_stdin_event_callback_t pbsys_host_stdin_event_callback;
 static lwrb_t pbsys_host_stdin_ring_buf;

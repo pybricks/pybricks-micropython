@@ -15,7 +15,7 @@
 
 #include "./storage.h"
 #include "./program_stop.h"
-#include "./telemetry.h"
+#include <pbsys/telemetry.h>
 
 static pbsys_command_write_app_data_callback_t write_app_data_callback = NULL;
 

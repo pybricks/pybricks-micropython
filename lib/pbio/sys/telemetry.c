@@ -17,7 +17,7 @@
 
 #include <pbsys/host.h>
 
-#include "telemetry.h"
+#include <pbsys/telemetry.h>
 
 typedef struct {
     lego_device_type_id_t type_id;

@@ -2,8 +2,8 @@
 // To build the firmware without this non-free component, set
 // PBSYS_CONFIG_TELEMETRY to 0 in pbsysconfig.h.
 
-#ifndef _PBSYS_SYS_TELEMETRY_H_
-#define _PBSYS_SYS_TELEMETRY_H_
+#ifndef _PBSYS_TELEMETRY_H_
+#define _PBSYS_TELEMETRY_H_
 
 #include <stdint.h>
 
@@ -130,4 +130,4 @@ static inline pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *da
 
 #endif // PBSYS_CONFIG_TELEMETRY
 
-#endif // _PBSYS_SYS_TELEMETRY_H_
+#endif // _PBSYS_TELEMETRY_H_
