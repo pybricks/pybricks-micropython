@@ -17,10 +17,12 @@
 typedef enum {
     /** Successfully set one payload. */
     PBSYS_TELEMETRY_SUCCESS,
+    /** Successfully set a payload, but there is more to read. */
+    PBSYS_TELEMETRY_ERROR_PARTIAL,
     /** The payload is bigger than available size. */
     PBSYS_TELEMETRY_ERROR_NO_ROOM,
-    /** The payload is not yet ready but is expected to be soon. */
-    PBSYS_TELEMETRY_ERROR_NOT_READY,
+    /** There is nothing new to report. */
+    PBSYS_TELEMETRY_ERROR_NO_REPORT,
 } pbsys_telemetry_error_t;
 
 // Telemetry message format.
@@ -73,6 +75,7 @@ typedef enum {
      * giving the chunk index. Chunk encoding is defined by the display type.
      */
     PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY = 0,
+    PBSYS_TELEMETRY_DEVICE_LEGO_NXT_BUILTIN_DISPLAY = 1,
 } pbsys_telemetry_device_lego_ev3_t;
 
 /**

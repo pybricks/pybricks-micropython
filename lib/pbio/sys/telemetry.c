@@ -52,6 +52,8 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
     static uint8_t i = 0;
     static pbio_os_timer_t timer;
 
+    pbsys_telemetry_error_t terr;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     for (;;) {
@@ -59,45 +61,30 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
         // Send any new display data, one chunk at a time. The driver tracks
         // read-out progress and is bounded to one frame before yielding.
         if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
-
             for (;;) {
-
-                uint32_t display_write_size = available - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
-                uint32_t location;
-
-                static pbio_os_state_t display_state;
-                pbio_error_t err = pbdrv_display_iterate_data(&display_state, data + PBSYS_TELEMETRY_MSG_HEADER_SIZE, &display_write_size, &location);
-
-                if (err == PBIO_ERROR_BUSY) {
+                terr = pbdrv_display_iterate_data(data, &available);
+                if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
                     // Not enough room now. Send what we had already and come back later.
-                    return err;
-                }
-
-                if (err != PBIO_ERROR_AGAIN) {
-                    // Full frame done or nothing new to send, move on.
+                    return PBIO_ERROR_BUSY;
+                } else if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
+                    // Nothing new to send, move on.
                     break;
-                }
-
-                if (display_write_size) {
-                    // We got a chunk, so queue it for sending.
-                    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-                    pbio_set_uint16_le(&data[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
-                        PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN,
-                        PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY));
-                    pbio_set_uint16_le(&data[3], location);
-                    data[5] = 0; // Mode.
-
-                    // Yield one display chunk for appending.
-                    PBIO_OS_YIELD_DATA(state, size, PBSYS_TELEMETRY_MSG_HEADER_SIZE + display_write_size);
+                } else if (terr == PBSYS_TELEMETRY_ERROR_PARTIAL) {
+                    PBIO_OS_YIELD_DATA(state, size, available);
+                    // Resume for more chunks.
+                    continue;
+                } else if (terr == PBSYS_TELEMETRY_SUCCESS) {
+                    PBIO_OS_YIELD_DATA(state, size, available);
+                    // Last chunk, move on.
+                    break;
                 }
             }
         }
 
-        (void)i;
-
+        // Poll ports in order.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
 
-            pbsys_telemetry_error_t terr = pbio_port_get_telemetry(i, data, &available);
+            terr = pbio_port_get_telemetry(i, data, &available);
             if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
                 return PBIO_ERROR_BUSY;
             }
