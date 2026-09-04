@@ -101,6 +101,15 @@ MICROPY_ROM_TEXT_COMPRESSION ?= 1
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
+# MICROPY_VFS_ROM is enabled so that py/persistentcode.c can reference the
+# bytecode and string data of a downloaded program in place instead of copying
+# it to the heap. MICROPY_VFS is not enabled, so the VfsRom object and its file
+# wrapper are never registered and the linker discards all of their code. Drop
+# the translation units entirely so that their qstrs are not added either.
+UNUSED_EXTMOD_SRC_C = extmod/vfs_rom.c extmod/vfs_rom_file.c
+PY_O := $(filter-out $(addprefix $(BUILD)/,$(UNUSED_EXTMOD_SRC_C:.c=.o)), $(PY_O))
+SRC_QSTR := $(filter-out $(UNUSED_EXTMOD_SRC_C), $(SRC_QSTR))
+
 INC += -I.
 INC += -I$(TOP)
 ifeq ($(PB_MCU_FAMILY),STM32)
