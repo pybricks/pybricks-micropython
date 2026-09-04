@@ -65,7 +65,6 @@ pbio_image_t *pbdrv_display_get_image(void) {
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 4)
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS)
 
-// Note: verbatim copy of EV3 display.
 pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size) {
 
     // Counter of most recent frame that made it over the air in full. Used to

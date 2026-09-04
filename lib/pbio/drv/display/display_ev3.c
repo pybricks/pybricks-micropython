@@ -522,10 +522,21 @@ pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size
 
     // Compress one chunk for sending, accepting that the frame may have updated
     // between chunks. In this case, we start over the next time.
+    // The buffer rows are padded to a whole number of column triplets, so
+    // rows must be visited one by one instead of as one flat array.
+    uint32_t row = chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS;
+    uint32_t col = 0;
     for (uint32_t i = 0; i < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE; i++) {
         // Pack 4 consecutive pixels (2 bits each, LSB first) per byte.
-        const uint8_t *p = (const uint8_t *)pbdrv_display_user_frame + (chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + i) * 4;
-        data[i + PBSYS_TELEMETRY_MSG_HEADER_SIZE] = (p[0] & 0x03) | ((p[1] & 0x03) << 2) | ((p[2] & 0x03) << 4) | ((p[3] & 0x03) << 6);
+        uint8_t packed = 0;
+        for (uint32_t p = 0; p < 4; p++) {
+            packed |= (pbdrv_display_user_frame[row][col] & 0x03) << (p * 2);
+            if (++col == PBDRV_CONFIG_DISPLAY_NUM_COLS) {
+                col = 0;
+                row++;
+            }
+        }
+        data[i + PBSYS_TELEMETRY_MSG_HEADER_SIZE] = packed;
     }
 
     // Header with position indicating chunk progress.
