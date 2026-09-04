@@ -163,11 +163,23 @@ struct _pbio_os_process_t {
  *
  * @param [in]  state    Protothread state.
  */
-#define PBIO_OS_ASYNC_BEGIN(state) { char do_yield_now = 0; (void)do_yield_now; switch (*state) { case 0:
+#define PBIO_OS_ASYNC_BEGIN(state) { enum { pbio_os_checkpoint_base = __COUNTER__ }; char do_yield_now = 0; (void)do_yield_now; switch (*state) { case 0:
+
+// Implementation detail of PBIO_OS_ASYNC_SET_CHECKPOINT. The checkpoint number
+// is taken as an argument so that __COUNTER__ is expanded only once and both
+// occurrences get the same value. PBIO_OS_ASYNC_BEGIN() captures the
+// translation unit wide __COUNTER__ value at the start of the protothread,
+// which is subtracted here so that each protothread numbers its checkpoints
+// from one. This keeps the case labels dense, which lets the compiler emit a
+// compact jump table.
+#define _PBIO_OS_ASYNC_SET_CHECKPOINT(state, n) *state = (n) - pbio_os_checkpoint_base; __attribute__((fallthrough)); case (n) - pbio_os_checkpoint_base:
 
 /**
- * Sets a protothread checkpoint state to the current line number so we can
- * continue from (jump) here later if we yield.
+ * Sets a protothread checkpoint state so we can continue from (jump) here
+ * later if we yield.
+ *
+ * The state value is the index of the checkpoint within the protothread,
+ * counting from one.
  *
  * This is used as part of several other yield-like macros such as yielding
  * until a condition is true. This macro is not typically used directly in user
@@ -177,7 +189,7 @@ struct _pbio_os_process_t {
  *
  * @param [in]  state    Protothread state.
  */
-#define PBIO_OS_ASYNC_SET_CHECKPOINT(state) *state = __LINE__; __attribute__((fallthrough)); case __LINE__:
+#define PBIO_OS_ASYNC_SET_CHECKPOINT(state) _PBIO_OS_ASYNC_SET_CHECKPOINT(state, __COUNTER__)
 
 /**
  * Declare the end of a protothread and returns with given code.
