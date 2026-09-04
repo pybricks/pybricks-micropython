@@ -20,6 +20,7 @@
 #include <pbio/port_dcm.h>
 #include <pbio/port_lump.h>
 
+#include <pbsys/telemetry.h>
 
 #define DEBUG 0
 #if DEBUG
@@ -619,6 +620,49 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
+}
+
+static pbsys_telemetry_error_t pbio_port_get_telemetry_no_dev(uint8_t index, uint8_t *data, uint32_t *size) {
+    if (*size < PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    pbio_set_uint16_le(&data[1], LEGO_DEVICE_TYPE_ID_NONE);
+
+    data[5] = 0;
+    *size = PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
+pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, uint8_t *data, uint32_t *size) {
+    if (*size < PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+
+    // All ports use the index as position.
+    pbio_set_uint16_le(&data[3], index);
+    pbio_port_t *port = pbio_port_by_index(index);
+
+    // TODO: if lego mode, Delegate to pbio_port_dcm_get_telemetry or
+    // pbio_port_lump_get_telemetry if lumpdev and so on.
+    // Now just populate motors to get some data.
+
+    pbio_angle_t angle;
+    if (!port || pbio_port_get_angle(port, &angle) != PBIO_SUCCESS) {
+        return pbio_port_get_telemetry_no_dev(index, data, size);
+    }
+
+    if (*size < 10) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+
+    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    pbio_set_uint16_le(&data[1], LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR);
+    pbio_set_uint16_le(&data[3], index);
+    data[5] = 0;
+    pbio_set_uint32_le(&data[6], pbio_angle_to_low_res(&angle, 1000));
+    *size = 10;
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_PORT

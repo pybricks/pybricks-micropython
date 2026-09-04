@@ -11,6 +11,18 @@
 
 #include <pbsys/config.h>
 
+/**
+ * Telemetry getter return codes
+ */
+typedef enum {
+    /** Successfully set one payload. */
+    PBSYS_TELEMETRY_SUCCESS,
+    /** The payload is bigger than available size. */
+    PBSYS_TELEMETRY_ERROR_NO_ROOM,
+    /** The payload is not yet ready but is expected to be soon. */
+    PBSYS_TELEMETRY_ERROR_NOT_READY,
+} pbsys_telemetry_error_t;
+
 // Telemetry message format.
 //
 // The payload of a ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY event consists of

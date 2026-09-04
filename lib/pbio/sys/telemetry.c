@@ -19,13 +19,6 @@
 
 #include <pbsys/telemetry.h>
 
-typedef struct {
-    lego_device_type_id_t type_id;
-    int32_t value;
-} pbsys_telemetry_port_data_t;
-
-static pbsys_telemetry_port_data_t last_data[PBIO_CONFIG_PORT_NUM_DEV];
-
 // Telemetry output level, controlled by the host via the set level command.
 static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_FULL;
 
@@ -39,43 +32,6 @@ typedef struct {
 
 static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
 
-#define MOTOR_DATA_SIZE (PBSYS_TELEMETRY_MSG_HEADER_SIZE + sizeof(uint32_t))
-
-#define DISPLAY_DATA_SIZE (PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBDRV_DISPLAY_TELEMETRY_MAX_SIZE)
-
-// Revisit: Come up with a data encoding protocol. Right now it just sends
-// six motor positions to drive the existing motor animation.
-static pbio_error_t update_port_data(uint8_t index, uint8_t *buf) {
-
-    // Get type and angle.
-    int32_t degrees = 0;
-    pbio_angle_t angle;
-    lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_NONE;
-    pbio_port_t *port = pbio_port_by_index(index);
-    pbio_error_t err = pbio_port_get_angle(port, &angle);
-    if (err == PBIO_SUCCESS) {
-        type_id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
-        degrees = pbio_angle_to_low_res(&angle, 1000);
-    }
-
-    pbsys_telemetry_port_data_t *data = &last_data[index];
-
-    if (data->type_id == type_id && data->value == degrees) {
-        // Same as before, don't send.
-        return PBIO_ERROR_AGAIN;
-    }
-
-    data->type_id = type_id;
-    data->value = degrees;
-
-    buf[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-    pbio_set_uint16_le(&buf[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
-        PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_POWERED_UP_SENSOR, type_id));
-    pbio_set_uint16_le(&buf[3], index);
-    buf[5] = 0; // Mode. REVISIT: Use actual device mode.
-    pbio_set_uint32_le(&buf[6], degrees);
-    return PBIO_SUCCESS;
-}
 
 /**
  * The telemetry "process" is not driven from the main event loop, but serves
@@ -137,25 +93,21 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
             }
         }
 
+        (void)i;
+
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
 
-            // REVISIT: Apply pending mode change for this port here.
-            (void)pending_modes;
-
-            // Can't fit any more motor samples.
-            if (available < MOTOR_DATA_SIZE) {
+            pbsys_telemetry_error_t terr = pbio_port_get_telemetry(i, data, &available);
+            if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
                 return PBIO_ERROR_BUSY;
             }
 
-            // REVISIT: Generalize I/O protocol.
-            pbio_error_t err = update_port_data(i, data);
-            if (err != PBIO_SUCCESS) {
-                // Skip unavailable device.
-                continue;
-            }
+            // REVISIT: Apply pending mode change for this port here.
+            // and handle not ready
+            (void)pending_modes;
 
             // Yield one motor payload for appending.
-            PBIO_OS_YIELD_DATA(state, size, MOTOR_DATA_SIZE);
+            PBIO_OS_YIELD_DATA(state, size, available);
         }
 
         // Yields with no data.
