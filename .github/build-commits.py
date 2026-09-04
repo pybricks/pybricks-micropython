@@ -3,16 +3,17 @@
 
 Builds every commit up to the current HEAD, starting after the newest commit
 that already has a recorded size. Results are appended to <hub>.csv in the size
-data worktree as one "hash,size" line per commit and committed there. Build
-failures are recorded with an empty size so they are never retried. With
---publish, each commit is also pushed to the GitHub remote, retrying when
-concurrent CI jobs push in between; the script fails if a push still does
-not go through.
+data worktree as one "hash,size" line per commit and committed there. A build
+failure stops the script, unless --keep-going records it with an empty size so
+that it is never retried and later commits are still built; then only a failure
+at HEAD itself is fatal. With --publish, each commit is also pushed to the
+GitHub remote, retrying when concurrent CI jobs push in between; the script
+fails if a push still does not go through.
 
 Example:
 
     build-commits.py movehub
-    build-commits.py movehub --publish
+    build-commits.py movehub --publish --keep-going
 """
 
 import argparse
@@ -56,6 +57,11 @@ parser.add_argument(
     "--publish",
     action="store_true",
     help="push each recorded size to the GitHub remote",
+)
+parser.add_argument(
+    "--keep-going",
+    action="store_true",
+    help="record a failed build and continue; only HEAD has to build",
 )
 args = parser.parse_args()
 
@@ -172,8 +178,6 @@ def build():
     )
 
 
-failures = False
-
 # micropython submodule commit that mpy-cross was last built from
 mpy_cross_built = None
 
@@ -212,9 +216,16 @@ for commit in pybricks.iter_commits(
         size = build()
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print("Build failed:", e, flush=True)
+        failure = f'{args.hub} build failed at {commit.hexsha[:8]} "{commit.summary}"'
+        if not args.keep_going:
+            # deliberately not recorded: keep reporting the failure until the
+            # branch is fixed up, which gives its commits new hashes anyway
+            sys.exit(f"::error::{failure}")
+        print(f"::warning::{failure}", flush=True)
         size = None
-        failures = True
     record(commit, size)
 
-if failures:
-    sys.exit("Some builds failed")
+# a gap left behind by an accidental bad commit must not fail every later run,
+# so once it is recorded only the state of HEAD still matters
+if recorded[head] == "":
+    sys.exit(f"::error::{args.hub} build failed at HEAD {head[:8]}")

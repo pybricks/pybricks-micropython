@@ -98,7 +98,9 @@ jobs:
   firmware:
     name: firmware
     strategy:
-      fail-fast: false
+      # off master, one broken commit means the branch has to be fixed up, so
+      # cancel the other hubs instead of building commits that get new hashes
+      fail-fast: ${{ github.ref != 'refs/heads/master' }}
       matrix:
         hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub, ev3, buildhat]
     needs: [mpy_cross, arm_toolchain_cache]
@@ -140,7 +142,11 @@ jobs:
         git -C size-data config user.email "team@pybricks.com"
     - name: Build commits and publish size data (push)
       if: github.event_name == 'push'
-      run: poetry run .github/build-commits.py ${{ matrix.hub }} --publish
+      env:
+        # master cannot be force pushed, so an accidental bad commit is recorded
+        # as a gap and only HEAD still has to build
+        KEEP_GOING: ${{ github.ref == 'refs/heads/master' && '--keep-going' || '' }}
+      run: poetry run .github/build-commits.py ${{ matrix.hub }} --publish $KEEP_GOING
     - name: Build commits without publishing size data (pull request)
       if: github.event_name == 'pull_request'
       run: poetry run .github/build-commits.py ${{ matrix.hub }}
