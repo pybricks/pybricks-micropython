@@ -23,11 +23,8 @@ typedef struct _pupdevices_UltrasonicSensor_obj_t {
 
 // pybricks.pupdevices.UltrasonicSensor.__init__
 static mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(pupdevices_UltrasonicSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
+    pupdevices_UltrasonicSensor_obj_t *self = pb_type_device_make_new(type, n_args, n_kw, args,
+        sizeof(pupdevices_UltrasonicSensor_obj_t), LEGO_DEVICE_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(&self->device_base, LEGO_DEVICE_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
