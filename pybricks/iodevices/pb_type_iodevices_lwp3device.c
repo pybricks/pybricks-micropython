@@ -3,7 +3,10 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_PUPDEVICES
+// The file name matches pybricks.iodevices.LWP3Device, but this file also
+// implements Remote and the other LWP3 hub classes, which are in
+// pybricks.pupdevices. So it is needed by either module.
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE || PYBRICKS_PY_PUPDEVICES
 
 #include <stdint.h>
 #include <string.h>
@@ -380,6 +383,8 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_type_lwp3device_name_obj, 1, 2, pb_type_lwp3device_name);
 
+#if PYBRICKS_PY_PUPDEVICES_REMOTE
+
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.Remote (special case of LWP3).
 // -----------------------------------------------------------------------------
@@ -615,6 +620,9 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_remote,
     protocol, pb_type_remote_attr_dict,
     locals_dict, &pb_type_remote_locals_dict);
 
+#endif // PYBRICKS_PY_PUPDEVICES_REMOTE
+
+#if PYBRICKS_PY_PUPDEVICES_TECHNIC_MOVE_HUB
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.TechnicMoveHub (special case of LWP3).
@@ -749,6 +757,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_technic_move_hub_make_new,
     locals_dict, &pb_type_technic_move_hub_locals_dict);
+
+#endif // PYBRICKS_PY_PUPDEVICES_TECHNIC_MOVE_HUB
+
+#if PYBRICKS_PY_PUPDEVICES_MARIO
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.MarioHub (special case of LWP3).
@@ -898,6 +910,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_mario_hub,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_mario_hub_make_new,
     locals_dict, &pb_type_mario_hub_locals_dict);
+
+#endif // PYBRICKS_PY_PUPDEVICES_MARIO
+
+#if PYBRICKS_PY_PUPDEVICES_DUPLO_TRAIN
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.DuploTrain (special case of LWP3).
@@ -1294,6 +1310,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_duplo_train,
     make_new, pb_type_duplo_train_make_new,
     locals_dict, &pb_type_duplo_train_locals_dict);
 
+#endif // PYBRICKS_PY_PUPDEVICES_DUPLO_TRAIN
+
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
+
 // -----------------------------------------------------------------------------
 // pybricks.iodevices.LWP3Device (most generic LWP3).
 // -----------------------------------------------------------------------------
@@ -1426,4 +1446,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_lwp3device,
     make_new, pb_type_lwp3device_make_new,
     locals_dict, &pb_type_lwp3device_locals_dict);
 
-#endif // PYBRICKS_PY_PUPDEVICES
+#endif // PYBRICKS_PY_IODEVICES_LWP3_DEVICE
+
+#endif // PYBRICKS_PY_IODEVICES_LWP3_DEVICE || PYBRICKS_PY_PUPDEVICES
