@@ -19,6 +19,11 @@
 [support#2788]: https://github.com/pybricks/support/issues/2788
 [4.1.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b2...v4.1.0b3
 
+### Added
+- `UARTDevice` and custom `I2CDevice` `power_pin` can stay on after the program
+  stops. After the existing first-time safety prompt, Pybricks asks
+  "Persist power after program stops?" (default N).
+
 ## [4.1.0b2] - 2026-07-14
 
 ### Fixed

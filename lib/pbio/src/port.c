@@ -88,6 +88,10 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
+    /**
+     * Whether P1/P2 power should stay applied after the user program stops.
+     */
+    bool persist_power;
 };
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
@@ -344,6 +348,9 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
     if (err != PBIO_SUCCESS) {
         return err;
     }
+    if (power_requirement == PBIO_PORT_POWER_REQUIREMENTS_NONE) {
+        port->persist_power = false;
+    }
     if (power_requirement == PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS) {
         return pbdrv_motor_driver_set_duty_cycle(motor_driver, -PBDRV_MOTOR_DRIVER_MAX_DUTY);
     }
@@ -351,6 +358,15 @@ pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_require
         return pbdrv_motor_driver_set_duty_cycle(motor_driver, PBDRV_MOTOR_DRIVER_MAX_DUTY);
     }
     return pbdrv_motor_driver_coast(motor_driver);
+}
+
+/**
+ * Sets whether P1/P2 power should remain applied after the user program stops.
+ *
+ * Cleared automatically when power is set to ::PBIO_PORT_POWER_REQUIREMENTS_NONE.
+ */
+void pbio_port_p1p2_set_persist(pbio_port_t *port, bool persist) {
+    port->persist_power = persist;
 }
 
 /**
@@ -529,7 +545,11 @@ void pbio_port_stop_user_actions(bool reset) {
     for (uint8_t i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
         pbio_port_t *port = &ports[i];
 
-        // Don't reset devices that always need power like powered sensors.
+        // Don't reset devices that always need power like powered sensors
+        // or custom devices that opted in to persistent P1/P2 power.
+        if (port->persist_power) {
+            continue;
+        }
         if (port->lump_dev && pbio_port_lump_get_power_requirements(port->lump_dev) != PBIO_PORT_POWER_REQUIREMENTS_NONE) {
             continue;
         }
