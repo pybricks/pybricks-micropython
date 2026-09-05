@@ -57,6 +57,7 @@ extern const mp_obj_type_t pb_type_device_method;
 
 mp_obj_t pb_type_device_method_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args);
 mp_obj_t pb_type_pupdevices_method(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args);
+void *pb_type_device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args, size_t size, lego_device_type_id_t valid_id);
 lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self, mp_obj_t port_in, lego_device_type_id_t valid_id);
 mp_obj_t pb_type_device_set_data(pb_type_device_obj_base_t *sensor, uint8_t mode, const void *data, uint8_t size);
 void *pb_type_device_get_data(mp_obj_t self_in, uint8_t mode);
