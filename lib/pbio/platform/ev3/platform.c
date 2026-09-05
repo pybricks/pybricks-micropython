@@ -302,7 +302,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART1,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 31, 28, 8, 10),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(6, 23, 20, 2, 2),
@@ -330,7 +330,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART0,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 23, 20, 8, 12),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(18, 11, 8, 8, 15),
@@ -354,7 +354,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE1,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 3, 0, 8, 9),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(16, 27, 24, 7, 11),
@@ -378,7 +378,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE0,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 11, 8, 6, 4),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(17, 7, 4, 7, 8),
