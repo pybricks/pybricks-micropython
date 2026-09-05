@@ -23,16 +23,10 @@ typedef struct _pupdevices_ForceSensor_obj_t {
 
 // pybricks.pupdevices.ForceSensor.__init__
 static mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_ForceSensor_obj_t *self = mp_obj_malloc(pupdevices_ForceSensor_obj_t, type);
-
     // This device only ever uses one mode at runtime, but this class was
     // historically async, so each method returns an awaitable constant in
     // async mode.
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR);
-    return MP_OBJ_FROM_PTR(self);
+    return pb_type_device_make_new(type, n_args, n_kw, args, sizeof(pupdevices_ForceSensor_obj_t), LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR);
 }
 
 // pybricks.pupdevices.ForceSensor.touched

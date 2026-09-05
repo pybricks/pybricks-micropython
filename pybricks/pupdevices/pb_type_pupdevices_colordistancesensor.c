@@ -65,11 +65,8 @@ static mp_obj_t pupdevices_ColorDistanceSensor_light_on(mp_obj_t parent_obj, con
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
 static mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_ColorDistanceSensor_obj_t *self = mp_obj_malloc(pupdevices_ColorDistanceSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
+    pupdevices_ColorDistanceSensor_obj_t *self = pb_type_device_make_new(type, n_args, n_kw, args,
+        sizeof(pupdevices_ColorDistanceSensor_obj_t), LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
     self->light = pb_type_ColorLight_external_obj_new(MP_OBJ_FROM_PTR(self), pupdevices_ColorDistanceSensor_light_on);
