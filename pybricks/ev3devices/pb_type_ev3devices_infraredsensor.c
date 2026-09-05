@@ -23,11 +23,8 @@ typedef struct _ev3devices_InfraredSensor_obj_t {
 
 // pybricks.ev3devices.InfraredSensor.__init__
 static mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    ev3devices_InfraredSensor_obj_t *self = mp_obj_malloc(ev3devices_InfraredSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR);
+    ev3devices_InfraredSensor_obj_t *self = pb_type_device_make_new(type, n_args, n_kw, args,
+        sizeof(ev3devices_InfraredSensor_obj_t), LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR);
     self->current_channel = 1;
     return MP_OBJ_FROM_PTR(self);
 }
