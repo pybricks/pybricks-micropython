@@ -760,115 +760,217 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
-static pbio_error_t init_device_information_service(pbio_os_state_t *state, void *context) {
-    static const uint8_t device_information_service_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_DEVICE_INFO_SERVICE_UUID) };
-    static const uint8_t firmware_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID) };
-    static const uint8_t software_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID) };
-    static const uint8_t pnp_id_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID) };
+// Device information service.
+static const uint8_t device_information_service_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_DEVICE_INFO_SERVICE_UUID) };
+static const uint8_t firmware_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID) };
+static const uint8_t software_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID) };
+static const uint8_t pnp_id_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID) };
 
-    static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle, pnp_id_char_handle;
-    static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
+// Pybricks service: c5f50001-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_service_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
+};
+
+// c5f50002-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_command_event_char_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
+};
+
+// c5f50003-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
+};
+
+// Nordic UART service. These are well-known, but not standard, UUIDs. Inspired
+// by Add_Sample_Service() from sample_service.c in the BlueNRG vendor sample
+// code and the Adafruit config file at
+// https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml
+
+// 6e400001-b5a3-f393-e0a9-e50e24dcca9e
+static const uint8_t nrf_uart_service_uuid[] = {
+    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
+    0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
+};
+
+// 6e400002-b5a3-f393-e0a9-e50e24dcca9e
+static const uint8_t nrf_uart_rx_char_uuid[] = {
+    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
+    0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
+};
+
+// 6e400003-b5a3-f393-e0a9-e50e24dcca9e
+static const uint8_t nrf_uart_tx_char_uuid[] = {
+    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
+    0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
+};
+
+// Characteristic values that are not known at compile time. Filled in before
+// the table below is walked.
+static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
+static uint8_t hub_capabilities[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
+
+/**
+ * One service or characteristic to add to the GATT database.
+ *
+ * Attributes are added in table order and each characteristic belongs to the
+ * service that precedes it, mirroring how the controller builds the database.
+ */
+typedef struct {
+    /** Service or characteristic UUID. */
+    const uint8_t *uuid;
+    /** Where to save the handle assigned by the controller, or NULL. */
+    uint16_t *handle;
+    /** Initial characteristic value, or NULL to leave the value unset. */
+    const void *value;
+    /** Either UUID_TYPE_16 or UUID_TYPE_128. */
+    uint8_t uuid_type;
+    /** Attribute records to reserve for a service, or 0 for a characteristic. */
+    uint8_t max_attr_records;
+    /** Characteristic value size, which is also the size of @p value. */
+    uint8_t value_len;
+    /** Characteristic properties (CHAR_PROP_*). */
+    uint8_t properties;
+    /** Which characteristic events to raise (GATT_*). */
+    uint8_t gatt_evt_mask;
+    /** Either CHAR_VALUE_LEN_CONSTANT or CHAR_VALUE_LEN_VARIABLE. */
+    uint8_t is_variable;
+} gatt_attr_t;
+
+static const gatt_attr_t gatt_attrs[] = {
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = device_information_service_uuid,
+        .max_attr_records = 7,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = firmware_version_char_uuid,
+        .value_len = sizeof(PBIO_VERSION_STR) - 1,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = PBIO_VERSION_STR,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = software_version_char_uuid,
+        .value_len = sizeof(PBIO_PROTOCOL_VERSION_STR) - 1,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = PBIO_PROTOCOL_VERSION_STR,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = pnp_id_char_uuid,
+        .value_len = PBIO_PYBRICKS_PNP_ID_SIZE,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = pnp_id,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_service_uuid,
+        .max_attr_records = 6,
+        .handle = &pybricks_service_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_command_event_char_uuid,
+        .value_len = ATT_MTU - 3,
+        .properties = CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
+        .gatt_evt_mask = GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP,
+        .is_variable = CHAR_VALUE_LEN_VARIABLE,
+        .handle = &pybricks_command_event_char_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_hub_capabilities_char_uuid,
+        .value_len = PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .handle = &pybricks_hub_capabilities_char_handle,
+        .value = hub_capabilities,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = nrf_uart_service_uuid,
+        .max_attr_records = 7,
+        .handle = &uart_service_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = nrf_uart_rx_char_uuid,
+        .value_len = NUS_CHAR_SIZE,
+        .properties = CHAR_PROP_WRITE_WITHOUT_RESP,
+        .gatt_evt_mask = GATT_NOTIFY_ATTRIBUTE_WRITE,
+        .is_variable = CHAR_VALUE_LEN_VARIABLE,
+        .handle = &uart_rx_char_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = nrf_uart_tx_char_uuid,
+        .value_len = NUS_CHAR_SIZE,
+        .properties = CHAR_PROP_NOTIFY,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_VARIABLE,
+        .handle = &uart_tx_char_handle,
+    },
+};
+
+/**
+ * Adds all services and characteristics in ::gatt_attrs to the GATT database.
+ */
+static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
+    static const gatt_attr_t *attr;
+    static uint16_t service_handle, char_handle;
+    static uint8_t idx;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     pbio_pybricks_pnp_id(pnp_id, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+    pbio_pybricks_hub_capabilities(hub_capabilities, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS,
+        pbsys_storage_get_maximum_program_size(), 0);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 7);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&service_handle);
+    for (idx = 0; idx < PBIO_ARRAY_SIZE(gatt_attrs); idx++) {
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, firmware_version_char_uuid,
-        sizeof(PBIO_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&fw_ver_char_handle);
+        attr = &gatt_attrs[idx];
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, fw_ver_char_handle,
-        0, sizeof(PBIO_VERSION_STR) - 1, PBIO_VERSION_STR);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_update_char_value_end();
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        if (attr->max_attr_records) {
+            aci_gatt_add_serv_begin(attr->uuid_type, attr->uuid, PRIMARY_SERVICE, attr->max_attr_records);
+        } else {
+            aci_gatt_add_char_begin(service_handle, attr->uuid_type, attr->uuid,
+                attr->value_len, attr->properties, ATTR_PERMISSION_NONE,
+                attr->gatt_evt_mask, MIN_ENCRY_KEY_SIZE, attr->is_variable);
+        }
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        if (attr->max_attr_records) {
+            aci_gatt_add_serv_end(&service_handle);
+            if (attr->handle) {
+                *attr->handle = service_handle;
+            }
+        } else {
+            aci_gatt_add_char_end(&char_handle);
+            if (attr->handle) {
+                *attr->handle = char_handle;
+            }
+        }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, software_version_char_uuid,
-        sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&sw_ver_char_handle);
+        if (!attr->value) {
+            continue;
+        }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, sw_ver_char_handle,
-        0, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, PBIO_PROTOCOL_VERSION_STR);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_update_char_value_end();
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, pnp_id_char_uuid,
-        PBIO_PYBRICKS_PNP_ID_SIZE, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pnp_id_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, pnp_id_char_handle,
-        0, PBIO_PYBRICKS_PNP_ID_SIZE, pnp_id);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gatt_update_char_value_end();
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context) {
-    // c5f50001-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_service_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
-    };
-
-    // c5f50002-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_command_event_char_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
-    };
-
-    // c5f50003-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
-    };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 6);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&pybricks_service_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_command_event_char_uuid,
-        ATT_MTU - 3, CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
-        GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pybricks_command_event_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_hub_capabilities_char_uuid,
-        PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pybricks_hub_capabilities_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    {
-        uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
-        aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_hub_capabilities_char_handle,
-            0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        aci_gatt_update_char_value_begin(service_handle, char_handle, 0, attr->value_len, attr->value);
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        // aci_gatt_update_char_value_end();
     }
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gatt_update_char_value_end();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -1198,53 +1300,6 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
-    // using well-known (but not standard) Nordic UART UUIDs
-
-    // 6e400001-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_service_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
-    };
-    // 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_rx_char_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
-    };
-    // 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_tx_char_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
-    };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // add the Nordic UART service (inspired by Add_Sample_Service() from
-    // sample_service.c in BlueNRG vendor sample code and Adafruit config file
-    // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, nrf_uart_service_uuid, PRIMARY_SERVICE, 7);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&uart_service_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_rx_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_NONE,
-        GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&uart_rx_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&uart_tx_char_handle);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
 void pbdrv_bluetooth_controller_reset_hard(void) {
     pybricks_notify_en = uart_tx_notify_en = false;
     conn_handle = peripheral_singleton.con_handle = 0;
@@ -1277,9 +1332,7 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
     // Init hci, gatt, gap, and services.
     static const pbio_os_process_func_t init_funcs[] = {
         hci_init,
-        init_device_information_service,
-        init_pybricks_service,
-        init_uart_service,
+        init_gatt_services,
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));
