@@ -59,9 +59,6 @@ static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 // value returned in READY byte of BlueNRG SPI header when interface is ready
 #define BLUENRG_READY 2
 
-// max data size for Nordic UART characteristics
-#define NUS_CHAR_SIZE (ATT_MTU - 3)
-
 // BlueNRG header data for SPI write xfer
 static const uint8_t write_header_tx[BLUENRG_HEADER_SIZE] = { 0x0a };
 // BlueNRG header data for SPI read xfer
@@ -104,11 +101,7 @@ static uint16_t pybricks_service_handle;
 static uint16_t pybricks_command_event_char_handle;
 static uint16_t pybricks_hub_capabilities_char_handle;
 
-// Nordic UART GATT service handles
-static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
-
 static bool pybricks_notify_en;
-static bool uart_tx_notify_en;
 
 static const pbdrv_gpio_t reset_gpio = { .bank = GPIOB, .pin = 6 };
 static const pbdrv_gpio_t cs_gpio = { .bank = GPIOB, .pin = 12 };
@@ -784,29 +777,6 @@ static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
     0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
 };
 
-// Nordic UART service. These are well-known, but not standard, UUIDs. Inspired
-// by Add_Sample_Service() from sample_service.c in the BlueNRG vendor sample
-// code and the Adafruit config file at
-// https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml
-
-// 6e400001-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_service_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
-};
-
-// 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_rx_char_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
-};
-
-// 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_tx_char_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
-};
-
 // Characteristic values that are not known at compile time. Filled in before
 // the table below is walked.
 static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
@@ -897,30 +867,6 @@ static const gatt_attr_t gatt_attrs[] = {
         .handle = &pybricks_hub_capabilities_char_handle,
         .value = hub_capabilities,
     },
-    {
-        .uuid_type = UUID_TYPE_128,
-        .uuid = nrf_uart_service_uuid,
-        .max_attr_records = 7,
-        .handle = &uart_service_handle,
-    },
-    {
-        .uuid_type = UUID_TYPE_128,
-        .uuid = nrf_uart_rx_char_uuid,
-        .value_len = NUS_CHAR_SIZE,
-        .properties = CHAR_PROP_WRITE_WITHOUT_RESP,
-        .gatt_evt_mask = GATT_NOTIFY_ATTRIBUTE_WRITE,
-        .is_variable = CHAR_VALUE_LEN_VARIABLE,
-        .handle = &uart_rx_char_handle,
-    },
-    {
-        .uuid_type = UUID_TYPE_128,
-        .uuid = nrf_uart_tx_char_uuid,
-        .value_len = NUS_CHAR_SIZE,
-        .properties = CHAR_PROP_NOTIFY,
-        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
-        .is_variable = CHAR_VALUE_LEN_VARIABLE,
-        .handle = &uart_tx_char_handle,
-    },
 };
 
 /**
@@ -986,7 +932,6 @@ static void handle_event(hci_event_pckt *event) {
             if (evt->handle == conn_handle) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
-                uart_tx_notify_en = false;
                 pbio_bluetooth_host_connection_changed();
             } else if (evt->handle == peri->con_handle) {
                 peri->con_handle = 0;
@@ -1046,10 +991,6 @@ static void handle_event(hci_event_pckt *event) {
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
                         pbio_bluetooth_host_connection_changed();
-                    } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
-                        // not implemented
-                    } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
-                        uart_tx_notify_en = subevt->att_data[0];
                     }
                 }
                 break;
@@ -1301,7 +1242,7 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 }
 
 void pbdrv_bluetooth_controller_reset_hard(void) {
-    pybricks_notify_en = uart_tx_notify_en = false;
+    pybricks_notify_en = false;
     conn_handle = peripheral_singleton.con_handle = 0;
     spi_disable_cs();
     bluetooth_reset(true);
