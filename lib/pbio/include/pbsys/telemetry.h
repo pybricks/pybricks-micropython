@@ -88,7 +88,7 @@ typedef enum {
     /** Low-bandwidth data such as port values. This is the default. */
     PBSYS_TELEMETRY_LEVEL_MINIMAL = 1,
     /** All data, including large buffers such as the display. */
-    PBSYS_TELEMETRY_LEVEL_FULL = 2,
+    PBSYS_TELEMETRY_LEVEL_ALL = 2,
 } pbsys_telemetry_level_t;
 
 /**

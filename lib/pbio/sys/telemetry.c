@@ -20,7 +20,7 @@
 #include <pbsys/telemetry.h>
 
 // Telemetry output level, controlled by the host via the set level command.
-static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_FULL;
+static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_MINIMAL;
 
 // Pending mode change per port, requested by the host and to be applied by
 // the data generator. Latest request wins.
@@ -70,7 +70,7 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
 
         // Send any new display data, one chunk at a time. The driver tracks
         // read-out progress and is bounded to one frame before yielding.
-        if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
+        if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_ALL) {
             for (;;) {
                 terr = pbdrv_display_iterate_data(tel, size);
                 if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
@@ -162,7 +162,7 @@ pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t s
 
     switch (data[0]) {
         case PBSYS_TELEMETRY_COMMAND_SET_LEVEL:
-            if (size != 2 || data[1] > PBSYS_TELEMETRY_LEVEL_FULL) {
+            if (size != 2 || data[1] > PBSYS_TELEMETRY_LEVEL_ALL) {
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
             pbsys_telemetry_level = data[1];
