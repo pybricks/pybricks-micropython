@@ -65,7 +65,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .pins = NULL,
-        .supported_modes = PBIO_PORT_MODE_QUADRATURE,
+        .supported_modes = 0,
     },
     {
         .port_id = PBIO_PORT_ID_E,
