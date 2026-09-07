@@ -17,6 +17,8 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/ioport.h>
 
+#include <pbsys/telemetry.h>
+
 #define DEBUG 0
 #if DEBUG
 #include <stdio.h>
@@ -1351,6 +1353,11 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
     pbio_os_request_poll();
 
     return PBIO_SUCCESS;
+}
+
+pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+    *size = 0;
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP

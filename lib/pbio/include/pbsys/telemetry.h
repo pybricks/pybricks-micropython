@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/compiler.h>
+
 #include <pbio/protocol.h>
 
 #include <pbsys/config.h>
@@ -37,7 +39,7 @@ typedef enum {
 // | Offset | Size  | Description                                                        |
 // | ------ | ----- | ------------------------------------------------------------------ |
 // | 0      | 2     | Message size N (16-bit le), excluding this size field.             |
-// | 2      | 1     | Manufacturer: ::pbsys_telemetry_manufacturer_t.                    |
+// | 2      | 1     | Manufacturer.                                                      |
 // | 3      | 2     | Device type identifier (16-bit le), scoped to manufacturer.        |
 // | 5      | 2     | Location (16-bit le). Meaning is defined per device type, such as port index or data chunk index. ::PBSYS_TELEMETRY_LOCATION_NONE if not applicable. |
 // | 7      | 1     | Device mode that the data belongs to.                              |
@@ -47,36 +49,35 @@ typedef enum {
 // single command: one byte ::pbsys_telemetry_command_t followed by its
 // command-specific payload. Each command returns its own success or error.
 
+typedef struct PBDRV_PACKED {
+    uint8_t manufacturer;
+    uint16_t id;
+    uint16_t location;
+    uint8_t mode;
+    uint8_t payload[];
+} pbsys_telemetry_packet_t;
+
+/**
+ * Size of the common telemetry message header: manufacturer, device type
+ * identifier, location, and mode. Excludes the 16-bit size prefix.
+ */
+#define PBSYS_TELEMETRY_MSG_HEADER_SIZE (sizeof(pbsys_telemetry_packet_t))
+
 /**
  * Manufacturer of a telemetry data source.
  */
-typedef enum {
-    PBSYS_TELEMETRY_MANUFACTURER_LEGO = 0,
-} pbsys_telemetry_manufacturer_t;
+enum {
+    PBSYS_TELEMETRY_MANUFACTURER_UKNOWN = 0,
+    PBSYS_TELEMETRY_MANUFACTURER_LEGO = 1,
+};
 
 /**
- * Device family used to compose 16-bit LEGO device type identifiers, occupying
- * the high byte. This is a LEGO-namespace convention only, not protocol
- * structure.
+ * Generic device IDs for unknown manufacturers.
  */
-typedef enum {
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_POWERED_UP_SENSOR = 0,
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_SENSOR = 1,
-    PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN = 2,
-} pbsys_telemetry_device_family_t;
-
-/**
- * Builtin EV3 devices. Values are scoped to
- * ::PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN.
- */
-typedef enum {
-    /**
-     * Sends packed pixel data in fixed-size chunks, with the location field
-     * giving the chunk index. Chunk encoding is defined by the display type.
-     */
-    PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY = 0,
-    PBSYS_TELEMETRY_DEVICE_LEGO_NXT_BUILTIN_DISPLAY = 1,
-} pbsys_telemetry_device_lego_ev3_t;
+enum {
+    PBSYS_TELEMETRY_DEVICE_UKNOWN_UART = 0,
+    PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C = 1,
+};
 
 /**
  * Telemetry output level.
@@ -121,11 +122,6 @@ typedef enum {
  */
 #define PBSYS_TELEMETRY_LOCATION_NONE (0xFFFF)
 
-/**
- * Size of the common telemetry message header: manufacturer, device type
- * identifier, location, and mode. Excludes the 16-bit size prefix.
- */
-#define PBSYS_TELEMETRY_MSG_HEADER_SIZE (6)
 
 #if PBSYS_CONFIG_TELEMETRY
 

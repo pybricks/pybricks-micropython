@@ -18,6 +18,8 @@
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
 
+#include <lego/device.h>
+
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
@@ -506,7 +508,7 @@ pbio_image_t *pbdrv_display_get_image(void) {
 #define PBDRV_DISPLAY_TELEMETRY_SETTLE_MS (20)
 #define PBDRV_DISPLAY_TELEMETRY_INTERVAL_MAX_MS (200)
 
-pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size) {
+pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     // Counter of most recent frame that made it over the air in full. Used to
     // decide if we must skip the request to send another frame.
@@ -519,7 +521,7 @@ pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size
     static uint32_t chunk = PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM;
 
     // Doesn't fit now.
-    if (*size < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+    if (*size < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE) {
         return PBSYS_TELEMETRY_ERROR_NO_ROOM;
     }
 
@@ -561,17 +563,15 @@ pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size
                 row++;
             }
         }
-        data[i + PBSYS_TELEMETRY_MSG_HEADER_SIZE] = packed;
+        tel->payload[i] = packed;
     }
 
     // Header with position indicating chunk progress.
-    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-    pbio_set_uint16_le(&data[1], PBSYS_TELEMETRY_DEVICE_ID_LEGO(
-        PBSYS_TELEMETRY_DEVICE_FAMILY_LEGO_EV3_BUILTIN,
-        PBSYS_TELEMETRY_DEVICE_LEGO_EV3_BUILTIN_DISPLAY));
-    pbio_set_uint16_le(&data[3], chunk);
-    data[5] = 0;
-    *size = PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+    tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    tel->id = LEGO_DEVICE_TYPE_ID_EV3_DISPLAY;
+    tel->location = chunk;
+    tel->mode = 0;
+    *size = PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE;
 
     // Yield the chunk, marked as partial or as last.
     return ++chunk == PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM ?

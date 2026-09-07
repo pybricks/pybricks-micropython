@@ -662,4 +662,13 @@ pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_a
     return PBIO_ERROR_NO_DEV;
 }
 
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    // TODO
+    tel->id = LEGO_DEVICE_TYPE_ID_NONE;
+    tel->mode = 0;
+    *size = 0;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
 #endif // PBIO_CONFIG_PORT_DCM_EV3

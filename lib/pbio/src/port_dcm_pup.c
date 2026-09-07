@@ -356,4 +356,18 @@ pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_a
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    // Only pass through known motors and lights.
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
+    pbio_error_t err = pbio_port_dcm_assert_type_id(dcm, &id);
+
+    // No mode and payload.
+    tel->id = err == PBIO_SUCCESS ? id : LEGO_DEVICE_TYPE_ID_NONE;
+    tel->mode = 0;
+    *size = 0;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
+
 #endif // PBIO_CONFIG_PORT_DCM_PUP

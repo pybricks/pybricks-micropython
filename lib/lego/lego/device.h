@@ -14,7 +14,8 @@
  * Type identifiers for LEGO devices.
  *
  * UART device type IDs are hard-coded in the device, so those numbers can't
- * change. Other ID numbers are arbitrary.
+ * change. Other ID numbers are arbitrary, but should remain fixed since they
+ * go over the telemetry protocol.
  */
 typedef enum {
     LEGO_DEVICE_TYPE_ID_NONE                     = 0,    /**< No device is present */
@@ -124,11 +125,13 @@ typedef enum {
     LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR,          /**< MINDSTORMS NXT Ultrasonic Sensor */
     LEGO_DEVICE_TYPE_ID_NXT_ENERGY_METER,                /**< MINDSTORMS NXT Energy Meter */
     LEGO_DEVICE_TYPE_ID_NXT_MOTOR,                       /**< MINDSTORMS NXT Motor */
+    LEGO_DEVICE_TYPE_ID_NXT_DISPLAY,                     /**< MINDSTORMS NXT brick display */
 
     // EV3 Devices
     LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR,                /**< MINDSTORMS EV3 Touch Sensor */
     LEGO_DEVICE_TYPE_ID_EV3_LARGE_MOTOR,                 /**< MINDSTORMS EV3 Large Motor */
     LEGO_DEVICE_TYPE_ID_EV3_MEDIUM_MOTOR,                /**< MINDSTORMS EV3 Medium Motor */
+    LEGO_DEVICE_TYPE_ID_EV3_DISPLAY,                     /**< MINDSTORMS NXT brick display */
 
     // Generic & Custom devices
     LEGO_DEVICE_TYPE_ID_NXT_ANALOG,                      /**< MINDSTORMS NXT-style Analog Sensor */

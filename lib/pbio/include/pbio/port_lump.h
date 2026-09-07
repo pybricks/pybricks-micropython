@@ -13,6 +13,8 @@
 
 #include <lego/lump.h>
 
+#include <pbsys/telemetry.h>
+
 typedef struct _pbio_port_lump_dev_t pbio_port_lump_dev_t;
 
 /**
@@ -58,6 +60,8 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
 pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance);
 
 pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev);
+
+pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 #else // PBIO_CONFIG_PORT_LUMP
 
@@ -118,6 +122,10 @@ static inline pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *stat
 
 static inline pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP

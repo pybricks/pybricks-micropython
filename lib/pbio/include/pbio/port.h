@@ -161,7 +161,7 @@ pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_d
 
 pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev);
 
-pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, uint8_t *data, uint32_t *size);
+pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 #else // PBIO_CONFIG_PORT
 
@@ -230,7 +230,7 @@ static inline pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_de
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, uint8_t *data, uint32_t *size) {
+static inline pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size) {
     *size = 0;
     return PBSYS_TELEMETRY_ERROR_NO_ROOM;
 }

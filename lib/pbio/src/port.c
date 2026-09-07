@@ -622,47 +622,50 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
     }
 }
 
-static pbsys_telemetry_error_t pbio_port_get_telemetry_no_dev(uint8_t index, uint8_t *data, uint32_t *size) {
-    if (*size < PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
-        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
-    }
-    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-    pbio_set_uint16_le(&data[1], LEGO_DEVICE_TYPE_ID_NONE);
+pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
-    data[5] = 0;
-    *size = PBSYS_TELEMETRY_MSG_HEADER_SIZE;
-    return PBSYS_TELEMETRY_SUCCESS;
-}
-
-pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, uint8_t *data, uint32_t *size) {
-    if (*size < PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
-        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    pbio_port_t *port = pbio_port_by_index(index);
+    if (!port) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
     }
 
     // All ports use the index as position.
-    pbio_set_uint16_le(&data[3], index);
-    pbio_port_t *port = pbio_port_by_index(index);
+    tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    tel->location = index;
 
-    // TODO: if lego mode, Delegate to pbio_port_dcm_get_telemetry or
-    // pbio_port_lump_get_telemetry if lumpdev and so on.
-    // Now just populate motors to get some data.
-
-    pbio_angle_t angle;
-    if (!port || pbio_port_get_angle(port, &angle) != PBIO_SUCCESS) {
-        return pbio_port_get_telemetry_no_dev(index, data, size);
+    // Fixed-port motors.
+    if (port->mode == PBIO_PORT_MODE_QUADRATURE) {
+        // Get motor type.
+        lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+        pbio_error_t err = pbdrv_counter_assert_type(port->counter, &id);
+        tel->id = err == PBIO_SUCCESS ? id : LEGO_DEVICE_TYPE_ID_NONE;
+        // No mode, 4 byte payload.
+        tel->mode = 0;
+        pbio_angle_t angle = { };
+        pbio_port_get_angle(port, &angle);
+        pbio_set_uint32_le(tel->payload, pbio_angle_to_low_res(&angle, 1000));
+        *size = 10;
+        return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    if (*size < 10) {
-        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    // Allows visualizer to mark port as custom port mode.
+    if (port->mode == PBIO_PORT_MODE_I2C || port->mode == PBIO_PORT_MODE_UART) {
+        tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_UKNOWN;
+        tel->id = port->mode == PBIO_PORT_MODE_I2C ? PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C : PBSYS_TELEMETRY_DEVICE_UKNOWN_UART;
+        tel->mode = 0;
+        *size = 0;
+        return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    data[0] = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
-    pbio_set_uint16_le(&data[1], LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR);
-    pbio_set_uint16_le(&data[3], index);
-    data[5] = 0;
-    pbio_set_uint32_le(&data[6], pbio_angle_to_low_res(&angle, 1000));
-    *size = 10;
-    return PBSYS_TELEMETRY_SUCCESS;
+    // Only DCM otherwise has telemetry info for us.
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    // Delegate telemetry to LUMP or passive manager.
+    return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
+           pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
+           pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
 }
 
 #endif // PBIO_CONFIG_PORT

@@ -32,29 +32,39 @@ typedef struct {
 
 static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
 
+// Got one sample, yield for appending.
+#define PBSYS_TELEMETRY_YIELD(state)                 \
+    do {                                             \
+        do_yield_now = 1;                            \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);         \
+        if (do_yield_now) {                          \
+            return true;                             \
+        }                                            \
+    } while (0)
 
-/**
- * The telemetry "process" is not driven from the main event loop, but serves
- * as a data generator, for the host process to pull when ready to send.
- *
- * Uses PBIO_SUCCESS to indicate yielding data, rather than returning.
- */
-static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t *data, uint32_t *size) {
+// No room or resource to append further for now. Send what we have.
+#define PBSYS_TELEMETRY_FULL(state) return false;
 
-    // Input argument is how much we are free to write.
-    uint32_t available = PBIO_OS_YIELD_DATA_INIT(size);
+// Idle the generator.
+#define PBSYS_TELEMETRY_IDLE(state, timer, duration)  \
+    do {                                              \
+        pbio_os_timer_set(timer, duration);           \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);          \
+        if (!pbio_os_timer_is_expired(timer)) {       \
+            return false;                             \
+        }                                             \
+    } while (0)
 
-    // Should be able to write at least a header.
-    if (available <= PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
-        return PBIO_ERROR_BUSY;
-    }
+
+static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     static uint8_t i = 0;
     static pbio_os_timer_t timer;
+    static pbio_os_state_t state;
 
     pbsys_telemetry_error_t terr;
 
-    PBIO_OS_ASYNC_BEGIN(state);
+    PBIO_OS_ASYNC_BEGIN(&state);
 
     for (;;) {
 
@@ -62,19 +72,19 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
         // read-out progress and is bounded to one frame before yielding.
         if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_FULL) {
             for (;;) {
-                terr = pbdrv_display_iterate_data(data, &available);
+                terr = pbdrv_display_iterate_data(tel, size);
                 if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
                     // Not enough room now. Send what we had already and come back later.
-                    return PBIO_ERROR_BUSY;
+                    PBSYS_TELEMETRY_FULL();
                 } else if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
-                    // Nothing new to send, move on.
+                    // Nothing new to send from this iterator, move on.
                     break;
                 } else if (terr == PBSYS_TELEMETRY_ERROR_PARTIAL) {
-                    PBIO_OS_YIELD_DATA(state, size, available);
+                    PBSYS_TELEMETRY_YIELD(&state);
                     // Resume for more chunks.
                     continue;
                 } else if (terr == PBSYS_TELEMETRY_SUCCESS) {
-                    PBIO_OS_YIELD_DATA(state, size, available);
+                    PBSYS_TELEMETRY_YIELD(&state);
                     // Last chunk, move on.
                     break;
                 }
@@ -84,30 +94,36 @@ static pbio_error_t pbsys_telemetry_iterate_data(pbio_os_state_t *state, uint8_t
         // Poll ports in order.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
 
-            terr = pbio_port_get_telemetry(i, data, &available);
+            terr = pbio_port_get_telemetry(i, tel, size);
+
             if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
-                return PBIO_ERROR_BUSY;
+                // Variable sized payload won't fit this time.
+                PBSYS_TELEMETRY_FULL();
+            }
+            if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
+                // This port has nothing new to say.
+                continue;
+            }
+            if (terr == PBSYS_TELEMETRY_SUCCESS) {
+                // Did get one sample, yield for appending.
+                PBSYS_TELEMETRY_YIELD(&state);
             }
 
             // REVISIT: Apply pending mode change for this port here.
             // and handle not ready
             (void)pending_modes;
-
-            // Yield one motor payload for appending.
-            PBIO_OS_YIELD_DATA(state, size, available);
         }
 
-        // Yields with no data.
-        PBIO_OS_AWAIT_MS(state, &timer, 40);
+        // Idle between sequences of samples.
+        PBSYS_TELEMETRY_IDLE(&state, &timer, 40);
     }
 
     // Unreachable
-    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
+    PBIO_OS_ASYNC_END(false);
 }
 
 uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
 
-    static pbio_os_state_t state;
     uint32_t next_index = 1;
 
     if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_OFF) {
@@ -116,28 +132,22 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
 
     data[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
 
-    while (next_index < max_size - 2) {
+    while (next_index + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE <= max_size) {
 
         // Fetch one sensor sample and attempt to append.
-        uint32_t size = max_size - next_index - 2;
-        pbio_error_t err = pbsys_telemetry_iterate_data(&state, &data[next_index + 2], &size);
+        uint32_t size = max_size - next_index - sizeof(uint16_t);
 
-        if (err == PBIO_ERROR_AGAIN) {
-            // Yield with no data means nothing more now. Send what we have.
-            if (!size) {
-                break;
-            }
+        pbsys_telemetry_packet_t *tel = (pbsys_telemetry_packet_t *)&data[next_index + sizeof(uint16_t)];
 
-            // Got a data point. Advance to the next.
-            pbio_set_uint16_le(&data[next_index], size);
-            next_index += size + 2;
-            continue;
-        }
-
-        if (err == PBIO_ERROR_BUSY) {
-            // Data full, time to send.
+        // Attempt to get next data point.
+        if (!pbsys_telemetry_iterate_data(tel, &size)) {
+            // Data full or idle, time to send.
             break;
         }
+
+        // Got a data point. Advance to the next.
+        pbio_set_uint16_le(&data[next_index], size + PBSYS_TELEMETRY_MSG_HEADER_SIZE);
+        next_index += size + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE;
     }
 
     return next_index > 1 ? next_index : 0;

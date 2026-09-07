@@ -63,7 +63,7 @@ void pbdrv_display_update(void);
  * @return  Number of bytes copied. Zero if there is nothing new to send or
  *          if the driver does not provide telemetry data.
  */
-pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size);
+pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 #else // PBDRV_CONFIG_DISPLAY
 
@@ -82,7 +82,7 @@ static inline uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, ui
 static inline void pbdrv_display_update(void) {
 }
 
-static inline pbsys_telemetry_error_t pbdrv_display_iterate_data(uint8_t *data, uint32_t *size) {
+static inline pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
     *size = 0;
     return 0;
 }

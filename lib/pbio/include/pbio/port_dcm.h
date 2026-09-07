@@ -11,6 +11,8 @@
 #include <pbio/os.h>
 #include <pbdrv/ioport.h>
 
+#include <pbsys/telemetry.h>
+
 typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 
 /**
@@ -82,6 +84,8 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
  */
 pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba);
 
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size);
+
 #else // PBIO_CONFIG_PORT_DCM
 
 static inline pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
@@ -110,6 +114,10 @@ static inline pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, p
 
 static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM

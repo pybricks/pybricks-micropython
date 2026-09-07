@@ -26,12 +26,10 @@ PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2
 PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY = 3
 
 # REVISIT: Align with firmware once the telemetry protocol is settled.
-MANUF_ID_LEGO = 0
-FAMILY_POWERED_UP = 0
-FAMILY_EV3_BUILTIN = 2
+MANUF_ID_LEGO = 1
 # 16-bit device id: family in high byte, type in low byte.
-DEVICE_EV3_BUILTIN_DISPLAY = (FAMILY_EV3_BUILTIN << 8) | 0
-DEVICE_ANY_ENCODED_MOTOR = (FAMILY_POWERED_UP << 8) | 94
+DEVICE_EV3_BUILTIN_DISPLAY = 89
+MOTOR_IDS = (38, 46, 47, 48, 49, 65, 75, 76)
 MSG_HEADER_SIZE = 6
 DISPLAY_CHUNK_SIZE = 356
 DISPLAY_FRAME_SIZE = DISPLAY_WIDTH * DISPLAY_HEIGHT
@@ -84,9 +82,7 @@ def process_telemetry(message):
         # Common header: manufacturer, device id, location, mode.
         if len(payload) < MSG_HEADER_SIZE:
             continue
-        manufacturer = payload[0]
-        device, location = struct.unpack_from("<HH", payload, 1)
-        mode = payload[5]
+        manufacturer, device, location, mode = struct.unpack_from("<BHHB", payload)
         if manufacturer != MANUF_ID_LEGO or mode != 0:
             continue
         # Display frame chunk: location is the chunk index, then pixels packed
@@ -104,7 +100,7 @@ def process_telemetry(message):
             if (chunk_offset + len(packed)) * 4 == DISPLAY_FRAME_SIZE:
                 update_display(display_frame)
         # Motor angle sample: location is the port index.
-        elif device == DEVICE_ANY_ENCODED_MOTOR:
+        elif device in MOTOR_IDS:
             (angle,) = struct.unpack_from("<i", payload, MSG_HEADER_SIZE)
             angles[location] = angle
 
