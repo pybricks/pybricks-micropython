@@ -64,6 +64,8 @@ const char *pbsys_host_get_hub_display_name(void) {
     return display_name;
 }
 
+static bool pbsys_host_initialized;
+
 void pbsys_host_init(void) {
     // Buffer needs 1 byte of headroom, but command drops 1 command.
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1 - 1];
@@ -74,6 +76,8 @@ void pbsys_host_init(void) {
     // worth of buffering before print pauses the user program.
     static uint8_t stdout_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE * 2 + 1];
     lwrb_init(&pbsys_host_stdout_ring_buf, stdout_buf, PBIO_ARRAY_SIZE(stdout_buf));
+
+    pbsys_host_initialized = true;
 }
 
 void pbsys_host_connection_changed(void) {
@@ -425,6 +429,12 @@ bool pbsys_host_tx_is_idle(void) {
 }
 
 bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len) {
+
+    // Transport drivers may call us early, but we should not yield data
+    // until all lower level drivers are ready.
+    if (!pbsys_host_initialized) {
+        return false;
+    }
 
     static uint8_t *current_buf;
 
