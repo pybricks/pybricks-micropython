@@ -6,6 +6,8 @@
 
 ### Changed
 - Updated MicroPython to v1.29.0.
+- On the Move Hub, `bytes()` and `bytes.find()` now truncate out-of-range
+  values instead of raising `ValueError`.
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 
