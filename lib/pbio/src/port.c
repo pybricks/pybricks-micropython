@@ -633,18 +633,26 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
     tel->location = index;
 
-    // Fixed-port motors.
-    if (port->mode == PBIO_PORT_MODE_QUADRATURE) {
-        // Get motor type.
-        lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
-        pbio_error_t err = pbdrv_counter_assert_type(port->counter, &id);
-        tel->id = err == PBIO_SUCCESS ? id : LEGO_DEVICE_TYPE_ID_NONE;
-        // No mode, 4 byte payload.
+    // All encoded motor types report the same data.
+    pbio_servo_t *srv;
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    if (pbio_port_get_servo(port, &id, &srv) == PBIO_SUCCESS) {
+        tel->id = id;
         tel->mode = 0;
-        pbio_angle_t angle = { };
-        pbio_port_get_angle(port, &angle);
-        pbio_set_uint32_le(tel->payload, pbio_angle_to_low_res(&angle, 1000));
-        *size = 10;
+
+        int32_t angle, speed;
+        if (pbio_servo_get_state_user(srv, &angle, &speed) != PBIO_SUCCESS) {
+            return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+        pbio_set_uint32_le(&tel->payload[0], angle);
+        pbio_set_uint16_le(&tel->payload[4], speed);
+        uint32_t stall_duration;
+        bool stalled;
+        tel->payload[8] = pbio_servo_is_stalled(srv, &stalled, &stall_duration) != PBIO_SUCCESS ? 0 :
+            (stalled << 1) | pbio_control_is_done(&srv->control);
+
+        // Reports 32-bit angle, 16-bit speed, 1 byte status (stalled || done (lsb)).
+        *size = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t);
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
