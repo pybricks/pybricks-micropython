@@ -14,7 +14,9 @@
 #include <pbsys/config.h>
 
 /**
- * Telemetry getter return codes
+ * Telemetry getter return codes, returned by payload generators. This lets us
+ * device if we should append a payload and whether to progress in our state
+ * machine that goes along each data point. Not part of the protocol.
  */
 typedef enum {
     /** Successfully set one payload. */
@@ -27,28 +29,23 @@ typedef enum {
     PBSYS_TELEMETRY_ERROR_NO_REPORT,
 } pbsys_telemetry_error_t;
 
-// Telemetry message format.
-//
-// The payload of a ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY event consists of
-// one or more size-prefixed messages, bundling as many current values as fit.
-// Receivers must skip messages they do not understand using the size field,
-// so the format can be extended.
-//
-// Outgoing (event) messages are encoded as follows.
-//
-// | Offset | Size  | Description                                                        |
-// | ------ | ----- | ------------------------------------------------------------------ |
-// | 0      | 2     | Message size N (16-bit le), excluding this size field.             |
-// | 2      | 1     | Manufacturer.                                                      |
-// | 3      | 2     | Device type identifier (16-bit le), scoped to manufacturer.        |
-// | 5      | 2     | Location (16-bit le). Meaning is defined per device type, such as port index or data chunk index. ::PBSYS_TELEMETRY_LOCATION_NONE if not applicable. |
-// | 7      | 1     | Device mode that the data belongs to.                              |
-// | 8      | N - 6 | Mode-specific data.                                                |
-//
-// The payload of a ::PBIO_PYBRICKS_COMMAND_WRITE_TELEMETRY command is a
-// single command: one byte ::pbsys_telemetry_command_t followed by its
-// command-specific payload. Each command returns its own success or error.
-
+/**
+ * Telemetry message format.
+ *
+ * The payload of a ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY event consists of
+ * one or more size-prefixed messages, bundling as many current values as fit.
+ *
+ * Outgoing (event) messages are encoded as follows.
+ *
+ * | Offset | Size  | Description                                                          |
+ * | ------ | ----- | ---------------------------------------------------------------------|
+ * | 0      | 2     | Message size N (16-bit le), excluding this size field.               |
+ * | 2      | 1     | Manufacturer.                                                        |
+ * | 3      | 2     | Device type identifier (16-bit le), scoped to manufacturer.          |
+ * | 5      | 2     | Device specific location (16-bit le), e.g. port index, pixel offset. |
+ * | 7      | 1     | Device mode that the data belongs to.                                |
+ * | 8      | N - 6 | Mode-specific data.                                                  |
+ */
 typedef struct PBDRV_PACKED {
     uint8_t manufacturer;
     uint16_t id;
@@ -111,17 +108,6 @@ typedef enum {
      */
     PBSYS_TELEMETRY_COMMAND_SET_MODE = 1,
 } pbsys_telemetry_command_t;
-
-/**
- * Composes a 16-bit LEGO device type identifier from family and type.
- */
-#define PBSYS_TELEMETRY_DEVICE_ID_LEGO(family, type) ((uint16_t)(((family) << 8) | (type)))
-
-/**
- * Location value for devices where location is not applicable.
- */
-#define PBSYS_TELEMETRY_LOCATION_NONE (0xFFFF)
-
 
 #if PBSYS_CONFIG_TELEMETRY
 

@@ -642,6 +642,14 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
 
         int32_t angle, speed;
         if (pbio_servo_get_state_user(srv, &angle, &speed) != PBIO_SUCCESS) {
+            // Servo may not be configured because no user program has run yet.
+            // We can still get the angle from the tacho directly.
+            pbio_angle_t tacho;
+            if (pbio_tacho_get_angle(&srv->tacho, &tacho) == PBIO_SUCCESS) {
+                pbio_set_uint32_le(&tel->payload[0], tacho.rotations * 360 + tacho.millidegrees / 1000);
+                *size = sizeof(uint32_t);
+                return PBSYS_TELEMETRY_SUCCESS;
+            }
             return PBSYS_TELEMETRY_ERROR_NO_REPORT;
         }
         pbio_set_uint32_le(&tel->payload[0], angle);
@@ -653,6 +661,13 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
 
         // Reports 32-bit angle, 16-bit speed, 1 byte status (stalled || done (lsb)).
         *size = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    } else if (port->mode == PBIO_PORT_MODE_QUADRATURE) {
+        // If motor detection failed but it is a quadrature port, it is a motor
+        // port with no device.
+        tel->id = LEGO_DEVICE_TYPE_ID_NONE;
+        tel->mode = 0;
+        *size = 0;
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
