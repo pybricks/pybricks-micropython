@@ -39,7 +39,9 @@ jobs:
         submodules: true
     - run: pipx install poetry
     - run: poetry install --only=lint
-    - name: Run codeformat.py
-      run: |
-        poetry run ./tools/codeformat.py
-        git diff --exit-code
+    - name: Format C code
+      run: poetry run ./tools/codeformat.py -c
+    - name: Format Python code
+      run: poetry run ruff format .
+    - name: Check for changes
+      run: git diff --exit-code

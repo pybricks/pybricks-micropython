@@ -149,7 +149,7 @@ jobs:
         if [ ! -f bricks/${{ matrix.hub }}/build/firmware.zip ] || [ "$(git rev-parse HEAD)" != "${{ github.sha }}" ]; then
           git checkout ${{ github.sha }}
           git submodule update --init micropython
-          git -C micropython submodule update --init lib/micropython-lib lib/stm32lib
+          git -C micropython submodule update --init lib/micropython-lib lib/stm32lib lib/CMSIS_6
           export MICROPY_GIT_TAG=ci-build-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
           export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
           [ "${{ matrix.hub }}" = "buildhat" ] && make -C bricks/${{ matrix.hub }} submodules

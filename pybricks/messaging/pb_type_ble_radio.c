@@ -544,7 +544,7 @@ static mp_obj_t pb_type_ble_radio_init(mp_obj_t broadcast_channel_in, mp_obj_t o
         mp_raise_ValueError(MP_ERROR_TEXT("Too many observe channels"));
     }
 
-    pb_obj_BLE_t *self = mp_obj_malloc_var_with_finaliser(pb_obj_BLE_t, observed_data_t, num_observe_channels, &pb_type_ble_radio);
+    pb_obj_BLE_t *self = mp_obj_malloc_var_with_finaliser(pb_obj_BLE_t, observed_data, observed_data_t, num_observe_channels, &pb_type_ble_radio);
     self->broadcast_channel = broadcast_channel_in;
 
     for (mp_int_t i = 0; i < num_observe_channels; i++) {

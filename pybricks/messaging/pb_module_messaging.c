@@ -107,7 +107,7 @@ static mp_obj_t pb_messaging_bluetooth_scan(size_t n_args, const mp_obj_t *pos_a
         num_results_max = 1;
     }
     pb_messaging_bluetooth_scan_result_obj_t *scanner = mp_obj_malloc_var_with_finaliser(
-        pb_messaging_bluetooth_scan_result_obj_t, pbio_bluetooth_inquiry_result_t,
+        pb_messaging_bluetooth_scan_result_obj_t, results, pbio_bluetooth_inquiry_result_t,
         num_results_max, &pb_type_messaging_bluetooth_scan);
 
     // Initialize at zero results.

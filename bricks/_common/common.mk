@@ -52,6 +52,15 @@ $(error failed)
 endif
 endif
 endif
+ifeq ($(PB_MCU_FAMILY),STM32)
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/CMSIS_6/README.md)","")
+$(info GIT cloning CMSIS_6 submodule)
+$(info $(shell cd $(PBTOP)/micropython && git submodule update --init lib/CMSIS_6))
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/CMSIS_6/README.md)","")
+$(error failed)
+endif
+endif
+endif
 ifeq ($(PB_LIB_BTSTACK),1)
 ifeq ("$(wildcard $(PBTOP)/lib/btstack/README.md)","")
 $(info GIT cloning btstack submodule)
@@ -113,7 +122,7 @@ SRC_QSTR := $(filter-out $(UNUSED_EXTMOD_SRC_C), $(SRC_QSTR))
 INC += -I.
 INC += -I$(TOP)
 ifeq ($(PB_MCU_FAMILY),STM32)
-INC += -I$(TOP)/lib/cmsis/inc
+INC += -I$(TOP)/lib/CMSIS_6/CMSIS/Core/Include
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
 endif
 ifeq ($(PB_LIB_STM32_HAL),1)

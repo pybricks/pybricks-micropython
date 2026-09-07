@@ -145,6 +145,9 @@ def update_submodules():
     micropython = pybricks.submodule("micropython").module()
     micropython.git.submodule("update", "--init", "lib/micropython-lib")
     micropython.git.submodule("update", "--init", "lib/stm32lib")
+    if any(sm.path == "lib/CMSIS_6" for sm in micropython.submodules):
+        # only present since MicroPython v1.29, older commits use lib/cmsis
+        micropython.git.submodule("update", "--init", "lib/CMSIS_6")
     if args.hub in ("primehub", "essentialhub"):
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
         pybricks.git.submodule(

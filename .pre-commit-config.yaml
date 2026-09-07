@@ -9,6 +9,5 @@ repos:
     -   id: codeformat_py
         name: codeformat-py
         language: system
-        entry: poetry run ./tools/codeformat.py -p
+        entry: poetry run ruff format --force-exclude
         types: [python]
-        pass_filenames: false

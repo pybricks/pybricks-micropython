@@ -1355,7 +1355,7 @@ static mp_obj_t pb_type_lwp3device_make_new(const mp_obj_type_t *type, size_t n_
         noti_num = 1;
     }
 
-    pb_type_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_type_lwp3device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
+    pb_type_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_type_lwp3device_obj_t, notification_buffer, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
     self->iter = NULL;
     self->noti_num = noti_num;
 

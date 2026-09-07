@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Updated MicroPython to v1.29.0.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 
 ## [4.1.0b3] - 2026-08-25
