@@ -45,6 +45,11 @@ set(MICROPY_PORT_DIR ${MICROPY_BOARD_DIR})
 
 set(MICROPY_USER_FROZEN_MANIFEST ${MICROPY_FROZEN_MANIFEST})
 
+# Shared Pybricks qstrs (e.g. "pybricks.hubs"). Without this, only the
+# auto-collected "pybricks_dot_hubs" style names exist and
+# "import pybricks.hubs" fails.
+set(MICROPY_QSTRDEFS_PORT ${TOP_DIR}/bricks/_common/qstrdefs.h)
+
 string(TOLOWER ${MICROPY_BOARD} PICO_BOARD)
 
 # Set the amount of C heap, if it's not already set.
