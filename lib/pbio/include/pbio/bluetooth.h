@@ -512,7 +512,8 @@ static inline pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_o
 }
 
 static inline pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+    // Don't hold up anything since Bluetooth is not used.
+    return PBIO_SUCCESS;
 }
 
 static inline pbio_error_t pbio_bluetooth_start_inquiry_scan(pbio_bluetooth_inquiry_result_t *results, uint32_t *results_count, uint32_t *results_count_max, uint32_t duration_ms) {
