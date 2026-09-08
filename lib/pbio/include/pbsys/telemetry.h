@@ -21,8 +21,6 @@
 typedef enum {
     /** Successfully set one payload. */
     PBSYS_TELEMETRY_SUCCESS,
-    /** Successfully set a payload, but there is more to read. */
-    PBSYS_TELEMETRY_ERROR_PARTIAL,
     /** The payload is bigger than available size. */
     PBSYS_TELEMETRY_ERROR_NO_ROOM,
     /** There is nothing new to report. */

@@ -400,37 +400,34 @@ pbio_image_t *pbdrv_display_get_image(void) {
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 8)
 #define PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS)
 
-pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
+pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, bool *done, uint32_t *size) {
 
-    // Counter of most recent frame that made it over the air in full. Used to
-    // decide if we must skip the request to send another frame.
-    static uint32_t last_started_frame = UINT32_MAX;
+    // Display update count when the current frame read-out started. Initialized
+    // to differ from the update count so the first frame is always sent.
+    static uint32_t last_update_count = UINT32_MAX;
 
-    // Starts out as if a frame just completed.
-    static uint32_t chunk = PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM;
+    // Next chunk to send. Zero means between frames.
+    static uint32_t chunk = 0;
 
-    // Doesn't fit now.
+    // Doesn't fit now. Caller retries this same chunk with a fresh buffer.
     if (*size < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE) {
         return PBSYS_TELEMETRY_ERROR_NO_ROOM;
     }
 
-    // If last frame completed, reset state.
-    if (chunk == PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM) {
-        // If last frame we started still unchanged, idle.
-        if (last_started_frame == pbdrv_display_update_count) {
+    // Between frames, start reading out a new one only if it changed. Changes
+    // during read-out are picked up by the next one, accepting that a read-out
+    // may span parts of two frames.
+    if (chunk == 0) {
+        if (last_update_count == pbdrv_display_update_count) {
+            *done = true;
             return PBSYS_TELEMETRY_ERROR_NO_REPORT;
         }
-
-        // Time to start a new frame.
-        chunk = 0;
-        last_started_frame = pbdrv_display_update_count;
+        last_update_count = pbdrv_display_update_count;
     }
 
-    // Compress one chunk for sending, accepting that the frame may have updated
-    // between chunks. In this case, we start over the next time.
     for (uint32_t i = 0; i < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE; i++) {
         // Pack 8 consecutive pixels, 1 bit per byte.
-        const uint8_t *p = (const uint8_t *)pbdrv_display_user_frame + (chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + i) * 4;
+        const uint8_t *p = (const uint8_t *)pbdrv_display_user_frame + (chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE + i) * 8;
         tel->payload[i] =
             p[0] | p[1] << 1 | p[2] << 2 | p[3] << 3 | p[4] << 4 | p[5] << 5 | p[6] << 6 | p[7] << 7;
     }
@@ -442,9 +439,9 @@ pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel
     tel->mode = 0;
     *size = PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE;
 
-    // Yield the chunk, marked as partial or as last.
-    return ++chunk == PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM ?
-           PBSYS_TELEMETRY_SUCCESS : PBSYS_TELEMETRY_ERROR_PARTIAL;
+    chunk = (chunk + 1) % PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM;
+    *done = chunk == 0;
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 uint8_t pbdrv_display_get_max_value(void) {

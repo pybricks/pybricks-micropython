@@ -32,18 +32,25 @@ typedef struct {
 
 static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
 
-// Got one sample, yield for appending.
-#define PBSYS_TELEMETRY_YIELD(state)                 \
-    do {                                             \
-        do_yield_now = 1;                            \
-        PBIO_OS_ASYNC_SET_CHECKPOINT(state);         \
-        if (do_yield_now) {                          \
-            return true;                             \
-        }                                            \
+// Yields one report if the getter produced one, skips to the next stage if it
+// had nothing, or sends what we have and retries the same getter when out of
+// room.
+#define PBSYS_TELEMETRY_STAGE(state, call)             \
+    do {                                               \
+        pbsys_telemetry_error_t terr;                  \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);           \
+        terr = (call);                                 \
+        if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {   \
+            return false;                              \
+        }                                              \
+        if (terr == PBSYS_TELEMETRY_SUCCESS) {         \
+            do_yield_now = 1;                          \
+            PBIO_OS_ASYNC_SET_CHECKPOINT(state);       \
+            if (do_yield_now) {                        \
+                return true;                           \
+            }                                          \
+        }                                              \
     } while (0)
-
-// No room or resource to append further for now. Send what we have.
-#define PBSYS_TELEMETRY_FULL() return false;
 
 // Idle the generator.
 #define PBSYS_TELEMETRY_IDLE(state, timer, duration)  \
@@ -62,56 +69,24 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
     static pbio_os_timer_t timer;
     static pbio_os_state_t state;
 
-    pbsys_telemetry_error_t terr;
-
     PBIO_OS_ASYNC_BEGIN(&state);
 
     for (;;) {
 
-        // Send any new display data, one chunk at a time. The driver tracks
-        // read-out progress and is bounded to one frame before yielding.
+        // Send any new display data, one chunk at a time. The driver says when
+        // to stop, so other stages get their turn on a busy display.
         if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_ALL) {
-            for (;;) {
-                terr = pbdrv_display_iterate_data(tel, size);
-                if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
-                    // Not enough room now. Send what we had already and come back later.
-                    PBSYS_TELEMETRY_FULL();
-                } else if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
-                    // Nothing new to send from this iterator, move on.
-                    break;
-                } else if (terr == PBSYS_TELEMETRY_ERROR_PARTIAL) {
-                    PBSYS_TELEMETRY_YIELD(&state);
-                    // Resume for more chunks.
-                    continue;
-                } else if (terr == PBSYS_TELEMETRY_SUCCESS) {
-                    PBSYS_TELEMETRY_YIELD(&state);
-                    // Last chunk, move on.
-                    break;
-                }
+            // Static to survive yields between chunks.
+            static bool display_done;
+            for (display_done = false; !display_done;) {
+                PBSYS_TELEMETRY_STAGE(&state, pbdrv_display_iterate_data(tel, &display_done, size));
             }
         }
 
         // Poll ports in order.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
 
-            PBIO_OS_ASYNC_SET_CHECKPOINT(&state);
-
-            terr = pbio_port_get_telemetry(i, tel, size);
-
-            if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
-                // Variable sized payload won't fit this time. We'll retry
-                // from the last checkpoint later.
-                PBSYS_TELEMETRY_FULL();
-            }
-
-            if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
-                // This port has nothing new to say, so advance.
-                continue;
-            }
-            if (terr == PBSYS_TELEMETRY_SUCCESS) {
-                // Did get one sample, yield for appending.
-                PBSYS_TELEMETRY_YIELD(&state);
-            }
+            PBSYS_TELEMETRY_STAGE(&state, pbio_port_get_telemetry(i, tel, size));
 
             // REVISIT: Apply pending mode change for this port here.
             // and handle not ready

@@ -52,18 +52,22 @@ void pbdrv_display_update(void);
  * Gets the next chunk of display telemetry data, if any.
  *
  * Data is in a device-specific encoding such as packed pixels, produced in
- * fixed-size chunks so that @p location maps to a fixed frame position. The
- * driver tracks its own read-out progress, bounded to one frame at a time.
- * Frames may be torn by concurrent display updates, in which case a newer
- * frame follows to fix it.
+ * fixed-size chunks so that the packet location maps to a fixed frame
+ * position. The driver tracks its own read-out progress. Frames may be torn
+ * by concurrent display updates, in which case a newer frame follows to fix it.
  *
- * @param [out] buffer    Buffer to copy into. Must fit at least
- *                        ::PBDRV_DISPLAY_TELEMETRY_MAX_SIZE bytes.
- * @param [out] location  Chunk index of the returned data within the frame.
- * @return  Number of bytes copied. Zero if there is nothing new to send or
- *          if the driver does not provide telemetry data.
+ * @param [out] tel   Packet to populate with one chunk.
+ * @param [out] done  Set when the caller should stop requesting chunks, which
+ *                    is after the last chunk of a frame or when there is
+ *                    nothing to send. Left alone when out of room, so that the
+ *                    caller retries the same chunk with a fresh buffer.
+ * @param [inout] size  Bytes available for the payload on entry, bytes
+ *                      written on return.
+ * @return  ::PBSYS_TELEMETRY_SUCCESS if a chunk was written,
+ *          ::PBSYS_TELEMETRY_ERROR_NO_ROOM if it does not fit in @p size, or
+ *          ::PBSYS_TELEMETRY_ERROR_NO_REPORT if there is nothing new to send.
  */
-pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size);
+pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, bool *done, uint32_t *size);
 
 #else // PBDRV_CONFIG_DISPLAY
 
@@ -82,9 +86,10 @@ static inline uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, ui
 static inline void pbdrv_display_update(void) {
 }
 
-static inline pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
+static inline pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, bool *done, uint32_t *size) {
+    *done = true;
     *size = 0;
-    return 0;
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBDRV_CONFIG_DISPLAY
