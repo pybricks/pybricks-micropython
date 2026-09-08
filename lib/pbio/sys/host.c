@@ -526,7 +526,7 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         return true;
     }
 
-    // Telemetry, if pending, is sent from its own buffer without copying.
+    // Telemetry, if pending, pulled from yielding data generator.
     uint32_t telemetry_size = pbsys_telemetry_get_data(pbsys_host_event_out_buf, pbsys_host_get_max_message_size());
     if (telemetry_size) {
         pbsys_host_event_out_set_size_all(telemetry_size);

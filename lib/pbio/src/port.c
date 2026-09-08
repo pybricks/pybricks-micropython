@@ -637,6 +637,9 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     pbio_servo_t *srv;
     lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
     if (pbio_port_get_servo(port, &id, &srv) == PBIO_SUCCESS) {
+        if (*size < sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
         tel->id = id;
         tel->mode = 0;
 
@@ -656,7 +659,7 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
         pbio_set_uint16_le(&tel->payload[4], speed);
         uint32_t stall_duration;
         bool stalled;
-        tel->payload[8] = pbio_servo_is_stalled(srv, &stalled, &stall_duration) != PBIO_SUCCESS ? 0 :
+        tel->payload[6] = pbio_servo_is_stalled(srv, &stalled, &stall_duration) != PBIO_SUCCESS ? 0 :
             (stalled << 1) | pbio_control_is_done(&srv->control);
 
         // Reports 32-bit angle, 16-bit speed, 1 byte status (stalled || done (lsb)).

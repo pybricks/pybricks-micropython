@@ -43,7 +43,7 @@ static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
     } while (0)
 
 // No room or resource to append further for now. Send what we have.
-#define PBSYS_TELEMETRY_FULL(state) return false;
+#define PBSYS_TELEMETRY_FULL() return false;
 
 // Idle the generator.
 #define PBSYS_TELEMETRY_IDLE(state, timer, duration)  \
@@ -94,14 +94,18 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
         // Poll ports in order.
         for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
 
+            PBIO_OS_ASYNC_SET_CHECKPOINT(&state);
+
             terr = pbio_port_get_telemetry(i, tel, size);
 
             if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {
-                // Variable sized payload won't fit this time.
+                // Variable sized payload won't fit this time. We'll retry
+                // from the last checkpoint later.
                 PBSYS_TELEMETRY_FULL();
             }
+
             if (terr == PBSYS_TELEMETRY_ERROR_NO_REPORT) {
-                // This port has nothing new to say.
+                // This port has nothing new to say, so advance.
                 continue;
             }
             if (terr == PBSYS_TELEMETRY_SUCCESS) {
@@ -135,7 +139,7 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
     while (next_index + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE <= max_size) {
 
         // Fetch one sensor sample and attempt to append.
-        uint32_t size = max_size - next_index - sizeof(uint16_t);
+        uint32_t size = max_size - next_index - sizeof(uint16_t) - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
 
         pbsys_telemetry_packet_t *tel = (pbsys_telemetry_packet_t *)&data[next_index + sizeof(uint16_t)];
 
