@@ -1562,10 +1562,13 @@ static const struct {
     {TGAP_GEN_DISC_ADV_INT_MAX, 40},
     {TGAP_CONN_ADV_INT_MIN, 40},
     {TGAP_CONN_ADV_INT_MAX, 40},
-    // scan interval general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_INT, 48},
-    // scan window general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_WIND, 48},
+    // Scan interval 32 * 0.625ms = 20ms, kept shorter than the 25ms
+    // advertising interval of a peer hub so that reception latency does not
+    // depend on the phase between the two.
+    {TGAP_GEN_DISC_SCAN_INT, 32},
+    // Scan window 16 * 0.625ms = 10ms. The 50% duty cycle leaves radio time
+    // for broadcasting while observing.
+    {TGAP_GEN_DISC_SCAN_WIND, 16},
     {TGAP_CONN_EST_INT_MIN, 40},
     {TGAP_CONN_EST_INT_MAX, 40},
     // scan interval connection established: 48 * 0.625ms = 30ms
