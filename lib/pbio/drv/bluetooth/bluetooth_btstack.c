@@ -1176,9 +1176,10 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (!pbdrv_bluetooth_is_observing) {
-        // 20ms interval, 10ms window. The 50% duty cycle leaves radio time
-        // for broadcasting while observing.
-        gap_set_scan_params(0, 0x20, 0x10, 0);
+        // 70ms interval, 35ms window. The 50% duty cycle leaves radio time
+        // for broadcasting while observing, and the longer interval spends
+        // less of the radio on starting and ending scans.
+        gap_set_scan_params(0, 0x70, 0x38, 0);
         gap_start_scan();
         pbdrv_bluetooth_is_observing = true;
         // REVISIT: use callback to await operation

@@ -644,9 +644,10 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     // the observer role which would use more RAM in the Bluetooth chip
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    // 20ms interval, 10ms window. The 50% duty cycle leaves radio time for
-    // broadcasting while observing.
-    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x20, 0x10, STATIC_RANDOM_ADDR, 0);
+    // 70ms interval, 35ms window. The 50% duty cycle leaves radio time for
+    // broadcasting while observing, and the longer interval spends less of the
+    // radio on starting and ending scans.
+    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x70, 0x38, STATIC_RANDOM_ADDR, 0);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     status = aci_gap_start_general_conn_establish_proc_end();
     if (status == BLE_STATUS_SUCCESS) {
