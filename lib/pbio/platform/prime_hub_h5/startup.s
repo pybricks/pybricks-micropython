@@ -60,6 +60,10 @@ Reset_Handler:
   ldr   r0, =pbdrv_stack_end
   mov   sp, r0          /* set stack pointer */
 
+/* Pybricks: stop bootloader-left DMA/ADC before its in-RAM structures are
+   stomped by the data copy and bss clear below. */
+  bl SystemInitEarly
+
 /* Copy the data segment initializers from flash to SRAM */
   ldr r0, =_sdata
   ldr r1, =_edata

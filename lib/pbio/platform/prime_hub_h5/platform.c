@@ -1654,6 +1654,28 @@ static void SystemClock_Config(void) {
 // special memory addresses defined in linker script
 extern uint32_t *_fw_isr_vector_src;
 
+// Called from startup.s at Reset_Handler entry, before the .data copy and
+// .bss clear. The bootloader jumps to the firmware with ADC1 still converting
+// (CONT mode) and a circular linked-list GPDMA channel still servicing it,
+// with its DMA nodes and destination buffer in SRAM. Once the startup code
+// stomps that SRAM, the still-running channel rewrites its (now reassigned)
+// buffer address with one more ADC scan and then fetches a zeroed node,
+// corrupting whatever firmware data lands there. Quiesce DMA and ADC first.
+// Runs before RAM init: must not touch .data or .bss.
+void SystemInitEarly(void) {
+    // The bootloader normally leaves these bus clocks on, but the resets
+    // below only take effect (and register reads only work) if they are.
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPDMA1EN | RCC_AHB1ENR_GPDMA2EN;
+    RCC->AHB2ENR |= RCC_AHB2ENR_ADCEN;
+    __DSB();
+
+    RCC->AHB1RSTR |= RCC_AHB1RSTR_GPDMA1RST | RCC_AHB1RSTR_GPDMA2RST;
+    RCC->AHB2RSTR |= RCC_AHB2RSTR_ADCRST;
+    __DSB();
+    RCC->AHB1RSTR &= ~(RCC_AHB1RSTR_GPDMA1RST | RCC_AHB1RSTR_GPDMA2RST);
+    RCC->AHB2RSTR &= ~RCC_AHB2RSTR_ADCRST;
+}
+
 // Called from assembly code in startup.s
 void SystemInit(void) {
     // If update mode was requested before a reset, the watchdog is now cleared.
