@@ -1523,8 +1523,59 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
 }
 
 pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    if (pbio_port_lump_is_ready(lump_dev) != PBIO_SUCCESS) {
+        *size = 0;
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    // No specific encoding, so return device ID without payload for this mode.
+    tel->id = lump_dev->type_id;
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
+        if (lump_dev->mode == LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX) {
+            if (*size >= 1) {
+                tel->mode = 2;
+                tel->payload[0] = lump_dev->bin_data[0] * 10;
+                return PBSYS_TELEMETRY_SUCCESS;
+            }
+        }
+    }
+
+    // No specific encoding, so return device ID without payload for this mode.
+    tel->mode = 0xFF;
     *size = 0;
-    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
+pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size) {
+
+    if (pbio_port_lump_is_ready(lump_dev) != PBIO_SUCCESS) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
+
+        uint8_t mode;
+
+        switch (tel->mode) {
+            case 0:
+                mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
+                break;        
+            case 1:
+                mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
+                break;        
+            case 2:
+                mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
+                break;        
+            default:
+                return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+        pbio_port_lump_set_mode(lump_dev, mode);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP

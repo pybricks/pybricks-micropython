@@ -99,10 +99,11 @@ typedef enum {
     /**
      * Requests a device mode change.
      *
-     * Payload mirrors the outgoing message header: manufacturer, device type
-     * identifier, location, and the new mode. Applied only if the given
-     * device is still present at that location. Confirmation is implicit via
-     * the mode byte of subsequent telemetry data.
+     * Payload is a single telemetry message in the outgoing format without
+     * the size prefix: header (manufacturer, device type identifier,
+     * location, new mode) plus optional mode-specific data. Applied only if
+     * the given device is still present at that location. Confirmation is
+     * implicit via the mode byte of subsequent telemetry data.
      */
     PBSYS_TELEMETRY_COMMAND_SET_MODE = 1,
 } pbsys_telemetry_command_t;

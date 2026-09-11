@@ -68,6 +68,8 @@ pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_l
 
 pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
+pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size);
+
 #else // PBIO_CONFIG_PORT_LUMP
 
 static inline pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index) {
@@ -139,6 +141,10 @@ static inline pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *stat
 
 static inline pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
     return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size) {
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP

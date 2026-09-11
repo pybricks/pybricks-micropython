@@ -778,4 +778,18 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
            pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
 }
 
+pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size) {
+
+    pbio_port_t *port = pbio_port_by_index(index);
+    if (!port || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    if (port->lump_dev && pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
+        return pbio_port_lump_set_telemetry_mode(port->lump_dev, tel, size);
+    }
+
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+}
+
 #endif // PBIO_CONFIG_PORT
