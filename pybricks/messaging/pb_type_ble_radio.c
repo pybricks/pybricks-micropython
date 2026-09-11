@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/clock.h>
 #include <pbio/bluetooth.h>
 
 #include <pbsys/config.h>
@@ -51,6 +52,55 @@ typedef struct {
 // pointer to dynamically allocated memory - needed for driver callback
 static observed_data_t *observed_data;
 static uint8_t num_observed_data;
+
+// TEMPORARY INSTRUMENTATION, NOT FOR RELEASE.
+//
+// Records the arrival time of every advertisement the radio reports, so that
+// the receive side of broadcasting can be measured directly. The gaps between
+// arrivals reveal the scan schedule the Bluetooth chip is actually running:
+// arrivals cluster inside each scan window and stop for the rest of the scan
+// period, so the distribution of the gaps gives the effective window and
+// period, which is not otherwise observable from outside the chip.
+#define PYBRICKS_BLE_TRACE (1)
+
+#if PYBRICKS_BLE_TRACE
+
+#define BLE_TRACE_SIZE (128)
+
+// Channel value recorded for an advertisement that is not a Pybricks broadcast.
+#define BLE_TRACE_CHANNEL_OTHER (0xff)
+
+typedef struct {
+    /** Time since the previous advertisement in units of 100 us, saturating. */
+    uint16_t delta;
+    /** Signal strength of this advertisement in dBm. */
+    int8_t rssi;
+    /** Broadcast channel, or ::BLE_TRACE_CHANNEL_OTHER. */
+    uint8_t channel;
+} ble_trace_entry_t;
+
+static ble_trace_entry_t ble_trace[BLE_TRACE_SIZE];
+static uint16_t ble_trace_count;
+static uint16_t ble_trace_dropped;
+static uint32_t ble_trace_last;
+
+static void ble_trace_record(int8_t rssi, uint8_t channel) {
+    uint32_t now = pbdrv_clock_get_100us();
+    uint32_t delta = now - ble_trace_last;
+    ble_trace_last = now;
+
+    if (ble_trace_count >= BLE_TRACE_SIZE) {
+        ble_trace_dropped++;
+        return;
+    }
+
+    ble_trace[ble_trace_count].delta = delta > UINT16_MAX ? UINT16_MAX : delta;
+    ble_trace[ble_trace_count].rssi = rssi;
+    ble_trace[ble_trace_count].channel = channel;
+    ble_trace_count++;
+}
+
+#endif // PYBRICKS_BLE_TRACE
 
 typedef struct {
     mp_obj_base_t base;
@@ -121,11 +171,20 @@ static observed_data_t *lookup_observed_data(uint8_t channel) {
  * @param [in]  rssi            The RSSI of the event in dBm.
  */
 static void handle_observe_event(pbio_bluetooth_ad_type_t event_type, const uint8_t *data, uint8_t length, int8_t rssi) {
+
+    bool is_broadcast = length >= 5 && data[1] == MFG_SPECIFIC && pbio_get_uint16_le(&data[2]) == LEGO_CID;
+
+    #if PYBRICKS_BLE_TRACE
+    // Every advertisement counts here, including those from other devices,
+    // because the radio had to be scanning to hear any of them.
+    ble_trace_record(rssi, is_broadcast ? data[4] : BLE_TRACE_CHANNEL_OTHER);
+    #endif
+
     // NB: ideally we would also be checking `event_type == PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND`
     // here but due to a Bluetooth firmware bug on city hub, we have to allow other
     // advertisement types. This would filter out broadcasts from the experimental
     // feature in official LEGO Robot Inventor firmware.
-    if (length >= 5 && data[1] == MFG_SPECIFIC && pbio_get_uint16_le(&data[2]) == LEGO_CID) {
+    if (is_broadcast) {
         uint8_t channel = data[4];
 
         observed_data_t *ch_data = lookup_observed_data(channel);
@@ -509,6 +568,55 @@ static mp_obj_t pb_module_ble_version(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_version_obj, pb_module_ble_version);
 
+#if PYBRICKS_BLE_TRACE
+/**
+ * TEMPORARY INSTRUMENTATION, NOT FOR RELEASE.
+ *
+ * Copies everything recorded since the last call and starts a new recording.
+ *
+ * The caller supplies the destination so that reading the recording does not
+ * allocate. Allocating would risk a garbage collection pause, which would
+ * delay the event processing that timestamps the advertisements and so distort
+ * the very gaps being measured.
+ *
+ * Each record is four bytes: the gap since the previous advertisement as a
+ * little endian uint16 in units of 100 us, the signal strength as an int8, and
+ * the broadcast channel, or 255 if it was not a Pybricks broadcast. The gap of
+ * the very first advertisement after boot is measured from the epoch and
+ * should be discarded.
+ *
+ * @param [in]  self_in     The BLE MicroPython object instance.
+ * @param [in]  buf_in      A writable buffer to copy the recording into.
+ * @returns                 A tuple of the number of advertisements that were
+ *                          dropped, either because the recording filled up or
+ *                          because @p buf_in was too small to hold it, and the
+ *                          number of bytes written to @p buf_in.
+ */
+static mp_obj_t pb_module_ble_trace(mp_obj_t self_in, mp_obj_t buf_in) {
+    mp_buffer_info_t buf;
+    mp_get_buffer_raise(buf_in, &buf, MP_BUFFER_WRITE);
+
+    uint16_t fits = buf.len / sizeof(ble_trace_entry_t);
+    uint16_t copied = ble_trace_count < fits ? ble_trace_count : fits;
+
+    memcpy(buf.buf, ble_trace, copied * sizeof(ble_trace_entry_t));
+
+    mp_obj_t items[2] = {
+        MP_OBJ_NEW_SMALL_INT(ble_trace_dropped + ble_trace_count - copied),
+        MP_OBJ_NEW_SMALL_INT(copied * sizeof(ble_trace_entry_t)),
+    };
+
+    ble_trace_count = 0;
+    ble_trace_dropped = 0;
+    // NB: ble_trace_last is deliberately left alone, so that gaps stay
+    // continuous across reads. Resetting it here would fabricate a short gap
+    // on the first advertisement after every read.
+
+    return mp_obj_new_tuple(2, items);
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_trace_obj, pb_module_ble_trace);
+#endif // PYBRICKS_BLE_TRACE
+
 mp_obj_t pb_module_ble_data_close(mp_obj_t self_in) {
     observed_data = NULL;
     num_observed_data = 0;
@@ -522,6 +630,9 @@ static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_observe), MP_ROM_PTR(&pb_module_ble_observe_obj) },
     { MP_ROM_QSTR(MP_QSTR_signal_strength), MP_ROM_PTR(&pb_module_ble_signal_strength_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
+    #if PYBRICKS_BLE_TRACE
+    { MP_ROM_QSTR(MP_QSTR_trace), MP_ROM_PTR(&pb_module_ble_trace_obj) },
+    #endif
 };
 static MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);
 
