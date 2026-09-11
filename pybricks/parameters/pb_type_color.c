@@ -94,25 +94,29 @@ pbio_color_t pb_type_Color_get_hsv(mp_obj_t obj) {
     return ((pb_type_Color_obj_t *)obj)->hsv;
 }
 
-pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
+/**
+ * Creates a new Color object.
+ *
+ * @param hsv [in]  The packed color value.
+ * @return          The new Color object.
+ */
+mp_obj_t pb_type_Color_new(pbio_color_t hsv) {
     pb_type_Color_obj_t *color = mp_obj_malloc(pb_type_Color_obj_t, &pb_type_Color);
-    return color;
+    color->hsv = hsv;
+    return MP_OBJ_FROM_PTR(color);
 }
 
 static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v) {
-    pb_type_Color_obj_t *self = pb_type_Color_new_empty();
 
     // Bind h to 0--360
     h = h % 360;
 
-    self->hsv = PBIO_COLOR_ENCODE(
+    return pb_type_Color_new(PBIO_COLOR_ENCODE(
         h < 0 ? h + 360 : h,
         // Bind s to 0--100
         pbio_int_math_bind(s, 0, 100),
         // Bind v to -100 to 100
-        pbio_int_math_clamp(v, 100));
-
-    return MP_OBJ_FROM_PTR(self);
+        pbio_int_math_clamp(v, 100)));
 }
 
 void pb_type_Color_reset(void) {
@@ -267,6 +271,15 @@ static void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
 }
 
+static mp_obj_t pb_type_Color_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
+    // Colors that compare equal must hash equally, so hash the packed value.
+    // The class itself has no value, so it falls back to the default pointer hash.
+    if (op == MP_UNARY_OP_HASH && MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
+        return MP_OBJ_NEW_SMALL_INT(((pb_type_Color_obj_t *)MP_OBJ_TO_PTR(self_in))->hsv);
+    }
+    return MP_OBJ_NULL;
+}
+
 static mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
@@ -342,6 +355,7 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_Color,
     call, pb_type_Color_call,
     attr, pb_type_Color_attr,
     print, pb_type_Color_print,
+    unary_op, pb_type_Color_unary_op,
     binary_op, pb_type_Color_binary_op,
     subscr, pb_type_Color_subscr,
     iter, pb_type_Color_getiter);

@@ -845,9 +845,7 @@ static mp_obj_t pb_type_mario_hub_hsv(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    color->hsv = pb_type_mario_hub_color_get_hsv_data(self);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(pb_type_mario_hub_color_get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_hsv_obj, pb_type_mario_hub_hsv);
 

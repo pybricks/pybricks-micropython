@@ -92,17 +92,13 @@ static pbio_color_t get_hsv_ambient(mp_obj_t self_in) {
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=True)
 static mp_obj_t get_hsv_surface_true(mp_obj_t self_in) {
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    color->hsv = get_hsv_reflected(self_in);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(get_hsv_reflected(self_in));
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_true_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I, get_hsv_surface_true);
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=False)
 static mp_obj_t get_hsv_surface_false(mp_obj_t self_in) {
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    color->hsv = get_hsv_ambient(self_in);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(get_hsv_ambient(self_in));
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_false_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV, get_hsv_surface_false);
 

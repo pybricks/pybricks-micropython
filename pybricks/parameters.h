@@ -39,7 +39,7 @@ typedef struct _pb_type_Color_obj_t {
     pbio_color_t hsv;
 } pb_type_Color_obj_t;
 
-pb_type_Color_obj_t *pb_type_Color_new_empty(void);
+mp_obj_t pb_type_Color_new(pbio_color_t hsv);
 pbio_color_t pb_type_Color_get_hsv(mp_obj_t obj);
 void pb_type_Color_reset(void);
 

@@ -126,9 +126,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_
 // pybricks.pupdevices.ColorDistanceSensor.hsv
 static mp_obj_t get_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    color->hsv = get_hsv_data(self);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(get_hsv_data(self));
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_hsv);
 

@@ -99,9 +99,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_ty
 // pybricks.nxtdevices.ColorSensor.hsv
 static mp_obj_t pb_type_nxtdevices_colorsensor_hsv(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    color->hsv = get_hsv_data(self);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type_nxtdevices_colorsensor_hsv);
 
