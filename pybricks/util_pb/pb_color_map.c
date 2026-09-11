@@ -24,41 +24,21 @@
 #include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// This expands pbio_color_from_rgb with additional calibration steps that
-// ultimately must be properly done in pbio_color_from_rgb, just like
-// pbio_color_to_rgb, by adjusting RGB instead of hacking at the HSV value.
-pbio_color_t pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb) {
-
-    // Standard conversion
-    pbio_color_t color = pbio_color_from_rgb(rgb);
-
-    // Slight shift for lower hues to make yellow somewhat more accurate
-    uint16_t h = pbio_color_get_h(color);
-    if (h >= 350) {
-        h = (350 + 2 * (h - 350)) % 360;
-    } else if (h < 40) {
-        h += 10;
-    } else if (h < 60) {
-        h = 50 + (h - 40) / 2;
-    }
-
-    return PBIO_COLOR_ENCODE(h, pbio_color_get_s(color), pbio_color_get_v(color));
-}
-
 // Gets the color map of the given port, with the default colors selected.
 pbio_color_map_t *pb_color_map_init(pbio_port_t *port) {
-    pbio_color_map_t *color_map;
+    pbio_color_map_t *color_map = NULL;
     pb_assert(pbio_port_get_color_map(port, &color_map));
     pbio_color_map_set_default(color_map);
     return color_map;
 }
 
-// Get a discrete color that matches the given hsv values most closely
-mp_obj_t pb_color_map_get_color(const pbio_color_map_t *color_map, pbio_color_t hsv) {
+// Wraps a color matched by @p color_map as a Color object. Returns None
+// instead if the user chose to detect no colors at all.
+mp_obj_t pb_color_map_get_color(const pbio_color_map_t *color_map, pbio_color_t color_matched) {
     if (color_map->num_colors == 0) {
         return mp_const_none;
     }
-    return pb_type_Color_from_hsv(pbio_color_map_find(color_map, hsv));
+    return pb_type_Color_from_hsv(color_matched);
 }
 
 mp_obj_t pb_color_map_detectable_colors_method(pbio_color_map_t *color_map, mp_obj_t colors_in) {

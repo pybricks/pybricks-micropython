@@ -428,25 +428,85 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
 }
 
 /**
- * Gets the analog color values of the LEGO device.
+ * Gets the color measured by a color sensor on this port, in a device
+ * independent HSV format that is comparable across sensors.
  *
- * @param [in]  port        The port instance.
- * @param [in]  type_id     The expected type identifier.
- * @param [out] rgba        The analog color values.
- * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
+ * Does not change sensor modes. The caller is responsible for first selecting
+ * the mode that provides the requested measurement.
+ *
+ * @param [in]  port          The port instance.
+ * @param [out] color_hsv     The measured color, or NULL to skip.
+ * @param [out] color_mapped  The closest match from the color map of this
+ *                            port, or NULL to skip.
+ * @param [in]  reflected     Whether to measure the surface lit by the sensor
+ *                            light (true) or the ambient light (false).
+ * @return                    ::PBIO_SUCCESS on success, otherwise
+ *                            ::PBIO_ERROR_NO_DEV if no sensor is attached,
+ *                            ::PBIO_ERROR_NOT_SUPPORTED if the sensor cannot
+ *                            measure color in this way, or
+ *                            ::PBIO_ERROR_INVALID_OP if the port or sensor is
+ *                            not in a mode that provides this measurement.
  */
-pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t *rgba) {
+pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, bool reflected) {
 
-    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &type_id);
+    pbio_color_t hsv;
+    pbio_error_t err = PBIO_ERROR_NO_DEV;
+
+    if (port->lump_dev) {
+        err = pbio_port_lump_get_color(port->lump_dev, &hsv, reflected);
+    }
+    // Ports can have both, so fall back to analog sensors if no LUMP device.
+    if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
+        err = pbio_port_dcm_get_color(port->connection_manager, &hsv, reflected);
+    }
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    return pbio_port_dcm_get_analog_rgba(port->connection_manager, rgba);
+    if (color_hsv) {
+        *color_hsv = hsv;
+    }
+    if (color_mapped) {
+        if (!port->color_map) {
+            return PBIO_ERROR_NOT_SUPPORTED;
+        }
+        *color_mapped = pbio_color_map_find(port->color_map, hsv);
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the light intensity measured by a sensor on this port.
+ *
+ * Does not change sensor modes. The caller is responsible for first selecting
+ * the mode that provides the requested measurement.
+ *
+ * @param [in]  port        The port instance.
+ * @param [out] intensity   The measured intensity, 0--1000.
+ * @param [in]  reflected   Whether to measure the surface lit by the sensor
+ *                          light (true) or the ambient light (false).
+ * @return                  ::PBIO_SUCCESS on success, otherwise see
+ *                          ::pbio_port_get_color for the error codes.
+ */
+pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, int32_t *intensity, bool reflected) {
+
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    pbio_error_t err = PBIO_ERROR_NO_DEV;
+
+    if (port->lump_dev) {
+        err = pbio_port_lump_get_light_intensity(port->lump_dev, intensity, reflected);
+    }
+    if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
+        err = pbio_port_dcm_get_light_intensity(port->connection_manager, intensity, reflected);
+    }
+    return err;
 }
 
 /**

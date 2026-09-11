@@ -5,6 +5,7 @@
 #define _PBIO_PORT_LUMP_H_
 
 #include <pbio/angle.h>
+#include <pbio/color.h>
 #include <pbio/port.h>
 #include <pbio/os.h>
 
@@ -59,6 +60,10 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
 
 pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance);
 
+pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color_t *color_hsv, bool reflected);
+
+pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, int32_t *intensity, bool reflected);
+
 pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev);
 
 pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size);
@@ -101,6 +106,14 @@ static inline pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lu
 }
 
 static inline pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color_t *color_hsv, bool reflected) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, int32_t *intensity, bool reflected) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

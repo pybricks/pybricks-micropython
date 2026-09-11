@@ -78,27 +78,12 @@ static mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     return MP_OBJ_FROM_PTR(self);
 }
 
-// Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
-static pbio_color_t get_hsv_data(pupdevices_ColorDistanceSensor_obj_t *self) {
-    int16_t *raw = pb_type_device_get_data(MP_OBJ_FROM_PTR(&self->device_base), LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
-
-    // Max observed value is ~440 so we scale to get a range of 0..255.
-    pbio_color_rgb_t rgb;
-    rgb.r = 1187 * raw[0] / 2048;
-    rgb.g = 1187 * raw[1] / 2048;
-    rgb.b = 1187 * raw[2] / 2048;
-    pbio_color_t hsv = pb_color_map_rgb_to_hsv(&rgb);
-
-    // Approximately double low values to get similar results
-    // as with other sensors.
-    int8_t v = pbio_color_get_v(hsv);
-    return PBIO_COLOR_ENCODE(pbio_color_get_h(hsv), pbio_color_get_s(hsv), v * (200 - v) / 100);
-}
-
 // pybricks.pupdevices.ColorDistanceSensor.color
 static mp_obj_t get_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(self->color_map, get_hsv_data(self));
+    pbio_color_t matched;
+    pb_assert(pbio_port_get_color(self->device_base.port, NULL, &matched, true));
+    return pb_color_map_get_color(self->color_map, matched);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_color);
 
@@ -111,22 +96,28 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, LEGO_DEVICE_MODE
 
 // pybricks.pupdevices.ColorDistanceSensor.reflection
 static mp_obj_t get_reflection(mp_obj_t self_in) {
-    int16_t *rgb = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
-    return mp_obj_new_int((rgb[0] + rgb[1] + rgb[2]) / 12);
+    pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, true));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_reflection);
 
 // pybricks.pupdevices.ColorDistanceSensor.ambient
 static mp_obj_t get_ambient(mp_obj_t self_in) {
-    int8_t *ambient = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI);
-    return mp_obj_new_int(ambient[0]);
+    pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, false));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, get_ambient);
 
 // pybricks.pupdevices.ColorDistanceSensor.hsv
 static mp_obj_t get_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_type_Color_new(get_hsv_data(self));
+    pbio_color_t hsv;
+    pb_assert(pbio_port_get_color(self->device_base.port, &hsv, NULL, true));
+    return pb_type_Color_new(hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_hsv);
 

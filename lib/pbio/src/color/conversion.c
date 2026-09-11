@@ -82,6 +82,32 @@ pbio_color_t pbio_color_from_rgb(const pbio_color_rgb_t *rgb) {
     return PBIO_COLOR_ENCODE(hue, saturation, 101 * max / 256);
 }
 
+/**
+ * Converts RGB to HSV, then nudges the hue of reddish and yellowish colors.
+ *
+ * The hues that LEGO sensors report for the colors they are meant to detect
+ * lie very close together at the low end of the hue circle, so this spreads
+ * them out a bit and pushes yellow closer to its expected value.
+ *
+ * @param [in]  rgb         The source RGB color value.
+ * @return                  The color.
+ */
+pbio_color_t pbio_color_from_rgb_with_hue_shift(const pbio_color_rgb_t *rgb) {
+
+    pbio_color_t color = pbio_color_from_rgb(rgb);
+
+    uint16_t h = pbio_color_get_h(color);
+    if (h >= 350) {
+        h = (350 + 2 * (h - 350)) % 360;
+    } else if (h < 40) {
+        h += 10;
+    } else if (h < 60) {
+        h = 50 + (h - 40) / 2;
+    }
+
+    return PBIO_COLOR_ENCODE(h, pbio_color_get_s(color), pbio_color_get_v(color));
+}
+
 // The following code derived from hsv2rgb_raw_C() and hsv2rgb_spectrum() in the FastLED project
 // https://github.com/FastLED/FastLED/blob/master/hsv2rgb.cpp
 

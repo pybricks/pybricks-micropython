@@ -833,7 +833,7 @@ static pbio_color_t pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_
         .g = self->data[1],
         .b = self->data[2],
     };
-    return pb_color_map_rgb_to_hsv(&rgb);
+    return pbio_color_from_rgb_with_hue_shift(&rgb);
 }
 
 static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
@@ -841,7 +841,8 @@ static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    return pb_color_map_get_color(&self->color_map, pb_type_mario_hub_color_get_hsv_data(self));
+    pbio_color_t matched = pbio_color_map_find(&self->color_map, pb_type_mario_hub_color_get_hsv_data(self));
+    return pb_color_map_get_color(&self->color_map, matched);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_color_obj, pb_type_mario_hub_color);
 

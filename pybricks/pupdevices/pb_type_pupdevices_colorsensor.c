@@ -7,8 +7,6 @@
 
 #include "py/mphal.h"
 
-#include <pbio/int_math.h>
-
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -45,76 +43,55 @@ static mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
 // pybricks.pupdevices.ColorSensor.reflection
 static mp_obj_t get_reflection(mp_obj_t self_in) {
-    // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
-    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I);
-    return mp_obj_new_int((data[0] + data[1] + data[2]) * 100 / 3072);
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, true));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I, get_reflection);
 
 // pybricks.pupdevices.ColorSensor.ambient
 static mp_obj_t get_ambient(mp_obj_t self_in) {
-    // Get ambient from "V" in SHSV (0--10000), scaled to 0 to 100
-    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV);
-    return pb_obj_new_fraction(data[2], 100);
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, false));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV, get_ambient);
 
-// Helper for getting HSV with the light on.
-static pbio_color_t get_hsv_reflected(mp_obj_t self_in) {
-    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I);
-    const pbio_color_rgb_t rgb = {
-        .r = data[0] == 1024 ? 255 : data[0] >> 2,
-        .g = data[1] == 1024 ? 255 : data[1] >> 2,
-        .b = data[2] == 1024 ? 255 : data[2] >> 2,
-    };
-    pbio_color_t hsv = pb_color_map_rgb_to_hsv(&rgb);
-
-    uint8_t s = pbio_color_get_s(hsv);
-    int8_t v = pbio_color_get_v(hsv);
-
-    return PBIO_COLOR_ENCODE(pbio_color_get_h(hsv),
-        // Approximately double saturation for low values to get similar results
-        // as other sensors.
-        s * (200 - s) / 100,
-        // Approximately +50% low values to get similar results
-        // as with other sensors.
-        v * (150 - v / 2) / 100);
-}
-
-// Helper for getting HSV with the light off, scale saturation and value to
-// match 0-100% range in typical applications.
-static pbio_color_t get_hsv_ambient(mp_obj_t self_in) {
-    int16_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV);
-    return PBIO_COLOR_ENCODE(data[0],
-        pbio_int_math_min(data[1] / 10, 100),
-        pbio_int_math_min(data[2] / 10, 100));
-}
-
 // pybricks.pupdevices.ColorSensor.hsv(surface=True)
 static mp_obj_t get_hsv_surface_true(mp_obj_t self_in) {
-    return pb_type_Color_new(get_hsv_reflected(self_in));
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_color_t hsv;
+    pb_assert(pbio_port_get_color(self->device_base.port, &hsv, NULL, true));
+    return pb_type_Color_new(hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_true_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I, get_hsv_surface_true);
 
 // pybricks.pupdevices.ColorSensor.hsv(surface=False)
 static mp_obj_t get_hsv_surface_false(mp_obj_t self_in) {
-    return pb_type_Color_new(get_hsv_ambient(self_in));
+    pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_color_t hsv;
+    pb_assert(pbio_port_get_color(self->device_base.port, &hsv, NULL, false));
+    return pb_type_Color_new(hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_false_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV, get_hsv_surface_false);
 
 // pybricks.pupdevices.ColorSensor.color(surface=True)
 static mp_obj_t get_color_surface_true(mp_obj_t self_in) {
-    pbio_color_t hsv = get_hsv_reflected(self_in);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(self->color_map, hsv);
+    pbio_color_t matched;
+    pb_assert(pbio_port_get_color(self->device_base.port, NULL, &matched, true));
+    return pb_color_map_get_color(self->color_map, matched);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_true_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I, get_color_surface_true);
 
 // pybricks.pupdevices.ColorSensor.color(surface=False)
 static mp_obj_t get_color_surface_false(mp_obj_t self_in) {
-    pbio_color_t hsv = get_hsv_ambient(self_in);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(self->color_map, hsv);
+    pbio_color_t matched;
+    pb_assert(pbio_port_get_color(self->device_base.port, NULL, &matched, false));
+    return pb_color_map_get_color(self->color_map, matched);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_false_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV, get_color_surface_false);
 

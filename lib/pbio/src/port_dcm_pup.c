@@ -352,7 +352,11 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return dcm->sensor_data;
 }
 
-pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

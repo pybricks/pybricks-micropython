@@ -117,6 +117,7 @@ static inline uint8_t pbio_color_get_v_clamped(pbio_color_t color) {
 }
 
 pbio_color_t pbio_color_from_rgb(const pbio_color_rgb_t *rgb);
+pbio_color_t pbio_color_from_rgb_with_hue_shift(const pbio_color_rgb_t *rgb);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 
 typedef int32_t (*pbio_color_distance_func_t)(pbio_color_t hsv_a, pbio_color_t hsv_b);
