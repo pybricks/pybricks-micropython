@@ -36,11 +36,11 @@ extern const mp_obj_base_t pb_type_Color_obj;
 
 typedef struct _pb_type_Color_obj_t {
     mp_obj_base_t base;
-    pbio_color_hsv_t hsv;
+    pbio_color_t hsv;
 } pb_type_Color_obj_t;
 
 pb_type_Color_obj_t *pb_type_Color_new_empty(void);
-const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj);
+pbio_color_t pb_type_Color_get_hsv(mp_obj_t obj);
 void pb_type_Color_reset(void);
 
 extern const pb_type_Color_obj_t pb_Color_RED_obj;

@@ -24,22 +24,25 @@
 #include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// This expands pbio_color_rgb_to_hsv with additional calibration steps that
-// ultimately must be properly done in pbio_color_rgb_to_hsv, just like
-// pbio_color_hsv_to_rgb, by adjusting RGB instead of hacking at the HSV value.
-void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
+// This expands pbio_color_from_rgb with additional calibration steps that
+// ultimately must be properly done in pbio_color_from_rgb, just like
+// pbio_color_to_rgb, by adjusting RGB instead of hacking at the HSV value.
+pbio_color_t pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb) {
 
     // Standard conversion
-    pbio_color_rgb_to_hsv(rgb, hsv);
+    pbio_color_t color = pbio_color_from_rgb(rgb);
 
     // Slight shift for lower hues to make yellow somewhat more accurate
-    if (hsv->h >= 350) {
-        hsv->h = (350 + 2 * (hsv->h - 350)) % 360;
-    } else if (hsv->h < 40) {
-        hsv->h += 10;
-    } else if (hsv->h < 60) {
-        hsv->h = 50 + (hsv->h - 40) / 2;
+    uint16_t h = pbio_color_get_h(color);
+    if (h >= 350) {
+        h = (350 + 2 * (h - 350)) % 360;
+    } else if (h < 40) {
+        h += 10;
+    } else if (h < 60) {
+        h = 50 + (h - 40) / 2;
     }
+
+    return PBIO_COLOR_ENCODE(h, pbio_color_get_s(color), pbio_color_get_v(color));
 }
 
 static const mp_rom_obj_tuple_t pb_color_map_default = {
@@ -61,7 +64,7 @@ void pb_color_map_save_default(mp_obj_t *color_map) {
 }
 
 // Get a discrete color that matches the given hsv values most closely
-mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
+mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_t hsv) {
 
     // Unpack the main list
     mp_obj_t *colors;
@@ -80,11 +83,11 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     // better default results that are distance independent. Otherwise use a
     // bicone color distance measure.
     for (size_t i = 0; i < n; i++) {
-        const pbio_color_hsv_t *candidate = pb_type_Color_get_hsv(colors[i]);
+        pbio_color_t candidate = pb_type_Color_get_hsv(colors[i]);
 
         // Use bicone mapping if custom (realistic) colors provided.
-        bool idealized_grayscale = candidate->s == 0 && candidate->h == 0;
-        bool idealized_color = candidate->s == 100 && candidate->v == 100;
+        bool idealized_grayscale = pbio_color_get_s(candidate) == 0 && pbio_color_get_h(candidate) == 0;
+        bool idealized_color = pbio_color_get_s(candidate) == 100 && pbio_color_get_v(candidate) == 100;
         if (!idealized_grayscale && !idealized_color) {
             distance_func = pbio_color_get_distance_bicone_squared;
             break;

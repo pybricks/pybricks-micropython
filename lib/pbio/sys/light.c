@@ -142,7 +142,7 @@ typedef struct {
     /** The color LED device */
     pbdrv_led_dev_t *led;
     /** The most recent user color value. */
-    pbio_color_hsv_t user_color;
+    pbio_color_t user_color;
     /** The user program is currently allowed to control the status light. */
     bool allow_user_update;
     /** The current pattern state. */
@@ -167,9 +167,9 @@ static pbsys_status_light_pattern_state_t *warning_pattern_state = &pbsys_status
 #endif
 
 
-static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
+static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, pbio_color_t hsv) {
     pbsys_status_light_t *instance = PBIO_CONTAINER_OF(light, pbsys_status_light_t, color_light);
-    instance->user_color = *hsv;
+    instance->user_color = hsv;
 
     if (!instance->led) {
         return PBIO_ERROR_NO_DEV;
@@ -357,11 +357,9 @@ static void pbsys_status_light_set_pattern_or_user_color(pbsys_status_light_t *i
         return;
     }
     if (instance->allow_user_update) {
-        pbdrv_led_set_hsv(instance->led, &instance->user_color);
+        pbdrv_led_set_hsv(instance->led, instance->user_color);
     } else {
-        pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(pattern_color, &hsv);
-        pbdrv_led_set_hsv(instance->led, &hsv);
+        pbdrv_led_set_hsv(instance->led, pattern_color);
     }
 }
 
@@ -409,9 +407,7 @@ void pbsys_status_light_poll(void) {
     // FIXME: Use sys light instance like the other lights.
     pbdrv_led_dev_t *led;
     if (pbdrv_led_get_dev(1, &led) == PBIO_SUCCESS) {
-        pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(new_battery_color, &hsv);
-        pbdrv_led_set_hsv(led, &hsv);
+        pbdrv_led_set_hsv(led, new_battery_color);
     }
 
     #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY

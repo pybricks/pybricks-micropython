@@ -45,7 +45,7 @@ static mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     }
 
     // Get port color indicator (blue or red)
-    uint16_t hue = pb_type_Color_get_hsv(color_in)->h;
+    uint16_t hue = pbio_color_get_h(pb_type_Color_get_hsv(color_in));
     if (hue != PBIO_COLOR_HUE_BLUE && hue != PBIO_COLOR_HUE_RED) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }

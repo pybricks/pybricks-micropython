@@ -15,7 +15,7 @@
 /** Implementation-specific callbacks for a color light. */
 typedef struct {
     /** Sets the light to the specified color and brightness. */
-    pbio_error_t (*set_hsv)(pbio_color_light_t *light, const pbio_color_hsv_t *hsv);
+    pbio_error_t (*set_hsv)(pbio_color_light_t *light, pbio_color_t hsv);
 } pbio_color_light_funcs_t;
 
 /** Data structure for defining a color light instance. */
@@ -24,10 +24,10 @@ struct _pbio_color_light_t {
     const pbio_color_light_funcs_t *funcs;
     union {
         const uint16_t *interval_cells;
-        const pbio_color_hsv_t *hsv_cells;
+        const pbio_color_t *hsv_cells;
     };
     union {
-        pbio_color_hsv_t hsv;
+        pbio_color_t hsv;
         uint16_t interval;
     };
     uint16_t current_cell;

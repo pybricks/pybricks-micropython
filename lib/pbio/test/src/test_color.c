@@ -11,162 +11,122 @@
 
 static void test_rgb_to_hsv(void *env) {
     pbio_color_rgb_t rgb;
-    pbio_color_hsv_t hsv;
+    pbio_color_t hsv;
 
     // black
     rgb.r = 0;
     rgb.g = 0;
     rgb.b = 0;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 0);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(0, 0, 0));
 
     // white
     rgb.r = 255;
     rgb.g = 255;
     rgb.b = 255;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(0, 0, 100));
 
     // gray
     rgb.r = 127;
     rgb.g = 127;
     rgb.b = 127;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 50);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(0, 0, 50));
 
     // red
     rgb.r = 255;
     rgb.g = 0;
     rgb.b = 0;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(0, 100, 100));
 
     // green
     rgb.r = 0;
     rgb.g = 255;
     rgb.b = 0;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 120);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(120, 100, 100));
 
     // blue
     rgb.r = 0;
     rgb.g = 0;
     rgb.b = 255;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 240);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(240, 100, 100));
 
     // yellow
     rgb.r = 255;
     rgb.g = 255;
     rgb.b = 0;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 60);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(60, 100, 100));
 
     // cyan
     rgb.r = 0;
     rgb.g = 255;
     rgb.b = 255;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 180);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(180, 100, 100));
 
     // magenta
     rgb.r = 255;
     rgb.g = 0;
     rgb.b = 255;
 
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
-    tt_want_int_op(hsv.h, ==, 300);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    hsv = pbio_color_from_rgb(&rgb);
+    tt_want_int_op(hsv, ==, PBIO_COLOR_ENCODE(300, 100, 100));
 }
 
 static void test_hsv_to_rgb(void *env) {
-    pbio_color_hsv_t hsv;
     pbio_color_rgb_t rgb;
 
     // no-color (negative brightness)
-    hsv.h = 0;
-    hsv.s = 0;
-    hsv.v = -50;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(0, 0, -50), &rgb);
     tt_want_int_op(rgb.r, ==, 0);
     tt_want_int_op(rgb.g, ==, 0);
     tt_want_int_op(rgb.b, ==, 0);
 
     // black
-    hsv.h = 0;
-    hsv.s = 0;
-    hsv.v = 0;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(0, 0, 0), &rgb);
     tt_want_int_op(rgb.r, ==, 0);
     tt_want_int_op(rgb.g, ==, 0);
     tt_want_int_op(rgb.b, ==, 0);
 
     // white
-    hsv.h = 0;
-    hsv.s = 0;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(0, 0, 100), &rgb);
     tt_want_int_op(rgb.r, >, 250);
     tt_want_int_op(rgb.g, >, 250);
     tt_want_int_op(rgb.b, >, 250);
 
     // red
-    hsv.h = 0;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(0, 100, 100), &rgb);
     tt_want_int_op(rgb.r, >, 250);
     tt_want_int_op(rgb.g, ==, 0);
     tt_want_int_op(rgb.b, ==, 0);
 
     // green
-    hsv.h = 120;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(120, 100, 100), &rgb);
     tt_want_int_op(rgb.r, ==, 0);
     tt_want_int_op(rgb.g, >, 250);
     tt_want_int_op(rgb.b, ==, 0);
 
     // blue
-    hsv.h = 240;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(240, 100, 100), &rgb);
     tt_want_int_op(rgb.r, ==, 0);
     tt_want_int_op(rgb.g, ==, 0);
     tt_want_int_op(rgb.b, >, 250);
 
     // yellow
-    hsv.h = 60;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(60, 100, 100), &rgb);
     tt_want_int_op(rgb.r, >, 120);
     tt_want_int_op(rgb.r, <, 130);
     tt_want_int_op(rgb.g, >, 120);
@@ -174,10 +134,7 @@ static void test_hsv_to_rgb(void *env) {
     tt_want_int_op(rgb.b, ==, 0);
 
     // cyan
-    hsv.h = 180;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(180, 100, 100), &rgb);
     tt_want_int_op(rgb.r, ==, 0);
     tt_want_int_op(rgb.g, >, 120);
     tt_want_int_op(rgb.g, <, 130);
@@ -185,10 +142,7 @@ static void test_hsv_to_rgb(void *env) {
     tt_want_int_op(rgb.b, <, 130);
 
     // magenta
-    hsv.h = 300;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(300, 100, 100), &rgb);
     tt_want_int_op(rgb.r, >, 120);
     tt_want_int_op(rgb.r, <, 130);
     tt_want_int_op(rgb.g, ==, 0);
@@ -196,10 +150,7 @@ static void test_hsv_to_rgb(void *env) {
     tt_want_int_op(rgb.b, <, 130);
 
     // orange
-    hsv.h = 30;
-    hsv.s = 100;
-    hsv.v = 100;
-    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    pbio_color_to_rgb(PBIO_COLOR_ENCODE(30, 100, 100), &rgb);
     tt_want_int_op(rgb.r, >, 185);
     tt_want_int_op(rgb.r, <, 195);
     tt_want_int_op(rgb.g, >, 55);
@@ -207,73 +158,33 @@ static void test_hsv_to_rgb(void *env) {
     tt_want_int_op(rgb.b, ==, 0);
 }
 
-static void test_color_to_hsv(void *env) {
-    pbio_color_hsv_t hsv;
+static void test_color_encoding(void *env) {
 
-    pbio_color_to_hsv(PBIO_COLOR_NONE, &hsv);
-    tt_want_int_op(hsv.h, ==, 180);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 0);
+    tt_want_int_op(PBIO_COLOR_NONE, ==, PBIO_COLOR_ENCODE(180, 0, 0));
 
-    pbio_color_to_hsv(PBIO_COLOR_BLACK, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 0);
+    tt_want_int_op(PBIO_COLOR_BLACK, ==, PBIO_COLOR_ENCODE(0, 0, 0));
 
-    pbio_color_to_hsv(PBIO_COLOR_GRAY, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 50);
+    tt_want_int_op(PBIO_COLOR_GRAY, ==, PBIO_COLOR_ENCODE(0, 0, 50));
 
-    pbio_color_to_hsv(PBIO_COLOR_WHITE, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 0);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_WHITE, ==, PBIO_COLOR_ENCODE(0, 0, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_RED, &hsv);
-    tt_want_int_op(hsv.h, ==, 0);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_RED, ==, PBIO_COLOR_ENCODE(0, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_BROWN, &hsv);
-    tt_want_int_op(hsv.h, ==, 30);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 50);
+    tt_want_int_op(PBIO_COLOR_BROWN, ==, PBIO_COLOR_ENCODE(30, 100, 50));
 
-    pbio_color_to_hsv(PBIO_COLOR_ORANGE, &hsv);
-    tt_want_int_op(hsv.h, ==, 30);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_ORANGE, ==, PBIO_COLOR_ENCODE(30, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_YELLOW, &hsv);
-    tt_want_int_op(hsv.h, ==, 60);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_YELLOW, ==, PBIO_COLOR_ENCODE(60, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_GREEN, &hsv);
-    tt_want_int_op(hsv.h, ==, 120);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_GREEN, ==, PBIO_COLOR_ENCODE(120, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_CYAN, &hsv);
-    tt_want_int_op(hsv.h, ==, 180);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_CYAN, ==, PBIO_COLOR_ENCODE(180, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_BLUE, &hsv);
-    tt_want_int_op(hsv.h, ==, 240);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_BLUE, ==, PBIO_COLOR_ENCODE(240, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_VIOLET, &hsv);
-    tt_want_int_op(hsv.h, ==, 270);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_VIOLET, ==, PBIO_COLOR_ENCODE(270, 100, 100));
 
-    pbio_color_to_hsv(PBIO_COLOR_MAGENTA, &hsv);
-    tt_want_int_op(hsv.h, ==, 300);
-    tt_want_int_op(hsv.s, ==, 100);
-    tt_want_int_op(hsv.v, ==, 100);
+    tt_want_int_op(PBIO_COLOR_MAGENTA, ==, PBIO_COLOR_ENCODE(300, 100, 100));
 }
 
 static void test_color_to_rgb(void *env) {
@@ -339,144 +250,91 @@ static void test_color_to_rgb(void *env) {
 }
 
 static void test_color_hsv_cost(void *env) {
-    pbio_color_hsv_t color_a;
-    pbio_color_hsv_t color_b;
+    pbio_color_t color_a;
+    pbio_color_t color_b;
     int32_t dist;
 
     // color compared to itself should give 0
-    color_a.h = 0;
-    color_a.s = 100;
-    color_a.v = 100;
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_a), ==, 0);
+    color_a = PBIO_COLOR_ENCODE(0, 100, 100);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_a), ==, 0);
 
     // blacks with different saturations/hues should be the same
-    color_a.h = 230;
-    color_a.s = 23;
-    color_a.v = 0;
+    color_a = PBIO_COLOR_ENCODE(230, 23, 0);
 
-    color_b.h = 23;
-    color_b.s = 99;
-    color_b.v = 0;
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
+    color_b = PBIO_COLOR_ENCODE(23, 99, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), ==, 0);
 
     // colors with different hues should be different when value>0 and saturation>0
-    color_a.h = 230;
-    color_a.s = 99;
-    color_a.v = 100;
+    color_a = PBIO_COLOR_ENCODE(230, 99, 100);
 
-    color_b.h = 23;
-    color_b.s = 99;
-    color_b.v = 100;
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
+    color_b = PBIO_COLOR_ENCODE(23, 99, 100);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, 0);
 
     // grays with different hues should be the same
-    color_a.h = 230;
-    color_a.s = 0;
-    color_a.v = 50;
+    color_a = PBIO_COLOR_ENCODE(230, 0, 50);
 
-    color_b.h = 23;
-    color_b.s = 0;
-    color_b.v = 50;
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
+    color_b = PBIO_COLOR_ENCODE(23, 0, 50);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), ==, 0);
 
     // distance should be greater when saturation is greater
-    color_a.h = 30;
-    color_a.s = 20;
-    color_a.v = 70;
+    color_a = PBIO_COLOR_ENCODE(30, 20, 70);
 
-    color_b.h = 60;
-    color_b.s = 20;
-    color_b.v = 70;
+    color_b = PBIO_COLOR_ENCODE(60, 20, 70);
 
-    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(color_a, color_b);
 
-    color_a.h = 30;
-    color_a.s = 40;
-    color_a.v = 70;
+    color_a = PBIO_COLOR_ENCODE(30, 40, 70);
 
-    color_b.h = 60;
-    color_b.s = 40;
-    color_b.v = 70;
+    color_b = PBIO_COLOR_ENCODE(60, 40, 70);
 
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, dist);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, dist);
 
     // resolve colors that are close
-    color_a.h = 30;
-    color_a.s = 20;
-    color_a.v = 70;
+    color_a = PBIO_COLOR_ENCODE(30, 20, 70);
 
-    color_b.h = 35;
-    color_b.s = 20;
-    color_b.v = 70;
+    color_b = PBIO_COLOR_ENCODE(35, 20, 70);
 
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, 0);
 
-    color_a.h = 30;
-    color_a.s = 20;
-    color_a.v = 70;
+    color_a = PBIO_COLOR_ENCODE(30, 20, 70);
 
-    color_b.h = 30;
-    color_b.s = 25;
-    color_b.v = 70;
+    color_b = PBIO_COLOR_ENCODE(30, 25, 70);
 
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, 0);
 
-    color_a.h = 30;
-    color_a.s = 20;
-    color_a.v = 70;
+    color_a = PBIO_COLOR_ENCODE(30, 20, 70);
 
-    color_b.h = 30;
-    color_b.s = 20;
-    color_b.v = 75;
+    color_b = PBIO_COLOR_ENCODE(30, 20, 75);
 
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, 0);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, 0);
 
     // hues 360 and 0 should be the same
-    color_a.h = 360;
-    color_a.s = 100;
-    color_a.v = 100;
+    color_a = PBIO_COLOR_ENCODE(360, 100, 100);
 
-    color_b.h = 0;
-    color_b.s = 100;
-    color_b.v = 100;
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), ==, 0);
+    color_b = PBIO_COLOR_ENCODE(0, 100, 100);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), ==, 0);
 
     // distance between hues 359 and 1 should be smaller than hues 1 and 5
-    color_a.h = 359;
-    color_a.s = 100;
-    color_a.v = 100;
+    color_a = PBIO_COLOR_ENCODE(359, 100, 100);
 
-    color_b.h = 1;
-    color_b.s = 100;
-    color_b.v = 100;
-    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    color_b = PBIO_COLOR_ENCODE(1, 100, 100);
+    dist = pbio_color_get_distance_bicone_squared(color_a, color_b);
 
-    color_a.h = 1;
-    color_a.s = 100;
-    color_a.v = 100;
+    color_a = PBIO_COLOR_ENCODE(1, 100, 100);
 
-    color_b.h = 5;
-    color_b.s = 100;
-    color_b.v = 100;
+    color_b = PBIO_COLOR_ENCODE(5, 100, 100);
 
-    tt_want_int_op(pbio_color_get_distance_bicone_squared(&color_a, &color_b), >, dist);
+    tt_want_int_op(pbio_color_get_distance_bicone_squared(color_a, color_b), >, dist);
 
     // check distance is monotonous along several color paths. This should catch potential int overflows
     int prev_dist = 0;
     bool monotone = true;
 
     // along saturation
-    color_a.h = 180;
-    color_a.s = 0;
-    color_a.v = 100;
+    color_b = PBIO_COLOR_ENCODE(180, 0, 100);
 
-    color_b.h = 180;
-    color_b.s = 0;
-    color_b.v = 100;
-
-    while (color_a.s < 100) {
-        color_a.s += 5;
-        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    for (int s = 5; s <= 100; s += 5) {
+        dist = pbio_color_get_distance_bicone_squared(PBIO_COLOR_ENCODE(180, s, 100), color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -491,17 +349,10 @@ static void test_color_hsv_cost(void *env) {
     prev_dist = 0;
     monotone = true;
 
-    color_a.h = 180;
-    color_a.s = 100;
-    color_a.v = 0;
+    color_b = PBIO_COLOR_ENCODE(180, 100, 0);
 
-    color_b.h = 180;
-    color_b.s = 100;
-    color_b.v = 0;
-
-    while (color_a.v < 100) {
-        color_a.v += 5;
-        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    for (int v = 5; v <= 100; v += 5) {
+        dist = pbio_color_get_distance_bicone_squared(PBIO_COLOR_ENCODE(180, 100, v), color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -516,17 +367,10 @@ static void test_color_hsv_cost(void *env) {
     prev_dist = 0;
     monotone = true;
 
-    color_a.h = 180;
-    color_a.s = 0;
-    color_a.v = 0;
+    color_b = PBIO_COLOR_ENCODE(180, 0, 0);
 
-    color_b.h = 180;
-    color_b.s = 0;
-    color_b.v = 0;
-
-    while (color_a.v < 100) {
-        color_a.v += 5;
-        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    for (int v = 5; v <= 100; v += 5) {
+        dist = pbio_color_get_distance_bicone_squared(PBIO_COLOR_ENCODE(180, 0, v), color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -541,20 +385,14 @@ static void test_color_hsv_cost(void *env) {
     prev_dist = 0;
     monotone = true;
 
-    color_a.h = 180;
-    color_a.s = 100;
-    color_a.v = 100;
-
-    color_b.h = 180;
-    color_b.s = 100;
-    color_b.v = 100;
+    color_b = PBIO_COLOR_ENCODE(180, 100, 100);
 
     for (int i = -19; i < 21; i++) {
-        color_a.s = i < 0 ? -i * 5 : i * 5;
-        color_a.h = i < 0 ? 180 : 0;
-        color_a.v = 10000 / (200 - color_a.s); // constant lightness
+        int s = i < 0 ? -i * 5 : i * 5;
+        // constant lightness
+        color_a = PBIO_COLOR_ENCODE(i < 0 ? 180 : 0, s, 10000 / (200 - s));
 
-        dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+        dist = pbio_color_get_distance_bicone_squared(color_a, color_b);
 
         if (dist <= prev_dist) {
             monotone = false;
@@ -565,27 +403,19 @@ static void test_color_hsv_cost(void *env) {
 
     // check max distances
 
-    color_a.h = 0;
-    color_a.s = 100;
-    color_a.v = 100;
+    color_a = PBIO_COLOR_ENCODE(0, 100, 100);
 
-    color_b.h = 180;
-    color_b.s = 100;
-    color_b.v = 100;
+    color_b = PBIO_COLOR_ENCODE(180, 100, 100);
 
-    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(color_a, color_b);
     tt_want_int_op(dist, >, 390000000);
     tt_want_int_op(dist, <, 410000000);
 
-    color_a.h = 0;
-    color_a.s = 0;
-    color_a.v = 0;
+    color_a = PBIO_COLOR_ENCODE(0, 0, 0);
 
-    color_b.h = 0;
-    color_b.s = 0;
-    color_b.v = 100;
+    color_b = PBIO_COLOR_ENCODE(0, 0, 100);
 
-    dist = pbio_color_get_distance_bicone_squared(&color_a, &color_b);
+    dist = pbio_color_get_distance_bicone_squared(color_a, color_b);
     tt_want_int_op(dist, >, 390000000);
     tt_want_int_op(dist, <, 410000000);
 }
@@ -593,7 +423,7 @@ static void test_color_hsv_cost(void *env) {
 struct testcase_t pbio_color_tests[] = {
     PBIO_TEST(test_rgb_to_hsv),
     PBIO_TEST(test_hsv_to_rgb),
-    PBIO_TEST(test_color_to_hsv),
+    PBIO_TEST(test_color_encoding),
     PBIO_TEST(test_color_to_rgb),
     PBIO_TEST(test_color_hsv_cost),
     END_OF_TESTCASES

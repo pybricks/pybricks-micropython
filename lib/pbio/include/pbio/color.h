@@ -20,14 +20,14 @@
  *
  * @param h [in]    The hue, 0..359 degrees
  * @param s [in]    The saturation, 0..100 percent
- * @param v [in]    The value, 0..100 percent
+ * @param v [in]    The value, 0..100 percent, or negative (see ::pbio_color_get_v)
  */
-#define PBIO_COLOR_ENCODE(h, s, v) (((h) << 16) | ((s) << 8) | (v))
+#define PBIO_COLOR_ENCODE(h, s, v) (((h) << 16) | ((s) << 8) | ((v) & 0xff))
 
 /** @endcond */
 
 /**
- * Color names.
+ * HSV color, packed as 0xHHHHSSVV. Named values are the standard colors.
  */
 typedef enum {
     // NONE uses different hue to differentiate if from black
@@ -82,30 +82,40 @@ typedef struct {
     uint8_t b;
 } pbio_color_rgb_t;
 
-/** HSV color. */
-typedef struct {
-    /** The hue component. 0 to 359 degrees. */
-    uint16_t h;
-    /** The saturation component. 0 to 100 percent. */
-    uint8_t s;
-    /** The value component. Normally 0 to 100 percent but allowed to be
-     * negative to provide higher contrast in color scanning applications. */
-    int8_t v;
-} pbio_color_hsv_t;
-
-static inline uint8_t pbio_color_hsv_get_v(const pbio_color_hsv_t *hsv) {
-    return hsv->v < 0 ? 0 : hsv->v;
+/** Gets the hue component, 0 to 359 degrees. */
+static inline uint16_t pbio_color_get_h(pbio_color_t color) {
+    return color >> 16;
 }
 
-void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
-void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
-void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
+/** Gets the saturation component, 0 to 100 percent. */
+static inline uint8_t pbio_color_get_s(pbio_color_t color) {
+    return (color >> 8) & 0xff;
+}
+
+/**
+ * Gets the value component as stored. Normally 0 to 100 percent but allowed to
+ * be negative to provide higher contrast in color scanning applications.
+ *
+ * Use ::pbio_color_get_v_clamped instead where a negative value makes no sense,
+ * such as when driving a light.
+ */
+static inline int8_t pbio_color_get_v(pbio_color_t color) {
+    return (int8_t)(color & 0xff);
+}
+
+/** Gets the value component like ::pbio_color_get_v, with negative values clamped to zero. */
+static inline uint8_t pbio_color_get_v_clamped(pbio_color_t color) {
+    int8_t v = pbio_color_get_v(color);
+    return v < 0 ? 0 : v;
+}
+
+pbio_color_t pbio_color_from_rgb(const pbio_color_rgb_t *rgb);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 
-typedef int32_t (*pbio_color_distance_func_t)(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
+typedef int32_t (*pbio_color_distance_func_t)(pbio_color_t hsv_a, pbio_color_t hsv_b);
 
-int32_t pbio_color_get_distance_bicone_squared(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
-int32_t pbio_color_get_distance_saturation_heuristic(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
+int32_t pbio_color_get_distance_bicone_squared(pbio_color_t hsv_a, pbio_color_t hsv_b);
+int32_t pbio_color_get_distance_saturation_heuristic(pbio_color_t hsv_a, pbio_color_t hsv_b);
 
 #endif // _PBIO_COLOR_H_
 
