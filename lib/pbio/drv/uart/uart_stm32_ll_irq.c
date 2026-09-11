@@ -223,10 +223,27 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
     }
     #endif /* UART12 */
 
-    // TODO: confirm that we don't need different prescalar.
-    // i.e. assert_param(IS_LL_USART_BRR_MIN(USARTx->BRR))
-    LL_USART_SetBaudRate(USARTx, periphclk, LL_USART_PRESCALER_DIV1, LL_USART_OVERSAMPLING_16, baud);
-    LL_USART_SetPrescaler(USARTx, LL_USART_PRESCALER_DIV1);
+    // BRR is only a 16-bit register. On H5, peripheral clocks can be as high
+    // as 250MHz, so periphclk / baud can overflow 16 bits at low baud rates
+    // (e.g. 2400), which silently wraps around to the wrong baud rate. Pick
+    // the smallest clock prescaler that keeps the divisor in range.
+    static const uint32_t prescaler_divisors[] = { 1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256 };
+    static const uint32_t prescalers[] = {
+        LL_USART_PRESCALER_DIV1, LL_USART_PRESCALER_DIV2, LL_USART_PRESCALER_DIV4,
+        LL_USART_PRESCALER_DIV6, LL_USART_PRESCALER_DIV8, LL_USART_PRESCALER_DIV10,
+        LL_USART_PRESCALER_DIV12, LL_USART_PRESCALER_DIV16, LL_USART_PRESCALER_DIV32,
+        LL_USART_PRESCALER_DIV64, LL_USART_PRESCALER_DIV128, LL_USART_PRESCALER_DIV256,
+    };
+    uint32_t prescaler = LL_USART_PRESCALER_DIV256;
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(prescaler_divisors); i++) {
+        if (periphclk / prescaler_divisors[i] / baud <= 0xFFFF) {
+            prescaler = prescalers[i];
+            break;
+        }
+    }
+
+    LL_USART_SetBaudRate(USARTx, periphclk, prescaler, LL_USART_OVERSAMPLING_16, baud);
+    LL_USART_SetPrescaler(USARTx, prescaler);
 }
 #else
 #error "unsupported MCU for btstack_stm32_hal_set_baudrate()"
