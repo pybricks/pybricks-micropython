@@ -28,14 +28,14 @@ static mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, 
 static uint8_t get_color_id(mp_obj_t color_in) {
 
     // Assert type and get hsv.
-    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
+    pbio_color_t hsv = pb_type_Color_get_hsv(color_in);
 
     // Brightness is defined in 10 increments.
-    uint8_t brightness = pbio_color_hsv_get_v(hsv) / 10;
+    uint8_t brightness = pbio_color_get_v_clamped(hsv) / 10;
     pb_powered_up_color_id_t color;
 
     // For low saturation, assume grayscale.
-    if (hsv->s < 30) {
+    if (pbio_color_get_s(hsv) < 30) {
         // Brightness 1 is broken (shows faint red), so assume 0.
         if (brightness == 1) {
             brightness = 0;
@@ -43,7 +43,7 @@ static uint8_t get_color_id(mp_obj_t color_in) {
         color = PB_PUP_COLOR_ID_WHITE;
     } else {
         // Everything else is rounded to nearest available hue.
-        color = pb_powered_up_color_id_from_hue(hsv->h);
+        color = pb_powered_up_color_id_from_hue(pbio_color_get_h(hsv));
     }
 
     // The light matrix data format is a 4-bit brightness in the MSBs and a

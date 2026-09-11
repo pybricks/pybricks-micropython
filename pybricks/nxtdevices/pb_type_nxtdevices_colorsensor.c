@@ -75,9 +75,9 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
  * Gets the RGB data from the sensor and converts it to HSV.
  *
  * @param  [in]  self  The sensor object.
- * @param  [out] hsv   The HSV data.
+ * @return             The HSV data.
  */
-static void get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self, pbio_color_hsv_t *hsv) {
+static pbio_color_t get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self) {
     pbio_port_dcm_analog_rgba_t rgba;
     pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
 
@@ -86,15 +86,13 @@ static void get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self, pbio_color_
     rgb.r = rgba.r >> 2;
     rgb.g = rgba.g >> 2;
     rgb.b = rgba.b >> 2;
-    pb_color_map_rgb_to_hsv(&rgb, hsv);
+    return pb_color_map_rgb_to_hsv(&rgb);
 }
 
 // pybricks.nxtdevices.ColorSensor.color
 static mp_obj_t pb_type_nxtdevices_colorsensor_color(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_color_hsv_t hsv;
-    get_hsv_data(self, &hsv);
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_color_map_get_color(&self->color_map, get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_type_nxtdevices_colorsensor_color);
 
@@ -102,7 +100,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_ty
 static mp_obj_t pb_type_nxtdevices_colorsensor_hsv(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    get_hsv_data(self, &color->hsv);
+    color->hsv = get_hsv_data(self);
     return MP_OBJ_FROM_PTR(color);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type_nxtdevices_colorsensor_hsv);

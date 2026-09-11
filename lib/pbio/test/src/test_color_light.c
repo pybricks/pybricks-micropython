@@ -27,16 +27,16 @@ static const uint16_t test_blink[] = {
     PBIO_COLOR_LIGHT_BLINK_END
 };
 
-static const pbio_color_hsv_t test_animation[] = {
-    PBIO_COLOR_LIGHT_ANIMATION_CELL(PBIO_COLOR_HUE_CYAN, 100, 100),
-    PBIO_COLOR_LIGHT_ANIMATION_CELL(PBIO_COLOR_HUE_MAGENTA, 100, 100),
+static const pbio_color_t test_animation[] = {
+    PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_CYAN, 100, 100),
+    PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_MAGENTA, 100, 100),
     PBIO_COLOR_LIGHT_ANIMATION_END_HSV
 };
 
-static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
+static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, pbio_color_t hsv) {
     test_light_set_hsv_call_count++;
-    test_light_set_hsv_last_hue = hsv->h;
-    test_light_set_hsv_last_brightness = pbio_color_hsv_get_v(hsv);
+    test_light_set_hsv_last_hue = pbio_color_get_h(hsv);
+    test_light_set_hsv_last_brightness = pbio_color_get_v_clamped(hsv);
     return PBIO_SUCCESS;
 }
 
@@ -66,8 +66,8 @@ static pbio_error_t test_color_light(pbio_os_state_t *state, void *context) {
     test_light_set_hsv_call_count = 0;
 
     // starting animation should call set_hsv() after handling pending events
-    static const pbio_color_hsv_t hsv = { .h = PBIO_COLOR_HUE_BLUE, .s = 100, .v = 100 };
-    pbio_color_light_start_blink_animation(&test_light, &hsv, test_blink);
+    static const pbio_color_t hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_BLUE, 100, 100);
+    pbio_color_light_start_blink_animation(&test_light, hsv, test_blink);
     PBIO_OS_AWAIT_ONCE(state);
 
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);

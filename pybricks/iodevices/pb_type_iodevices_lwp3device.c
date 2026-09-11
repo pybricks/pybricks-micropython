@@ -446,7 +446,7 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     #endif
 }
 
-static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
+static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, pbio_color_t hsv) {
 
     struct {
         uint8_t length;
@@ -469,7 +469,7 @@ static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_
     };
 
     pbio_color_rgb_t rgb;
-    pbio_color_hsv_to_rgb(hsv, &rgb);
+    pbio_color_to_rgb(hsv, &rgb);
 
     // The red LED on the handset is weak, so we have to reduce green and blue
     // to get the colors right.
@@ -482,7 +482,7 @@ static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_
     return pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
 }
 
-static mp_obj_t pb_type_remote_light_on(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
+static mp_obj_t pb_type_remote_light_on(mp_obj_t self_in, pbio_color_t hsv) {
     pb_assert(pb_type_remote_write_light_msg(self_in, hsv));
     return wait_or_await_operation(self_in);
 }
@@ -553,9 +553,7 @@ static pbio_error_t pb_type_remote_post_connect(pbio_os_state_t *state, mp_obj_t
     }
 
     // set status light to blue.
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(PBIO_COLOR_BLUE, &hsv);
-    err = pb_type_remote_write_light_msg(parent_obj, &hsv);
+    err = pb_type_remote_write_light_msg(parent_obj, PBIO_COLOR_BLUE);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -824,13 +822,13 @@ static pbio_error_t pb_type_mario_hub_post_connect(pbio_os_state_t *state, mp_ob
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static void pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_t *self, pbio_color_hsv_t *hsv) {
+static pbio_color_t pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_t *self) {
     pbio_color_rgb_t rgb = {
         .r = self->data[0],
         .g = self->data[1],
         .b = self->data[2],
     };
-    pb_color_map_rgb_to_hsv(&rgb, hsv);
+    return pb_color_map_rgb_to_hsv(&rgb);
 }
 
 static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
@@ -838,9 +836,7 @@ static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    pbio_color_hsv_t hsv;
-    pb_type_mario_hub_color_get_hsv_data(self, &hsv);
-    return pb_color_map_get_color(&self->buttons, &hsv);
+    return pb_color_map_get_color(&self->buttons, pb_type_mario_hub_color_get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_color_obj, pb_type_mario_hub_color);
 
@@ -850,7 +846,7 @@ static mp_obj_t pb_type_mario_hub_hsv(mp_obj_t self_in) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    pb_type_mario_hub_color_get_hsv_data(self, &color->hsv);
+    color->hsv = pb_type_mario_hub_color_get_hsv_data(self);
     return MP_OBJ_FROM_PTR(color);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_hsv_obj, pb_type_mario_hub_hsv);
@@ -1040,28 +1036,31 @@ static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *po
         pb_type_lwp3device_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
+    pbio_color_t hsv = pb_type_Color_get_hsv(color_in);
+    uint16_t h = pbio_color_get_h(hsv);
+    uint8_t s = pbio_color_get_s(hsv);
+    int8_t v = pbio_color_get_v(hsv);
 
     if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
         uint8_t id;
-        if (hsv->s < 10) {
+        if (s < 10) {
             // Desaturated, so pick white or black.
-            id = hsv->v > 50 ? 10 : 0;
-        } else if (hsv->h < 15) {
+            id = v > 50 ? 10 : 0;
+        } else if (h < 15) {
             id = 9; // red
-        } else if (hsv->h < 45) {
+        } else if (h < 45) {
             id = 8; // orange
-        } else if (hsv->h < 90) {
+        } else if (h < 90) {
             id = 7; // yellow
-        } else if (hsv->h < 150) {
+        } else if (h < 150) {
             id = 6; // green
-        } else if (hsv->h < 170) {
+        } else if (h < 170) {
             id = 5; // torquoise
-        } else if (hsv->h < 210) {
+        } else if (h < 210) {
             id = 4; // light blue
-        } else if (hsv->h < 270) {
+        } else if (h < 270) {
             id = 3; // blue
-        } else if (hsv->h < 305) {
+        } else if (h < 305) {
             id = 2; // magenta
         } else {
             id = 1; // violet red
@@ -1072,18 +1071,18 @@ static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *po
         pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
     } else {
         uint8_t id;
-        if (hsv->s < 10) {
+        if (s < 10) {
             // Desaturated, so pick white or black.
-            id = hsv->v > 50 ? 1 : 0;
-        } else if (hsv->h < 15) {
+            id = v > 50 ? 1 : 0;
+        } else if (h < 15) {
             id = 2; // red
-        } else if (hsv->h < 90) {
+        } else if (h < 90) {
             id = 4; // yellow/orange
-        } else if (hsv->h < 150) {
+        } else if (h < 150) {
             id = 5; // green
-        } else if (hsv->h < 210) {
+        } else if (h < 210) {
             id = 3; // light blue
-        } else if (hsv->h < 270) {
+        } else if (h < 270) {
             id = 15; // blue
         } else {
             id = 14; // violet red
@@ -1175,34 +1174,36 @@ static mp_obj_t pb_type_duplo_train_color(mp_obj_t self_in) {
             .g = rgb_to_byte(&self->data[4]),
             .b = rgb_to_byte(&self->data[6]),
         };
-        pbio_color_hsv_t hsv;
-        pbio_color_rgb_to_hsv(&rgb, &hsv);
-        if (hsv.v > 30 && hsv.h > 235 && hsv.h < 270 && hsv.s < 50) {
+        pbio_color_t hsv = pbio_color_from_rgb(&rgb);
+        uint16_t h = pbio_color_get_h(hsv);
+        uint8_t s = pbio_color_get_s(hsv);
+        int8_t v = pbio_color_get_v(hsv);
+        if (v > 30 && h > 235 && h < 270 && s < 50) {
             // purple star tag
             return MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj);
         }
-        if (hsv.v > 60 && hsv.h > 190 && hsv.h < 230 && hsv.s < 40) {
+        if (v > 60 && h > 190 && h < 230 && s < 40) {
             // pink home tag
             return MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj);
         }
-        if (hsv.h > 70 && hsv.h < 110 && hsv.s > 50) {
+        if (h > 70 && h < 110 && s > 50) {
             // green leaf tag
             return MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj);
         }
         // Deal with unsaturated colors.
-        if (hsv.s < 50) {
-            return hsv.v > 75 ?
+        if (s < 50) {
+            return v > 75 ?
                    MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj):
                    MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
         }
         // What remains are pure saturated colors, so go by hue.
-        if (hsv.h > 300 || hsv.h < 20) {
+        if (h > 300 || h < 20) {
             return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
         }
-        if (hsv.h < 85) {
+        if (h < 85) {
             return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
         }
-        if (hsv.h < 180) {
+        if (h < 180) {
             return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
         }
         return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);

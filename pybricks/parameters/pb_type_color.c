@@ -17,81 +17,81 @@
 
 const pb_type_Color_obj_t pb_Color_RED_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_RED, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_RED, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_BROWN_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 50}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_ORANGE, 100, 50)
 };
 
 const pb_type_Color_obj_t pb_Color_ORANGE_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_ORANGE, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_YELLOW_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_YELLOW, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_YELLOW, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_GREEN_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_GREEN, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_GREEN, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_CYAN_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_CYAN, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_CYAN, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_BLUE_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_BLUE, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_BLUE, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_VIOLET_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_VIOLET, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_VIOLET, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_MAGENTA_obj = {
     {&pb_type_Color},
-    .hsv = {PBIO_COLOR_HUE_MAGENTA, 100, 100}
+    .hsv = PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_MAGENTA, 100, 100)
 };
 
 const pb_type_Color_obj_t pb_Color_NONE_obj = {
     {&pb_type_Color},
-    .hsv = {0, 0, 0}
+    .hsv = PBIO_COLOR_ENCODE(0, 0, 0)
 };
 
 const pb_type_Color_obj_t pb_Color_BLACK_obj = {
     {&pb_type_Color},
-    .hsv = {0, 0, 10}
+    .hsv = PBIO_COLOR_ENCODE(0, 0, 10)
 };
 
 const pb_type_Color_obj_t pb_Color_GRAY_obj = {
     {&pb_type_Color},
-    .hsv = {0, 0, 50}
+    .hsv = PBIO_COLOR_ENCODE(0, 0, 50)
 };
 
 const pb_type_Color_obj_t pb_Color_WHITE_obj = {
     {&pb_type_Color},
-    .hsv = {0, 0, 100}
+    .hsv = PBIO_COLOR_ENCODE(0, 0, 100)
 };
 
 /**
- * Gets the pointer to the hsv type from a Color type.
+ * Gets the hsv value from a Color type.
  *
  * If @p obj is not a Color type, a TypeError is raised.
  *
  * @param obj [in]  A MicroPython object of pb_type_Color
- * @return          Pointer to hsv structure
+ * @return          The color
  */
-const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
+pbio_color_t pb_type_Color_get_hsv(mp_obj_t obj) {
     // Assert type and extract hsv
     pb_assert_type(obj, &pb_type_Color);
-    return &((pb_type_Color_obj_t *)obj)->hsv;
+    return ((pb_type_Color_obj_t *)obj)->hsv;
 }
 
 pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
@@ -104,13 +104,13 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
 
     // Bind h to 0--360
     h = h % 360;
-    self->hsv.h = h < 0 ? h + 360 : h;
 
-    // Bind s to 0--100
-    self->hsv.s = pbio_int_math_bind(s, 0, 100);
-
-    // Bind v to -100 to 100
-    self->hsv.v = pbio_int_math_clamp(v, 100);
+    self->hsv = PBIO_COLOR_ENCODE(
+        h < 0 ? h + 360 : h,
+        // Bind s to 0--100
+        pbio_int_math_bind(s, 0, 100),
+        // Bind v to -100 to 100
+        pbio_int_math_clamp(v, 100));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -154,17 +154,17 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // Otherwise, print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Color(h=%u, s=%u, v=%d)", self->hsv.h, self->hsv.s, self->hsv.v);
+    mp_printf(print, "Color(h=%u, s=%u, v=%d)", pbio_color_get_h(self->hsv), pbio_color_get_s(self->hsv), pbio_color_get_v(self->hsv));
 }
 
 static mp_obj_t pb_type_Color_subscr_index(pb_type_Color_obj_t *self, size_t index) {
     switch (index) {
         case 0:
-            return MP_OBJ_NEW_SMALL_INT(self->hsv.h);
+            return MP_OBJ_NEW_SMALL_INT(pbio_color_get_h(self->hsv));
         case 1:
-            return MP_OBJ_NEW_SMALL_INT(self->hsv.s);
+            return MP_OBJ_NEW_SMALL_INT(pbio_color_get_s(self->hsv));
         case 2:
-            return MP_OBJ_NEW_SMALL_INT(self->hsv.v);
+            return MP_OBJ_NEW_SMALL_INT(pbio_color_get_v(self->hsv));
         default:
             mp_raise_type(&mp_type_IndexError);
     }
@@ -241,13 +241,13 @@ static void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         // Return h, s, or v as requested
         switch (attr) {
             case MP_QSTR_h:
-                dest[0] = MP_OBJ_NEW_SMALL_INT(self->hsv.h);
+                dest[0] = MP_OBJ_NEW_SMALL_INT(pbio_color_get_h(self->hsv));
                 return;
             case MP_QSTR_s:
-                dest[0] = MP_OBJ_NEW_SMALL_INT(self->hsv.s);
+                dest[0] = MP_OBJ_NEW_SMALL_INT(pbio_color_get_s(self->hsv));
                 return;
             case MP_QSTR_v:
-                dest[0] = MP_OBJ_NEW_SMALL_INT(self->hsv.v);
+                dest[0] = MP_OBJ_NEW_SMALL_INT(pbio_color_get_v(self->hsv));
                 return;
             default:
                 break;
@@ -278,13 +278,7 @@ static mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
                 return mp_const_false;
             }
             pb_type_Color_obj_t *other = MP_OBJ_TO_PTR(rhs_in);
-            if (self->hsv.h == other->hsv.h &&
-                self->hsv.s == other->hsv.s &&
-                self->hsv.v == other->hsv.v) {
-                return mp_const_true;
-            } else {
-                return mp_const_false;
-            }
+            return mp_obj_new_bool(self->hsv == other->hsv);
         case MP_BINARY_OP_LSHIFT:
             // lshift is negative rshift, so negate and fall through to rshift
             rhs_in = mp_obj_new_int(-pb_obj_get_int(rhs_in));
@@ -292,22 +286,22 @@ static mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
         case MP_BINARY_OP_RSHIFT:
             // Color shifting shifts the hue
             return pb_type_Color_make_new_helper(
-                self->hsv.h + pb_obj_get_int(rhs_in),
-                self->hsv.s,
-                self->hsv.v);
+                pbio_color_get_h(self->hsv) + pb_obj_get_int(rhs_in),
+                pbio_color_get_s(self->hsv),
+                pbio_color_get_v(self->hsv));
         case MP_BINARY_OP_MULTIPLY:
         // For both A*c and c*A, MicroPython calls c the rhs_in,
         // so we can just fall through and treat both the same here.
         case MP_BINARY_OP_REVERSE_MULTIPLY: {
             // Multiply multiplies the value.
             #if MICROPY_PY_BUILTINS_FLOAT
-            mp_int_t value = (mp_int_t)(mp_obj_get_float(rhs_in) * self->hsv.v);
+            mp_int_t value = (mp_int_t)(mp_obj_get_float(rhs_in) * pbio_color_get_v(self->hsv));
             #else
-            mp_int_t value = mp_obj_get_int(rhs_in) * self->hsv.v;
+            mp_int_t value = mp_obj_get_int(rhs_in) * pbio_color_get_v(self->hsv);
             #endif
             return pb_type_Color_make_new_helper(
-                self->hsv.h,
-                self->hsv.s,
+                pbio_color_get_h(self->hsv),
+                pbio_color_get_s(self->hsv),
                 value);
         }
         case MP_BINARY_OP_FLOOR_DIVIDE:
@@ -316,13 +310,13 @@ static mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
         case MP_BINARY_OP_TRUE_DIVIDE: {
             // Divide divides the value
             #if MICROPY_PY_BUILTINS_FLOAT
-            mp_int_t value = (mp_int_t)(self->hsv.v / mp_obj_get_float(rhs_in));
+            mp_int_t value = (mp_int_t)(pbio_color_get_v(self->hsv) / mp_obj_get_float(rhs_in));
             #else
-            mp_int_t value = self->hsv.v / mp_obj_get_int(rhs_in);
+            mp_int_t value = pbio_color_get_v(self->hsv) / mp_obj_get_int(rhs_in);
             #endif
             return pb_type_Color_make_new_helper(
-                self->hsv.h,
-                self->hsv.s,
+                pbio_color_get_h(self->hsv),
+                pbio_color_get_s(self->hsv),
                 value);
         }
         default:

@@ -59,8 +59,8 @@ static int get_color(mp_obj_t obj) {
     if (mp_obj_is_int(obj)) {
         return mp_obj_get_int(obj);
     }
-    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(obj);
-    return pbdrv_display_get_value_from_hsv(hsv->h, hsv->s, hsv->v);
+    pbio_color_t hsv = pb_type_Color_get_hsv(obj);
+    return pbdrv_display_get_value_from_hsv(pbio_color_get_h(hsv), pbio_color_get_s(hsv), pbio_color_get_v(hsv));
 }
 
 mp_obj_t pb_type_Image_display_obj_new(void) {

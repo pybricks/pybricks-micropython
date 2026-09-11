@@ -42,7 +42,7 @@ pb_type_device_obj_base_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t o
  * @param [in] context    Sensor base object.
  * @param [in] hsv        Requested color, will be rounded to nearest color.
  */
-static mp_obj_t pupdevices_ColorDistanceSensor_light_on(mp_obj_t parent_obj, const pbio_color_hsv_t *hsv) {
+static mp_obj_t pupdevices_ColorDistanceSensor_light_on(mp_obj_t parent_obj, pbio_color_t hsv) {
 
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(parent_obj);
 
@@ -50,11 +50,12 @@ static mp_obj_t pupdevices_ColorDistanceSensor_light_on(mp_obj_t parent_obj, con
     // actually turn on the light. So we just pick the closest of these 3 to the
     // requested color.
     int8_t color;
-    if (hsv->s < 50 || hsv->v < 50) {
+    uint16_t h = pbio_color_get_h(hsv);
+    if (pbio_color_get_s(hsv) < 50 || pbio_color_get_v(hsv) < 50) {
         color = 0; // off
-    } else if (hsv->h >= PBIO_COLOR_HUE_YELLOW && hsv->h < PBIO_COLOR_HUE_CYAN) {
+    } else if (h >= PBIO_COLOR_HUE_YELLOW && h < PBIO_COLOR_HUE_CYAN) {
         color = 5; // green
-    } else if (hsv->h >= PBIO_COLOR_HUE_CYAN && hsv->h < PBIO_COLOR_HUE_MAGENTA) {
+    } else if (h >= PBIO_COLOR_HUE_CYAN && h < PBIO_COLOR_HUE_MAGENTA) {
         color = 3; // blue
     } else {
         color = 9; // red
@@ -78,7 +79,7 @@ static mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 }
 
 // Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
-static void get_hsv_data(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_hsv_t *hsv) {
+static pbio_color_t get_hsv_data(pupdevices_ColorDistanceSensor_obj_t *self) {
     int16_t *raw = pb_type_device_get_data(MP_OBJ_FROM_PTR(&self->device_base), LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I);
 
     // Max observed value is ~440 so we scale to get a range of 0..255.
@@ -86,19 +87,18 @@ static void get_hsv_data(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_
     rgb.r = 1187 * raw[0] / 2048;
     rgb.g = 1187 * raw[1] / 2048;
     rgb.b = 1187 * raw[2] / 2048;
-    pb_color_map_rgb_to_hsv(&rgb, hsv);
+    pbio_color_t hsv = pb_color_map_rgb_to_hsv(&rgb);
 
     // Approximately double low values to get similar results
     // as with other sensors.
-    hsv->v = hsv->v * (200 - hsv->v) / 100;
+    int8_t v = pbio_color_get_v(hsv);
+    return PBIO_COLOR_ENCODE(pbio_color_get_h(hsv), pbio_color_get_s(hsv), v * (200 - v) / 100);
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.color
 static mp_obj_t get_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_color_hsv_t hsv;
-    get_hsv_data(self, &hsv);
-    return pb_color_map_get_color(&self->color_map, &hsv);
+    return pb_color_map_get_color(&self->color_map, get_hsv_data(self));
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_color);
 
@@ -127,7 +127,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_
 static mp_obj_t get_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    get_hsv_data(self, &color->hsv);
+    color->hsv = get_hsv_data(self);
     return MP_OBJ_FROM_PTR(color);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_obj, LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, get_hsv);
