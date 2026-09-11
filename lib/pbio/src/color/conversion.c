@@ -191,9 +191,9 @@ void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb) {
  */
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv) {
     // See PBIO_COLOR_ENCODE in color.h for encoding scheme
-    hsv->h = (color >> 3) * 30;
-    hsv->s = (color & (0x1 << 2)) ? 100 : 0;
-    hsv->v = (color & 0x2) ? 100 : ((color & 0x1) ? 50 : 0);
+    hsv->h = color >> 16;
+    hsv->s = (color >> 8) & 0xff;
+    hsv->v = color & 0xff;
 }
 
 /**
@@ -208,28 +208,4 @@ void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb) {
     pbio_color_hsv_t hsv;
     pbio_color_to_hsv(color, &hsv);
     pbio_color_hsv_to_rgb(&hsv, rgb);
-}
-
-/**
- * Compresses an HSV value.
- *
- * @param [in]  hsv         The HSV value to compress.
- * @param [out] compressed  Location to store the compressed value.
- */
-void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed) {
-    compressed->h = hsv->h;
-    compressed->s = hsv->s;
-    compressed->v = hsv->v;
-}
-
-/**
- * Expands a compressed HSV value.
- *
- * @param [in]  compressed  The compressed HSV value.
- * @param [out] hsv         Location to store the expanded value.
- */
-void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv) {
-    hsv->h = compressed->h;
-    hsv->s = compressed->s;
-    hsv->v = compressed->v;
 }

@@ -16,15 +16,13 @@
 /** @cond INTERNAL */
 
 /**
- * Squeezes HSV into 8 bits.
+ * Packs HSV into 32 bits as 0xHHHHSSVV.
  *
- * This gets us 12 hues, 2 saturations and 3 values
- *
- * @param h [in]    The hue, 0..359 degrees in increments of 30
- * @param s [in]    The saturation, 0 or 100 percent
- * @param v [in]    The value, 0, 50, or 100 percent
+ * @param h [in]    The hue, 0..359 degrees
+ * @param s [in]    The saturation, 0..100 percent
+ * @param v [in]    The value, 0..100 percent
  */
-#define PBIO_COLOR_ENCODE(h, s, v) (((h / 30) << 3) | ((s / 51) << 2) | (v / 34))
+#define PBIO_COLOR_ENCODE(h, s, v) (((h) << 16) | ((s) << 8) | (v))
 
 /** @endcond */
 
@@ -48,8 +46,6 @@ typedef enum {
     PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(270, 100, 100), /**< violet */
     PBIO_COLOR_MAGENTA = PBIO_COLOR_ENCODE(300, 100, 100), /**< magenta */
 } pbio_color_t;
-
-#undef PBIO_COLOR_ENCODE
 
 /** Color hues for HSV color space. Values are in degrees (0 to 359). */
 typedef enum {
@@ -101,23 +97,10 @@ static inline uint8_t pbio_color_hsv_get_v(const pbio_color_hsv_t *hsv) {
     return hsv->v < 0 ? 0 : hsv->v;
 }
 
-/** Compressed HSV color. Stores data in 24 bytes instead of 32. */
-typedef struct __attribute__((__packed__)) {
-    /** The hue component. 0 to 359 degrees. */
-    uint16_t h : 9;
-    /** The saturation component. 0 to 100 percent. */
-    uint8_t s : 7;
-    /** The value component. Normally 0 to 100 percent but allowed to be
-     * negative to provide higher contrast in color scanning applications. */
-    int8_t v;
-} pbio_color_compressed_hsv_t;
-
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
 void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
-void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
-void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);
 
 typedef int32_t (*pbio_color_distance_func_t)(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
 
