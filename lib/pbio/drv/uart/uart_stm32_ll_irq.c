@@ -242,8 +242,15 @@ void pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
         }
     }
 
+    // PRESC (and BRR) must only be written while the USART is disabled, or
+    // the hardware may silently ignore the write. This matters here because,
+    // unlike the initial configuration in pbdrv_uart_init(), this function
+    // can be called again later while the USART is already enabled and
+    // actively receiving (e.g. switching baud rate mid-handshake).
+    LL_USART_Disable(USARTx);
     LL_USART_SetBaudRate(USARTx, periphclk, prescaler, LL_USART_OVERSAMPLING_16, baud);
     LL_USART_SetPrescaler(USARTx, prescaler);
+    LL_USART_Enable(USARTx);
 }
 #else
 #error "unsupported MCU for btstack_stm32_hal_set_baudrate()"
