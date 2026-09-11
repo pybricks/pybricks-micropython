@@ -18,19 +18,19 @@ hub.light.on(Color.WHITE)
 seen = [None] * WINDOWS
 count = 0
 
-# Rates are per second times ten. The histogram columns are gaps between
-# arrivals in ms: under 15, 15-25, 25-40, 40-60, 60-90, 90-150, 150-300, over
-# 300.
-print("window ours all max_gap_ms histogram")
+# The rate is per second times ten. The histogram columns are gaps between
+# updates from the measured hub in ms: under 15, 15-25, 25-40, 40-60, 60-90,
+# 90-150, 150-300, over 300. Its median is the useful summary.
+print("window rate*10 max_gap_ms histogram")
 
 while count < WINDOWS:
     data = hub.ble.observe(REPORT_CHANNEL)
     if data is not None:
-        index, rate_ours, rate_all, max_gap, hist = data
+        index, rate_ours, max_gap, hist = data
         if 0 <= index < WINDOWS and seen[index] is None:
             seen[index] = data
             count += 1
-            print(index, rate_ours, rate_all, max_gap, list(hist))
+            print(index, rate_ours, max_gap, list(hist))
     wait(50)
 
 hub.light.on(Color.GREEN)

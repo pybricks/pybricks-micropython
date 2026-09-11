@@ -77,6 +77,12 @@ for index in range(WINDOWS):
     max_gap = 0
     dropped = 0
 
+    # Gaps have to be accumulated across advertisements from other devices.
+    # Binning the raw gap would measure how often the radio heard anything at
+    # all, which depends on whatever else is transmitting nearby, rather than
+    # how long this hub waited for an update from the hub under test.
+    gap = 0
+
     hub.ble.trace(BUF)
     watch.reset()
 
@@ -90,17 +96,22 @@ for index in range(WINDOWS):
             channel = BUF[i + 3]
 
             total += 1
-            if channel == RX_CHANNEL:
-                ours += 1
-            if delta > max_gap:
-                max_gap = delta
+            gap += delta
+
+            if channel != RX_CHANNEL:
+                continue
+
+            ours += 1
+            if gap > max_gap:
+                max_gap = gap
 
             slot = len(EDGES)
             for edge in range(len(EDGES)):
-                if delta < EDGES[edge]:
+                if gap < EDGES[edge]:
                     slot = edge
                     break
             hist[slot] += 1
+            gap = 0
 
     elapsed = watch.time()
 
@@ -110,7 +121,6 @@ for index in range(WINDOWS):
     results.append(
         (
             rate_ours,
-            rate_all,
             max_gap // 10,
             dropped,
             bytes([h if h < 255 else 255 for h in hist]),
@@ -129,6 +139,6 @@ for index in range(WINDOWS):
 hub.light.on(Color.WHITE)
 while True:
     for index in range(len(results)):
-        rate_ours, rate_all, max_gap, dropped, hist = results[index]
-        hub.ble.broadcast((index, rate_ours, rate_all, max_gap, hist))
+        rate_ours, max_gap, dropped, hist = results[index]
+        hub.ble.broadcast((index, rate_ours, max_gap, hist))
         wait(700)
