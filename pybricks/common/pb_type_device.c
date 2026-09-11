@@ -175,6 +175,7 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     // Get the port instance.
     pbio_port_t *port;
     pb_assert(pbio_port_get_port(port_id, &port));
+    self->port = port;
 
     // Set the port mode to LEGO if it is not already set.
     pb_device_set_lego_mode(port);

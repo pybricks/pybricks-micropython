@@ -106,6 +106,27 @@ mp_obj_t pb_type_Color_new(pbio_color_t hsv) {
     return MP_OBJ_FROM_PTR(color);
 }
 
+/**
+ * Gets the Color object for a color value.
+ *
+ * Returns the existing object if the value is one of the colors in the Color
+ * class, so that results of color matching keep printing by name.
+ *
+ * @param hsv [in]  The packed color value.
+ * @return          The Color object.
+ */
+mp_obj_t pb_type_Color_from_hsv(pbio_color_t hsv) {
+    mp_map_elem_t *color_elems = MP_STATE_VM(pb_type_Color_dict)->map.table;
+    for (size_t i = 0; i < MP_STATE_VM(pb_type_Color_dict)->map.alloc; i++) {
+        mp_map_elem_t *element = &color_elems[i];
+        if (MP_OBJ_IS_QSTR(element->key) &&
+            ((pb_type_Color_obj_t *)MP_OBJ_TO_PTR(element->value))->hsv == hsv) {
+            return element->value;
+        }
+    }
+    return pb_type_Color_new(hsv);
+}
+
 static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v) {
 
     // Bind h to 0--360

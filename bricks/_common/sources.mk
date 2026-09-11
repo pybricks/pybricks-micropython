@@ -206,6 +206,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/bluetooth.c \
 	src/busy_count.c \
 	src/cobs.c \
+	src/color/color_map.c \
 	src/color/conversion.c \
 	src/color/util.c \
 	src/control_settings.c \

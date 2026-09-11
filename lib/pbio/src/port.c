@@ -89,6 +89,10 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
+    /**
+     * Colors to detect by sensors on this port, if it supports them.
+     */
+    pbio_color_map_t *color_map;
 };
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
@@ -194,6 +198,25 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
         return pbdrv_counter_get_abs_angle(port->counter, &angle->millidegrees);
     }
     return PBIO_ERROR_NO_DEV;
+}
+
+/**
+ * Gets the colors that sensors on this port should detect.
+ *
+ * The map is not reset when a sensor is disconnected or when the user program
+ * ends, so it can be inspected and reused afterwards.
+ *
+ * @param [in]  port        The port instance.
+ * @param [out] color_map   The color map.
+ * @return                  ::PBIO_SUCCESS on success, otherwise
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this port cannot have sensors.
+ */
+pbio_error_t pbio_port_get_color_map(pbio_port_t *port, pbio_color_map_t **color_map) {
+    if (!port->color_map) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    *color_map = port->color_map;
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -471,6 +494,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index);
+        port->color_map = pbio_color_map_init_instance(port->pdata->external_port_index);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
     }

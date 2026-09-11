@@ -26,7 +26,7 @@
 typedef struct _pb_type_nxtdevices_colorsensor_obj_t {
     mp_obj_base_t base;
     pbio_port_t *port;
-    mp_obj_t color_map;
+    pbio_color_map_t *color_map;
 } pb_type_nxtdevices_colorsensor_obj_t;
 
 // pybricks.nxtdevices.ColorSensor.ambient
@@ -66,7 +66,7 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     }
 
     // Save default settings
-    pb_color_map_save_default(&self->color_map);
+    self->color_map = pb_color_map_init(self->port);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -92,7 +92,7 @@ static pbio_color_t get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self) {
 // pybricks.nxtdevices.ColorSensor.color
 static mp_obj_t pb_type_nxtdevices_colorsensor_color(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(&self->color_map, get_hsv_data(self));
+    return pb_color_map_get_color(self->color_map, get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_type_nxtdevices_colorsensor_color);
 
@@ -117,7 +117,7 @@ static mp_obj_t detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_ma
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_nxtdevices_colorsensor_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));
-    return pb_color_map_detectable_colors_method(&self->color_map, colors_in);
+    return pb_color_map_detectable_colors_method(self->color_map, colors_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(detectable_colors_obj, 1, detectable_colors);
 
