@@ -109,6 +109,11 @@ typedef struct {
      */
     mp_obj_t buttons;
     /**
+     * Colors to detect (property of Mario class). Not a port instance like
+     * other sensors, since this device is not attached to a port.
+     */
+    pbio_color_map_t color_map;
+    /**
      * Light object (property of Remote class).
      */
     mp_obj_t light;
@@ -836,7 +841,7 @@ static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    return pb_color_map_get_color(&self->buttons, pb_type_mario_hub_color_get_hsv_data(self));
+    return pb_color_map_get_color(&self->color_map, pb_type_mario_hub_color_get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_color_obj, pb_type_mario_hub_color);
 
@@ -853,7 +858,7 @@ static mp_obj_t pb_type_mario_hub_detectable_colors(size_t n_args, const mp_obj_
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_lwp3device_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));
-    return pb_color_map_detectable_colors_method(&self->buttons, colors_in);
+    return pb_color_map_detectable_colors_method(&self->color_map, colors_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_mario_hub_detectable_colors_obj, 1, pb_type_mario_hub_detectable_colors);
 
@@ -882,9 +887,7 @@ static mp_obj_t pb_type_mario_hub_make_new(const mp_obj_type_t *type, size_t n_a
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
     pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
 
-    // Reusing the buttons object which is not used on Mario to hold the
-    // detectable color mapping.
-    pb_color_map_save_default(&self->buttons);
+    pbio_color_map_set_default(&self->color_map);
 
     return MP_OBJ_FROM_PTR(self);
 }

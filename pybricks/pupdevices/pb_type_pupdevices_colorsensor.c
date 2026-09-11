@@ -22,7 +22,7 @@
 // Class structure for ColorSensor. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _pupdevices_ColorSensor_obj_t {
     pb_type_device_obj_base_t device_base;
-    mp_obj_t color_map;
+    pbio_color_map_t *color_map;
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
 
@@ -38,7 +38,7 @@ static mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I);
 
     // Save default settings
-    pb_color_map_save_default(&self->color_map);
+    self->color_map = pb_color_map_init(self->device_base.port);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -106,7 +106,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_surface_false_obj, LEGO_DE
 static mp_obj_t get_color_surface_true(mp_obj_t self_in) {
     pbio_color_t hsv = get_hsv_reflected(self_in);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(&self->color_map, hsv);
+    return pb_color_map_get_color(self->color_map, hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_true_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I, get_color_surface_true);
 
@@ -114,7 +114,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_true_obj, LEGO_D
 static mp_obj_t get_color_surface_false(mp_obj_t self_in) {
     pbio_color_t hsv = get_hsv_ambient(self_in);
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(&self->color_map, hsv);
+    return pb_color_map_get_color(self->color_map, hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_surface_false_obj, LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV, get_color_surface_false);
 
@@ -151,7 +151,7 @@ static mp_obj_t detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_ma
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));
-    return pb_color_map_detectable_colors_method(&self->color_map, colors_in);
+    return pb_color_map_detectable_colors_method(self->color_map, colors_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(detectable_colors_obj, 1, detectable_colors);
 

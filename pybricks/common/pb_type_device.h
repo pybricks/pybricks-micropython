@@ -18,6 +18,7 @@
  */
 typedef struct _pb_type_device_obj_base_t {
     mp_obj_base_t base;
+    pbio_port_t *port;
     pbio_port_lump_dev_t *lump_dev;
     pb_type_async_t *last_awaitable;
 } pb_type_device_obj_base_t;

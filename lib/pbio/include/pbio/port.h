@@ -18,6 +18,7 @@
 #include <pbdrv/config.h>
 
 #include <pbio/angle.h>
+#include <pbio/color_map.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 
@@ -143,6 +144,8 @@ pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_type_id_t *expec
 
 pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_port_lump_dev_t **lump_dev);
 
+pbio_error_t pbio_port_get_color_map(pbio_port_t *port, pbio_color_map_t **color_map);
+
 pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
@@ -175,6 +178,7 @@ static inline void pbio_port_stop_user_actions(bool reset) {
 }
 
 static inline pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
+    *port = NULL;
     return PBIO_ERROR_NO_DEV;
 }
 
@@ -192,6 +196,11 @@ static inline pbio_error_t pbio_port_get_servo(pbio_port_t *port, lego_device_ty
 
 static inline pbio_error_t pbio_port_get_lump_device(pbio_port_t *port, lego_device_type_id_t *expected_type_id, pbio_port_lump_dev_t **lump_dev) {
     return PBIO_ERROR_NO_DEV;
+}
+
+static inline pbio_error_t pbio_port_get_color_map(pbio_port_t *port, pbio_color_map_t **color_map) {
+    *color_map = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbio_port_get_angle(pbio_port_t *port, pbio_angle_t *angle) {
