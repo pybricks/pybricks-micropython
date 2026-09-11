@@ -1562,10 +1562,19 @@ static const struct {
     {TGAP_GEN_DISC_ADV_INT_MAX, 40},
     {TGAP_CONN_ADV_INT_MIN, 40},
     {TGAP_CONN_ADV_INT_MAX, 40},
-    // scan interval general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_INT, 48},
-    // scan window general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_WIND, 48},
+    // Scan interval 112 * 0.625ms = 70ms. Starting and ending a scan costs
+    // radio and scheduler time, so a longer interval leaves more of the radio
+    // for broadcasting. 70ms is not a multiple of any hub's advertising
+    // interval, so reception does not settle into a pattern of missing them.
+    {TGAP_GEN_DISC_SCAN_INT, 112},
+    // Scan window 56 * 0.625ms = 35ms. The 50% duty cycle leaves radio time
+    // for broadcasting while observing.
+    {TGAP_GEN_DISC_SCAN_WIND, 56},
+    // The Bluetooth chip quietly uses these instead of the two above whenever
+    // there is a connection, so they have to match or observing collapses
+    // while connected to Pybricks Code.
+    {TGAP_CONN_SCAN_INT, 112},
+    {TGAP_CONN_SCAN_WIND, 56},
     {TGAP_CONN_EST_INT_MIN, 40},
     {TGAP_CONN_EST_INT_MAX, 40},
     // scan interval connection established: 48 * 0.625ms = 30ms
