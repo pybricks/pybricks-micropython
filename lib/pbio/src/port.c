@@ -772,9 +772,10 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
         return PBSYS_TELEMETRY_ERROR_NO_REPORT;
     }
 
-    // Delegate telemetry to LUMP or passive manager.
+    // Delegate telemetry to LUMP or passive manager. The color map is owned by
+    // the port but needed to report the matched color.
     return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
-           pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
+           pbio_port_lump_get_telemetry(port->lump_dev, port->color_map, tel, size) :
            pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
 }
 

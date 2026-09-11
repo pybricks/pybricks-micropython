@@ -10,8 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbio/debug.h>
-
 #include <pbdrv/display.h>
 
 #include <pbio/os.h>
@@ -159,28 +157,23 @@ pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t s
             pbsys_telemetry_level = data[1];
             return PBIO_PYBRICKS_ERROR_OK;
         case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
-            pbio_debug("got set mode\n");
             // Command id followed by one telemetry message: the outgoing
             // message format without the size prefix, so header + payload.
             if (size < 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE ||
                 size > 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX) {
-                    pbio_debug("size err %d\n", size);
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
             const pbsys_telemetry_packet_t *tel = (const pbsys_telemetry_packet_t *)&data[1];
             if (tel->manufacturer != PBSYS_TELEMETRY_MANUFACTURER_LEGO) {
-                pbio_debug("manuf err\n");
                 // Unknown manufacturer, ignore.
                 return PBIO_PYBRICKS_ERROR_OK;
             }
             if (tel->location >= PBIO_CONFIG_PORT_NUM_DEV) {
-                pbio_debug("port err\n");
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
             // Latest request wins. Applied by the data generator.
             memcpy(&pending_modes[tel->location].tel, tel, size - 1);
             pending_modes[tel->location].size = size - 1;
-            pbio_debug("set pending\n");
             return PBIO_PYBRICKS_ERROR_OK;
         }
         default:

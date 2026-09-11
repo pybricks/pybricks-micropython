@@ -66,7 +66,7 @@ pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, 
 
 pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev);
 
-pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size);
+pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, const pbio_color_map_t *color_map, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size);
 
@@ -139,7 +139,7 @@ static inline pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *stat
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+static inline pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, const pbio_color_map_t *color_map, pbsys_telemetry_packet_t *tel, uint32_t *size) {
     return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
