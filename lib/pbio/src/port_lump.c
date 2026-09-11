@@ -532,7 +532,9 @@ pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, 
         if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I) {
             return PBIO_ERROR_INVALID_OP;
         }
-        *intensity = (data16[0] + data16[1] + data16[2]) * 10 / 12;
+        // The channels can each read higher than the 400 that this scale
+        // assumes, so cap rather than rescale to keep existing values intact.
+        *intensity = pbio_int_math_min((data16[0] + data16[1] + data16[2]) * 10 / 12, 1000);
         return PBIO_SUCCESS;
     }
 
@@ -1103,6 +1105,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__CALIB;
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
@@ -1522,23 +1526,90 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev) {
     return PBIO_SUCCESS;
 }
 
-pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+/**
+ * Reports the measured color as device independent HSV, the closest match in
+ * the color map, and the light intensity.
+ */
+static pbsys_telemetry_error_t get_color_telemetry(pbio_port_lump_dev_t *lump_dev, const pbio_color_map_t *color_map, pbsys_telemetry_packet_t *tel, uint32_t *size, bool reflected) {
+
+    pbio_color_t hsv;
+    int32_t intensity;
+    if (pbio_port_lump_get_color(lump_dev, &hsv, reflected) != PBIO_SUCCESS ||
+        pbio_port_lump_get_light_intensity(lump_dev, &intensity, reflected) != PBIO_SUCCESS) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    if (*size < 2 * sizeof(uint32_t) + sizeof(uint8_t)) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+    pbio_set_uint32_le(&tel->payload[0], hsv);
+    pbio_set_uint32_le(&tel->payload[4], color_map ? pbio_color_map_find(color_map, hsv) : PBIO_COLOR_NONE);
+    tel->payload[8] = intensity / 10;
+    *size = 2 * sizeof(uint32_t) + sizeof(uint8_t);
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
+/**
+ * Reports the light intensity for sensors that cannot also measure color in
+ * the requested way.
+ */
+static pbsys_telemetry_error_t get_light_intensity_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size, bool reflected) {
+
+    int32_t intensity;
+    if (pbio_port_lump_get_light_intensity(lump_dev, &intensity, reflected) != PBIO_SUCCESS) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    if (*size < sizeof(uint8_t)) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+    tel->payload[0] = intensity / 10;
+    *size = sizeof(uint8_t);
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
+pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, const pbio_color_map_t *color_map, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     if (pbio_port_lump_is_ready(lump_dev) != PBIO_SUCCESS) {
         *size = 0;
         return PBSYS_TELEMETRY_ERROR_NO_REPORT;
     }
 
-    // No specific encoding, so return device ID without payload for this mode.
     tel->id = lump_dev->type_id;
 
+    // Telemetry modes are abstract capabilities rather than LEGO modes, since
+    // not all LEGO modes are functional or meaningfully different.
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
-        if (lump_dev->mode == LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX) {
-            if (*size >= 1) {
+        switch (lump_dev->mode) {
+            case LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I:
+                tel->mode = 0;
+                return get_color_telemetry(lump_dev, color_map, tel, size, true);
+            case LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI:
+                tel->mode = 1;
+                return get_light_intensity_telemetry(lump_dev, tel, size, false);
+            case LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX:
+                if (*size < sizeof(uint8_t)) {
+                    return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+                }
                 tel->mode = 2;
                 tel->payload[0] = lump_dev->bin_data[0] * 10;
+                *size = sizeof(uint8_t);
                 return PBSYS_TELEMETRY_SUCCESS;
-            }
+            default:
+                break;
+        }
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
+        switch (lump_dev->mode) {
+            case LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I:
+                tel->mode = 0;
+                return get_color_telemetry(lump_dev, color_map, tel, size, true);
+            case LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV:
+                tel->mode = 1;
+                return get_color_telemetry(lump_dev, color_map, tel, size, false);
+            default:
+                break;
         }
     }
 
@@ -1555,19 +1626,33 @@ pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *
     }
 
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
-
         uint8_t mode;
-
         switch (tel->mode) {
             case 0:
                 mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I;
-                break;        
+                break;
             case 1:
                 mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
-                break;        
+                break;
             case 2:
                 mode = LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
-                break;        
+                break;
+            default:
+                return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+        pbio_port_lump_set_mode(lump_dev, mode);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
+        uint8_t mode;
+        switch (tel->mode) {
+            case 0:
+                mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I;
+                break;
+            case 1:
+                mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV;
+                break;
             default:
                 return PBSYS_TELEMETRY_ERROR_NO_REPORT;
         }
