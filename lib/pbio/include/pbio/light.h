@@ -19,10 +19,6 @@ typedef struct _pbio_color_light_t pbio_color_light_t;
 /** Sentinel value for a color light blink array. */
 #define PBIO_COLOR_LIGHT_BLINK_END 0
 
-/** Sentinel value for a color light animation array. */
-#define PBIO_COLOR_LIGHT_ANIMATION_END_V (INT8_MAX)
-#define PBIO_COLOR_LIGHT_ANIMATION_END_HSV PBIO_COLOR_ENCODE(0, 0, PBIO_COLOR_LIGHT_ANIMATION_END_V)
-
 #if PBIO_CONFIG_LIGHT
 
 pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color);

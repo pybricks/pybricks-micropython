@@ -30,7 +30,7 @@ static const uint16_t test_blink[] = {
 static const pbio_color_t test_animation[] = {
     PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_CYAN, 100, 100),
     PBIO_COLOR_ENCODE(PBIO_COLOR_HUE_MAGENTA, 100, 100),
-    PBIO_COLOR_LIGHT_ANIMATION_END_HSV
+    PBIO_COLOR_ARRAY_END
 };
 
 static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, pbio_color_t hsv) {

@@ -160,9 +160,9 @@ static void test_hsv_to_rgb(void *env) {
 
 static void test_color_encoding(void *env) {
 
-    tt_want_int_op(PBIO_COLOR_NONE, ==, PBIO_COLOR_ENCODE(180, 0, 0));
+    tt_want_int_op(PBIO_COLOR_NONE, ==, PBIO_COLOR_ENCODE(0, 0, 0));
 
-    tt_want_int_op(PBIO_COLOR_BLACK, ==, PBIO_COLOR_ENCODE(0, 0, 0));
+    tt_want_int_op(PBIO_COLOR_BLACK, ==, PBIO_COLOR_ENCODE(0, 0, 10));
 
     tt_want_int_op(PBIO_COLOR_GRAY, ==, PBIO_COLOR_ENCODE(0, 0, 50));
 
@@ -196,9 +196,10 @@ static void test_color_to_rgb(void *env) {
     tt_want_int_op(rgb.b, ==, 0);
 
     pbio_color_to_rgb(PBIO_COLOR_BLACK, &rgb);
-    tt_want_int_op(rgb.r, ==, 0);
-    tt_want_int_op(rgb.g, ==, 0);
-    tt_want_int_op(rgb.b, ==, 0);
+    tt_want_int_op(rgb.r, >, 0);
+    tt_want_int_op(rgb.r, <, 40);
+    tt_want_int_op(rgb.r, ==, rgb.g);
+    tt_want_int_op(rgb.r, ==, rgb.b);
 
     pbio_color_to_rgb(PBIO_COLOR_WHITE, &rgb);
     tt_want_int_op(rgb.r, >, 250);
