@@ -167,6 +167,8 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
 
 pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
+pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size);
+
 #else // PBIO_CONFIG_PORT
 
 static inline void pbio_port_init(void) {
@@ -247,6 +249,10 @@ static inline pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_de
 static inline pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size) {
     *size = 0;
     return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size) {
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 

@@ -8,6 +8,9 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <pbio/debug.h>
 
 #include <pbdrv/display.h>
 
@@ -22,15 +25,21 @@
 // Telemetry output level, controlled by the host via the set level command.
 static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_MINIMAL;
 
+// Maximum mode-specific payload size accepted for incoming set mode commands.
+// None of the current commands need a payload, so keep it small.
+#define PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX (4)
+
 // Pending mode change per port, requested by the host and to be applied by
 // the data generator. Latest request wins.
-typedef struct {
-    uint16_t device_id;
-    uint8_t mode;
-    bool pending;
-} pbsys_telemetry_pending_mode_t;
-
-static pbsys_telemetry_pending_mode_t pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
+static struct {
+    // Message size including header. 0 means no pending request.
+    uint8_t size;
+    union {
+        pbsys_telemetry_packet_t tel;
+        // Reserves room for the flexible payload of tel.
+        uint8_t buf[PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX];
+    };
+} pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
 
 // Yields one report if the getter produced one, skips to the next stage if it
 // had nothing, or sends what we have and retries the same getter when out of
@@ -88,9 +97,12 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
 
             PBSYS_TELEMETRY_STAGE(&state, pbio_port_get_telemetry(i, tel, size));
 
-            // REVISIT: Apply pending mode change for this port here.
-            // and handle not ready
-            (void)pending_modes;
+            // Apply pending mode change. Ignore failure; confirmation is
+            // implicit via the mode byte of subsequent telemetry data.
+            if (pending_modes[i].size) {
+                pbio_port_set_telemetry_mode(i, &pending_modes[i].tel, pending_modes[i].size - PBSYS_TELEMETRY_MSG_HEADER_SIZE);
+                pending_modes[i].size = 0;
+            }
         }
 
         // Idle between sequences of samples.
@@ -147,24 +159,28 @@ pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t s
             pbsys_telemetry_level = data[1];
             return PBIO_PYBRICKS_ERROR_OK;
         case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
-            // Command id followed by the outgoing message header.
-            if (size != 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE) {
+            pbio_debug("got set mode\n");
+            // Command id followed by one telemetry message: the outgoing
+            // message format without the size prefix, so header + payload.
+            if (size < 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE ||
+                size > 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX) {
+                    pbio_debug("size err %d\n", size);
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
-            if (data[1] != PBSYS_TELEMETRY_MANUFACTURER_LEGO) {
+            const pbsys_telemetry_packet_t *tel = (const pbsys_telemetry_packet_t *)&data[1];
+            if (tel->manufacturer != PBSYS_TELEMETRY_MANUFACTURER_LEGO) {
+                pbio_debug("manuf err\n");
                 // Unknown manufacturer, ignore.
                 return PBIO_PYBRICKS_ERROR_OK;
             }
-            uint16_t location = pbio_get_uint16_le(&data[4]);
-            if (location >= PBIO_CONFIG_PORT_NUM_DEV) {
+            if (tel->location >= PBIO_CONFIG_PORT_NUM_DEV) {
+                pbio_debug("port err\n");
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
             // Latest request wins. Applied by the data generator.
-            pending_modes[location] = (pbsys_telemetry_pending_mode_t) {
-                .device_id = pbio_get_uint16_le(&data[2]),
-                .mode = data[6],
-                .pending = true,
-            };
+            memcpy(&pending_modes[tel->location].tel, tel, size - 1);
+            pending_modes[tel->location].size = size - 1;
+            pbio_debug("set pending\n");
             return PBIO_PYBRICKS_ERROR_OK;
         }
         default:
