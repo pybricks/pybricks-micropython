@@ -173,7 +173,7 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get the port instance.
-    pbio_port_t *port;
+    pbio_port_t *port = NULL;
     pb_assert(pbio_port_get_port(port_id, &port));
     self->port = port;
 

@@ -13,6 +13,7 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // Class structure for ColorSensor
 typedef struct _ev3devices_ColorSensor_obj_t {
@@ -51,15 +52,19 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_EV
 
 // pybricks.ev3devices.ColorSensor.ambient
 static mp_obj_t get_ambient(mp_obj_t self_in) {
-    int8_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT);
-    return mp_obj_new_int(data[0]);
+    ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, false));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT, get_ambient);
 
 // pybricks.ev3devices.ColorSensor.reflection
 static mp_obj_t get_reflection(mp_obj_t self_in) {
-    int8_t *data = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT);
-    return mp_obj_new_int(data[0]);
+    ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, true));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT, get_reflection);
 

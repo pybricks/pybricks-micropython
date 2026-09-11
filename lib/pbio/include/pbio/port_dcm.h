@@ -6,6 +6,7 @@
 
 #include <lego/device.h>
 
+#include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
@@ -14,22 +15,6 @@
 #include <pbsys/telemetry.h>
 
 typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
-
-/**
- * Cached analog values when a particular light color is active.
- */
-typedef struct _pbio_port_dcm_analog_rgba_t {
-    /** Red analog value. */
-    uint32_t r;
-    /** Green analog value. */
-    uint32_t g;
-    /** Blue analog value. */
-    uint32_t b;
-    /** Ambient analog value. */
-    uint32_t a;
-    /** Time of most recent full update. */
-    uint32_t last_sample_time;
-} pbio_port_dcm_analog_rgba_t;
 
 #if PBIO_CONFIG_PORT_DCM
 
@@ -74,15 +59,33 @@ pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active);
 
 /**
- * Gets the analog color values of the device connected to the port.
+ * Gets the color measured by an analog color sensor on the port, in a device
+ * independent HSV format that is comparable across sensors.
  *
  * @param [in]  dcm         The device connection manager.
- * @param [in]  rgba        Analog values struct to hold the result.
- * @return                  ::PBIO_SUCCESS if values are retrieved
- *                          ::PBIO_ERROR_NO_DEV if there is no device that
- *                          can produce these values.
+ * @param [out] color_hsv   The measured color.
+ * @param [in]  reflected   Whether to measure the surface lit by the sensor
+ *                          light (true) or the ambient light (false).
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if no color sensor is attached.
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if the sensor cannot
+ *                          measure color in this way.
+ *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
  */
-pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba);
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected);
+
+/**
+ * Gets the light intensity measured by an analog light sensor on the port.
+ *
+ * @param [in]  dcm         The device connection manager.
+ * @param [out] intensity   The measured intensity, 0--1000.
+ * @param [in]  reflected   Whether to measure the surface lit by the sensor
+ *                          light (true) or the ambient light (false).
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if no light sensor is attached.
+ *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
+ */
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected);
 
 pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
@@ -108,7 +111,11 @@ static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, cons
     return 0;
 }
 
-static inline pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
+static inline pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

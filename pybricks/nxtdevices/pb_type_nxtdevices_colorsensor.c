@@ -7,12 +7,8 @@
 
 #include "py/mphal.h"
 
-#include <pbdrv/clock.h>
-
-#include <pbio/int_math.h>
+#include <pbio/color.h>
 #include <pbio/port.h>
-#include <pbio/util.h>
-#include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -32,9 +28,9 @@ typedef struct _pb_type_nxtdevices_colorsensor_obj_t {
 // pybricks.nxtdevices.ColorSensor.ambient
 static mp_obj_t pb_type_nxtdevices_colorsensor_ambient(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-    return pb_obj_new_fraction(rgba.a, 10);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, false));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_ambient_obj, pb_type_nxtdevices_colorsensor_ambient);
 
@@ -52,18 +48,15 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     // On NXT, this activates the background process to drive this sensor.
     pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR));
 
-    // Assert that the device is there.
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-
-    // Wait for a recent sample. On EV3 with autodetection this never waits in
-    // practice. On NXT we activate this sensor process manually the first time,
-    // so we need to wait a little while to get a new sample.
-    uint32_t start_time = pbdrv_clock_get_ms();
-    while (!pbio_util_time_has_passed(rgba.last_sample_time, start_time - 100)) {
-        pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
+    // Assert that the device is there and wait for its first sample. On EV3
+    // with autodetection this never waits in practice. On NXT we activate this
+    // sensor process manually the first time, so we need to wait a little while.
+    pbio_error_t err;
+    pbio_color_t hsv;
+    while ((err = pbio_port_get_color(self->port, &hsv, NULL, true)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
+    pb_assert(err);
 
     // Save default settings
     self->color_map = pb_color_map_init(self->port);
@@ -71,44 +64,30 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     return MP_OBJ_FROM_PTR(self);
 }
 
-/**
- * Gets the RGB data from the sensor and converts it to HSV.
- *
- * @param  [in]  self  The sensor object.
- * @return             The HSV data.
- */
-static pbio_color_t get_hsv_data(pb_type_nxtdevices_colorsensor_obj_t *self) {
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-
-    // Values are capped between 0--1000, so scale to get a range of 0..255.
-    pbio_color_rgb_t rgb;
-    rgb.r = rgba.r >> 2;
-    rgb.g = rgba.g >> 2;
-    rgb.b = rgba.b >> 2;
-    return pb_color_map_rgb_to_hsv(&rgb);
-}
-
 // pybricks.nxtdevices.ColorSensor.color
 static mp_obj_t pb_type_nxtdevices_colorsensor_color(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_color_map_get_color(self->color_map, get_hsv_data(self));
+    pbio_color_t matched;
+    pb_assert(pbio_port_get_color(self->port, NULL, &matched, true));
+    return pb_color_map_get_color(self->color_map, matched);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_type_nxtdevices_colorsensor_color);
 
 // pybricks.nxtdevices.ColorSensor.hsv
 static mp_obj_t pb_type_nxtdevices_colorsensor_hsv(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return pb_type_Color_new(get_hsv_data(self));
+    pbio_color_t hsv;
+    pb_assert(pbio_port_get_color(self->port, &hsv, NULL, true));
+    return pb_type_Color_new(hsv);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type_nxtdevices_colorsensor_hsv);
 
 // pybricks.nxtdevices.ColorSensor.reflection
 static mp_obj_t pb_type_nxtdevices_colorsensor_reflection(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR, &rgba));
-    return pb_obj_new_fraction((rgba.r + rgba.g + rgba.b) / 3, 10);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, true));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_reflection_obj, pb_type_nxtdevices_colorsensor_reflection);
 

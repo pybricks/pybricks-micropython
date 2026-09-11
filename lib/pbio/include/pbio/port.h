@@ -31,7 +31,6 @@ typedef struct _pbio_port_t pbio_port_t;
 typedef struct _pbio_dcmotor_t pbio_dcmotor_t;
 typedef struct _pbio_servo_t pbio_servo_t;
 typedef struct _pbio_port_lump_dev_t pbio_port_lump_dev_t;
-typedef struct _pbio_port_dcm_analog_rgba_t pbio_port_dcm_analog_rgba_t;
 typedef struct _pbdrv_uart_dev_t pbdrv_uart_dev_t;
 typedef struct _pbdrv_i2c_dev_t pbdrv_i2c_dev_t;
 
@@ -152,7 +151,9 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, bool active, uint32_t *value);
 
-pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t *rgba);
+pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, bool reflected);
+
+pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, int32_t *intensity, bool reflected);
 
 pbio_error_t pbio_port_p1p2_set_power(pbio_port_t *port, pbio_port_power_requirements_t power_requirement);
 
@@ -215,7 +216,11 @@ static inline pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_de
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t *rgba) {
+static inline pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, bool reflected) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, int32_t *intensity, bool reflected) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

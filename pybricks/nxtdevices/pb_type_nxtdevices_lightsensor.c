@@ -7,12 +7,7 @@
 
 #include "py/mphal.h"
 
-#include <pbdrv/clock.h>
-
-#include <pbio/int_math.h>
 #include <pbio/port.h>
-#include <pbio/port_dcm.h>
-#include <pbio/util.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
@@ -30,19 +25,18 @@ typedef struct _nxtdevices_LightSensor_obj_t {
 // pybricks.nxtdevices.LightSensor.ambient
 static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-    return pb_obj_new_fraction(rgba.a, 10);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, false));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
 // pybricks.nxtdevices.LightSensor.reflection
 static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-    return pb_obj_new_fraction(rgba.r, 10);
+    int32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, true));
+    return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
@@ -60,18 +54,15 @@ static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     // On NXT, this activates the background process to drive this sensor.
     pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR));
 
-    // Assert that the device is there.
-    pbio_port_dcm_analog_rgba_t rgba;
-    pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
-
-    // Wait for a recent sample. On EV3 with autodetection this never waits in
-    // practice. On NXT we activate this sensor process manually the first time,
-    // so we need to wait a little while to get a new sample.
-    uint32_t start_time = pbdrv_clock_get_ms();
-    while (!pbio_util_time_has_passed(rgba.last_sample_time, start_time - 100)) {
-        pb_assert(pbio_port_get_analog_rgba(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR, &rgba));
+    // Assert that the device is there and wait for its first sample. On EV3
+    // with autodetection this never waits in practice. On NXT we activate this
+    // sensor process manually the first time, so we need to wait a little while.
+    pbio_error_t err;
+    int32_t intensity;
+    while ((err = pbio_port_get_light_intensity(self->port, &intensity, true)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
+    pb_assert(err);
 
     return MP_OBJ_FROM_PTR(self);
 }

@@ -11,6 +11,8 @@
 #include <pbio/os.h>
 #include <pbio/util.h>
 
+#include <pbio/color.h>
+#include <pbio/int_math.h>
 #include <pbio/port.h>
 #include <pbio/port_lump.h>
 
@@ -380,6 +382,171 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
     // Otherwise return angle as-is.
     *angle = lump_dev->angle;
     return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the color measured by a LEGO UART color sensor, in a device independent
+ * HSV format that is comparable across sensors.
+ *
+ * This does not change modes. The caller is responsible for first selecting
+ * the mode that provides the requested measurement.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance.
+ * @param [out] color_hsv   The measured color.
+ * @param [in]  reflected   Whether to measure the surface lit by the sensor
+ *                          light (true) or the ambient light (false).
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this device cannot
+ *                          measure color in this way.
+ *                          ::PBIO_ERROR_INVALID_OP if the device is not in the
+ *                          mode that provides this measurement.
+ *                          Otherwise see ::pbio_port_lump_is_ready.
+ */
+pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color_t *color_hsv, bool reflected) {
+
+    // Need to be up and running so we don't return stale data.
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    const int16_t *data = (const int16_t *)lump_dev->bin_data;
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
+
+        if (!reflected) {
+            if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV) {
+                return PBIO_ERROR_INVALID_OP;
+            }
+            // Saturation and value are 0--10000, scaled to match the 0--100
+            // range that is typical in applications.
+            *color_hsv = PBIO_COLOR_ENCODE(data[0],
+                pbio_int_math_min(data[1] / 10, 100),
+                pbio_int_math_min(data[2] / 10, 100));
+            return PBIO_SUCCESS;
+        }
+
+        if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        const pbio_color_rgb_t rgb = {
+            .r = data[0] == 1024 ? 255 : data[0] >> 2,
+            .g = data[1] == 1024 ? 255 : data[1] >> 2,
+            .b = data[2] == 1024 ? 255 : data[2] >> 2,
+        };
+        pbio_color_t hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
+        uint8_t s = pbio_color_get_s(hsv);
+        int8_t v = pbio_color_get_v(hsv);
+        *color_hsv = PBIO_COLOR_ENCODE(pbio_color_get_h(hsv),
+            // Approximately double saturation for low values to get similar
+            // results as other sensors.
+            s * (200 - s) / 100,
+            // Approximately +50% low values to get similar results as with
+            // other sensors.
+            v * (150 - v / 2) / 100);
+        return PBIO_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
+
+        // This sensor measures ambient light intensity but not ambient color.
+        if (!reflected) {
+            return PBIO_ERROR_NOT_SUPPORTED;
+        }
+
+        if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        // Max observed value is ~440 so we scale to get a range of 0..255.
+        const pbio_color_rgb_t rgb = {
+            .r = 1187 * data[0] / 2048,
+            .g = 1187 * data[1] / 2048,
+            .b = 1187 * data[2] / 2048,
+        };
+        pbio_color_t hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
+        int8_t v = pbio_color_get_v(hsv);
+        // Approximately double low values to get similar results as with other
+        // sensors.
+        *color_hsv = PBIO_COLOR_ENCODE(pbio_color_get_h(hsv), pbio_color_get_s(hsv), v * (200 - v) / 100);
+        return PBIO_SUCCESS;
+    }
+
+    // The EV3 Color Sensor has no equalized or calibrated RGB output, so its
+    // own color index is used instead of a color map.
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+/**
+ * Gets the light intensity measured by a LEGO UART sensor, in permille.
+ *
+ * This does not change modes. The caller is responsible for first selecting
+ * the mode that provides the requested measurement.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance.
+ * @param [out] intensity   The measured intensity, 0--1000.
+ * @param [in]  reflected   Whether to measure the surface lit by the sensor
+ *                          light (true) or the ambient light (false).
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this device cannot
+ *                          measure light intensity in this way.
+ *                          ::PBIO_ERROR_INVALID_OP if the device is not in the
+ *                          mode that provides this measurement.
+ *                          Otherwise see ::pbio_port_lump_is_ready.
+ */
+pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, int32_t *intensity, bool reflected) {
+
+    // Need to be up and running so we don't return stale data.
+    pbio_error_t err = pbio_port_lump_is_ready(lump_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    const int16_t *data16 = (const int16_t *)lump_dev->bin_data;
+    const int8_t *data8 = (const int8_t *)lump_dev->bin_data;
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
+        if (!reflected) {
+            if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__SHSV) {
+                return PBIO_ERROR_INVALID_OP;
+            }
+            // The value component of the ambient color is 0--10000.
+            *intensity = data16[2] / 10;
+            return PBIO_SUCCESS;
+        }
+        if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        // Average of the RGB reflections, which each range from 0 to 1024.
+        *intensity = (data16[0] + data16[1] + data16[2]) * 1000 / 3072;
+        return PBIO_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_COLOR_DIST_SENSOR) {
+        if (!reflected) {
+            if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI) {
+                return PBIO_ERROR_INVALID_OP;
+            }
+            *intensity = data8[0] * 10;
+            return PBIO_SUCCESS;
+        }
+        if (lump_dev->mode != LEGO_DEVICE_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        *intensity = (data16[0] + data16[1] + data16[2]) * 10 / 12;
+        return PBIO_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+        uint8_t mode = reflected ?
+            LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT : LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
+        if (lump_dev->mode != mode) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        *intensity = data8[0] * 10;
+        return PBIO_SUCCESS;
+    }
+
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 /**
