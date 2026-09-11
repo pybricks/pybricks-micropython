@@ -1156,7 +1156,8 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     }
 
     bd_addr_t null_addr = { };
-    gap_advertisements_set_params(0xA0, 0xA0, PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
+    // Advertise every 30ms so that other hubs receive broadcasts quickly.
+    gap_advertisements_set_params(0x30, 0x30, PBIO_BLUETOOTH_AD_TYPE_ADV_NONCONN_IND, 0, null_addr, 0x7, 0);
     recorded_events.advertise_enable_complete = false;
     gap_advertisements_enable(true);
 
@@ -1175,7 +1176,10 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (!pbdrv_bluetooth_is_observing) {
-        gap_set_scan_params(0, 0x30, 0x30, 0);
+        // 70ms interval, 35ms window. The 50% duty cycle leaves radio time
+        // for broadcasting while observing, and the longer interval spends
+        // less of the radio on starting and ending scans.
+        gap_set_scan_params(0, 0x70, 0x38, 0);
         gap_start_scan();
         pbdrv_bluetooth_is_observing = true;
         // REVISIT: use callback to await operation

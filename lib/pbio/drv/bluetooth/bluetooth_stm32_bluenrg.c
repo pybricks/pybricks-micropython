@@ -587,6 +587,8 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 
     if (pbdrv_bluetooth_advertising_state != PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        // This chip cannot broadcast faster than every 100ms, so other hubs
+        // receive from it more slowly than they do from each other.
         aci_gap_set_non_connectable_begin(ADV_NONCONN_IND, STATIC_RANDOM_ADDR);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
         status = aci_gap_set_non_connectable_end();
@@ -642,7 +644,10 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     // the observer role which would use more RAM in the Bluetooth chip
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x30, 0x30, STATIC_RANDOM_ADDR, 0);
+    // 70ms interval, 35ms window. The 50% duty cycle leaves radio time for
+    // broadcasting while observing, and the longer interval spends less of the
+    // radio on starting and ending scans.
+    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x70, 0x38, STATIC_RANDOM_ADDR, 0);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     status = aci_gap_start_general_conn_establish_proc_end();
     if (status == BLE_STATUS_SUCCESS) {
