@@ -30,9 +30,8 @@
  * HSV color, packed as 0xHHHHSSVV. Named values are the standard colors.
  */
 typedef enum {
-    // NONE uses different hue to differentiate if from black
-    PBIO_COLOR_NONE = PBIO_COLOR_ENCODE(180, 0, 0), /**< no color */
-    PBIO_COLOR_BLACK = PBIO_COLOR_ENCODE(0, 0, 0), /**< black */
+    PBIO_COLOR_NONE = PBIO_COLOR_ENCODE(0, 0, 0), /**< no color, i.e. no light at all */
+    PBIO_COLOR_BLACK = PBIO_COLOR_ENCODE(0, 0, 10), /**< black, which still reflects some light */
     PBIO_COLOR_GRAY = PBIO_COLOR_ENCODE(0, 0, 50), /**< gray */
     PBIO_COLOR_WHITE = PBIO_COLOR_ENCODE(0, 0, 100), /**< white */
     PBIO_COLOR_RED = PBIO_COLOR_ENCODE(0, 100, 100), /**< red */
@@ -45,6 +44,14 @@ typedef enum {
     PBIO_COLOR_BLUE = PBIO_COLOR_ENCODE(240, 100, 100), /**< blue */
     PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(270, 100, 100), /**< violet */
     PBIO_COLOR_MAGENTA = PBIO_COLOR_ENCODE(300, 100, 100), /**< magenta */
+    // Hues of 360 and up cannot occur in real colors, so they are used for sentinels.
+    /**
+     * Not a color, but a sentinel for showing whatever is underneath, such as
+     * a lower priority indication.
+     */
+    PBIO_COLOR_TRANSPARENT = PBIO_COLOR_ENCODE(360, 0, 0),
+    /** Not a color, but a sentinel that marks the end of an array of colors. */
+    PBIO_COLOR_ARRAY_END = PBIO_COLOR_ENCODE(361, 0, 0),
 } pbio_color_t;
 
 /** Color hues for HSV color space. Values are in degrees (0 to 359). */

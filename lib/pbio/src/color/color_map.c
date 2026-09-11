@@ -53,9 +53,7 @@ void pbio_color_map_set_default(pbio_color_map_t *map) {
         PBIO_COLOR_GREEN,
         PBIO_COLOR_BLUE,
         PBIO_COLOR_WHITE,
-        // Absence of color. Not PBIO_COLOR_NONE, whose nonzero hue would
-        // make this count as a nonideal color when matching below.
-        PBIO_COLOR_ENCODE(0, 0, 0),
+        PBIO_COLOR_NONE,
     };
     pbio_color_map_set(map, default_colors, PBIO_ARRAY_SIZE(default_colors));
 }

@@ -67,7 +67,7 @@ pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color) 
  *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  */
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
-    return pbio_color_light_on(light, PBIO_COLOR_BLACK);
+    return pbio_color_light_on(light, PBIO_COLOR_NONE);
 }
 
 static uint32_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
@@ -82,7 +82,7 @@ static uint32_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
         light->current_cell = 1;
     }
 
-    light->funcs->set_hsv(light, light->current_cell % 2 ? light->hsv : PBIO_COLOR_BLACK);
+    light->funcs->set_hsv(light, light->current_cell % 2 ? light->hsv : PBIO_COLOR_NONE);
     return *interval;
 }
 
@@ -151,7 +151,7 @@ static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation)
     pbio_color_t cell = cells[light->current_cell++];
 
     // if we have reached the array terminator, start back at the beginning
-    if (pbio_color_get_v(cell) == PBIO_COLOR_LIGHT_ANIMATION_END_V) {
+    if (cell == PBIO_COLOR_ARRAY_END) {
         cell = cells[0];
         light->current_cell = 1;
     }
@@ -171,7 +171,7 @@ static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation)
  *
  * @param [in]  light       The light instance
  * @param [in]  interval    The the time intervale between animation cells in milliseconds
- * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END_HSV
+ * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_ARRAY_END
  */
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_t *cells) {
     pbio_color_light_stop_animation(light);
