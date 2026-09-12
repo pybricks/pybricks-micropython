@@ -12,8 +12,10 @@
 ### Fixed
 - Fixed slow broadcasting while observing at the same time ([support#2822]).
 - Fixed slow observing while connected to a computer or app ([support#2822]).
+- Fixed Move Hub not broadcasting while connected to a PC ([support#2826]).
 
 [support#2822]: https://github.com/orgs/pybricks/discussions/2822
+[support#2826]: https://github.com/pybricks/support/issues/2826
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 
