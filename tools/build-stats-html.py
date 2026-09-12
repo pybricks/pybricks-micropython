@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+from collections import namedtuple
 from pathlib import Path
 
 import git
@@ -38,6 +39,18 @@ HUBS = [
     "ev3",
     "buildhat",
 ]
+
+# Firmware builds recorded for each hub, plotted together on the hub's graph.
+# Only the Prime Hub has more than one: it ships as two variants in a single
+# firmware.zip, one for each of the two hardware revisions.
+VARIANTS = {
+    "primehub": ["primehub_f4", "primehub_h5"],
+}
+
+# Color of each variant's size plot, and of the red markers that stand in for
+# commits with no size data
+SERIES_COLORS = ["#636efa", "#00cc96"]
+MISSING_COLOR = "red"
 
 # Linker script holding the space available to the firmware image, and the
 # MEMORY region within it that the image is linked into. The scripts have moved
@@ -79,14 +92,17 @@ PLATFORM_LD = {
         ],
         ["FLASH_FIRMWARE", "FLASH"],
     ),
-    # the recorded size is that of the prime_hub_f4 variant
-    "primehub": (
+    "primehub_f4": (
         [
             "lib/pbio/platform/prime_hub_f4/platform.ld",
             "lib/pbio/platform/prime_hub/platform.ld",
             "bricks/primehub/prime_hub.ld",
         ],
         ["FLASH_FIRMWARE", "FLASH"],
+    ),
+    "primehub_h5": (
+        ["lib/pbio/platform/prime_hub_h5/platform.ld"],
+        ["FLASH_FIRMWARE"],
     ),
     # the rest of the ROM is the user file system, which starts where the
     # firmware ends
@@ -183,19 +199,19 @@ def parse_memory(script):
     return regions
 
 
-def parse_limit(script, hub):
+def parse_limit(script, variant):
     """Finds the space available to the firmware image in a linker script.
 
     Args:
         script (str): contents of the linker script
-        hub (str): the hub type
+        variant (str): the firmware build
 
     Returns:
         (int) The size in bytes, or None if the script could not be read.
     """
     regions = parse_memory(script)
 
-    if hub == "buildhat":
+    if variant == "buildhat":
         # where the image has to stop is a symbol rather than the end of the
         # region, see the comment on PLATFORM_LD
         stop = re.search(
@@ -206,28 +222,28 @@ def parse_limit(script, hub):
         if stop and "RAM" in regions:
             return evaluate(stop.group(1)) - regions["RAM"][0]
 
-    for name in PLATFORM_LD[hub][1]:
+    for name in PLATFORM_LD[variant][1]:
         if name in regions:
             return regions[name][1]
 
     return None
 
 
-def load_limits(commits, hub):
+def load_limits(commits, variant):
     """Reads the space available to the firmware at each commit.
 
     Args:
         commits (list of git.Commit): mainline commits, oldest first
-        hub (str): the hub type
+        variant (str): the firmware build
 
     Returns:
         (dict) available space in bytes, keyed by commit hash, missing for
             commits where no linker script was found
     """
-    if hub not in PLATFORM_LD:
+    if variant not in PLATFORM_LD:
         return {}
 
-    paths = PLATFORM_LD[hub][0]
+    paths = PLATFORM_LD[variant][0]
 
     # ask for every candidate path at every commit in one go, since a lookup
     # per commit would take minutes over the whole history
@@ -255,37 +271,60 @@ def load_limits(commits, hub):
     limits = {}
 
     for blob in set(blobs.values()):
-        limits[blob] = parse_limit(pybricks.git.cat_file("blob", blob), hub)
+        limits[blob] = parse_limit(pybricks.git.cat_file("blob", blob), variant)
 
     return {sha: limits[blob] for sha, blob in blobs.items() if limits[blob]}
 
 
-def select(sizes, limits, commits, hub):
-    """Selects the useful fields from sorted items. Skips the first diff as well
-    as commits that did not change the firmware size.
+# One firmware build's plotted history, each field holding one value per
+# plotted commit, as select() yields them
+Series = namedtuple("Series", "shas messages sizes diffs missing limits")
+
+
+def trim(commits, size_maps):
+    """Drops the commits from before any of the builds has a recorded size.
+
+    All of a graph's builds share one x axis, so they are all plotted over the
+    same commits even where one of them started being built much later.
+
+    Args:
+        commits (list of git.Commit): mainline commits, oldest first
+        size_maps (list of dict): firmware size keyed by commit hash
+
+    Returns:
+        (list of git.Commit) The commits to plot.
+    """
+    recorded = set()
+
+    for sizes in size_maps:
+        recorded |= {sha for sha, size in sizes.items() if size is not None}
+
+    for i, commit in enumerate(commits):
+        if commit.hexsha in recorded:
+            return commits[i:]
+
+    return []
+
+
+def select(sizes, limits, commits):
+    """Selects the useful fields from sorted items.
 
     Args:
         sizes (dict): firmware size keyed by commit hash, None for failures
         limits (dict): available space keyed by commit hash, missing if unknown
-        commits (list of git.Commit): mainline commits, oldest first
-        hub (str): The hub type.
+        commits (list of git.Commit): the commits to plot, oldest first
 
     Yields:
-        (tuple of int, string, string, int, int, bool, int) The index, commit
-            hash, commit message, firmware size, change in size from previous
-            commit, whether the size data is missing for this commit and the
-            space available to the firmware
+        (tuple of string, string, int, int, bool, int) The commit hash, commit
+            message, firmware size, change in size from previous commit,
+            whether the size data is missing for this commit and the space
+            available to the firmware. The size is None before this build has
+            any recorded size at all, which leaves a gap in the plot.
     """
     prev_size = 0
-    i = 0
 
     for commit in commits:
         size = sizes.get(commit.hexsha)
-
-        # skip leading commits before the first recorded size
-        if size is None and prev_size == 0:
-            continue
-
         sha = commit.hexsha[:HASH_SIZE]
         message = commit.summary
         date = commit.committed_datetime.strftime("%Y-%m-%d")
@@ -293,7 +332,9 @@ def select(sizes, limits, commits, hub):
         missing = size is None
 
         if missing:
-            size = prev_size
+            # nothing to carry forward yet, so leave a gap rather than draw a
+            # flat line back to the start of the graph
+            size = prev_size or None
             message = f"no data<br />{message}<br />{date}"
         else:
             if prev_size != 0:
@@ -301,8 +342,7 @@ def select(sizes, limits, commits, hub):
                 message = f"{diff:+}<br />{message}<br />{date}"
             prev_size = size
 
-        yield i, sha, message, size, diff, missing, limits.get(commit.hexsha)
-        i += 1
+        yield sha, message, size, diff, missing, limits.get(commit.hexsha)
 
 
 def label_limit(value):
@@ -320,29 +360,24 @@ def label_limit(value):
     return f"{value // 1024}KiB ({value} bytes) available"
 
 
-def segments(limits):
-    """Splits a series of limits into runs of the same value.
+def runs(indexes):
+    """Groups sorted indexes into contiguous runs.
 
     Args:
-        limits (list of int): available space at each commit, None if unknown
+        indexes (list of int): the indexes, in ascending order
 
     Yields:
-        (tuple of int, int, int) The first and last index of the run and the
-            value it holds. Runs of unknown values are skipped.
+        (tuple of int, int) The first and last index of each run.
     """
-    start = 0
+    start = previous = indexes[0]
 
-    for i, value in enumerate(limits):
-        if value == limits[start]:
-            continue
+    for i in indexes[1:]:
+        if i > previous + 1:
+            yield start, previous
+            start = i
+        previous = i
 
-        if limits[start]:
-            yield start, i - 1, limits[start]
-
-        start = i
-
-    if limits[start]:
-        yield start, len(limits) - 1, limits[start]
+    yield start, previous
 
 
 def y_ticks(y_start, y_end, y_max):
@@ -373,34 +408,57 @@ def y_ticks(y_start, y_end, y_max):
     return values, [f"{v // 1024}KiB" for v in values]
 
 
-def create_plot(size_map, limit_map, commits, hub):
+def create_plot(variants, commits, hub):
+    """Writes the graph of one hub's firmware size over time.
+
+    Args:
+        variants (list of str): the firmware builds to plot together
+        commits (list of git.Commit): mainline commits, oldest first
+        hub (str): the hub type
+    """
     print("creating plot for", hub, "at", Path(BUILD_DIR, f"{hub}.html"))
 
-    indexes, shas, messages, sizes, diffs, missing, limits = zip(
-        *select(size_map, limit_map, commits, hub)
-    )
-    marker_colors = ["red" if m else "#636efa" for m in missing]
+    size_maps = [load_sizes(v) for v in variants]
+    limit_maps = [load_limits(commits, v) for v in variants]
+
+    # a graph's builds share one x axis, so they are plotted over the same
+    # commits even where one of them was only added recently
+    commits = trim(commits, size_maps)
+    indexes = list(range(len(commits)))
+
+    plots = [
+        Series(*zip(*select(sizes, limits, commits)))
+        for sizes, limits in zip(size_maps, limit_maps)
+    ]
 
     # Find sensible ranges to display by default
     x_end = len(indexes)
     x_start = x_end - 100
-    y_end = max(s + 64 for s in sizes[x_start - 1 : x_end])
-    y_start = min(s - 64 for s in sizes[x_start - 1 : x_end])
-    diff_peak = max([abs(d) + 64 for d in diffs[x_start - 1 : x_end]])
+
+    def window(values):
+        return [v for v in values[x_start - 1 : x_end] if v is not None]
+
+    # pooled over the builds, which do not all go back the same distance
+    window_sizes = [v for p in plots for v in window(p.sizes)]
+    window_diffs = [v for p in plots for v in window(p.diffs)]
+    y_end = max(window_sizes) + 64
+    y_start = min(window_sizes) - 64
+    diff_peak = max(abs(d) for d in window_diffs) + 64
 
     # leave the limit in view by default only once the firmware is getting
     # close to filling the space available
-    visible_limits = [x for x in limits[x_start - 1 : x_end] if x]
+    visible_limits = [v for p in plots for v in window(p.limits)]
     if visible_limits and y_end > min(visible_limits) * LIMIT_IN_VIEW:
         y_end = max(visible_limits) + 1024
 
-    known_limits = [x for x in limits if x]
-    tickvals, ticktext = y_ticks(y_start, y_end, max([max(sizes)] + known_limits))
+    all_values = [v for p in plots for v in p.sizes + p.limits if v]
+    tickvals, ticktext = y_ticks(y_start, y_end, max(all_values))
 
     # Create the figure with two subplots
     fig = make_subplots(rows=2, cols=1)
     fig.update_layout(
-        showlegend=False,
+        # naming each build is only useful when there is more than one
+        showlegend=len(variants) > 1,
         title_text=f"Pybricks {hub} firmware size",
         titlefont=dict(size=36),
         dragmode="zoom",
@@ -408,21 +466,24 @@ def create_plot(size_map, limit_map, commits, hub):
     fig.update_xaxes(showticklabels=False, range=[x_start, x_end])
 
     # Add and configure size plot
-    fig.append_trace(
-        go.Scatter(
-            x=indexes,
-            y=sizes,
-            name="Size",
-            line={"shape": "hv"},
-            mode="lines+markers",
-            marker={"color": marker_colors},
-            hovertext=messages,
-            hoverinfo="y+text",
-            customdata=shas,
-        ),
-        row=1,
-        col=1,
-    )
+    for variant, color, p in zip(variants, SERIES_COLORS, plots):
+        fig.append_trace(
+            go.Scatter(
+                x=indexes,
+                y=p.sizes,
+                name=variant,
+                legendgroup=variant,
+                line={"shape": "hv", "color": color},
+                mode="lines+markers",
+                marker={"color": [MISSING_COLOR if m else color for m in p.missing]},
+                hovertext=p.messages,
+                hoverinfo="y+text",
+                customdata=p.shas,
+            ),
+            row=1,
+            col=1,
+        )
+
     fig.update_yaxes(
         row=1,
         exponentformat="none",
@@ -434,24 +495,39 @@ def create_plot(size_map, limit_map, commits, hub):
 
     # Add the space available to the firmware, which steps whenever the
     # linker script changed
-    if known_limits:
+    for variant, p in zip(variants, plots):
+        if not any(p.limits):
+            continue
+
         fig.append_trace(
             go.Scatter(
                 x=indexes,
-                y=limits,
-                name="Available",
+                y=p.limits,
+                name=f"{variant} available",
+                legendgroup=variant,
+                showlegend=False,
                 line={"shape": "hv", "color": LIMIT_COLOR, "dash": "dash"},
                 mode="lines",
-                hovertext=[label_limit(v) for v in limits],
+                hovertext=[label_limit(v) for v in p.limits],
                 hoverinfo="text",
             ),
             row=1,
             col=1,
         )
 
-        # Label each step, keeping the label of the step that is showing when
-        # the page opens inside the default view rather than off to the left
-        for begin, end, value in segments(limits):
+    # Label each step, from the union of the builds' steps so that builds
+    # sharing a limit share its label instead of overprinting it. The label of
+    # the step that is showing when the page opens is kept inside the default
+    # view rather than left off to the left.
+    shared = {}
+
+    for p in plots:
+        for i, value in enumerate(p.limits):
+            if value:
+                shared.setdefault(value, []).append(i)
+
+    for value, points in shared.items():
+        for begin, end in runs(sorted(set(points))):
             fig.add_annotation(
                 row=1,
                 col=1,
@@ -465,18 +541,23 @@ def create_plot(size_map, limit_map, commits, hub):
             )
 
     # Add and configure diff plot
-    fig.append_trace(
-        go.Bar(
-            x=indexes,
-            y=diffs,
-            hovertext=messages,
-            hoverinfo="text",
-            name="Delta",
-            customdata=shas,
-        ),
-        row=2,
-        col=1,
-    )
+    for variant, color, p in zip(variants, SERIES_COLORS, plots):
+        fig.append_trace(
+            go.Bar(
+                x=indexes,
+                y=p.diffs,
+                hovertext=p.messages,
+                hoverinfo="text",
+                name=variant,
+                legendgroup=variant,
+                showlegend=False,
+                marker={"color": color},
+                customdata=p.shas,
+            ),
+            row=2,
+            col=1,
+        )
+
     fig.update_yaxes(row=2, range=[-diff_peak, diff_peak])
 
     # Export plot
@@ -525,15 +606,20 @@ def create_plot(size_map, limit_map, commits, hub):
         f.write(html_str)
 
 
-def load_sizes(hub):
-    """Loads a hub's sizes from the size-data worktree.
+def load_sizes(variant):
+    """Loads a firmware build's sizes from the size-data worktree.
 
     Returns:
         (dict) firmware size keyed by commit hash, None for recorded failures
     """
-    path = os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR, f"{hub}.csv")
-    with open(path, newline="") as f:
-        return {row[0]: int(row[1]) if row[1] else None for row in csv.reader(f)}
+    path = os.path.join(PYBRICKS_PATH, SIZE_DATA_DIR, f"{variant}.csv")
+
+    try:
+        with open(path, newline="") as f:
+            return {row[0]: int(row[1]) if row[1] else None for row in csv.reader(f)}
+    except FileNotFoundError:
+        # a build that has not been recorded yet simply has no line on the graph
+        return {}
 
 
 def main():
@@ -562,7 +648,7 @@ def main():
     Path(BUILD_DIR).mkdir(parents=True, exist_ok=True)
 
     for h in HUBS:
-        create_plot(load_sizes(h), load_limits(commits, h), commits, h)
+        create_plot(VARIANTS.get(h, [h]), commits, h)
 
 
 if __name__ == "__main__":
