@@ -12,6 +12,7 @@
 ### Fixed
 - Fixed slow broadcasting while observing at the same time ([support#2822]).
 - Fixed slow observing while connected to a computer or app ([support#2822]).
+- Fixed connected remote preventing Move Hub from advertising.
 
 [support#2822]: https://github.com/orgs/pybricks/discussions/2822
 

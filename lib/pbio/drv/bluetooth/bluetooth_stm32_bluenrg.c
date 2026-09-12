@@ -240,6 +240,8 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
  * Sets advertising data and enables advertisements.
  */
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
+    tBleStatus status;
+
     // c5f50001-8280-46da-89f4-6d8051e4aeef
     static const uint8_t service_uuids[] = {
         AD_TYPE_128_BIT_SERV_UUID,
@@ -272,7 +274,13 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
         0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gap_set_discoverable_end();
+    status = aci_gap_set_discoverable_end();
+
+    // Recording this as advertising when it is not means nothing ever tries
+    // again, since starting is skipped when it is already in that state.
+    if (status != BLE_STATUS_SUCCESS) {
+        return ble_error_to_pbio_error(status);
+    }
 
     pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
 
@@ -425,8 +433,14 @@ try_again:
     assert(!peri->con_handle);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    // The connection interval is the anchor period that the chip schedules
+    // everything else around, and the last two parameters are how much of each
+    // period this link reserves. Asking for up to 30ms out of a period that
+    // could itself be 10ms left nothing to allocate an advertising event in,
+    // so the hub could not be connected to while a remote was attached. Both
+    // halves matter: a 30ms period is just as full if 30ms of it is reserved.
     aci_gap_create_connection_begin(0x0060, 0x0030, peri->bdaddr_type, peri->bdaddr,
-        STATIC_RANDOM_ADDR, 0x0010 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0010, 0x0030);
+        STATIC_RANDOM_ADDR, 0x0030 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0004, 0x0010);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gap_create_connection_end();
 
