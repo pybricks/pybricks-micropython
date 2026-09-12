@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2023 The Pybricks Authors
+# Copyright (c) 2019-2026 The Pybricks Authors
 
 # This file is shared by all bare-metal Arm Pybricks ports.
 
@@ -665,6 +665,13 @@ OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LEGO_SPEC_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+
+ifeq ($(PB_LIB_AEABI_DIV),1)
+OBJ += $(addprefix $(BUILD)/, $(AEABI_DIV_SRC_C:.c=.o))
+# Overriding the libgcc division helpers only works when they are not
+# compiled with LTO. See lib/aeabi_div/aeabi_div.c.
+$(BUILD)/lib/aeabi_div/%.o: CFLAGS += -fno-lto
+endif
 
 ifeq ($(PB_LIB_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
