@@ -634,13 +634,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     if (pbdrv_bluetooth_advertising_state != PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
 
         // Advertising parameters can only be set while advertising is stopped,
-        // so leave the GAP discoverable mode if it is still active.
-        if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS) {
-            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-            aci_gap_set_non_discoverable_begin();
-            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-            // aci_gap_set_non_discoverable_end();
-        }
+        // which it always is here, since starting a program stops it.
 
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         {
