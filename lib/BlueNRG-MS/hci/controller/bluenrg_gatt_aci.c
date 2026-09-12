@@ -199,25 +199,6 @@ void aci_gatt_add_char_begin(uint16_t serviceHandle,
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gatt_add_char_end(uint16_t* charHandle)
-{
-  struct hci_response rq;
-  gatt_add_serv_rp resp;
-
-  rq.rparam = &resp;
-  rq.rlen = GATT_ADD_CHAR_RP_SIZE;
-
-  hci_recv_resp(&rq);
-
-  if (resp.status) {
-    return resp.status;
-  }
-
-  *charHandle = btohs(resp.handle);
-
-  return 0;
-}
-
 tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
                                   uint16_t charHandle,
                                   uint8_t descUuidType,
