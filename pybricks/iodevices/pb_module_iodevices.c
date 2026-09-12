@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -17,24 +17,48 @@
 /**
  * Interactive test for getting user permission to enable power for custom sensors.
  *
+ * On first use, this also asks whether power should persist after the program
+ * stops. The default is no.
+ *
  * @returns  True if the user accepted now or previously, otherwise false.
  */
 static bool pb_module_iodevices_has_power_permission(void) {
     // Permission persists.
-    if (pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED)) {
-        return true;
+    if (!pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED)) {
+        mp_printf(&mp_plat_print, "Enabling 8V power on self-build circuits may damage your LEGO hub. Proceed? (y/n)\n");
+        int chr = mp_hal_stdin_rx_chr();
+        if (chr == 'y' || chr == 'Y') {
+            mp_printf(&mp_plat_print, "%c. power_pin may be enabled at your own risk.\n", chr);
+            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED, true);
+        } else {
+            mp_printf(&mp_plat_print, "Cancelled. power_pin will be ignored.\n", chr);
+            return false;
+        }
     }
 
-    mp_printf(&mp_plat_print, "Custom electronics may damage your LEGO hub. Proceed at your own risk.\nPress Y to proceed. Press N to cancel.\n");
-    int chr = mp_hal_stdin_rx_chr();
-    if (chr == 'y' || chr == 'Y') {
-        mp_printf(&mp_plat_print, "%c. Port power may be enabled.\n", chr);
-        pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED, true);
-    } else {
-        mp_printf(&mp_plat_print, "Cancelled. Power not enabled.\n", chr);
+    // After the safety confirmation, ask once whether power should persist.
+    if (!pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST_PROMPT_SHOWN)) {
+        mp_printf(&mp_plat_print, "Persist 8V power after program stops? (y/n)\n");
+        int chr = mp_hal_stdin_rx_chr();
+        pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST_PROMPT_SHOWN, true);
+        if (chr == 'y' || chr == 'Y') {
+            mp_printf(&mp_plat_print, "%c. Power will stay on after the program stops.\n", chr);
+            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST, true);
+        } else {
+            mp_printf(&mp_plat_print, "Power will turn off when the program stops.\n");
+        }
     }
 
     return pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED);
+}
+
+/**
+ * Gets whether the user opted in to keeping custom port power on after stop.
+ *
+ * @returns  True if persistent power is enabled.
+ */
+bool pb_module_iodevices_get_persist_power(void) {
+    return pbsys_storage_settings_get_flag(PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST);
 }
 
 /**

@@ -34,6 +34,16 @@ typedef enum {
      * electronics (defaults to false).
      */
     PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED = (1 << 1),
+    /**
+     * User has been asked whether custom port power should persist after the
+     * program stops (defaults to false).
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST_PROMPT_SHOWN = (1 << 2),
+    /**
+     * User wants custom port power to stay on after the program stops
+     * (defaults to false).
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_PERSIST = (1 << 3),
 } pbsys_storage_settings_flags_t;
 
 /**

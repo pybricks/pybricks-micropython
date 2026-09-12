@@ -55,6 +55,8 @@ void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8
 
 pbio_port_power_requirements_t pb_module_iodevices_get_requested_power_pin(mp_obj_t power_pin_in);
 
+bool pb_module_iodevices_get_persist_power(void);
+
 #endif // PYBRICKS_PY_IODEVICES
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_IODEVICES_H

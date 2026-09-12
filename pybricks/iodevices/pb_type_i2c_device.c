@@ -90,6 +90,9 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, uint
     device->sensor_obj = sensor_obj;
     device->iter = NULL;
     pbio_port_p1p2_set_power(port, power_pin);
+    if (custom) {
+        pbio_port_p1p2_set_persist(port, power_pin != PBIO_PORT_POWER_REQUIREMENTS_NONE && pb_module_iodevices_get_persist_power());
+    }
 
     return MP_OBJ_FROM_PTR(device);
 }

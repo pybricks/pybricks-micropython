@@ -85,7 +85,9 @@ static mp_obj_t pb_type_uart_device_make_new(const mp_obj_type_t *type, size_t n
     self->read_iter = NULL;
     self->wait_len = 0;
 
-    pbio_port_p1p2_set_power(self->port, pb_module_iodevices_get_requested_power_pin(power_pin_in));
+    pbio_port_power_requirements_t pin = pb_module_iodevices_get_requested_power_pin(power_pin_in);
+    pbio_port_p1p2_set_power(self->port, pin);
+    pbio_port_p1p2_set_persist(self->port, pin != PBIO_PORT_POWER_REQUIREMENTS_NONE && pb_module_iodevices_get_persist_power());
 
     return MP_OBJ_FROM_PTR(self);
 }
