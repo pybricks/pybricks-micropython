@@ -259,10 +259,14 @@ typedef enum {
      * Status report event.
      *
      * The payload is one 32-bit little-endian unsigned integer containing
-     * ::pbio_pybricks_status_flags_t flags and a one byte program identifier
-     * representing the currently active program if it is running.
+     * ::pbio_pybricks_status_flags_t flags, a one byte program identifier
+     * representing the currently active program if it is running, a one byte
+     * identifier of the currently selected program slot, and a one byte exit
+     * code of the program that ran most recently.
      *
-     * @since Pybricks Profile v1.0.0. Program identifier added in Pybricks Profile v1.4.0.
+     * @since Pybricks Profile v1.0.0. Program identifier added in Pybricks
+     * Profile v1.4.0. Slot added in Pybricks Profile v1.5.0. Exit code added
+     * in Pybricks Profile v1.6.0.
      */
     PBIO_PYBRICKS_EVENT_STATUS_REPORT = 0,
 
@@ -404,10 +408,37 @@ typedef enum {
  */
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
 
-/** Size of status report event message in bytes. */
-#define PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE 7
+/**
+ * Well-known exit codes of the program that ran most recently, as reported in
+ * the status report event.
+ *
+ * A program can also exit with a value of its own choosing, so hosts must be
+ * prepared to receive any value. The values here follow the POSIX convention
+ * of 128 plus the signal number for programs that did not exit of their own
+ * accord, so that they don't clash with common program exit codes.
+ *
+ * @since Pybricks Profile v1.6.0
+ */
+typedef enum {
+    /** The program ran to completion or exited without giving a value. */
+    PBIO_PYBRICKS_EXIT_CODE_OK = 0,
+    /** The program ended with an unhandled exception. */
+    PBIO_PYBRICKS_EXIT_CODE_EXCEPTION = 1,
+    /** The program was interrupted by the user, such as with Ctrl-C. */
+    PBIO_PYBRICKS_EXIT_CODE_INTERRUPTED = 128 + 2,
+    /** The program was aborted because the hub is shutting down. */
+    PBIO_PYBRICKS_EXIT_CODE_ABORTED = 128 + 9,
+    /**
+     * The program was asked to stop, either with the stop button on the hub or
+     * with ::PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM.
+     */
+    PBIO_PYBRICKS_EXIT_CODE_STOPPED = 128 + 15,
+} pbio_pybricks_exit_code_t;
 
-uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot);
+/** Size of status report event message in bytes. */
+#define PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE 8
+
+uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot, uint8_t exit_code);
 
 /**
  * Application-specific feature flag supported by a hub.

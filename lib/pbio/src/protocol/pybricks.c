@@ -21,18 +21,21 @@ _Static_assert(NUM_PBIO_PYBRICKS_STATUS <= sizeof(uint32_t) * 8,
  *
  * Program ID parameter was added in Pybricks Profile v1.4.0.
  * Slot parameter was added in Pybricks Profile v1.5.0.
+ * Exit code parameter was added in Pybricks Profile v1.6.0.
  *
  * @param [in]  buf         The buffer to hold the binary data.
  * @param [in]  flags       The status flags.
  * @param [in]  program_id  Program identifier of currently running program.
  * @param [in]  slot        The currently selected program slot.
+ * @param [in]  exit_code   Exit code of the program that ran most recently.
  * @return                  The number of bytes written to @p buf.
  */
-uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot) {
+uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags, pbio_pybricks_user_program_id_t program_id, uint8_t slot, uint8_t exit_code) {
     buf[0] = PBIO_PYBRICKS_EVENT_STATUS_REPORT;
     pbio_set_uint32_le(&buf[1], flags);
     buf[5] = program_id;
     buf[6] = slot;
+    buf[7] = exit_code;
     return PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE;
 }
 

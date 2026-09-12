@@ -111,13 +111,14 @@ void pbsys_main(void) {
 
         // Run the main application.
         pbio_main_start_application_resources();
-        pbsys_main_run_program(&program);
+        uint8_t exit_code = pbsys_main_run_program(&program);
 
         // Stop motors, user animations, user bluetooth activity, etc.
         err = pbio_main_stop_application_resources();
 
-        // Get system back in idle state.
-        pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        // Get system back in idle state. This also makes the exit code of the
+        // program that just ended available to connected hosts.
+        pbsys_status_clear_program_running(exit_code);
         pbsys_host_stdin_set_callback(NULL);
         pbsys_program_stop_set_buttons(PBSYS_CONFIG_HMI_STOP_BUTTON);
         program.start_request_type = PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_NONE;
