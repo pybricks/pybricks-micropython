@@ -334,9 +334,8 @@ static mp_obj_t pb_module_ble_broadcast(size_t n_args, const mp_obj_t *pos_args,
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_obj_BLE_t, self,
         PB_ARG_REQUIRED(data));
-    // On Move Hub, nothing is broadcast if it is called while the
-    // move hub is connected to Pybricks Code. Also, broadcasting interferes
-    // with observing even when not connected to Pybricks Code.
+    // On the Move Hub, broadcasting interferes with observing, even when not
+    // connected to Pybricks Code.
 
     mp_obj_t self_in = MP_OBJ_FROM_PTR(self);
 

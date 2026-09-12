@@ -237,6 +237,25 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
 }
 
 /**
+ * Sends a link layer command with constant parameters.
+ *
+ * The BlueNRG library's hci_le_*() functions for these commands wait for the
+ * response, which this driver cannot do, so the command is packed here.
+ *
+ * @param [in]  ocf     The opcode command field.
+ * @param [in]  params  The command parameters.
+ * @param [in]  plen    The size of @p params in bytes.
+ */
+static void hci_send_le_command(uint16_t ocf, const uint8_t *params, uint8_t plen) {
+    struct hci_request rq = {
+        .opcode = cmd_opcode_pack(OGF_LE_CTL, ocf),
+        .cparam = (void *)params,
+        .clen = plen,
+    };
+    hci_send_req(&rq);
+}
+
+/**
  * Sets advertising data and enables advertisements.
  */
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
@@ -284,10 +303,21 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
 
     // REVISIT: might need to delete advertising data here
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_set_non_discoverable_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gap_set_non_discoverable_end();
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
+        // The GAP layer does not know about advertising that was enabled with
+        // a link layer command, so it has to be stopped the same way.
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        {
+            static const uint8_t disable = 0;
+            hci_send_le_command(OCF_LE_SET_ADVERTISE_ENABLE, &disable, sizeof(disable));
+        }
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    } else {
+        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+        aci_gap_set_non_discoverable_begin();
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        // aci_gap_set_non_discoverable_end();
+    }
 
     // This protothread is also shared with stop broadcasting. Either way,
     // nothing is advertising or broadcasting after this, so reset that state.
@@ -585,49 +615,68 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // The GAP layer refuses to enter any advertising mode while a computer is
+    // connected, so the link layer is driven directly instead.
     if (pbdrv_bluetooth_advertising_state != PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        // This chip cannot broadcast faster than every 100ms, so other hubs
-        // receive from it more slowly than they do from each other.
-        aci_gap_set_non_connectable_begin(ADV_NONCONN_IND, STATIC_RANDOM_ADDR);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-        status = aci_gap_set_non_connectable_end();
 
-        if (status != BLE_STATUS_SUCCESS) {
-            pbio_error_t err = ble_error_to_pbio_error(status);
-            // Broadcasting does not work while connected to the computer. But
-            // returning an error means that Move Hub programs with
-            // broadcasting can never run while connected, which makes it very
-            // impractical to test any program. So mark as success.
-            if (err == PBIO_ERROR_INVALID_OP) {
-                return PBIO_SUCCESS;
-            }
-            return err;
+        // Advertising parameters can only be set while advertising is stopped,
+        // so leave the GAP discoverable mode if it is still active.
+        if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS) {
+            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+            aci_gap_set_non_discoverable_begin();
+            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+            // aci_gap_set_non_discoverable_end();
         }
 
-        // These AD types are left over from connectable discovery and need
-        // to be deleted _after_ starting non-connectable advertising.
-
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_delete_ad_type_begin(AD_TYPE_128_BIT_SERV_UUID);
+        {
+            static const uint8_t params[] = {
+                // 100ms, the fastest this controller allows.
+                0xa0, 0x00, // Advertising_Interval_Min
+                0xa0, 0x00, // Advertising_Interval_Max
+                ADV_NONCONN_IND,
+                STATIC_RANDOM_ADDR,
+                0, // Peer_Address_Type
+                0, 0, 0, 0, 0, 0, // Peer_Address
+                0x07, // Advertising_Channel_Map
+                NO_WHITE_LIST_USE,
+            };
+            hci_send_le_command(OCF_LE_SET_ADV_PARAMETERS, params, sizeof(params));
+        }
         PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        status = hci_le_command_end();
 
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_delete_ad_type_begin(AD_TYPE_TX_POWER_LEVEL);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-
-        // Errors from deleting are ignored since we should only get an error
-        // if the AD does not exist, which is OK.
-
-        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
+        if (status != BLE_STATUS_SUCCESS) {
+            return ble_error_to_pbio_error(status);
+        }
     }
 
-    // This has to be done _after_ other data is delete to make sure it fits.
+    // The link layer advertises exactly this payload.
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    hci_le_set_advertising_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
+    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    status = hci_le_set_advertising_data_end();
+
+    if (status != BLE_STATUS_SUCCESS) {
+        return ble_error_to_pbio_error(status);
+    }
+
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
+        // Already advertising, so updating the data was all that was needed.
+        return PBIO_SUCCESS;
+    }
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_update_adv_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
+    {
+        static const uint8_t enable = 1;
+        hci_send_le_command(OCF_LE_SET_ADVERTISE_ENABLE, &enable, sizeof(enable));
+    }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    status = aci_gap_update_adv_data_end();
+    status = hci_le_command_end();
+
+    if (status == BLE_STATUS_SUCCESS) {
+        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
+    }
 
     PBIO_OS_ASYNC_END(ble_error_to_pbio_error(status));
 }
