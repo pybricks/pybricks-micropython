@@ -260,12 +260,11 @@ static void hci_send_const_cmd(const hci_const_cmd_t *cmd) {
 // assumption the global hci_command_complete flag already makes.
 static pbio_os_state_t hci_cmd_sub;
 
-// Waits for the transport to be free, sends a command with constant
-// parameters, and waits for the completion flag to be set.
+// Sends a command with constant parameters and waits for the completion flag
+// to be set.
 static pbio_error_t hci_cmd_thread(pbio_os_state_t *state, const hci_const_cmd_t *cmd, bool *flag) {
     PBIO_OS_ASYNC_BEGIN(state);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     hci_send_const_cmd(cmd);
     PBIO_OS_AWAIT_UNTIL(state, *flag);
 
@@ -321,7 +320,6 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
     uint8_t response_data[25];
@@ -395,7 +393,6 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
     PBIO_OS_ASYNC_BEGIN(state);
 
 retry:
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_command_event_char_handle, 0, size, data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     tBleStatus ret = aci_gatt_update_char_value_end();
@@ -531,7 +528,6 @@ try_again:
     // connect
     assert(!peri->con_handle);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     // The connection interval is the anchor period that the chip schedules
     // everything else around, and the last two parameters are how much of each
     // period this link reserves. Asking for up to 30ms out of a period that
@@ -568,8 +564,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
 
     uint8_t uuid_le[16];
     uint8_t uuid_type;
@@ -615,7 +609,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     static const uint16_t enable = 0x0001;
 
 retry:
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_disc.handle + 2, sizeof(enable), (const uint8_t *)&enable);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gatt_write_charac_value_end();
@@ -654,8 +647,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-
     aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_handle + 1, peri->char_size, peri->char_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     tBleStatus status = aci_gatt_write_charac_value_end();
@@ -688,7 +679,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
         return PBIO_SUCCESS;
     }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gap_terminate_begin(peri->con_handle, HCI_OE_USER_ENDED_CONNECTION);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     aci_gap_terminate_end();
@@ -748,7 +738,6 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     }
 
     // The link layer advertises exactly this payload.
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     hci_le_set_advertising_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     status = hci_le_set_advertising_data_end();
@@ -1027,7 +1016,6 @@ static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
 
         attr = &gatt_attrs[idx];
 
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         if (attr->max_attr_records) {
             aci_gatt_add_serv_begin(attr->uuid_type, attr->uuid, PRIMARY_SERVICE, attr->max_attr_records);
         } else {
@@ -1052,7 +1040,6 @@ static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
             continue;
         }
 
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         aci_gatt_update_char_value_begin(service_handle, char_handle, 0, attr->value_len, attr->value);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
         // aci_gatt_update_char_value_end();
@@ -1331,7 +1318,6 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set the Bluetooth address
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
         // has to be in little-endian format, but stored in big-endian in flash
         uint8_t bd_addr[6];
@@ -1382,7 +1368,6 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set the device name
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
         0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
@@ -1461,7 +1446,6 @@ pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
 
     // Disconnect gracefully if connected to host.
     if (conn_handle) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         aci_gap_terminate_begin(conn_handle, HCI_OE_USER_ENDED_CONNECTION);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
         aci_gap_terminate_end();
@@ -1485,12 +1469,16 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, {
             // Iterate the main Bluetooth thread once when some data is
-            // available or new data can be sent.
-            pbio_error_t err = pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
+            // available or new data can be sent. It is not iterated while a
+            // write is pending, so the threads it drives never need to await
+            // the transport becoming free before sending a command.
+            if (!write_xfer_size) {
+                pbio_error_t err = pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
 
-            // Exit this spi process once the high level Bluetooth process completes.
-            if (err != PBIO_ERROR_AGAIN) {
-                return err;
+                // Exit this spi process once the high level Bluetooth process completes.
+                if (err != PBIO_ERROR_AGAIN) {
+                    return err;
+                }
             }
 
             // - spi_irq is set by the interrupt handler when there is new
