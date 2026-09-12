@@ -508,6 +508,22 @@ typedef enum {
  */
 #define PBIO_PYBRICKS_PNP_ID_SIZE 7
 
+/**
+ * Static initializer for the Device Information Service PnP ID characteristic
+ * value, the compile-time equivalent of pbio_pybricks_pnp_id().
+ *
+ * Expands to ::PBIO_PYBRICKS_PNP_ID_SIZE comma-separated array elements, so
+ * it can also be used as part of a larger array initializer.
+ *
+ * @param [in]  product_id       The Product ID Field (::pbio_pybricks_hub_kind_t).
+ * @param [in]  product_version  The Product Version Field (hub variant).
+ */
+#define PBIO_PYBRICKS_PNP_ID_INIT(product_id, product_version) \
+    0x01, /* Vendor ID Source Field - Bluetooth SIG-assigned ID */ \
+    PBIO_UINT16_LE(0x0397), /* Vendor ID Field - LEGO company identifier */ \
+    PBIO_UINT16_LE(product_id), /* Product ID Field */ \
+    PBIO_UINT16_LE(product_version) /* Product Version Field */
+
 void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version);
 
 extern const uint8_t pbio_pybricks_service_uuid[];
