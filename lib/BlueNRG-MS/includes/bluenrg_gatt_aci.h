@@ -127,7 +127,8 @@ void aci_gatt_add_char_begin(uint16_t serviceHandle,
                                    uint8_t gattEvtMask,
                                    uint8_t encryKeySize,
                                    uint8_t isVariable);
-tBleStatus aci_gatt_add_char_end(uint16_t* charHandle);
+// Same response format as aci_gatt_add_serv_end, so share the code.
+#define aci_gatt_add_char_end aci_gatt_add_serv_end
 
 /**
  * Add a characteristic descriptor to a service.
