@@ -236,24 +236,71 @@ const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
 
-/**
- * Sends a link layer command with constant parameters.
- *
- * The BlueNRG library's hci_le_*() functions for these commands wait for the
- * response, which this driver cannot do, so the command is packed here.
- *
- * @param [in]  ocf     The opcode command field.
- * @param [in]  params  The command parameters.
- * @param [in]  plen    The size of @p params in bytes.
- */
-static void hci_send_le_command(uint16_t ocf, const uint8_t *params, uint8_t plen) {
+// Many HCI commands in this driver have parameters that are all fixed at
+// compile time. Storing the complete command as const data takes considerably
+// less flash than packing the parameters at runtime with the aci_*_begin
+// functions.
+typedef struct {
+    uint16_t opcode;
+    uint8_t plen;
+    uint8_t params[];
+} hci_const_cmd_t;
+
+static void hci_send_const_cmd(const hci_const_cmd_t *cmd) {
     struct hci_request rq = {
-        .opcode = cmd_opcode_pack(OGF_LE_CTL, ocf),
-        .cparam = (void *)params,
-        .clen = plen,
+        .opcode = cmd->opcode,
+        .cparam = (void *)cmd->params,
+        .clen = cmd->plen,
     };
     hci_send_req(&rq);
 }
+
+// State for hci_cmd_thread(). A single shared instance suffices because at
+// most one HCI command exchange is in flight at a time, which is the same
+// assumption the global hci_command_complete flag already makes.
+static pbio_os_state_t hci_cmd_sub;
+
+// Waits for the transport to be free, sends a command with constant
+// parameters, and waits for the completion flag to be set.
+static pbio_error_t hci_cmd_thread(pbio_os_state_t *state, const hci_const_cmd_t *cmd, bool *flag) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    hci_send_const_cmd(cmd);
+    PBIO_OS_AWAIT_UNTIL(state, *flag);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+// Sends a command with constant parameters and awaits the command complete
+// (or, for the _STATUS variant, command status) event.
+#define HCI_AWAIT_CONST_CMD(state, cmd) \
+    PBIO_OS_AWAIT(state, &hci_cmd_sub, hci_cmd_thread(&hci_cmd_sub, cmd, &hci_command_complete))
+#define HCI_AWAIT_CONST_CMD_STATUS(state, cmd) \
+    PBIO_OS_AWAIT(state, &hci_cmd_sub, hci_cmd_thread(&hci_cmd_sub, cmd, &hci_command_status))
+
+// Equivalent of aci_gap_set_discoverable_begin(ADV_IND, 0, 0,
+// STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE, 0, NULL, sizeof(service_uuids),
+// service_uuids, 0, 0).
+static const hci_const_cmd_t cmd_gap_set_discoverable = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_DISCOVERABLE),
+    .plen = 30,
+    .params = {
+        ADV_IND,
+        0x00, 0x00, // Adv_Interval_Min
+        0x00, 0x00, // Adv_Interval_Max
+        STATIC_RANDOM_ADDR,
+        NO_WHITE_LIST_USE,
+        0, // Local_Name_Length
+        17, // Service_Uuid_Length
+        // Pybricks service UUID: c5f50001-8280-46da-89f4-6d8051e4aeef
+        AD_TYPE_128_BIT_SERV_UUID,
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5,
+        0x00, 0x00, // Slave_Conn_Interval_Min
+        0x00, 0x00, // Slave_Conn_Interval_Max
+    },
+};
 
 /**
  * Sets advertising data and enables advertisements.
@@ -261,11 +308,15 @@ static void hci_send_le_command(uint16_t ocf, const uint8_t *params, uint8_t ple
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
     tBleStatus status;
 
-    // c5f50001-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t service_uuids[] = {
-        AD_TYPE_128_BIT_SERV_UUID,
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5 // Pybricks service UUID
+    // Scan response data up to the hub name, which is appended at runtime.
+    static const uint8_t response_data_template[] = {
+        // Device Information Service (DIS) PnP ID as service data to identify the hub.
+        1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE,
+        AD_TYPE_SERVICE_DATA,
+        PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID),
+        PBIO_PYBRICKS_PNP_ID_INIT(PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT),
+        0, // hub name length + 1, filled in at runtime
+        AD_TYPE_COMPLETE_LOCAL_NAME,
     };
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -274,25 +325,18 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
     uint8_t response_data[25];
-    // Device Information Service (DIS) PnP ID as service data to identify the hub.
-    response_data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
-    response_data[1] = AD_TYPE_SERVICE_DATA;
-    pbio_set_uint16_le(&response_data[2], PBIO_GATT_PNP_ID_CHAR_UUID);
-    pbio_pybricks_pnp_id(&response_data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+    memcpy(response_data, response_data_template, sizeof(response_data_template));
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
-    response_data[12] = AD_TYPE_COMPLETE_LOCAL_NAME;
     memcpy(&response_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
+    _Static_assert(sizeof(response_data_template) == 13, "hub name must follow the 13 byte template");
     _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
 
     hci_le_set_scan_response_data_begin(13 + hub_name_len, response_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // hci_le_set_scan_response_data_end();
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
-        0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_set_discoverable);
     status = aci_gap_set_discoverable_end();
 
     // Recording this as advertising when it is not means nothing ever tries
@@ -306,6 +350,19 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+// Equivalent of aci_gap_set_non_discoverable_begin().
+static const hci_const_cmd_t cmd_gap_set_non_discoverable = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_DISCOVERABLE),
+    .plen = 0,
+};
+
+// Equivalent of hci_le_set_advertise_enable_begin(0).
+static const hci_const_cmd_t cmd_le_set_advertise_disable = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADVERTISE_ENABLE),
+    .plen = 1,
+    .params = { 0 },
+};
+
 pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -314,16 +371,9 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
         // The GAP layer does not know about advertising that was enabled with
         // a link layer command, so it has to be stopped the same way.
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        {
-            static const uint8_t disable = 0;
-            hci_send_le_command(OCF_LE_SET_ADVERTISE_ENABLE, &disable, sizeof(disable));
-        }
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        HCI_AWAIT_CONST_CMD(state, &cmd_le_set_advertise_disable);
     } else {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_set_non_discoverable_begin();
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        HCI_AWAIT_CONST_CMD(state, &cmd_gap_set_non_discoverable);
         // aci_gap_set_non_discoverable_end();
     }
 
@@ -361,6 +411,39 @@ retry:
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+// Equivalent of aci_gap_start_general_conn_establish_proc_begin(scan_type,
+// scan_interval, scan_window, STATIC_RANDOM_ADDR, 0).
+#define GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(name, scan_type, scan_interval, scan_window) \
+    static const hci_const_cmd_t name = { \
+        .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC), \
+        .plen = 7, \
+        .params = { \
+            scan_type, \
+            PBIO_UINT16_LE(scan_interval), \
+            PBIO_UINT16_LE(scan_window), \
+            STATIC_RANDOM_ADDR, \
+            0, /* filter_duplicates */ \
+        }, \
+    }
+
+GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(cmd_gap_start_active_scan, ACTIVE_SCAN, 0x0030, 0x0030);
+
+// 70ms interval, 35ms window. The 50% duty cycle leaves radio time for
+// broadcasting while observing, and the longer interval spends less of the
+// radio on starting and ending scans.
+GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(cmd_gap_start_passive_scan, PASSIVE_SCAN, 0x0070, 0x0038);
+
+// Equivalent of aci_gap_terminate_gap_procedure_begin(procedure_code).
+#define GAP_TERMINATE_GAP_PROCEDURE_CMD(name, procedure_code) \
+    static const hci_const_cmd_t name = { \
+        .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_TERMINATE_GAP_PROCEDURE), \
+        .plen = 1, \
+        .params = { procedure_code }, \
+    }
+
+GAP_TERMINATE_GAP_PROCEDURE_CMD(cmd_gap_terminate_general_proc, GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
+GAP_TERMINATE_GAP_PROCEDURE_CMD(cmd_gap_terminate_direct_proc, GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
+
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
     pbio_bluetooth_peripheral_t *peri = context;
 
@@ -375,9 +458,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     PBIO_OS_ASYNC_BEGIN(state);
 
     // start scanning
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, STATIC_RANDOM_ADDR, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+    HCI_AWAIT_CONST_CMD_STATUS(state, &cmd_gap_start_active_scan);
     peri->status = aci_gap_start_general_conn_establish_proc_end();
 
 try_again:
@@ -387,12 +468,7 @@ try_again:
         PBIO_OS_AWAIT_UNTIL(state, advertising_data_received || peri->cancel || timed_out);
 
         if (!advertising_data_received) {
-            // Things didn't work out, so stop scanning.
-            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-            aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-            // aci_gap_terminate_gap_procedure_end();
-            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+            goto stop_scanning_failed;
         }
 
         le_advertising_info *subevt = (void *)&read_buf[5];
@@ -423,12 +499,7 @@ try_again:
         PBIO_OS_AWAIT_UNTIL(state, advertising_data_received || peri->cancel || timed_out);
 
         if (!advertising_data_received) {
-            // Things didn't work out, so stop scanning.
-            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-            aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-            // aci_gap_terminate_gap_procedure_end();
-            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+            goto stop_scanning_failed;
         }
 
         le_advertising_info *subevt = (void *)&read_buf[5];
@@ -452,9 +523,7 @@ try_again:
     }
 
     // stop scanning
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
     peri->status = aci_gap_terminate_gap_procedure_end();
 
     // REVISIT: might need to wait for procedure complete event here
@@ -478,14 +547,21 @@ try_again:
     PBIO_OS_AWAIT_UNTIL(state, peri->cancel || timed_out || peri->con_handle);
 
     if (peri->cancel || timed_out) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_terminate_gap_procedure_begin(GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_direct_proc);
         // aci_gap_terminate_gap_procedure_end();
         return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
     }
 
-    PBIO_OS_ASYNC_END(ble_error_to_pbio_error(peri->status));
+    return ble_error_to_pbio_error(peri->status);
+
+    // Scanning did not turn up a matching device in time, so stop scanning.
+stop_scanning_failed:
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
+    // aci_gap_terminate_gap_procedure_end();
+    return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
@@ -623,6 +699,34 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 }
 
 
+// Equivalent of hci_le_set_advertising_parameters_begin() with a
+// non-connectable, undirected advertising type on all three channels.
+static const hci_const_cmd_t cmd_le_set_adv_parameters = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_PARAMETERS),
+    .plen = 15,
+    .params = {
+        // 100ms is the fastest this controller allows. The range has to be
+        // wide, because the chip fits a new activity to the anchor period it
+        // is already running for the connection and any scanning, and rejects
+        // an interval that is not a multiple of it.
+        PBIO_UINT16_LE(0x00a0), // Advertising_Interval_Min, 100ms
+        PBIO_UINT16_LE(0x0140), // Advertising_Interval_Max, 200ms
+        ADV_NONCONN_IND,
+        STATIC_RANDOM_ADDR,
+        0, // Peer_Address_Type
+        0, 0, 0, 0, 0, 0, // Peer_Address
+        0x07, // Advertising_Channel_Map
+        NO_WHITE_LIST_USE,
+    },
+};
+
+// Equivalent of hci_le_set_advertise_enable_begin(1).
+static const hci_const_cmd_t cmd_le_set_advertise_enable = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADVERTISE_ENABLE),
+    .plen = 1,
+    .params = { 1 },
+};
+
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
 
     tBleStatus status;
@@ -635,27 +739,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
 
         // Advertising parameters can only be set while advertising is stopped,
         // which it always is here, since starting a program stops it.
-
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        {
-            static const uint8_t params[] = {
-                // 100ms is the fastest this controller allows. The range has
-                // to be wide, because the chip fits a new activity to the
-                // anchor period it is already running for the connection and
-                // any scanning, and rejects an interval that is not a multiple
-                // of it.
-                0xa0, 0x00, // Advertising_Interval_Min, 100ms
-                0x40, 0x01, // Advertising_Interval_Max, 200ms
-                ADV_NONCONN_IND,
-                STATIC_RANDOM_ADDR,
-                0, // Peer_Address_Type
-                0, 0, 0, 0, 0, 0, // Peer_Address
-                0x07, // Advertising_Channel_Map
-                NO_WHITE_LIST_USE,
-            };
-            hci_send_le_command(OCF_LE_SET_ADV_PARAMETERS, params, sizeof(params));
-        }
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        HCI_AWAIT_CONST_CMD(state, &cmd_le_set_adv_parameters);
         status = hci_le_command_end();
 
         if (status != BLE_STATUS_SUCCESS) {
@@ -678,12 +762,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
         return PBIO_SUCCESS;
     }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    {
-        static const uint8_t enable = 1;
-        hci_send_le_command(OCF_LE_SET_ADVERTISE_ENABLE, &enable, sizeof(enable));
-    }
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_le_set_advertise_enable);
     status = hci_le_command_end();
 
     if (status == BLE_STATUS_SUCCESS) {
@@ -704,12 +783,7 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     // elsewhere, so this reduces code size and we would also have to enable
     // the observer role which would use more RAM in the Bluetooth chip
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    // 70ms interval, 35ms window. The 50% duty cycle leaves radio time for
-    // broadcasting while observing, and the longer interval spends less of the
-    // radio on starting and ending scans.
-    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x70, 0x38, STATIC_RANDOM_ADDR, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+    HCI_AWAIT_CONST_CMD_STATUS(state, &cmd_gap_start_passive_scan);
     status = aci_gap_start_general_conn_establish_proc_end();
     if (status == BLE_STATUS_SUCCESS) {
         pbdrv_bluetooth_is_observing = true;
@@ -725,9 +799,7 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
         return PBIO_SUCCESS;
     }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
     // tBleStatus status = aci_gap_terminate_gap_procedure_end();
 
     // if (status != BLE_STATUS_SUCCESS) {
@@ -843,9 +915,12 @@ static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
     0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
 };
 
+static const uint8_t pnp_id[] = {
+    PBIO_PYBRICKS_PNP_ID_INIT(PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT),
+};
+
 // Characteristic values that are not known at compile time. Filled in before
 // the table below is walked.
-static uint8_t pnp_id[PBIO_PYBRICKS_PNP_ID_SIZE];
 static uint8_t hub_capabilities[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
 /**
@@ -945,7 +1020,6 @@ static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbio_pybricks_pnp_id(pnp_id, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
     pbio_pybricks_hub_capabilities(hub_capabilities, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS,
         pbsys_storage_get_maximum_program_size(), 0);
 
@@ -1199,6 +1273,50 @@ void hci_recv_resp(struct hci_response *r) {
     memcpy(r->rparam, &read_buf[offset], r->rlen);
 }
 
+// Equivalent of aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET,
+// CONFIG_DATA_MODE_LEN, &mode) with mode 4. Mode 4 supports advertising and
+// scanning at the same time, which is needed to broadcast and observe at
+// once, and has enough RAM for all of the current services/characteristics.
+static const hci_const_cmd_t cmd_hal_write_config_mode = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_WRITE_CONFIG_DATA),
+    .plen = 2 + CONFIG_DATA_MODE_LEN,
+    .params = { CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, 4 },
+};
+
+// Equivalent of aci_hal_set_tx_power_level_begin(1, 5).
+// 1.4 dBm - same as LEGO firmware.
+static const hci_const_cmd_t cmd_hal_set_tx_power = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_SET_TX_POWER_LEVEL),
+    .plen = 2,
+    .params = { 1, 5 },
+};
+
+// Equivalent of hci_le_read_local_version_begin().
+static const hci_const_cmd_t cmd_read_local_version = {
+    .opcode = cmd_opcode_pack(OGF_INFO_PARAM, OCF_READ_LOCAL_VERSION),
+    .plen = 0,
+};
+
+// Equivalent of aci_gatt_init_begin().
+static const hci_const_cmd_t cmd_gatt_init = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT),
+    .plen = 0,
+};
+
+// Equivalent of aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE,
+// PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name)).
+static const hci_const_cmd_t cmd_gap_init = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT),
+    .plen = 3,
+    .params = { GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name) },
+};
+
+// Equivalent of hci_le_rand_begin().
+static const hci_const_cmd_t cmd_le_rand = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_RAND),
+    .plen = 0,
+};
+
 // Initializes the Bluetooth chip
 // this function is largely inspired by the LEGO bootloader
 static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
@@ -1208,14 +1326,7 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set the mode
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    {
-        // NB: if we use mode 3, then there is not enough RAM for all of the
-        // curent services/characteristics
-        uint8_t mode = 4;
-        aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
-    }
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_hal_write_config_mode);
     // aci_hal_write_config_data_end();
 
     // set the Bluetooth address
@@ -1237,14 +1348,10 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set Tx power level
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_hal_set_tx_power_level_begin(1, 5); // 1.4 dBm - same as LEGO firmware
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_hal_set_tx_power);
     // aci_hal_set_tx_power_level_end();
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    hci_le_read_local_version_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_read_local_version);
     {
         uint8_t hci_version;
         uint16_t hci_revision;
@@ -1265,16 +1372,12 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // init GATT layer
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_init_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gatt_init);
     // aci_gatt_init_end();
 
     // init GAP layer
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name));
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_init);
     aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
 
     // set the device name
@@ -1291,7 +1394,7 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // STM32F0 doesn't have a random number generator, so we use the bluetooth
     // chip to get some random bytes.
-    hci_le_rand_begin();
+    hci_send_const_cmd(&cmd_le_rand);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     {
         uint8_t rand_buf[8];
