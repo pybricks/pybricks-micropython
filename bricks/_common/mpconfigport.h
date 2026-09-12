@@ -71,7 +71,10 @@
 #define MICROPY_PY_ASYNC_AWAIT                  (1)
 #define MICROPY_MULTIPLE_INHERITANCE            (0)
 #define MICROPY_PY_ARRAY                        (0)
-#define MICROPY_PY_BUILTINS_BYTEARRAY           (PYBRICKS_OPT_EXTRA_LEVEL1)
+// TEMPORARY, FOR THE BROADCAST AND OBSERVE MEASUREMENT ONLY. hub.ble.trace()
+// copies into a caller supplied writable buffer, and at the Move Hub's option
+// level there is no writable buffer type at all.
+#define MICROPY_PY_BUILTINS_BYTEARRAY           (1)
 #define MICROPY_PY_BUILTINS_MEMORYVIEW          (PYBRICKS_OPT_EXTRA_LEVEL2)
 #define MICROPY_PY_BUILTINS_ENUMERATE           (PYBRICKS_OPT_EXTRA_LEVEL1)
 #define MICROPY_PY_BUILTINS_FILTER              (0)

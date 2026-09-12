@@ -614,6 +614,30 @@ static mp_obj_t pb_module_ble_trace(mp_obj_t self_in, mp_obj_t buf_in) {
     return mp_obj_new_tuple(2, items);
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(pb_module_ble_trace_obj, pb_module_ble_trace);
+
+#if PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG
+/**
+ * TEMPORARY INSTRUMENTATION, NOT FOR RELEASE.
+ *
+ * Move Hub only: the other drivers do not use raw link layer commands to
+ * advertise and so have nothing to report here.
+ *
+ * @param [in]  self_in     The BLE MicroPython object instance.
+ * @returns                 A tuple of the status of the set advertising
+ *                          parameters, set advertising data and set advertise
+ *                          enable commands, or 255 if not attempted yet.
+ */
+static mp_obj_t pb_module_ble_adv_status(mp_obj_t self_in) {
+    extern uint8_t pbdrv_bluetooth_debug_adv[3];
+    mp_obj_t items[3] = {
+        MP_OBJ_NEW_SMALL_INT(pbdrv_bluetooth_debug_adv[0]),
+        MP_OBJ_NEW_SMALL_INT(pbdrv_bluetooth_debug_adv[1]),
+        MP_OBJ_NEW_SMALL_INT(pbdrv_bluetooth_debug_adv[2]),
+    };
+    return mp_obj_new_tuple(3, items);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_module_ble_adv_status_obj, pb_module_ble_adv_status);
+#endif // PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG
 #endif // PYBRICKS_BLE_TRACE
 
 mp_obj_t pb_module_ble_data_close(mp_obj_t self_in) {
@@ -631,6 +655,9 @@ static const mp_rom_map_elem_t common_BLE_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&pb_module_ble_version_obj) },
     #if PYBRICKS_BLE_TRACE
     { MP_ROM_QSTR(MP_QSTR_trace), MP_ROM_PTR(&pb_module_ble_trace_obj) },
+    #if PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG
+    { MP_ROM_QSTR(MP_QSTR_adv_status), MP_ROM_PTR(&pb_module_ble_adv_status_obj) },
+    #endif
     #endif
 };
 static MP_DEFINE_CONST_DICT(common_BLE_locals_dict, common_BLE_locals_dict_table);

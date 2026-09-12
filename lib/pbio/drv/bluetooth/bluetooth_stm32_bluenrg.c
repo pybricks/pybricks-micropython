@@ -50,6 +50,10 @@ char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 
+// TEMPORARY INSTRUMENTATION, NOT FOR RELEASE. Status of each command in the
+// raw HCI advertising sequence, read back with radio.adv_status().
+uint8_t pbdrv_bluetooth_debug_adv[3] = { 0xff, 0xff, 0xff };
+
 
 // bluetooth address is set at factory at this address
 #define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
@@ -631,9 +635,13 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         {
             static const uint8_t params[] = {
-                // 100ms, the fastest this controller allows.
-                0xa0, 0x00, // Advertising_Interval_Min
-                0xa0, 0x00, // Advertising_Interval_Max
+                // 100ms is the fastest this controller allows. The range has
+                // to be wide, because the chip fits a new activity to the
+                // anchor period it is already running for the connection and
+                // any scanning, and rejects an interval that is not a multiple
+                // of it.
+                0xa0, 0x00, // Advertising_Interval_Min, 100ms
+                0x40, 0x01, // Advertising_Interval_Max, 200ms
                 ADV_NONCONN_IND,
                 STATIC_RANDOM_ADDR,
                 0, // Peer_Address_Type
@@ -644,7 +652,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
             hci_send_le_command(OCF_LE_SET_ADV_PARAMETERS, params, sizeof(params));
         }
         PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-        status = hci_le_command_end();
+        pbdrv_bluetooth_debug_adv[0] = status = hci_le_command_end();
 
         if (status != BLE_STATUS_SUCCESS) {
             return ble_error_to_pbio_error(status);
@@ -655,7 +663,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     hci_le_set_advertising_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    status = hci_le_set_advertising_data_end();
+    pbdrv_bluetooth_debug_adv[1] = status = hci_le_set_advertising_data_end();
 
     if (status != BLE_STATUS_SUCCESS) {
         return ble_error_to_pbio_error(status);
@@ -672,7 +680,7 @@ pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, voi
         hci_send_le_command(OCF_LE_SET_ADVERTISE_ENABLE, &enable, sizeof(enable));
     }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    status = hci_le_command_end();
+    pbdrv_bluetooth_debug_adv[2] = status = hci_le_command_end();
 
     if (status == BLE_STATUS_SUCCESS) {
         pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
