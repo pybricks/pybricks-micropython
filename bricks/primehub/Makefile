@@ -28,13 +28,6 @@ $(BUILD)/firmware.zip: $(VARIANTS)
 	mkdir -p $(BUILD)
 	$(PYTHON) $(COMBINE) $@ $(VARIANT_ZIPS)
 
-# This file is expected by the firmware size stats checker, which we will only
-# do for the F4 variant, so we just copy it from there. It is not used or shipped
-# for flashing.
-$(BUILD)/firmware-base.bin: primehub_f4
-	mkdir -p $(BUILD)
-	cp ../primehub_f4/build/firmware-base.bin $@
-
 deploy: $(BUILD)/firmware.zip
 	$(FLASH) $< --name primehub
 
