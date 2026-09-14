@@ -22,6 +22,8 @@
 - Fixed slow observing while connected to a computer or app ([support#2822]).
 - Fixed connected remote preventing Move Hub from advertising.
 - Fixed Move Hub not broadcasting while connected to a PC ([support#2826]).
+- Fixed crash when supplying an array of colors to ColorLightMatrix. Also give
+  this device some colors when plugging in.
 
 [support#2822]: https://github.com/orgs/pybricks/discussions/2822
 [support#2826]: https://github.com/pybricks/support/issues/2826

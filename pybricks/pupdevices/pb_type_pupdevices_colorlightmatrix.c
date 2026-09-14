@@ -5,6 +5,7 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
+#include <pybricks/util_pb/pb_error.h>
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -69,9 +70,17 @@ static mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     // Sequence of 9 colors.
     else {
         mp_obj_iter_buf_t iter_buf;
+        int i;
         mp_obj_t colors_iter = mp_getiter(colors_in, &iter_buf);
-        for (int i = 0; i < 9; i++) {
-            color_ids[i] = get_color_id(mp_iternext(colors_iter));
+        for (i = 0; i < 9; i++) {
+            mp_obj_t color = mp_iternext(colors_iter);
+            if (color == MP_OBJ_STOP_ITERATION) {
+                break;
+            }
+            color_ids[i] = get_color_id(color);
+        }
+        if (i != 9) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
         }
     }
 

@@ -280,6 +280,15 @@ static bool pbio_port_lump_is_absolute_motor(pbio_port_lump_dev_t *lump_dev) {
  */
 static void pbio_port_lump_handle_known_data(pbio_port_lump_dev_t *lump_dev) {
 
+    // Set some initial colors for this device. Can only be done some time
+    // after initially plugged in, so wait a few samples.
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX && lump_dev->calibration_data[0] < 2) {
+        if (lump_dev->calibration_data[0]++ == 1) {
+            const uint8_t rainbow[] = {0xa9, 0xa8, 0xa7, 0xa1, 0xaa, 0xa6, 0xa2, 0xa3, 0xa4};
+            pbio_port_lump_set_mode_with_data(lump_dev, LEGO_DEVICE_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O, (uint8_t *)rainbow, sizeof(rainbow));
+        }
+    }
+
     // Handles LUMP motors in a mode that reports an absolute angle in decidegrees (0--3600).
     if (pbio_port_lump_is_absolute_motor(lump_dev)) {
 
@@ -1115,6 +1124,7 @@ sync:
     }
 
     // Reset other timers
+    lump_dev->calibration_data[0] = 0;
     lump_dev->data_set->time = pbdrv_clock_get_ms() - 1000; // i.e. no data set
     lump_dev->data_set->size = 0;
 
@@ -1661,6 +1671,19 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         tel->payload[0] = lump_dev->bin_data[0];
         tel->payload[1] = lump_dev->bin_data[1];
         *size = 2 * sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX && lump_dev->mode == LEGO_DEVICE_MODE_PUP_COLOR_LIGHT_MATRIX__PIX_O) {
+        if (*size < 9 * sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->mode = 0;
+        // This device reports the rows in the order opposite of setting.
+        memcpy(&tel->payload[0], &lump_dev->bin_data[6], 3);
+        memcpy(&tel->payload[3], &lump_dev->bin_data[3], 3);
+        memcpy(&tel->payload[6], &lump_dev->bin_data[0], 3);
+        *size = 9 * sizeof(uint8_t);
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
