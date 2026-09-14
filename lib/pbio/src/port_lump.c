@@ -1107,6 +1107,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__CALIB;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_COLOR_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I;
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
@@ -1633,10 +1635,32 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         if (*size < sizeof(uint16_t)) {
             return PBSYS_TELEMETRY_ERROR_NO_ROOM;
         }
-        int16_t *distance = (int16_t *)lump_dev->bin_data;
+        int16_t distance = *(int16_t *)lump_dev->bin_data;
         int16_t limit = lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_ULTRASONIC_SENSOR ? 2000 : 2550;
-        pbio_set_uint16_le(tel->payload, *distance < 0 || *distance >= limit ? limit : *distance);
+        pbio_set_uint16_le(tel->payload, distance < 0 || distance >= limit ? limit : distance);
         *size = sizeof(uint16_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL) {
+        if (*size < 2 * sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        uint16_t raw = *(int16_t *)lump_dev->bin_data;
+        tel->payload[0] = pbio_int_math_bind(1100 / (10 + raw), 0, 100);
+        tel->payload[1] = pbio_int_math_bind(raw / 5, 0, 100);
+        *size = 2 * sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_WEDO2_TILT_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE) {
+        if (*size < 2 * sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->mode = 0;
+        tel->payload[0] = lump_dev->bin_data[0];
+        tel->payload[1] = lump_dev->bin_data[1];
+        *size = 2 * sizeof(uint8_t);
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
