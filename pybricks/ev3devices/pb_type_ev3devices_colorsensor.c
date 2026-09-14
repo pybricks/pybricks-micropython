@@ -73,14 +73,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MO
 static mp_obj_t get_rgb(mp_obj_t self_in) {
     int16_t *rgb = pb_type_device_get_data(self_in, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW);
     mp_obj_t tup[3];
-
-    rgb[0] = (int)((0.258 * rgb[0]) - 0.3);
-    rgb[1] = (int)((0.280 * rgb[1]) - 0.8);
-    rgb[2] = (int)((0.523 * rgb[2]) - 3.7);
-
     for (uint8_t i = 0; i < 3; i++) {
-        rgb[i] = (rgb[i] > 100 ? 100 : rgb[i]);
-        rgb[i] = (rgb[i] < 0   ?   0 : rgb[i]);
         tup[i] = mp_obj_new_int(rgb[i]);
     }
     return mp_obj_new_tuple(3, tup);
