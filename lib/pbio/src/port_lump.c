@@ -1613,6 +1613,33 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         }
     }
 
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_FORCE_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW) {
+        int32_t force;
+        int32_t distance;
+        if (pbio_port_lump_get_force(lump_dev, &force, &distance) == PBIO_SUCCESS) {
+            if (*size < 2 * sizeof(uint16_t)) {
+                return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+            }
+            tel->mode = 0;
+            pbio_set_uint16_le(&tel->payload[0], force);
+            pbio_set_uint16_le(&tel->payload[2], distance);
+            *size = 2 * sizeof(uint16_t);
+            return PBSYS_TELEMETRY_SUCCESS;
+        }
+    }
+
+    if ((lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_ULTRASONIC_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_PUP_ULTRASONIC_SENSOR__DISTL) ||
+        (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_ULTRASONIC_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM)) {
+        if (*size < sizeof(uint16_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        int16_t *distance = (int16_t *)lump_dev->bin_data;
+        int16_t limit = lump_dev->type_id == LEGO_DEVICE_TYPE_ID_SPIKE_ULTRASONIC_SENSOR ? 2000 : 2550;
+        pbio_set_uint16_le(tel->payload, *distance < 0 || *distance >= limit ? limit : *distance);
+        *size = sizeof(uint16_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
     // No specific encoding, so return device ID without payload for this mode.
     tel->mode = 0xFF;
     *size = 0;
