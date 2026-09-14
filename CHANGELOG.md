@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+- Added the exit code of the most recently ended program to the status report
+  event. Stopping a program now also gives it a distinct exit code, so hosts
+  can tell it apart from a program that ran to completion.
+
 ### Changed
 - Updated MicroPython to v1.29.0.
 - On the Move Hub, `bytes()` and `bytes.find()` now truncate out-of-range

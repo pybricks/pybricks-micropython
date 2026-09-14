@@ -111,8 +111,11 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program);
  * This should be provided by the application running on top of pbio.
  *
  * @param [in]  program   Program size and data
+ * @returns     The exit code of the program. This is the value it exited
+ *              with, if any, or one of the well-known
+ *              ::pbio_pybricks_exit_code_t values.
  */
-void pbsys_main_run_program(pbsys_main_program_t *program);
+uint8_t pbsys_main_run_program(pbsys_main_program_t *program);
 
 /**
  * Cleans up after running main application program, such as wiping application
@@ -169,7 +172,8 @@ static inline pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *pro
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbsys_main_run_program(pbsys_main_program_t *program) {
+static inline uint8_t pbsys_main_run_program(pbsys_main_program_t *program) {
+    return 0;
 }
 
 static inline void pbsys_main_stop_program(bool force_stop) {

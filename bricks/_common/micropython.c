@@ -46,11 +46,18 @@ void pbsys_main_stop_program(bool force_stop) {
     if (force_stop) {
         mp_sched_vm_abort();
     } else {
+        // The value of SystemExit is the exit code of the program, so give it
+        // the stop code. This lets the host tell a program that was stopped
+        // apart from one that ran to completion or called sys.exit().
+        static const mp_rom_obj_tuple_t args = {
+            { &mp_type_tuple }, 1, { MP_ROM_INT(PBIO_PYBRICKS_EXIT_CODE_STOPPED) }
+        };
+
         static mp_obj_exception_t system_exit;
         system_exit.base.type = &mp_type_SystemExit;
         system_exit.traceback_alloc = system_exit.traceback_len = 0;
         system_exit.traceback_data = NULL;
-        system_exit.args = (mp_obj_tuple_t *)&mp_const_empty_tuple_obj;
+        system_exit.args = (mp_obj_tuple_t *)&args;
 
         mp_sched_exception(MP_OBJ_FROM_PTR(&system_exit));
     }
@@ -63,6 +70,40 @@ bool pbsys_main_stdin_event(uint8_t c) {
     }
 
     return false;
+}
+
+// The exit codes reported to the host are the same as the ones that pyexec
+// returns for the REPL and for programs run with pyexec_frozen_module().
+_Static_assert(PYEXEC_NORMAL_EXIT == PBIO_PYBRICKS_EXIT_CODE_OK, "wrong ok code");
+_Static_assert(PYEXEC_UNHANDLED_EXCEPTION == PBIO_PYBRICKS_EXIT_CODE_EXCEPTION, "wrong exception code");
+_Static_assert(PYEXEC_KEYBOARD_INTERRUPT == PBIO_PYBRICKS_EXIT_CODE_INTERRUPTED, "wrong interrupt code");
+_Static_assert(PYEXEC_ABORT == PBIO_PYBRICKS_EXIT_CODE_ABORTED, "wrong abort code");
+
+// Gets the pyexec-style return value for the exception that ended a program.
+// The low byte is the exit code as it will be reported to the host.
+static int pyexec_ret_from_exception(mp_obj_t exc) {
+
+    if (mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
+        // As in CPython, no value or None means a normal exit, an integer is
+        // the exit code itself, and any other object is an error. A program
+        // stopped on request gets the stop code this way.
+        mp_obj_t value = mp_obj_exception_get_value(exc);
+        int exit_code = PBIO_PYBRICKS_EXIT_CODE_OK;
+        if (mp_obj_is_int(value)) {
+            exit_code = mp_obj_int_get_truncated(value);
+        } else if (value != mp_const_none) {
+            exit_code = PBIO_PYBRICKS_EXIT_CODE_EXCEPTION;
+        }
+        // The flag tells callers that the program exited instead of running to
+        // completion, which an exit code of 0 does not distinguish.
+        return exit_code | PYEXEC_FORCED_EXIT;
+    }
+
+    if (mp_obj_exception_match(exc, MP_OBJ_FROM_PTR(&mp_type_KeyboardInterrupt))) {
+        return PBIO_PYBRICKS_EXIT_CODE_INTERRUPTED;
+    }
+
+    return PBIO_PYBRICKS_EXIT_CODE_EXCEPTION;
 }
 
 // Prints the exception that ended the program.
@@ -98,8 +139,8 @@ static void print_final_exception(mp_obj_t exc, int ret) {
 }
 
 #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
-static void run_repl(void) {
-    int ret = 0;
+static int run_repl(void) {
+    int ret = PBIO_PYBRICKS_EXIT_CODE_OK;
 
     readline_init0();
 
@@ -125,16 +166,19 @@ static void run_repl(void) {
         // if vm abort
         if (nlr.ret_val == NULL) {
             // we are shutting down, so don't bother with cleanup
-            return;
+            return PBIO_PYBRICKS_EXIT_CODE_ABORTED;
         }
 
         // clear any pending exceptions (and run any callbacks).
         mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_CLEAR_EXCEPTIONS);
+        ret = pyexec_ret_from_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
         // Print which exception triggered this.
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val), ret);
     }
 
     nlr_set_abort(NULL);
+
+    return ret;
 }
 #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 
@@ -227,8 +271,8 @@ static void execute_rom_mpy_in_context(mp_module_context_t *module_context, mpy_
 /**
  * Runs the __main__ module from user RAM.
  */
-static void run_user_program(void) {
-    int ret = 0;
+static int run_user_program(void) {
+    int ret = PBIO_PYBRICKS_EXIT_CODE_OK;
 
     nlr_buf_t nlr;
     nlr.ret_val = NULL;
@@ -257,16 +301,13 @@ static void run_user_program(void) {
         // if vm abort
         if (nlr.ret_val == NULL) {
             // we are shutting down, so don't bother with cleanup
-            return;
+            return PBIO_PYBRICKS_EXIT_CODE_ABORTED;
         }
 
         // Clear any pending exceptions (and run any callbacks).
         mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_CLEAR_EXCEPTIONS);
 
-        if (mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t *)nlr.ret_val)->type), MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
-            // at the moment, the value of SystemExit is unused
-            ret = PYEXEC_FORCED_EXIT;
-        }
+        ret = pyexec_ret_from_exception(MP_OBJ_FROM_PTR(nlr.ret_val));
 
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val), ret);
 
@@ -279,13 +320,15 @@ static void run_user_program(void) {
             // but not reset so the user can restart them in the REPL.
             pbio_main_soft_stop();
 
-            // Enter REPL.
-            run_repl();
+            // Enter REPL. Its exit code is now the exit code of the program.
+            ret = run_repl();
         }
         #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
     }
 
     nlr_set_abort(NULL);
+
+    return ret;
 }
 
 pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
@@ -348,7 +391,11 @@ const char *pbsys_main_get_application_version_hash(void) {
 }
 
 // Runs MicroPython with the given program data.
-void pbsys_main_run_program(pbsys_main_program_t *program) {
+uint8_t pbsys_main_run_program(pbsys_main_program_t *program) {
+
+    // Return value of the program, which holds the ::pbio_pybricks_exit_code_t
+    // exit code in its low byte.
+    int ret = PBIO_PYBRICKS_EXIT_CODE_OK;
 
     #if PBDRV_CONFIG_STACK_EMBEDDED
     // Stack limit should be less than real stack size, so we have a chance
@@ -384,14 +431,14 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         case PBIO_PYBRICKS_USER_PROGRAM_ID_REPL:
             // Run REPL with everything auto-imported.
             pb_package_pybricks_init(true);
-            run_repl();
+            ret = run_repl();
             break;
         #endif
 
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_PORT_VIEW && MICROPY_MODULE_FROZEN
         case PBIO_PYBRICKS_USER_PROGRAM_ID_PORT_VIEW:
             pb_package_pybricks_init(false);
-            pyexec_frozen_module("_builtin_port_view.py", false);
+            ret = pyexec_frozen_module("_builtin_port_view.py", false);
             break;
         #endif
 
@@ -404,15 +451,15 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
         #if PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_EV3_APPS
         case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL:
             pb_package_pybricks_init(false);
-            pyexec_frozen_module("_ev3_motor_button_control.py", false);
+            ret = pyexec_frozen_module("_ev3_motor_button_control.py", false);
             break;
         case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_IR_CONTROL:
             pb_package_pybricks_init(false);
-            pyexec_frozen_module("_ev3_motor_ir_control.py", false);
+            ret = pyexec_frozen_module("_ev3_motor_ir_control.py", false);
             break;
         case PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_PORT_VIEW:
             pb_package_pybricks_init(false);
-            pyexec_frozen_module("_ev3_port_view.py", false);
+            ret = pyexec_frozen_module("_ev3_port_view.py", false);
             break;
         #endif
 
@@ -420,13 +467,17 @@ void pbsys_main_run_program(pbsys_main_program_t *program) {
             // Init Pybricks package without auto-import.
             pb_package_pybricks_init(false);
             // Run loaded user program (just slot 0 for now).
-            run_user_program();
+            ret = run_user_program();
             break;
     }
 
     // Ensure everything is written before the user application is considered
     // done, so that the host does not receive stdout after receiving stop.
     pb_stdout_flush_to_new_line();
+
+    // Only the exit code is of interest to the system, not the internal
+    // PYEXEC_FORCED_EXIT flag above it.
+    return ret & 0xff;
 }
 
 void pbsys_main_run_program_cleanup(void) {
