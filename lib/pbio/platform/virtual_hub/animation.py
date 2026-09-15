@@ -101,7 +101,10 @@ def process_telemetry(message):
                 update_display(display_frame)
         # Motor angle sample: location is the port index.
         elif device in MOTOR_IDS:
-            (angle, _, _) = struct.unpack_from("<ihB", payload, MSG_HEADER_SIZE)
+            try:
+                (angle, _, _) = struct.unpack_from("<ihB", payload, MSG_HEADER_SIZE)
+            except struct.error:
+                (angle,) = struct.unpack_from("<i", payload, MSG_HEADER_SIZE)
             angles[location] = angle
 
 
