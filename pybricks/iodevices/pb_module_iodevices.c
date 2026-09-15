@@ -106,4 +106,13 @@ const mp_obj_module_t pb_module_iodevices = {
 MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_iodevices, pb_module_iodevices);
 #endif
 
+#if PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD
+void pb_module_iodevices_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (dest[0] == MP_OBJ_NULL && attr == MP_QSTR_PlayStationController) {
+        dest[0] = pb_function_import_helper(MP_QSTR__extra_iodevices, attr);
+    }
+}
+MP_REGISTER_MODULE_DELEGATION(pb_module_iodevices, pb_module_iodevices_attr);
+#endif // PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD
+
 #endif // PYBRICKS_PY_IODEVICES
