@@ -70,7 +70,7 @@
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_LEVEL1               (1)
 #define PYBRICKS_OPT_EXTRA_LEVEL2               (1)
-#define PYBRICKS_OPT_CUSTOM_IMPORT              (0)
+#define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
 
 // The Virtual Hub has no hardware interrupt that requests polling every 1ms.
