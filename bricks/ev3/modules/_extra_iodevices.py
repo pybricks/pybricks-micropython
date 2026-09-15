@@ -47,8 +47,8 @@ class PlayStationController(BluetoothClassicGamepad):
         self.buttons = Keypad(self.pressed)
 
     def _report(self):
-        report = self.report()
-        if len(report) < 10 or report[0] != REPORT_ID:
+        report = self.report(REPORT_ID)
+        if len(report) < 10:
             raise OSError("Unexpected report. Is this a PlayStation controller?")
         return report
 

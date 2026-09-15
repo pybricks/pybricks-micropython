@@ -144,6 +144,11 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
  */
 #define PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE (80)
 
+/**
+ * Number of distinct Bluetooth Classic HID input report IDs stored at once.
+ */
+#define PBDRV_BLUETOOTH_HID_NUM_REPORTS (4)
+
 #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 /**
@@ -215,18 +220,32 @@ void pbdrv_bluetooth_classic_hid_pair_cancel(void);
 bool pbdrv_bluetooth_classic_hid_is_connected(void);
 
 /**
- * Gets the most recent input report from the connected Bluetooth Classic HID
- * device.
+ * Gets the most recent input report with the given ID from the connected
+ * Bluetooth Classic HID device.
  *
- * Reports of all IDs are stored in the same buffer, so callers that care must
- * check the report ID in the first byte.
+ * HID devices push input reports on their own; there is nothing to subscribe
+ * to. A report ID becomes available only after the device has sent it at
+ * least once since connecting.
  *
- * @param [out] data  Buffer to copy the report into.
- * @param [in]  size  Size of @p data.
- * @return            Number of bytes copied, or 0 if nothing is connected or
- *                    no report has been received yet.
+ * @param [in]  report_id  ID of the requested report, or 0 if the device
+ *                         declares no report IDs.
+ * @param [out] data       Buffer to copy the report into, starting with the
+ *                         report ID if the device has any.
+ * @param [in]  size       Size of @p data.
+ * @return                 Number of bytes copied, or 0 if nothing is
+ *                         connected or this report has not been seen yet.
  */
-uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size);
+uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size);
+
+/**
+ * Gets the ID of the input report stored in the given slot, to discover what
+ * the connected device sends.
+ *
+ * @param [in]  index      Slot index, less than ::PBDRV_BLUETOOTH_HID_NUM_REPORTS.
+ * @param [out] report_id  The report ID, if the slot is in use.
+ * @return                 True if the slot is in use.
+ */
+bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id);
 
 /**
  * Gets the name of the connected Bluetooth Classic HID device.
@@ -364,8 +383,12 @@ static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return false;
 }
 
-static inline uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size) {
+static inline uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size) {
     return 0;
+}
+
+static inline bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id) {
+    return false;
 }
 
 static inline const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {

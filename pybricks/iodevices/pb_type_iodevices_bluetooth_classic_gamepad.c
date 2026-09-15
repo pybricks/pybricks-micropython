@@ -55,20 +55,47 @@ static mp_obj_t pb_type_bluetooth_classic_gamepad_name(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_bluetooth_classic_gamepad_name_obj, pb_type_bluetooth_classic_gamepad_name);
 
-static mp_obj_t pb_type_bluetooth_classic_gamepad_report(mp_obj_t self_in) {
+static mp_obj_t pb_type_bluetooth_classic_gamepad_report(mp_obj_t self_in, mp_obj_t report_id_in) {
 
     pb_type_bluetooth_classic_gamepad_assert_connected();
 
+    uint8_t report_id = mp_obj_get_int(report_id_in);
+
     uint8_t report[PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE];
-    uint32_t size = pbdrv_bluetooth_classic_hid_get_report(report, sizeof(report));
+    uint32_t size = pbdrv_bluetooth_classic_hid_get_report(report_id, report, sizeof(report));
+
+    if (!size) {
+        mp_raise_msg(&mp_type_OSError, MP_ERROR_TEXT(
+            "This controller does not send this report."
+            ));
+    }
 
     return mp_obj_new_bytes(report, size);
 }
-static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_bluetooth_classic_gamepad_report_obj, pb_type_bluetooth_classic_gamepad_report);
+static MP_DEFINE_CONST_FUN_OBJ_2(pb_type_bluetooth_classic_gamepad_report_obj, pb_type_bluetooth_classic_gamepad_report);
+
+static mp_obj_t pb_type_bluetooth_classic_gamepad_report_ids(mp_obj_t self_in) {
+
+    pb_type_bluetooth_classic_gamepad_assert_connected();
+
+    mp_obj_t ids[PBDRV_BLUETOOTH_HID_NUM_REPORTS];
+    size_t count = 0;
+
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        uint8_t report_id;
+        if (pbdrv_bluetooth_classic_hid_get_report_id(i, &report_id)) {
+            ids[count++] = MP_OBJ_NEW_SMALL_INT(report_id);
+        }
+    }
+
+    return mp_obj_new_tuple(count, ids);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_bluetooth_classic_gamepad_report_ids_obj, pb_type_bluetooth_classic_gamepad_report_ids);
 
 static const mp_rom_map_elem_t pb_type_bluetooth_classic_gamepad_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_bluetooth_classic_gamepad_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_report), MP_ROM_PTR(&pb_type_bluetooth_classic_gamepad_report_obj) },
+    { MP_ROM_QSTR(MP_QSTR_report_ids), MP_ROM_PTR(&pb_type_bluetooth_classic_gamepad_report_ids_obj) },
 };
 static MP_DEFINE_CONST_DICT(pb_type_bluetooth_classic_gamepad_locals_dict, pb_type_bluetooth_classic_gamepad_locals_dict_table);
 

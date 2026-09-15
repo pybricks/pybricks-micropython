@@ -1395,15 +1395,71 @@ static struct {
     /** Ends the pairing session if the device never connects. */
     btstack_timer_source_t pair_timeout;
     /**
-     * Most recent input report, starting with the report ID. Reports of all
-     * IDs land here, so consumers that care must check the ID.
+     * Whether the descriptor event has been received. For incoming
+     * connections it lands one SDP query after the first reports, which are
+     * dropped until then so that nothing is filed under a guessed ID.
      */
-    uint8_t report[PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE];
-    /** Size of the most recent input report, or 0 if none received yet. */
-    uint8_t report_size;
+    bool descriptor_known;
+    /** Whether the device declares report IDs. Only valid once known. */
+    bool report_id_declared;
+    /**
+     * Most recent input report of each ID seen so far. Slots are claimed on
+     * a first come, first served basis and released when the device
+     * disconnects. Reports with a new ID are dropped once all slots are used.
+     */
+    struct {
+        /** Report contents, starting with the report ID if the device has any. */
+        uint8_t data[PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE];
+        /** Size of the report, or 0 if this slot is free. */
+        uint8_t size;
+        /** Report ID, or 0 if the device declares no report IDs. */
+        uint8_t id;
+    } reports[PBDRV_BLUETOOTH_HID_NUM_REPORTS];
 } hid_connection;
 
 static void hid_pair_end(pbio_error_t err);
+
+static void hid_report_store_reset(void) {
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        hid_connection.reports[i].size = 0;
+    }
+}
+
+/**
+ * Stores an input report in the slot for its ID, claiming a free slot if this
+ * is the first report with that ID.
+ */
+static void hid_report_store(const uint8_t *data, uint8_t size) {
+
+    if (!hid_connection.descriptor_known) {
+        return;
+    }
+
+    uint8_t id = hid_connection.report_id_declared ? data[0] : 0;
+    uint32_t free_slot = PBDRV_BLUETOOTH_HID_NUM_REPORTS;
+
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        if (hid_connection.reports[i].size == 0) {
+            if (free_slot == PBDRV_BLUETOOTH_HID_NUM_REPORTS) {
+                free_slot = i;
+            }
+            continue;
+        }
+        if (hid_connection.reports[i].id == id) {
+            free_slot = i;
+            break;
+        }
+    }
+
+    if (free_slot == PBDRV_BLUETOOTH_HID_NUM_REPORTS) {
+        DEBUG_PRINT("No free slot for HID report 0x%02x.\n", id);
+        return;
+    }
+
+    memcpy(hid_connection.reports[free_slot].data, data, size);
+    hid_connection.reports[free_slot].size = size;
+    hid_connection.reports[free_slot].id = id;
+}
 
 /**
  * Handles Bluetooth Classic HID events. Registered both as a general HCI
@@ -1485,7 +1541,8 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
                         hid_pair_end(PBIO_SUCCESS);
                     }
-                    hid_connection.report_size = 0;
+                    hid_report_store_reset();
+                    hid_connection.descriptor_known = false;
                     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
                     pbio_bluetooth_host_connection_changed();
                     DEBUG_PRINT("HID connection to %s opened.\n", bd_addr_to_str(hid_connection.bdaddr));
@@ -1493,8 +1550,18 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
 
                 case HID_SUBEVENT_DESCRIPTOR_AVAILABLE:
                     // Delayed for incoming connections; reports may arrive first.
-                    DEBUG_PRINT("HID descriptor available, status 0x%02x.\n",
-                        hid_subevent_descriptor_available_get_status(packet));
+                    status = hid_subevent_descriptor_available_get_status(packet);
+                    DEBUG_PRINT("HID descriptor available, status 0x%02x.\n", status);
+                    // Reports stay blocked until this event, so unblock even
+                    // without a descriptor, assuming report IDs as most
+                    // devices have them.
+                    hid_connection.report_id_declared = status != ERROR_CODE_SUCCESS ||
+                        btstack_hid_report_id_declared(
+                        hid_descriptor_storage_get_descriptor_len(hid_connection.hid_cid),
+                        hid_descriptor_storage_get_descriptor_data(hid_connection.hid_cid));
+                    hid_connection.descriptor_known = true;
+                    DEBUG_PRINT("HID device %s report IDs.\n",
+                        hid_connection.report_id_declared ? "declares" : "does not declare");
                     break;
 
                 case HID_SUBEVENT_REPORT: {
@@ -1514,11 +1581,12 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     }
                     DEBUG_PRINT("\n");
                     #endif
-                    if (report_len > sizeof(hid_connection.report)) {
-                        report_len = sizeof(hid_connection.report);
+                    if (report_len > PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE) {
+                        report_len = PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE;
                     }
-                    memcpy(hid_connection.report, report, report_len);
-                    hid_connection.report_size = report_len;
+                    if (report_len) {
+                        hid_report_store(report, report_len);
+                    }
                     break;
                 }
 
@@ -1631,17 +1699,35 @@ bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
 }
 
-uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size) {
+uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size) {
 
     if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_CONNECTED) {
         return 0;
     }
 
-    if (size > hid_connection.report_size) {
-        size = hid_connection.report_size;
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        if (hid_connection.reports[i].size == 0 || hid_connection.reports[i].id != report_id) {
+            continue;
+        }
+        if (size > hid_connection.reports[i].size) {
+            size = hid_connection.reports[i].size;
+        }
+        memcpy(data, hid_connection.reports[i].data, size);
+        return size;
     }
-    memcpy(data, hid_connection.report, size);
-    return size;
+
+    return 0;
+}
+
+bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id) {
+
+    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_CONNECTED ||
+        index >= PBDRV_BLUETOOTH_HID_NUM_REPORTS || hid_connection.reports[index].size == 0) {
+        return false;
+    }
+
+    *report_id = hid_connection.reports[index].id;
+    return true;
 }
 
 const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
