@@ -108,6 +108,12 @@ MP_REGISTER_MODULE(MP_QSTR_pybricks_dot_iodevices, pb_module_iodevices);
 
 #if PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD
 void pb_module_iodevices_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+
+    // TODO: Update block coding to support both. Alias for now.
+    if (attr == MP_QSTR_XboxController) {
+        attr = MP_QSTR_PlayStationController;
+    }
+
     if (dest[0] == MP_OBJ_NULL && attr == MP_QSTR_PlayStationController) {
         dest[0] = pb_function_import_helper(MP_QSTR__extra_iodevices, attr);
     }

@@ -7,6 +7,7 @@
 ### Added
 - Support for setting a custom hub name when flashing NXT and EV3
   firmware ([support#2342]).
+- Support `PlayStationController` on EV3.
 
 ### Changed
 - Updated MicroPython to v1.29.0.
