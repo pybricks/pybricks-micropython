@@ -529,6 +529,7 @@ void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_ve
 extern const uint8_t pbio_pybricks_service_uuid[];
 extern const uint8_t pbio_pybricks_command_event_char_uuid[];
 extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];
+extern const uint8_t pbio_pybricks_rfcomm_service_class_uuid[];
 
 /**
  * Standard Bluetooth GATT UUIDs used as part of the Pybricks "protocol".

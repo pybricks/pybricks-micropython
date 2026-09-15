@@ -116,6 +116,20 @@ const uint8_t pbio_pybricks_hub_capabilities_char_uuid[] = {
     0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
 };
 
+/**
+ * Pybricks Bluetooth Classic RFCOMM serial service class UUID, as registered
+ * in the hub's SDP record.
+ *
+ * C5F50101-8280-46DA-89F4-6D8051E4AEEF
+ *
+ * Allocated from the 0x01xx block, which is reserved for identifiers that are
+ * not GATT attributes.
+ */
+const uint8_t pbio_pybricks_rfcomm_service_class_uuid[] = {
+    0xC5, 0xF5, 0x01, 0x01, 0x82, 0x80, 0x46, 0xDA,
+    0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
+};
+
 
 /**
  * Converts a ::pbio_error_t to a ::pbio_pybricks_error_t for commands.
