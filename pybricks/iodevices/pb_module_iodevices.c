@@ -73,6 +73,9 @@ static const mp_rom_map_elem_t iodevices_globals_table[] = {
     #if PYBRICKS_PY_IODEVICES_DC_MOTOR
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&pb_type_DCMotor)                  },
     #endif
+    #if PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD
+    { MP_ROM_QSTR(MP_QSTR_BluetoothClassicGamepad), MP_ROM_PTR(&pb_type_iodevices_BluetoothClassicGamepad)     },
+    #endif
     #if PYBRICKS_PY_IODEVICES_I2C_DEVICE
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&pb_type_i2c_device)               },
     #endif

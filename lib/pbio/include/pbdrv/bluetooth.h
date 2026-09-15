@@ -138,6 +138,12 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
  */
 #define PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS (20)
 
+/**
+ * Size of the buffer holding the most recent Bluetooth Classic HID input
+ * report. Enough for the 78-byte DualSense extended report.
+ */
+#define PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE (80)
+
 #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 /**
@@ -207,6 +213,20 @@ void pbdrv_bluetooth_classic_hid_pair_cancel(void);
  * @return  True if connected.
  */
 bool pbdrv_bluetooth_classic_hid_is_connected(void);
+
+/**
+ * Gets the most recent input report from the connected Bluetooth Classic HID
+ * device.
+ *
+ * Reports of all IDs are stored in the same buffer, so callers that care must
+ * check the report ID in the first byte.
+ *
+ * @param [out] data  Buffer to copy the report into.
+ * @param [in]  size  Size of @p data.
+ * @return            Number of bytes copied, or 0 if nothing is connected or
+ *                    no report has been received yet.
+ */
+uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size);
 
 /**
  * Gets the name of the connected Bluetooth Classic HID device.
@@ -342,6 +362,10 @@ static inline void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
 
 static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return false;
+}
+
+static inline uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size) {
+    return 0;
 }
 
 static inline const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {

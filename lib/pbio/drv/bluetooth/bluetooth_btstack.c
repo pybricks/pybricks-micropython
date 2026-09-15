@@ -1394,6 +1394,13 @@ static struct {
     pbio_error_t pair_err;
     /** Ends the pairing session if the device never connects. */
     btstack_timer_source_t pair_timeout;
+    /**
+     * Most recent input report, starting with the report ID. Reports of all
+     * IDs land here, so consumers that care must check the ID.
+     */
+    uint8_t report[PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE];
+    /** Size of the most recent input report, or 0 if none received yet. */
+    uint8_t report_size;
 } hid_connection;
 
 static void hid_pair_end(pbio_error_t err);
@@ -1478,6 +1485,7 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
                         hid_pair_end(PBIO_SUCCESS);
                     }
+                    hid_connection.report_size = 0;
                     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
                     pbio_bluetooth_host_connection_changed();
                     DEBUG_PRINT("HID connection to %s opened.\n", bd_addr_to_str(hid_connection.bdaddr));
@@ -1490,7 +1498,6 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     break;
 
                 case HID_SUBEVENT_REPORT: {
-                    #if DEBUG
                     // BTstack quirk: report points at the DATA|INPUT header
                     // byte (0xa1) but report_len excludes it, so the report
                     // payload is at report + 1 with report_len bytes. Reading
@@ -1500,12 +1507,18 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     if (report_len && report[0] == 0xa1) {
                         report++;
                     }
+                    #if DEBUG
                     DEBUG_PRINT("HID report (%u):", report_len);
                     for (uint16_t i = 0; i < report_len; i++) {
                         DEBUG_PRINT(" %02x", report[i]);
                     }
                     DEBUG_PRINT("\n");
                     #endif
+                    if (report_len > sizeof(hid_connection.report)) {
+                        report_len = sizeof(hid_connection.report);
+                    }
+                    memcpy(hid_connection.report, report, report_len);
+                    hid_connection.report_size = report_len;
                     break;
                 }
 
@@ -1616,6 +1629,19 @@ void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
 
 bool pbdrv_bluetooth_classic_hid_is_connected(void) {
     return hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED;
+}
+
+uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t *data, uint32_t size) {
+
+    if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_CONNECTED) {
+        return 0;
+    }
+
+    if (size > hid_connection.report_size) {
+        size = hid_connection.report_size;
+    }
+    memcpy(data, hid_connection.report, size);
+    return size;
 }
 
 const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {

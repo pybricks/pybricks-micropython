@@ -46,6 +46,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_module_iodevices.c \
 	iodevices/pb_type_iodevices_analogsensor.c \
 	iodevices/pb_type_i2c_device.c \
+	iodevices/pb_type_iodevices_bluetooth_classic_gamepad.c \
 	iodevices/pb_type_iodevices_lwp3device.c \
 	iodevices/pb_type_iodevices_pupdevice.c \
 	iodevices/pb_type_iodevices_xbox_controller.c \
