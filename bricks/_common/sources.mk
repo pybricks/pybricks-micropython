@@ -180,6 +180,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/resistor_ladder/resistor_ladder.c \
 	drv/rproc/rproc_ev3.c \
 	drv/rproc/rproc_nxt.c \
+	drv/rproc/rproc_nxt_twi.c \
 	drv/rproc/rproc_virtual.c \
 	drv/sound/beep_sampled.c \
 	drv/sound/sound_ev3.c \

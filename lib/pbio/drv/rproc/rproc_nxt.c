@@ -24,14 +24,34 @@
 #include <pbio/int_math.h>
 
 #include "nxos/nxt.h"
-#include "nxos/util.h"
-#include "nxos/assert.h"
-#include "nxos/drivers/systick.h"
-#include "nxos/drivers/_twi.h"
 
 #include "rproc_nxt.h"
+#include "rproc_nxt_twi.h"
 
-#define AVR_ADDRESS 1
+#define DEBUG 1
+
+#if DEBUG
+#include <pbdrv/clock.h>
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
+#else
+#define DEBUG_PRINT(...)
+#endif
+
+/**
+ * Milliseconds of processing time given to the AVR between transfers. The AVR
+ * gives up on the ARM after two seconds, so this only needs to be short enough
+ * to leave room for a few recovery attempts within that.
+ */
+#define AVR_GRACE_PERIOD_MS 2
+
+/**
+ * Milliseconds before a transfer that never completes is considered stuck. The
+ * longest transfer, the handshake, takes just over a millisecond at 400 kHz.
+ */
+#define AVR_TRANSFER_TIMEOUT_MS 20
+
+/** Corrupt responses tolerated before the link is rebuilt from scratch. */
 #define AVR_MAX_FAILED_CHECKSUMS 3
 
 /**
@@ -89,36 +109,76 @@ static uint8_t pbdrv_rproc_nxt_get_checksum(uint8_t *data, size_t len) {
 
 static pbio_os_process_t pbdrv_rproc_nxt_link_process;
 
+#if DEBUG
+static void pbdrv_rproc_nxt_debug_fault(const char *phase) {
+    uint32_t fault_status;
+    uint32_t bytes_remaining;
+    pbdrv_rproc_nxt_twi_get_fault_info(&fault_status, &bytes_remaining);
+    DEBUG_PRINT("avr %s: %s, sr=%08lx left=%lu\n", phase,
+        pbdrv_rproc_nxt_twi_get_status() == PBDRV_RPROC_NXT_TWI_STATUS_ERROR ? "bus error" : "timeout",
+        (unsigned long)fault_status, (unsigned long)bytes_remaining);
+}
+#else
+#define pbdrv_rproc_nxt_debug_fault(phase)
+#endif
+
+/**
+ * Waits for the transfer started just above to end, one way or another, and
+ * records in @p ok whether it got there without the bus going wrong.
+ */
+#define AWAIT_TRANSFER(state, timer, ok)                                           \
+    do {                                                                           \
+        pbio_os_timer_set((timer), AVR_TRANSFER_TIMEOUT_MS);                       \
+        PBIO_OS_AWAIT_UNTIL((state), pbdrv_rproc_nxt_twi_get_status() != PBDRV_RPROC_NXT_TWI_STATUS_BUSY || pbio_os_timer_is_expired((timer))); \
+        (ok) = pbdrv_rproc_nxt_twi_get_status() == PBDRV_RPROC_NXT_TWI_STATUS_READY; \
+    } while (0)
+
 static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, void *context) {
 
-    static pbio_os_timer_t timer;
+    static pbio_os_timer_t grace_timer;
+    static pbio_os_timer_t transfer_timer;
 
-    static uint32_t failed_checksums = 0;
+    static uint32_t failed_checksums;
+    static bool transfer_ok;
+
+    #if DEBUG
+    static uint32_t link_starts;
+    static uint32_t cycles;
+    #endif
 
     PBIO_OS_ASYNC_BEGIN(state)
 
     for (;;) {
+        // Either this is the first attempt or a previous one went wrong, so
+        // start from a known state: reset the bus, then tell the AVR that we
+        // are alive. Without the handshake the AVR assumes the ARM is dead and
+        // cuts the power a few seconds later, which is the clicking brick.
+        pbdrv_rproc_nxt_twi_init();
+
         failed_checksums = 0;
 
-        // ARM-AVR link is not initialized. We need to send the hello string to
-        // tell the AVR that we are alive. This will (among other things) stop the
-        // "clicking brick" sound, and avoid having the brick powered down after a
-        // few minutes by an AVR that doesn't see us coming up.
-        static char avr_init_handshake[] = "\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
-        nx__twi_write_async(AVR_ADDRESS, (uint8_t *)avr_init_handshake, sizeof(avr_init_handshake) - 1);
-        PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+        #if DEBUG
+        DEBUG_PRINT("avr: link start %lu at %lu ms\n",
+            (unsigned long)++link_starts, (unsigned long)pbdrv_clock_get_ms());
+        cycles = 0;
+        #endif
 
-        // Give the AVR some grace time between messages to run its own code.
-        // Note that the TWI driver is not polling the event loop, so we are in
-        // effect only checking nx__twi_ready once per millisecond
-        // This is fine because of the grace period we add in anyway.
-        pbio_os_timer_set(&timer, 2);
+        static const char avr_init_handshake[] = "\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
+        pbdrv_rproc_nxt_twi_write((const uint8_t *)avr_init_handshake, sizeof(avr_init_handshake) - 1);
+        AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
+        if (!transfer_ok) {
+            pbdrv_rproc_nxt_debug_fault("handshake");
+            continue;
+        }
+        DEBUG_PRINT("avr: handshake sent\n");
+
+        pbio_os_timer_set(&grace_timer, AVR_GRACE_PERIOD_MS);
 
         while (failed_checksums < AVR_MAX_FAILED_CHECKSUMS) {
 
             // Allow processing on AVR.
-            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
-            pbio_os_timer_extend(&timer);
+            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&grace_timer));
+            pbio_os_timer_extend(&grace_timer);
 
             // Double buffer command to send to AVR.
             static uint8_t send_buf[sizeof(pbdrv_rproc_nxt_send_data)];
@@ -131,22 +191,49 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
                 send_buf[sizeof(send_buf) - 1] = pbdrv_rproc_nxt_get_checksum(send_buf, sizeof(send_buf) - 1);
             }
 
-            nx__twi_write_async(AVR_ADDRESS, send_buf, sizeof(send_buf));
-            PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+            pbdrv_rproc_nxt_twi_write(send_buf, sizeof(send_buf));
+            AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
+            if (!transfer_ok) {
+                pbdrv_rproc_nxt_debug_fault("write");
+                break;
+            }
 
             // Allow processing on AVR.
-            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&timer));
-            pbio_os_timer_extend(&timer);
+            PBIO_OS_AWAIT_UNTIL(state, pbio_os_timer_is_expired(&grace_timer));
+            pbio_os_timer_extend(&grace_timer);
 
             // Get state data from the AVR.
             static uint8_t recv_buf[sizeof(pbdrv_rproc_nxt_received_data)];
-            nx__twi_read_async(AVR_ADDRESS, recv_buf, sizeof(recv_buf));
-            PBIO_OS_AWAIT_UNTIL(state, nx__twi_ready());
+            pbdrv_rproc_nxt_twi_read(recv_buf, sizeof(recv_buf));
+            AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
+            if (!transfer_ok) {
+                pbdrv_rproc_nxt_debug_fault("read");
+                break;
+            }
+
             if (pbdrv_rproc_nxt_get_checksum(recv_buf, sizeof(recv_buf)) == 0) {
+                failed_checksums = 0;
                 memcpy(&pbdrv_rproc_nxt_received_data, recv_buf, sizeof(recv_buf));
+                #if DEBUG
+                // One line per second or so, to show the link is alive and
+                // that the numbers coming back are plausible.
+                if (++cycles % 250 == 0) {
+                    DEBUG_PRINT("avr: %lu ok, batt=%u btn=%u adc=%u %u %u %u\n",
+                        (unsigned long)cycles,
+                        pbdrv_rproc_nxt_received_data.battery_and_version_info,
+                        pbdrv_rproc_nxt_received_data.button_adc,
+                        pbdrv_rproc_nxt_received_data.sensor_adc[0],
+                        pbdrv_rproc_nxt_received_data.sensor_adc[1],
+                        pbdrv_rproc_nxt_received_data.sensor_adc[2],
+                        pbdrv_rproc_nxt_received_data.sensor_adc[3]);
+                }
+                #endif
             } else {
-                // Start over if we fail too many times.
                 failed_checksums++;
+                DEBUG_PRINT("avr: bad checksum %lu, %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+                    (unsigned long)failed_checksums,
+                    recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5],
+                    recv_buf[6], recv_buf[7], recv_buf[8], recv_buf[9], recv_buf[10], recv_buf[11], recv_buf[12]);
             }
         }
     }
@@ -280,14 +367,10 @@ bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage) {
  * @return True if no transfer is in progress, else false.
  */
 bool pbdrv_rproc_nxt_link_is_idle(void) {
-    return nx__twi_ready();
+    return pbdrv_rproc_nxt_twi_get_status() != PBDRV_RPROC_NXT_TWI_STATUS_BUSY;
 }
 
 void pbdrv_rproc_init(void) {
-    // Set up the TWI driver to turn on the i2c bus, and kickstart the state
-    // machine to start transmitting.
-    nx__twi_init();
-
     pbio_os_process_start(&pbdrv_rproc_nxt_link_process, pbdrv_rproc_nxt_link_process_thread, NULL);
 }
 
@@ -312,10 +395,23 @@ void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
     }
     pbdrv_rproc_nxt_send_data.changed = true;
 
+    // The AVR acts on the first packet that carries this command and has a
+    // valid checksum, but it only looks at it while the link is up. Restart the
+    // link process from the top so that a link broken by whatever ran before
+    // this, such as flash programming, gets rebuilt instead of never delivering
+    // the command.
+    PBIO_OS_ASYNC_RESET(&pbdrv_rproc_nxt_link_process.state);
+
+    DEBUG_PRINT("avr: reset host, action %d\n", action);
+
     // The main event loop is no longer running, but we do want communication
     // with the AVR to keep going to transmit this command.
     for (;;) {
         pbdrv_rproc_nxt_link_process_thread(&pbdrv_rproc_nxt_link_process.state, NULL);
+        #if DEBUG
+        // Only so that buffered debug output still reaches the host.
+        pbio_os_run_processes_once();
+        #endif
     }
 }
 
