@@ -28,14 +28,31 @@
 #include "rproc_nxt.h"
 #include "rproc_nxt_twi.h"
 
-#define DEBUG 1
+/** Traces every link cycle. */
+#define DEBUG 0
 
-#if DEBUG
+/**
+ * Logs only lost links. Cheap enough to leave on during development: the link
+ * recovers by itself, so without this a fault caused by unrelated code that
+ * blocks for too long would go unnoticed.
+ */
+#define DEBUG_FAULT 1
+
+#if DEBUG || DEBUG_FAULT
 #include <pbdrv/clock.h>
 #include <pbio/debug.h>
+#endif
+
+#if DEBUG
 #define DEBUG_PRINT pbio_debug
 #else
 #define DEBUG_PRINT(...)
+#endif
+
+#if DEBUG_FAULT
+#define FAULT_PRINT pbio_debug
+#else
+#define FAULT_PRINT(...)
 #endif
 
 /**
@@ -109,17 +126,17 @@ static uint8_t pbdrv_rproc_nxt_get_checksum(uint8_t *data, size_t len) {
 
 static pbio_os_process_t pbdrv_rproc_nxt_link_process;
 
-#if DEBUG
-static void pbdrv_rproc_nxt_debug_fault(const char *phase) {
+#if DEBUG_FAULT
+static void pbdrv_rproc_nxt_log_fault(const char *phase) {
     uint32_t fault_status;
     uint32_t bytes_remaining;
     pbdrv_rproc_nxt_twi_get_fault_info(&fault_status, &bytes_remaining);
-    DEBUG_PRINT("avr %s: %s, sr=%08lx left=%lu\n", phase,
+    FAULT_PRINT("avr %s: %s, sr=%08lx left=%lu\n", phase,
         pbdrv_rproc_nxt_twi_get_status() == PBDRV_RPROC_NXT_TWI_STATUS_ERROR ? "bus error" : "timeout",
         (unsigned long)fault_status, (unsigned long)bytes_remaining);
 }
 #else
-#define pbdrv_rproc_nxt_debug_fault(phase)
+#define pbdrv_rproc_nxt_log_fault(phase)
 #endif
 
 /**
@@ -141,8 +158,10 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
     static uint32_t failed_checksums;
     static bool transfer_ok;
 
-    #if DEBUG
+    #if DEBUG_FAULT
     static uint32_t link_starts;
+    #endif
+    #if DEBUG
     static uint32_t cycles;
     #endif
 
@@ -157,9 +176,15 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
 
         failed_checksums = 0;
 
+        #if DEBUG_FAULT
+        // The first start is not a fault, and under DEBUG it is covered by the
+        // handshake message below.
+        if (link_starts++) {
+            FAULT_PRINT("avr: link restart %lu at %lu ms\n",
+                (unsigned long)link_starts, (unsigned long)pbdrv_clock_get_ms());
+        }
+        #endif
         #if DEBUG
-        DEBUG_PRINT("avr: link start %lu at %lu ms\n",
-            (unsigned long)++link_starts, (unsigned long)pbdrv_clock_get_ms());
         cycles = 0;
         #endif
 
@@ -167,10 +192,10 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
         pbdrv_rproc_nxt_twi_write((const uint8_t *)avr_init_handshake, sizeof(avr_init_handshake) - 1);
         AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
         if (!transfer_ok) {
-            pbdrv_rproc_nxt_debug_fault("handshake");
+            pbdrv_rproc_nxt_log_fault("handshake");
             continue;
         }
-        DEBUG_PRINT("avr: handshake sent\n");
+        DEBUG_PRINT("avr: handshake sent at %lu ms\n", (unsigned long)pbdrv_clock_get_ms());
 
         pbio_os_timer_set(&grace_timer, AVR_GRACE_PERIOD_MS);
 
@@ -194,7 +219,7 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
             pbdrv_rproc_nxt_twi_write(send_buf, sizeof(send_buf));
             AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
             if (!transfer_ok) {
-                pbdrv_rproc_nxt_debug_fault("write");
+                pbdrv_rproc_nxt_log_fault("write");
                 break;
             }
 
@@ -207,7 +232,7 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
             pbdrv_rproc_nxt_twi_read(recv_buf, sizeof(recv_buf));
             AWAIT_TRANSFER(state, &transfer_timer, transfer_ok);
             if (!transfer_ok) {
-                pbdrv_rproc_nxt_debug_fault("read");
+                pbdrv_rproc_nxt_log_fault("read");
                 break;
             }
 
@@ -230,7 +255,7 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
                 #endif
             } else {
                 failed_checksums++;
-                DEBUG_PRINT("avr: bad checksum %lu, %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+                FAULT_PRINT("avr: bad checksum %lu, %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
                     (unsigned long)failed_checksums,
                     recv_buf[0], recv_buf[1], recv_buf[2], recv_buf[3], recv_buf[4], recv_buf[5],
                     recv_buf[6], recv_buf[7], recv_buf[8], recv_buf[9], recv_buf[10], recv_buf[11], recv_buf[12]);
@@ -408,7 +433,7 @@ void pbdrv_rproc_nxt_reset_host(pbdrv_reset_action_t action) {
     // with the AVR to keep going to transmit this command.
     for (;;) {
         pbdrv_rproc_nxt_link_process_thread(&pbdrv_rproc_nxt_link_process.state, NULL);
-        #if DEBUG
+        #if DEBUG || DEBUG_FAULT
         // Only so that buffered debug output still reaches the host.
         pbio_os_run_processes_once();
         #endif
