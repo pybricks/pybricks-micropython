@@ -33,6 +33,8 @@
 #include <nxos/drivers/systick.h>
 #include <nxos/interrupts.h>
 
+#include "../../drv/adc/adc_nxt.h"
+
 const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
     .bank = NULL,
     .pin = 0,
@@ -79,8 +81,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 23},
             .p6 = {.pin = 18},
-            .adc_p1 = 0,
-            .adc_p6 = 4,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(0),
+            .adc_p6 = 1,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -94,8 +96,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 28},
             .p6 = {.pin = 19},
-            .adc_p1 = 1,
-            .adc_p6 = 5,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(1),
+            .adc_p6 = 2,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -109,8 +111,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 29},
             .p6 = {.pin = 20},
-            .adc_p1 = 2,
-            .adc_p6 = 6,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(2),
+            .adc_p6 = 3,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -124,7 +126,8 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 30},
             .p6 = {.pin = 2},
-            .adc_p1 = 3,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(3),
+            // Pin 6 of port 4 is also wired to the dedicated AD7 input.
             .adc_p6 = 7,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
