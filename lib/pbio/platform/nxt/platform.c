@@ -159,6 +159,14 @@ void SystemInit(void) {
         pbdrv_gpio_input(&pins->p6);
     }
 
+    // Pins 5 and 6 of port 4 are shared with the RS485 transceiver, whose
+    // driver enable is RTS0. That pin resets to an input with its pull-up on,
+    // which enables the transceiver and lets it drive the port, so disable.
+    static const pbdrv_gpio_t rs485_driver_enable = { .pin = 7 };
+    pbdrv_gpio_alt(&rs485_driver_enable, false);
+    pbdrv_gpio_set_pull(&rs485_driver_enable, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_out_low(&rs485_driver_enable);
+
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbio_busy_count_busy instead of busy waiting for 100ms.
     nx__motors_init();
