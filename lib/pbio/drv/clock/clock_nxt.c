@@ -24,6 +24,11 @@
 /* We want a timer interrupt 1000 times per second. */
 #define SYSIRQ_FREQ 1000
 
+/* The PIT counter runs from 0 to PIV and rolls over exactly once per system
+ * tick, so it can be used to interpolate between ticks.
+ */
+#define PIT_COUNTS_PER_TICK (PIT_BASE_FREQUENCY / SYSIRQ_FREQ)
+
 /* The system timer. Counts the number of milliseconds elapsed since
  * the system's initialization.
  */
@@ -61,14 +66,35 @@ uint32_t pbdrv_clock_get_ms(void) {
     return pbdrv_clock_ticks;
 }
 
+/**
+ * Gets the tick count along with the PIT counter value within that tick.
+ *
+ * PICNT is nonzero when the timer has rolled over but the interrupt has not
+ * run yet, so it must be added to the tick count.
+ */
+static uint32_t pbdrv_clock_get_ticks_and_count(uint32_t *count) {
+    uint32_t ticks, image;
+
+    // Retry if the interrupt lands between the two reads, making them disagree.
+    do {
+        ticks = pbdrv_clock_ticks;
+        image = *AT91C_PITC_PIIR;
+    } while (ticks != pbdrv_clock_ticks);
+
+    *count = image & AT91C_PITC_CPIV;
+    return ticks + ((image & AT91C_PITC_PICNT) >> 20);
+}
+
 uint32_t pbdrv_clock_get_100us(void) {
-    // Revisit: derive from ns counter properly.
-    return pbdrv_clock_ticks * 10;
+    uint32_t count;
+    uint32_t ticks = pbdrv_clock_get_ticks_and_count(&count);
+    return ticks * 10 + count * 10 / PIT_COUNTS_PER_TICK;
 }
 
 uint32_t pbdrv_clock_get_us(void) {
-    // TODO
-    return pbdrv_clock_ticks * 1000;
+    uint32_t count;
+    uint32_t ticks = pbdrv_clock_get_ticks_and_count(&count);
+    return ticks * 1000 + count * 1000 / PIT_COUNTS_PER_TICK;
 }
 
 // TODO: we really should get rid of blocking waits if possible
