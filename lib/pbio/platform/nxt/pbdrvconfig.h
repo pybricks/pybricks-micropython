@@ -10,8 +10,9 @@
 #define PBDRV_CONFIG_BATTERY_NXT                    (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (10 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (18 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_NXT               (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_NXT_SIZE          (16 * 1024) // Must match FLASH_USER in linker script
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_NXT                     (1)

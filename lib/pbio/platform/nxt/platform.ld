@@ -18,7 +18,11 @@
  */
 
 MEMORY {
-FLASH_FIRMWARE : ORIGIN = 1M, LENGTH =256k
+/* The firmware. Installed via SAM-BA. */
+FLASH_FIRMWARE : ORIGIN = 1M, LENGTH = 240k
+/* User data written by the firmware during shutdown. Its length must match
+   PBDRV_CONFIG_BLOCK_DEVICE_NXT_SIZE. */
+FLASH_USER : ORIGIN = 1M + 240k, LENGTH = 16k
 vector_ram : ORIGIN = 2M, LENGTH = 64
 ram : ORIGIN = 2M + 64, LENGTH = 64K - 64
 }
@@ -28,6 +32,9 @@ ROM_SIZE = 256k;
 RAM_BASE = 2M;
 RAM_SIZE = 64k;
 SAMBA_RESERVED_SIZE = 8k;
+
+/* Start of data storage. */
+_pbdrv_block_device_storage_start = ORIGIN(FLASH_USER);
 
 /* Extra heap for large allocations (images, etc). */
 pb_umm_heap_size = 8k;
@@ -51,6 +58,8 @@ SECTIONS {
    * function correctly (like flash writing code)
    */
   .ram_text : ALIGN(4) {
+    *(.ram_text .ram_text.*)
+    . = ALIGN(4);
     *.oram (*.text *.text.* *.glue*)
     . = ALIGN(4);
     *.oram (*.rodata *.rodata.*)
@@ -183,7 +192,7 @@ SECTIONS {
   __boot_from_samba__ = 0;
 
   __rom_userspace_start__ = ADDR(.text) + SIZEOF(.text);
-  __rom_userspace_end__ = (ROM_BASE + ROM_SIZE);
+  __rom_userspace_end__ = ORIGIN(FLASH_USER);
 
   __ram_userspace_start__ = pbdrv_stack_end;
   __ram_userspace_end__ = (RAM_BASE + RAM_SIZE);

@@ -269,6 +269,20 @@ bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage) {
     return data & 0x8000;
 }
 
+/**
+ * Tests whether the link to the AVR is between transfers.
+ *
+ * Drivers that have to disable interrupts for more than about a millisecond,
+ * such as when programming flash, should wait for this first. Aborting a
+ * transfer in progress breaks the link, and with it the power supply that the
+ * AVR controls.
+ *
+ * @return True if no transfer is in progress, else false.
+ */
+bool pbdrv_rproc_nxt_link_is_idle(void) {
+    return nx__twi_ready();
+}
+
 void pbdrv_rproc_init(void) {
     // Set up the TWI driver to turn on the i2c bus, and kickstart the state
     // machine to start transmitting.
