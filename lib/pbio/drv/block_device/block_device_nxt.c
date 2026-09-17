@@ -123,7 +123,6 @@ static uint32_t __attribute__((noinline, section(".ram_text"))) pbdrv_block_devi
 pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_data_size) {
 
     static uint32_t done;
-    static pbio_os_timer_t timer;
 
     uint32_t size;
     uint32_t status;
@@ -147,11 +146,13 @@ pbio_error_t pbdrv_block_device_write_all(pbio_os_state_t *state, uint32_t used_
 
     for (done = 0; done < ramdisk.saved_size; done += FLASH_PAGE_SIZE) {
 
-        // Interrupts are off for a few milliseconds per page, which is far
-        // longer than the NXT normally tolerates. Let the AVR link run and
-        // then catch it between transfers so that none gets aborted, since
-        // losing the link takes the power supply with it.
-        PBIO_OS_AWAIT_MS(state, &timer, 2);
+        // Interrupts are off for a few milliseconds per page, which stalls the
+        // AVR link. The AVR only gives up after two seconds without a valid
+        // packet, so the link survives this as long as no transfer is aborted
+        // part way through: losing it takes the power supply with it. Yield so
+        // the link gets a turn, then start only once it is between transfers.
+        // Nothing yields in between, so it cannot start one behind our back.
+        PBIO_OS_AWAIT_ONCE(state);
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_rproc_nxt_link_is_idle());
 
         // Fill the write latch buffer. This does not touch the flash plane;
