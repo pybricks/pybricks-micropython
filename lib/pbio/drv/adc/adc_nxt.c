@@ -101,15 +101,22 @@ void pbdrv_adc_init(void) {
     #endif
 }
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
 
     PBIO_OS_ASYNC_BEGIN(state);
-    *start_time_us = pbdrv_clock_get_ms();
-    // REVISIT: Pass channel ID to this function so we can adjust the wait time
-    // to the specific sample coming in. The AVR adc samples will be slower.
-    // The AT91 channels only need to wait one sweep, which can be confirmed
-    // exactly by clearing the channel EOC flag in ADC_SR and awaiting it.
-    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 7));
+
+    if (ch < PBDRV_ADC_NXT_NUM_CH_AT91) {
+        // A sweep completes every 100 µs, so only the settling time of the
+        // measured signal matters.
+        *start_time_us = pbdrv_clock_get_us();
+        PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_us(), *start_time_us + future_us));
+    } else {
+        // The AVR samples at 333 Hz and then still has to ship the value over
+        // the TWI link, which dwarfs any settling time.
+        *start_time_us = pbdrv_clock_get_ms();
+        PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 7));
+    }
+
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 

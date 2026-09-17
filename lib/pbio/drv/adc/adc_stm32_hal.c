@@ -52,7 +52,7 @@ static uint32_t pbdrv_adc_dma_buffer[PBDRV_CONFIG_ADC_STM32_HAL_ADC_NUM_CHANNELS
 static uint32_t pbdrv_adc_error_count;
 static uint32_t pbdrv_adc_last_error;
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
