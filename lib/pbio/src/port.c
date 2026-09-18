@@ -574,6 +574,12 @@ void pbio_port_init(void) {
         pbio_port_t *port = &ports[i];
         port->pdata = &pbdrv_ioport_platform_data[i];
         pbio_port_init_one_port(port);
+
+        #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
+        if (i == 0) {
+            pbio_port_set_mode(port, PBIO_PORT_MODE_UART);
+        }
+        #endif
     }
 }
 
