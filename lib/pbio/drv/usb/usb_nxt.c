@@ -767,6 +767,9 @@ static void pbdrv_usb_nxt_isr(void) {
     }
 }
 
+/** Set on soft power-off, so that a late start-up does not undo the deinit. */
+static bool pbdrv_usb_nxt_closing;
+
 void pbdrv_usb_nxt_deinit(void) {
     nx_aic_disable(AT91C_ID_UDP);
 
@@ -852,6 +855,12 @@ static pbio_error_t pbdrv_usb_nxt_process_thread(pbio_os_state_t *state, void *c
     // Waits for the bluetooth address or a minimal settling time, whichever is longer.
     PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), timer.start + 200));
 
+    // Shutdown can happen during the waits above, in which case the hardware
+    // has already been deinitialized and must stay that way.
+    if (pbdrv_usb_nxt_closing) {
+        return PBIO_ERROR_CANCELED;
+    }
+
     // This ends with enabling the pull up, so the host does not see the device
     // before its descriptors are complete.
     pbdrv_usb_nxt_hw_init();
@@ -864,6 +873,7 @@ void pbdrv_usb_init(void) {
 }
 
 void pbdrv_usb_deinit(void) {
+    pbdrv_usb_nxt_closing = true;
     pbdrv_usb_nxt_deinit();
 }
 
