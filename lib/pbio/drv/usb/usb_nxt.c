@@ -20,6 +20,8 @@
 
 #include <pbio/serial.h>
 
+#include <pbdrv/adc.h>
+
 #include <pbio/os.h>
 #include <pbio/util.h>
 
@@ -34,6 +36,7 @@
 
 #include <pbdrv/usb.h>
 
+#include "../adc/adc_nxt.h"
 #include "../bluetooth/bluetooth_nxt.h"
 
 #include "usb_ch9.h"
@@ -862,10 +865,19 @@ void pbdrv_usb_deinit(void) {
 }
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
-    return pbdrv_usb_nxt_configured ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
+    return pbdrv_usb_is_ready() ? PBIO_SUCCESS : PBIO_ERROR_AGAIN;
 }
 
 bool pbdrv_usb_is_ready(void) {
+
+    // The UDP has no disconnect interrupt, so this line, which is pin 1 of the
+    // USB port, is the only way to notice that the cable was pulled. Without
+    // it the configured flag would stay set until the next bus reset.
+    uint16_t adc;
+    if (pbdrv_adc_get_ch(PBDRV_ADC_NXT_CH_USB, &adc) != PBIO_SUCCESS || adc < 512) {
+        pbdrv_usb_nxt_configured = false;
+    }
+
     return pbdrv_usb_nxt_configured;
 }
 
