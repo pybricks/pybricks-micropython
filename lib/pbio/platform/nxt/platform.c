@@ -164,15 +164,6 @@ void SystemInit(void) {
     pbdrv_gpio_set_pull(&rs485_driver_enable, PBDRV_GPIO_PULL_NONE);
     pbdrv_gpio_out_low(&rs485_driver_enable);
 
-    // TODO: we should be able to convert these to generic pbio drivers and use
-    // pbio_busy_count_busy instead of busy waiting for 100ms.
-
-    // nx__sensors_init();
-    // nx_i2c_init();
-
-    /* Delay a little post-init, to let all the drivers settle down. */
-    nx_systick_wait_ms(100);
-
     // Separate heap for large allocations - defined in linker script.
     extern char pb_umm_heap_start;
     extern char pb_umm_heap_end;

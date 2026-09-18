@@ -21,6 +21,7 @@
 #include <pbio/serial.h>
 
 #include <pbdrv/adc.h>
+#include <pbdrv/clock.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -772,12 +773,9 @@ void pbdrv_usb_nxt_deinit(void) {
     *AT91C_PIOA_PER = (1 << 16);
     *AT91C_PIOA_OER = (1 << 16);
     *AT91C_PIOA_SODR = (1 << 16);
-    nx_systick_wait_ms(200);
 }
 
 static void pbdrv_usb_nxt_hw_init(void) {
-
-    pbdrv_usb_nxt_deinit();
 
     pbdrv_usb_nxt_configured = false;
     pbdrv_usb_nxt_transmitting = false;
@@ -837,6 +835,8 @@ static pbio_error_t pbdrv_usb_nxt_process_thread(pbio_os_state_t *state, void *c
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    pbdrv_usb_nxt_deinit();
+
     // Falls back to an all-zero address if the Bluetooth chip never comes up,
     // so that USB works even then.
     pbio_os_timer_set(&timer, PBDRV_USB_NXT_ADDRESS_TIMEOUT);
@@ -848,6 +848,9 @@ static pbio_error_t pbdrv_usb_nxt_process_thread(pbio_os_state_t *state, void *c
     }
     pbdrv_usb_str_desc_serial.bLength = sizeof(pbdrv_usb_str_desc_serial);
     pbdrv_usb_str_desc_serial.bDescriptorType = DESC_TYPE_STRING;
+
+    // Waits for the bluetooth address or a minimal settling time, whichever is longer.
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), timer.start + 200));
 
     // This ends with enabling the pull up, so the host does not see the device
     // before its descriptors are complete.

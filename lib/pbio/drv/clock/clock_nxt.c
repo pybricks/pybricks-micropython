@@ -99,15 +99,6 @@ uint32_t pbdrv_clock_get_us(void) {
 
 // TODO: we really should get rid of blocking waits if possible
 
-void nx_systick_wait_ms(uint32_t ms) {
-    // FIXME: this does not currently handle overflow (pbdrv_clock_ticks + ms > UINT32_MAX)
-    uint32_t final = pbdrv_clock_ticks + ms;
-
-    while (pbdrv_clock_ticks < final) {
-        ;
-    }
-}
-
 void nx_systick_wait_ns(uint32_t ns) {
     volatile uint32_t x = (ns >> 7) + 1;
 
