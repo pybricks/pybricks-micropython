@@ -331,8 +331,14 @@ static pbio_error_t pbdrv_display_nxt_process_thread(pbio_os_state_t *state, voi
     pbio_busy_count_down();
 
     // Update the display with the user frame buffer, if changed.
-    while (pbdrv_display_nxt_process.request != PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
-        PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
+    for (;;) {
+        // Cancellation can arrive with no frame pending, so it has to be part
+        // of the condition or the process parks here and never deinitializes.
+        PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested ||
+            pbdrv_display_nxt_process.request == PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL);
+        if (pbdrv_display_nxt_process.request == PBIO_OS_PROCESS_REQUEST_TYPE_CANCEL) {
+            break;
+        }
         pbdrv_display_user_frame_update_requested = false;
         pbdrv_display_update_count++;
         for (page = 0; page < PBDRV_CONFIG_DISPLAY_NUM_ROWS / 8; page++) {
