@@ -12,7 +12,9 @@ MEMORY
 }
 
 _minimal_stack_size = 4M;
-pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
+/* AAPCS requires 8-byte stack alignment. All mode stacks in start.S are carved
+   from here by subtracting multiples of 8, so this must be 8-byte aligned. */
+pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 8;
 /* Extra heap for large allocations (images, etc). */
 pb_umm_heap_size = 2M;
 /*

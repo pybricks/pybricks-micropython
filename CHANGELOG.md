@@ -25,6 +25,7 @@
 - Fixed Move Hub not broadcasting while connected to a PC ([support#2826]).
 - Fixed crash when supplying an array of colors to ColorLightMatrix. Also give
   this device some colors when plugging in.
+- Fixed occasional segfault on EV3 with high data output.
 
 [support#2822]: https://github.com/orgs/pybricks/discussions/2822
 [support#2826]: https://github.com/pybricks/support/issues/2826
