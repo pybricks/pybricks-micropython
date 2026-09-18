@@ -207,13 +207,18 @@ static void spi_init(void) {
     *AT91C_PIOA_SODR = AT91C_PA10_NPCS2;
 
     // Disable all SPI interrupts, then configure the SPI controller in
-    // master mode, with the chip select locked to chip 0 (UC1601 LCD
-    // controller), communication at 2MHz, 8 bits per transfer and an
+    // master mode, communication at 2MHz, 8 bits per transfer and an
     // inactive-high clock signal.
+    //
+    // Mode fault detection has to be off. It watches NPCS0, which on this
+    // board is not a chip select at all but the Bluetooth chip's power pin.
+    // Taking that pin low to power the BC4 down would otherwise read as
+    // another master claiming the bus, which disables the SPI mid-transfer
+    // and leaves the display stuck waiting for a transfer that never ends.
     *AT91C_SPI_CR = AT91C_SPI_SWRST;
     *AT91C_SPI_CR = AT91C_SPI_SPIEN;
     *AT91C_SPI_IDR = ~0;
-    *AT91C_SPI_MR = (6 << 24) | AT91C_SPI_MSTR;
+    *AT91C_SPI_MR = (6 << 24) | AT91C_SPI_MODFDIS | AT91C_SPI_MSTR;
     AT91C_SPI_CSR[0] = ((0x18 << 24) | (0x18 << 16) | (0x18 << 8) |
         AT91C_SPI_BITS_8 | AT91C_SPI_CPOL);
 
