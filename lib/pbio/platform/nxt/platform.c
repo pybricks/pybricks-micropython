@@ -166,7 +166,7 @@ void SystemInit(void) {
 
     // TODO: we should be able to convert these to generic pbio drivers and use
     // pbio_busy_count_busy instead of busy waiting for 100ms.
-    nx__motors_init();
+
     // nx__sensors_init();
     // nx_i2c_init();
 
