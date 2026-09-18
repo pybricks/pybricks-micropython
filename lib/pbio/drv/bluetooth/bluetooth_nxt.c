@@ -460,12 +460,6 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Revisit: Powering up the BC4 might draw enough current to upset the AVR
-    // co-processor and the display, so wait for the AVR link to be established
-    // first. This is not definitive, though, but at least empirically the
-    // display does not produce garbage this way.
-    // PBIO_OS_AWAIT_UNTIL(state, pbdrv_rproc_is_ready());
-    PBIO_OS_AWAIT_MS(state, &timer, 1000);
     DEBUG_PRINT("bt start\n");
 
     // Command mode, chip select asserted, and the BC4 held in reset until the
