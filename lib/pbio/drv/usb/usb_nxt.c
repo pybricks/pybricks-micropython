@@ -34,6 +34,8 @@
 
 #include <pbdrv/usb.h>
 
+#include "../bluetooth/bluetooth_nxt.h"
+
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
 
@@ -46,9 +48,13 @@
 #define EP_BULK_IN  2   /* CDC data, hub to host. */
 #define EP_NOTIF    3   /* CDC notification (interrupt IN), never used. */
 
-/* The AT91 has no unique device ID, and the Bluetooth address that was used
- * here before is not available until the Bluetooth chip has booted. */
-#define PBDRV_USB_NXT_SERIAL_NUMBER "000000000000"
+/* The AT91 has no unique device ID of its own, so the Bluetooth address is
+ * used as the serial number, rendered as this many hex digits. */
+#define PBDRV_USB_NXT_SERIAL_NUMBER_SIZE 12
+
+/* How long to wait for the Bluetooth chip to report its address before
+ * enumerating with an all-zero serial number anyway. */
+#define PBDRV_USB_NXT_ADDRESS_TIMEOUT 10000
 
 /* Maximum data packet sizes. Endpoint 0 is a special case (control endpoint). */
 #define MAX_EP0_SIZE 8
@@ -214,7 +220,7 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t wString[sizeof(PBDRV_USB_NXT_SERIAL_NUMBER) - 1];
+    uint16_t wString[PBDRV_USB_NXT_SERIAL_NUMBER_SIZE];
 } pbdrv_usb_serial_number_desc_t;
 
 static pbdrv_usb_serial_number_desc_t pbdrv_usb_str_desc_serial;
@@ -766,13 +772,7 @@ void pbdrv_usb_nxt_deinit(void) {
     nx_systick_wait_ms(200);
 }
 
-void pbdrv_usb_init(void) {
-
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString); i++) {
-        pbdrv_usb_str_desc_serial.wString[i] = PBDRV_USB_NXT_SERIAL_NUMBER[i];
-    }
-    pbdrv_usb_str_desc_serial.bLength = sizeof(pbdrv_usb_str_desc_serial);
-    pbdrv_usb_str_desc_serial.bDescriptorType = DESC_TYPE_STRING;
+static void pbdrv_usb_nxt_hw_init(void) {
 
     pbdrv_usb_nxt_deinit();
 
@@ -823,6 +823,38 @@ void pbdrv_usb_init(void) {
     *AT91C_PIOA_PER = (1 << 16);
     *AT91C_PIOA_OER = (1 << 16);
     *AT91C_PIOA_CODR = (1 << 16);
+}
+
+static pbio_os_process_t pbdrv_usb_nxt_process;
+
+static pbio_error_t pbdrv_usb_nxt_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_timer_t timer;
+    static uint8_t addr[6];
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Falls back to an all-zero address if the Bluetooth chip never comes up,
+    // so that USB works even then.
+    pbio_os_timer_set(&timer, PBDRV_USB_NXT_ADDRESS_TIMEOUT);
+    PBIO_OS_AWAIT_UNTIL(state, pbdrv_bluetooth_nxt_get_local_address(addr) || pbio_os_timer_is_expired(&timer));
+
+    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(addr); i++) {
+        pbdrv_usb_str_desc_serial.wString[2 * i] = "0123456789ABCDEF"[addr[i] >> 4];
+        pbdrv_usb_str_desc_serial.wString[2 * i + 1] = "0123456789ABCDEF"[addr[i] & 0xF];
+    }
+    pbdrv_usb_str_desc_serial.bLength = sizeof(pbdrv_usb_str_desc_serial);
+    pbdrv_usb_str_desc_serial.bDescriptorType = DESC_TYPE_STRING;
+
+    // This ends with enabling the pull up, so the host does not see the device
+    // before its descriptors are complete.
+    pbdrv_usb_nxt_hw_init();
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbdrv_usb_init(void) {
+    pbio_os_process_start(&pbdrv_usb_nxt_process, pbdrv_usb_nxt_process_thread, NULL);
 }
 
 void pbdrv_usb_deinit(void) {

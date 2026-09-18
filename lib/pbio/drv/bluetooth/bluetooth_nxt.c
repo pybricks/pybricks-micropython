@@ -38,6 +38,8 @@
 
 #include <pbsys/host.h>
 
+#include "bluetooth_nxt.h"
+
 #include "../rproc/rproc.h"
 
 #include <pbdrv/adc.h>
@@ -103,6 +105,7 @@ typedef enum {
     BT_MSG_OPEN_STREAM = 0x0B,
     BT_MSG_SET_DISCOVERABLE = 0x1C,
     BT_MSG_SET_FRIENDLY_NAME = 0x21,
+    BT_MSG_GET_LOCAL_ADDR = 0x27,
     // BC4 to ARM7.
     BT_MSG_HEARTBEAT = 0x0D,
     BT_MSG_CONNECT_RESULT = 0x13,
@@ -114,9 +117,14 @@ typedef enum {
     BT_MSG_PIN_CODE_ACK = 0x1F,
     BT_MSG_SET_DISCOVERABLE_ACK = 0x20,
     BT_MSG_SET_FRIENDLY_NAME_ACK = 0x22,
+    BT_MSG_GET_LOCAL_ADDR_RESULT = 0x28,
     /** Not a BC4 message: used to mean that no reply is expected. */
     BT_MSG_NONE = 0xFF,
 } bt_msg_t;
+
+/** Address of this hub, once the BC4 has reported it. */
+static uint8_t bt_local_addr[6];
+static bool bt_local_addr_valid;
 
 /** Received stream bytes, written by the interrupt and drained by pbio serial. */
 static lwrb_t bt_rx_ring;
@@ -494,6 +502,14 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
         DEBUG_PRINT("bc4 up\n");
 
+        // The USB driver holds off enumeration until this is known, so get it
+        // before anything else.
+        PBIO_OS_AWAIT(state, &sub, err = bt_command(&sub, BT_MSG_GET_LOCAL_ADDR, NULL, 0, BT_MSG_GET_LOCAL_ADDR_RESULT));
+        if (err == PBIO_SUCCESS) {
+            memcpy(bt_local_addr, (const void *)bt.reply_args, sizeof(bt_local_addr));
+            bt_local_addr_valid = true;
+        }
+
         // The BC4 name is fixed-length and padded with zeros. It is all the
         // host has to go on: the class of device and the service record are
         // burned into the chip firmware.
@@ -594,6 +610,16 @@ void pbdrv_bluetooth_init(void) {
     // The hardware is claimed from the process instead of here, which runs
     // before the display is up and so cannot report anything.
     pbio_os_process_start(&bt_process, bt_process_thread, NULL);
+}
+
+bool pbdrv_bluetooth_nxt_get_local_address(uint8_t *addr) {
+
+    if (!bt_local_addr_valid) {
+        return false;
+    }
+
+    memcpy(addr, bt_local_addr, sizeof(bt_local_addr));
+    return true;
 }
 
 //
