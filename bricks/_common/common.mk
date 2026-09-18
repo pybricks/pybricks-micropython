@@ -586,7 +586,6 @@ NXOS_SRC_C = $(addprefix lib/pbio/platform/nxt/nxos/,\
 	drivers/_efc.c \
 	drivers/_uart.c \
 	drivers/aic.c \
-	drivers/bt.c \
 	drivers/i2c_memory.c \
 	drivers/i2c.c \
 	drivers/motors.c \

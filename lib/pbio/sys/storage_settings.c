@@ -33,9 +33,9 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     pbio_imu_set_default_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
 
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC && PBIO_CONFIG_BLUETOOTH
     memset(settings->bluetooth_bonds, 0, sizeof(settings->bluetooth_bonds));
-    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #endif
 
     // Always request save for this one off default setter.
     pbsys_storage_request_write();
@@ -51,9 +51,11 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
     pbio_imu_apply_loaded_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
 
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    // Chips that keep their own bonding store, like the NXT BlueCore, do not
+    // use the pbio link key store.
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC && PBIO_CONFIG_BLUETOOTH
     pbio_bluetooth_classic_apply_loaded_link_keys(settings->bluetooth_bonds);
-    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #endif
 }
 
 /**

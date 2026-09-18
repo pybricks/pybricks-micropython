@@ -136,9 +136,11 @@ static pbio_serial_connection_t pbio_serial_connections[] = {
         .rx_read = pbdrv_bluetooth_classic_host_rx_read,
         .tx_message = pbdrv_bluetooth_classic_host_tx_message,
         // Readiness coincides with the channel being open. The Bluetooth
-        // process owns the chip lifecycle, so there is nothing else to await,
-        // reset, or deinit here.
+        // process owns the chip lifecycle, so there is nothing else to await
+        // or reset here, but the link is dropped on soft-poweroff so that the
+        // host sees a disconnect rather than a silent timeout.
         .is_ready = pbdrv_bluetooth_classic_host_is_connected,
+        .deinit = pbdrv_bluetooth_classic_host_disconnect,
     },
     #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 };

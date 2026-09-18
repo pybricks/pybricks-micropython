@@ -17,7 +17,11 @@
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_NXT                     (1)
 
+// The BlueCore 4 does Bluetooth Classic only, and runs the stack itself, so
+// none of the BLE controller driver applies to it.
 #define PBDRV_CONFIG_BLUETOOTH                      (0)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC              (1)
+#define PBDRV_CONFIG_BLUETOOTH_NXT                  (1)
 
 #define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_NXT
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000

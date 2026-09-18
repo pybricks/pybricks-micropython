@@ -28,7 +28,6 @@
 #include <nxos/drivers/_aic.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>
-#include <nxos/drivers/bt.h>
 #include <nxos/drivers/i2c.h>
 #include <nxos/drivers/systick.h>
 #include <nxos/interrupts.h>
@@ -134,8 +133,6 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
     },
 };
 
-char bluetooth_address_string[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
-
 // Called from assembly code in startup.S
 void SystemInit(void) {
     nx__aic_init();
@@ -175,17 +172,6 @@ void SystemInit(void) {
 
     /* Delay a little post-init, to let all the drivers settle down. */
     nx_systick_wait_ms(100);
-
-    // Get Bluetooth address for use as unique USB serial number.
-    nx_bt_init();
-    nx_bt_set_friendly_name("Pybricks NXT");
-    uint8_t local_addr[7];
-    if (nx_bt_get_local_addr(local_addr)) {
-        snprintf(bluetooth_address_string, sizeof(bluetooth_address_string),
-            "%02X:%02X:%02X:%02X:%02X:%02X",
-            local_addr[0], local_addr[1], local_addr[2],
-            local_addr[3], local_addr[4], local_addr[5]);
-    }
 
     // Separate heap for large allocations - defined in linker script.
     extern char pb_umm_heap_start;

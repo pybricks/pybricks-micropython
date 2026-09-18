@@ -46,6 +46,10 @@
 #define EP_BULK_IN  2   /* CDC data, hub to host. */
 #define EP_NOTIF    3   /* CDC notification (interrupt IN), never used. */
 
+/* The AT91 has no unique device ID, and the Bluetooth address that was used
+ * here before is not available until the Bluetooth chip has booted. */
+#define PBDRV_USB_NXT_SERIAL_NUMBER "000000000000"
+
 /* Maximum data packet sizes. Endpoint 0 is a special case (control endpoint). */
 #define MAX_EP0_SIZE 8
 #define MAX_RCV_SIZE 64
@@ -210,7 +214,7 @@ static const pbdrv_usb_nxt_conf_t pbdrv_usb_nxt_full_config = {
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t wString[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
+    uint16_t wString[sizeof(PBDRV_USB_NXT_SERIAL_NUMBER) - 1];
 } pbdrv_usb_serial_number_desc_t;
 
 static pbdrv_usb_serial_number_desc_t pbdrv_usb_str_desc_serial;
@@ -764,9 +768,8 @@ void pbdrv_usb_nxt_deinit(void) {
 
 void pbdrv_usb_init(void) {
 
-    extern char bluetooth_address_string[PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString)];
     for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(pbdrv_usb_str_desc_serial.wString); i++) {
-        pbdrv_usb_str_desc_serial.wString[i] = bluetooth_address_string[i];
+        pbdrv_usb_str_desc_serial.wString[i] = PBDRV_USB_NXT_SERIAL_NUMBER[i];
     }
     pbdrv_usb_str_desc_serial.bLength = sizeof(pbdrv_usb_str_desc_serial);
     pbdrv_usb_str_desc_serial.bDescriptorType = DESC_TYPE_STRING;

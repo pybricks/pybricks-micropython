@@ -15,9 +15,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_BLUETOOTH || PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 void pbdrv_bluetooth_init(void);
+
+#else
+
+static inline void pbdrv_bluetooth_init(void) {
+}
+
+#endif
+
+#if PBDRV_CONFIG_BLUETOOTH
 
 /**
  * Gets the Bluetooth chip firmware version.
@@ -107,9 +116,6 @@ extern pbio_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callbac
 pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context);
 
 #else // PBDRV_CONFIG_BLUETOOTH
-
-static inline void pbdrv_bluetooth_init(void) {
-}
 
 static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return NULL;
