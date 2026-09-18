@@ -124,13 +124,21 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
     while (next_index + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE <= max_size) {
 
         // Fetch one sensor sample and attempt to append.
-        uint32_t size = max_size - next_index - sizeof(uint16_t) - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+        uint32_t room = max_size - next_index - sizeof(uint16_t) - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+        uint32_t size = room;
 
         pbsys_telemetry_packet_t *tel = (pbsys_telemetry_packet_t *)&data[next_index + sizeof(uint16_t)];
 
         // Attempt to get next data point.
         if (!pbsys_telemetry_iterate_data(tel, &size)) {
             // Data full or idle, time to send.
+            break;
+        }
+
+        // A generator that reports more than it was given has already written
+        // out of bounds, so stop rather than compound it by advancing past
+        // the end of the buffer.
+        if (size > room) {
             break;
         }
 

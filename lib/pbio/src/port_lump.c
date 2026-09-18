@@ -1583,7 +1583,8 @@ static pbsys_telemetry_error_t get_light_intensity_telemetry(pbio_port_lump_dev_
 pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, const pbio_color_map_t *color_map, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     if (pbio_port_lump_is_ready(lump_dev) != PBIO_SUCCESS) {
-        *size = 0;
+        // Leaves size untouched: it is the room still available to the next
+        // generator in this round, not an output until we report success.
         return PBSYS_TELEMETRY_ERROR_NO_REPORT;
     }
 
@@ -1687,6 +1688,53 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
+    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_EV3_INFRARED_SENSOR__PROX) {
+        if (*size < sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        // TODO: Other modes.
+        tel->mode = 0;
+        tel->payload[0] = lump_dev->bin_data[0];
+        *size = sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_GYRO_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A) {
+        if (*size < 2 * sizeof(uint16_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        int16_t angle = *(int16_t *)&lump_dev->bin_data[0];
+        int16_t speed = *(int16_t *)&lump_dev->bin_data[2];
+        pbio_set_uint16_le(&tel->payload[0], angle);
+        pbio_set_uint16_le(&tel->payload[2], speed);
+        tel->mode = 0;
+        *size = 2 * sizeof(uint16_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+        if (*size < sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+
+        if (lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT) {
+            tel->mode = 0;
+            tel->payload[0] = lump_dev->bin_data[0];
+            *size = sizeof(uint8_t);
+            return PBSYS_TELEMETRY_SUCCESS;
+        }
+
+        if (lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT) {
+            tel->mode = 1;
+            tel->payload[0] = lump_dev->bin_data[0];
+            *size = sizeof(uint8_t);
+            return PBSYS_TELEMETRY_SUCCESS;
+        }
+    }
+
+    #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
+
     // No specific encoding, so return device ID without payload for this mode.
     tel->mode = 0xFF;
     *size = 0;
@@ -1733,6 +1781,24 @@ pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *
         pbio_port_lump_set_mode(lump_dev, mode);
         return PBSYS_TELEMETRY_SUCCESS;
     }
+
+    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+        uint8_t mode;
+        switch (tel->mode) {
+            case 0:
+                mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT;
+                break;
+            case 1:
+                mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
+                break;
+            default:
+                return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+        pbio_port_lump_set_mode(lump_dev, mode);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+    #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
 
     return PBSYS_TELEMETRY_SUCCESS;
 }

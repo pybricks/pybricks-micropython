@@ -595,7 +595,7 @@ pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
  * @return Port.
  */
 pbio_port_t *pbio_port_by_index(uint8_t index) {
-    if (index > PBIO_CONFIG_PORT_NUM_DEV) {
+    if (index >= PBIO_CONFIG_PORT_NUM_DEV) {
         index = 0;
     }
     return &ports[index];
