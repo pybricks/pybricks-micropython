@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 6
+#define PBIO_PROTOCOL_VERSION_MINOR 7
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -212,6 +212,8 @@ typedef enum {
      *
      * This is the complement of ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY. The
      * full payload details are given in telemetry.h.
+     * 
+     * @since Pybricks Profile v1.7.0
      *
      * Parameters:
      * - payload: One or more telemetry commands.
