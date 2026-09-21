@@ -19,6 +19,17 @@ bStatus_t ATT_ErrorRsp(uint16_t connHandle, attErrorRsp_t *pRsp) {
     return HCI_sendHCICommand(ATT_CMD_ERROR_RSP, buf, 6);
 }
 
+bStatus_t ATT_ExchangeMTUReq(uint16_t connHandle, attExchangeMTUReq_t *pReq) {
+    uint8_t buf[4];
+
+    buf[0] = connHandle & 0xFF;
+    buf[1] = (connHandle >> 8) & 0xFF;
+    buf[2] = pReq->clientRxMTU & 0xFF;
+    buf[3] = (pReq->clientRxMTU >> 8) & 0xFF;
+
+    return HCI_sendHCICommand(ATT_CMD_EXCHANGEMTUREQ, buf, 4);
+}
+
 bStatus_t ATT_ExchangeMTURsp(uint16_t connHandle, attExchangeMTURsp_t *pRsp) {
     uint8_t buf[4];
 

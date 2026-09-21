@@ -26,18 +26,13 @@
 - Fixed crash when supplying an array of colors to ColorLightMatrix. Also give
   this device some colors when plugging in.
 - Fixed occasional segfault on EV3 with high data output.
-
-[support#2822]: https://github.com/orgs/pybricks/discussions/2822
-[support#2826]: https://github.com/pybricks/support/issues/2826
-
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
-
-### Fixed
 - Fixed output missing on Technic Hub and City Hub ([support#2814]).
 
 [support#2342]: https://github.com/pybricks/support/issues/2342
 [support#2630]: https://github.com/pybricks/support/issues/2630
-[support#2812]: https://github.com/pybricks/support/issues/2814
+[support#2814]: https://github.com/pybricks/support/issues/2814
+[support#2822]: https://github.com/orgs/pybricks/discussions/2822
+[support#2826]: https://github.com/pybricks/support/issues/2826
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...HEAD
 

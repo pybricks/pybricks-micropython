@@ -99,7 +99,8 @@ static bool advertising_data_received;
 static bool busy_disconnecting;
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
-// MTU exchange response is deferred until chip stack accepts the new MTU.
+// Set while waiting for our reply to the central to go out, since only one
+// command can be queued at a time.
 static bool exchange_mtu_rsp_pending;
 
 // Bonding status of the peripheral.
@@ -940,21 +941,24 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_EXCHANGE_MTU_REQ: {
                     uint16_t client_mtu = (data[7] << 8) | data[6];
 
+                    // Reply with what we can receive. The client applies the
+                    // minimum of that and its own size itself.
+                    attExchangeMTURsp_t rsp;
+                    rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                    ATT_ExchangeMTURsp(connection_handle, &rsp);
+
+                    DEBUG_PRINT("MTU req on %04X: client %d, ours %d\n",
+                        connection_handle, client_mtu, rsp.serverRxMTU);
+
                     // REVISIT: Just saving the main connection MTU for now.
                     // If we allow multiple connections, this will need to be
                     // changed.
                     if (connection_handle == conn_handle) {
                         conn_mtu = MIN(client_mtu, PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
-                        // The chip's ATT layer doesn't learn the MTU from the
-                        // flow-through response below, so inform it first. The
-                        // response is sent when the command status arrives,
-                        // since only one command can be queued at a time.
+                        // This exchange only tells the central what we accept.
+                        // The chip applies the size it may send only for an
+                        // exchange that it runs itself, so ask for one too.
                         exchange_mtu_rsp_pending = true;
-                        GATT_UpdateMTU(conn_handle, conn_mtu);
-                    } else {
-                        attExchangeMTURsp_t rsp;
-                        rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
-                        ATT_ExchangeMTURsp(connection_handle, &rsp);
                     }
                 }
                 break;
@@ -1064,6 +1068,16 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_READ_BY_TYPE_RSP:
                     break;
 
+                case ATT_EVENT_EXCHANGEMTURSP: {
+                    uint16_t server_mtu = (data[7] << 8) | data[6];
+                    if (connection_handle == conn_handle) {
+                        conn_mtu = MIN(conn_mtu, server_mtu);
+                    }
+                    DEBUG_PRINT("MTU exchange rsp on %04X: status 0x%02X, server %d, using %d\n",
+                        connection_handle, status, server_mtu, conn_mtu);
+                }
+                break;
+
                 case ATT_EVENT_READ_REQ: {
                     uint16_t handle = (data[7] << 8) | data[6];
 
@@ -1135,6 +1149,7 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
                         pbsys_host_get_hub_capabilities(buf, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
+                        DEBUG_PRINT("capabilities read: mtu %d, max char %d\n", conn_mtu, pbio_get_uint16_le(&buf[0]));
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
@@ -1321,6 +1336,7 @@ static void handle_event(uint8_t *packet) {
                         DBG("link: %04x", conn_handle);
                         // assume minimum MTU until we get an exchange MTU request
                         conn_mtu = ATT_MTU_SIZE;
+                        DEBUG_PRINT("link established %04X, mtu %d\n", conn_handle, conn_mtu);
 
                         // Establishing the link implicitly stops advertising.
                         pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
@@ -1414,19 +1430,16 @@ static void handle_event(uint8_t *packet) {
                     if (opcode == hci_command_opcode) {
                         hci_command_status = true;
                     }
-                    if (opcode == GATT_UPDATEMTU && exchange_mtu_rsp_pending && conn_handle != NO_CONNECTION) {
+                    if (opcode == ATT_CMD_EXCHANGE_MTU_RSP && exchange_mtu_rsp_pending && conn_handle != NO_CONNECTION) {
                         exchange_mtu_rsp_pending = false;
-                        // If the chip rejected the new MTU, keep the default.
-                        if (status != bleSUCCESS) {
-                            conn_mtu = ATT_MTU_SIZE;
-                        }
-                        DEBUG_PRINT("MTU update status 0x%02X, using %d\n", status, conn_mtu);
-                        attExchangeMTURsp_t rsp;
-                        rsp.serverRxMTU = conn_mtu;
-                        ATT_ExchangeMTURsp(conn_handle, &rsp);
+                        attExchangeMTUReq_t req;
+                        req.clientRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                        ATT_ExchangeMTUReq(conn_handle, &req);
+                        DEBUG_PRINT("MTU rsp status 0x%02X, requesting %d\n", status, req.clientRxMTU);
                     }
                     if (status != bleSUCCESS) {
                         DBG("status: %02X %04X", status, connection_handle);
+                        DEBUG_PRINT("cmd status: opcode %04X status 0x%02X\n", opcode, status);
                     }
                 }
                 break;
