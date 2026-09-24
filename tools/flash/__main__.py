@@ -94,7 +94,7 @@ def main():
         flash_nxt(firmwares)
     elif hub_kind == HubKind.EV3:
         if serial:
-            time.sleep(2)
+            time.sleep(4)
         flash_ev3(firmwares)
     else:
         raise ValueError(f"unsupported hub kind: {hub_kind}")
