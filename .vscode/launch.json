@@ -124,7 +124,7 @@
                     "value": "true"
                 },
                 {
-                    "name": "UB500_INDEX",
+                    "name": "USB_BLE_INDEX",
                     "value": "0"
                 },
                 {
@@ -159,7 +159,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
         {
-            "name": "virtualhub (UB500_INDEX=0)",
+            "name": "virtualhub (USB_BLE_INDEX=0)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -174,7 +174,7 @@
                     "value": "true"
                 },
                 {
-                    "name": "UB500_INDEX",
+                    "name": "USB_BLE_INDEX",
                     "value": "0"
                 },
                 {
@@ -209,7 +209,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
         {
-            "name": "virtualhub (UB500_INDEX=1)",
+            "name": "virtualhub (USB_BLE_INDEX=1)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -224,7 +224,7 @@
                     "value": "true"
                 },
                 {
-                    "name": "UB500_INDEX",
+                    "name": "USB_BLE_INDEX",
                     "value": "1"
                 },
                 {
