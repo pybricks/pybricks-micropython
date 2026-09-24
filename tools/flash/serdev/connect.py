@@ -17,24 +17,68 @@ HUB_PIDS = {
 }
 
 
-def get_serial_device(expected_hub: HubKind):
-    """Returns the serial device path for a connected hub."""
+def get_hub_name(port) -> str | None:
+    """Gets the hub name from a port's USB product string.
 
-    ports = []
-    for port in list_ports.comports():
-        if port.vid == LEGO_USB_VID and port.pid in HUB_PIDS[expected_hub]:
-            print(f"Found hub on {port.device}")
-            ports.append(port.device)
+    The firmware advertises itself as "<name> (<hub type>)", see
+    pbsys_host_get_hub_display_name(), so the name is everything before the
+    type. Taking it from the descriptor means hubs can be told apart without
+    opening them, so a hub that something else is talking to is still
+    recognizable.
+    """
+    product = port.product
+    if not product:
+        return None
+
+    name, separator, _ = product.rpartition(" (")
+    return name if separator else product
+
+
+def get_serial_device(expected_hub: HubKind, name: str | None = None):
+    """Returns the serial device for a connected hub.
+
+    Args:
+        expected_hub: The kind of hub to look for.
+        name: Which hub to use when several are attached. Ignored when only one
+            is, so that renaming the hub in front of you always works. A hub
+            that is already in its bootloader does not appear here at all, so
+            it is flashed whatever it used to be called.
+    """
+
+    ports = [
+        port
+        for port in list_ports.comports()
+        if port.vid == LEGO_USB_VID and port.pid in HUB_PIDS[expected_hub]
+    ]
+
+    for port in ports:
+        print(f"Found hub '{get_hub_name(port)}' on {port.device}")
 
     # Nothing found, we'll skip auto-reboot.
     if len(ports) == 0:
         return None
 
     if len(ports) > 1:
-        sys.exit("Multiple Pybricks hubs found. Make sure there is only one.")
+        if not name:
+            sys.exit(
+                "Multiple Pybricks hubs found. Pass NAME=<hub name> to pick "
+                "one, or leave only one attached."
+            )
+
+        matches = [port for port in ports if get_hub_name(port) == name]
+
+        if not matches:
+            found = ", ".join(f"{p.device} ({get_hub_name(p)})" for p in ports)
+            sys.exit(f"No attached hub is called '{name}'. Found: {found}.")
+
+        if len(matches) > 1:
+            found = ", ".join(p.device for p in matches)
+            sys.exit(f"Several attached hubs are called '{name}': {found}.")
+
+        ports = matches
 
     # Return opened port if available.
     try:
-        return serial.Serial(ports[0], baudrate=115200, timeout=0.1)
+        return serial.Serial(ports[0].device, baudrate=115200, timeout=0.1)
     except serial.SerialException:
-        sys.exit(f"Could not open serial port. Is Pybricks Code using it?")
+        sys.exit(f"Could not open {ports[0].device}. Is Pybricks Code or pb using it?")

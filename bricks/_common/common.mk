@@ -905,8 +905,14 @@ $(BUILD)/pru_ledpwm.bin.o: $(PBTOP)/lib/pbio/platform/ev3/pru_ledpwm.bin
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
 		--rename-section .data=.pru1,alloc,load,readonly,data,contents $^ $@
 
+# Name given to the hub being flashed. Also picks which hub to flash when
+# several are attached, since a hub running Pybricks carries its name in its
+# USB product string. A hub already in its bootloader does not, so it is
+# flashed whatever it used to be called.
+NAME ?= $(PBIO_PLATFORM)
+
 deploy: $(BUILD)/firmware.zip
-	$(Q)$(FLASH) $< --name $(PBIO_PLATFORM)
+	$(Q)$(FLASH) $< --name $(NAME)
 
 .DELETE_ON_ERROR:
 

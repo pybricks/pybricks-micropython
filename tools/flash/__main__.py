@@ -46,7 +46,12 @@ def main():
     ).completer = FilesCompleter(allowednames=(".zip", ".bin"))
 
     parser.add_argument(
-        "-n", "--name", metavar="<name>", type=str, help="a custom name for the hub"
+        "-n",
+        "--name",
+        metavar="<name>",
+        type=str,
+        help="a custom name for the hub. Also picks which hub to flash when "
+        "several are attached and running Pybricks",
     )
 
     argcomplete.autocomplete(parser)
@@ -60,8 +65,10 @@ def main():
     print("Unpacking firmware.")
     hub_kind, firmwares = create_firmware_blob(args.firmware, args.name)
 
-    # Reboot into update mode if present.
-    serial = get_serial_device(hub_kind)
+    # Reboot into update mode if present. The name picks which hub that is
+    # when several are attached; a hub already in its bootloader is flashed
+    # whatever it used to be called.
+    serial = get_serial_device(hub_kind, args.name)
 
     if serial and hub_kind == HubKind.TECHNIC_SMALL:
         sys.exit("SPIKE Essential cannot reboot into update mode automatically.")
