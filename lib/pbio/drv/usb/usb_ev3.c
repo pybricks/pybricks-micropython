@@ -846,20 +846,23 @@ static void usb_device_intr(void) {
         // EP 1 OUT, host to device, rx
         uint8_t rxcsr = HWREGB(USB0_BASE + USB_O_RXCSRL1);
 
-        // Clear error bits
-        rxcsr &= ~USB_RXCSRL1_STALLED;
-
-        HWREGB(USB0_BASE + USB_O_RXCSRL1) = rxcsr;
+        // Clear the sticky error bits by writing back only the bits that have
+        // to persist: RXRDY, because clearing it would drop a received packet,
+        // and the stall request. Writing back the value we read would leave
+        // the overrun flag set forever and re-trigger the write-only FLUSH and
+        // CLRDT bits if they ever read as set.
+        HWREGB(USB0_BASE + USB_O_RXCSRL1) = rxcsr & (USB_RXCSRL1_RXRDY | USB_RXCSRL1_STALL);
     }
 
     if (intr_src & USBOTG_INTR_EP1_IN) {
         // EP 1 IN, device to host, tx
         uint8_t txcsr = HWREGB(USB0_BASE + USB_O_TXCSRL1);
 
-        // Clear error bits
-        txcsr &= ~(USB_TXCSRL1_STALLED | USB_TXCSRL1_UNDRN | USB_TXCSRL1_FIFONE);
-
-        HWREGB(USB0_BASE + USB_O_TXCSRL1) = txcsr;
+        // Same here, and the stakes are higher: TXRDY is a read/write control
+        // bit, so writing back the value we read re-asserts it whenever a
+        // packet is still queued for the host, making the controller transmit
+        // that packet a second time. Only the stall request has to persist.
+        HWREGB(USB0_BASE + USB_O_TXCSRL1) = txcsr & USB_TXCSRL1_STALL;
     }
 
     // Check for DMA completions
