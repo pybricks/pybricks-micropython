@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
@@ -166,6 +167,12 @@ int main(int argc, char **argv) {
     static uint8_t umm_heap[1024 * 1024 * 2];
     umm_init_heap(umm_heap, sizeof(umm_heap));
 
+    // Program output is written straight to the stdout file descriptor while
+    // the drivers use printf(), so stdio must not hold anything back or the
+    // two end up out of order. That is already the case on a terminal, but not
+    // when stdout is a pipe, which is how the Bluetooth tests read it.
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     #ifdef PBDRV_CONFIG_RUN_ON_CI
     // On the CI modifying settings for stdin causes problems. The REPL isn't
     // used on CI anyway.
@@ -173,24 +180,26 @@ int main(int argc, char **argv) {
     return 0;
     #endif
 
-    // Save the original terminal settings
+    // Only a terminal has settings to change. Without one, such as when the
+    // hub is run by a test that reads its output through a pipe, there is
+    // nothing to configure and nothing to restore afterwards.
     struct termios term_old, term_new;
-    if (tcgetattr(STDIN_FILENO, &term_old) != 0) {
-        printf("DEBUG: Failed to get terminal attributes\n");
-        return 0;
-    }
-    term_new = term_old;
+    bool interactive = tcgetattr(STDIN_FILENO, &term_old) == 0;
 
-    // Get one char at a time instead of newline and disable CTRL+C for exit.
-    term_new.c_lflag &= ~(ICANON | ECHO | ISIG);
+    if (interactive) {
+        term_new = term_old;
 
-    // MicroPython REPL expects \r for newline.
-    term_new.c_iflag |= INLCR;
-    term_new.c_iflag &= ~ICRNL;
+        // Get one char at a time instead of newline and disable CTRL+C for exit.
+        term_new.c_lflag &= ~(ICANON | ECHO | ISIG);
 
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &term_new) != 0) {
-        printf("Failed to set terminal attributes\n");
-        return 0;
+        // MicroPython REPL expects \r for newline.
+        term_new.c_iflag |= INLCR;
+        term_new.c_iflag &= ~ICRNL;
+
+        if (tcsetattr(STDIN_FILENO, TCSANOW, &term_new) != 0) {
+            printf("Failed to set terminal attributes\n");
+            return 0;
+        }
     }
 
     // Set stdin non-blocking so we can service it in the runloop like on
@@ -214,7 +223,7 @@ int main(int argc, char **argv) {
     }
 
     // Restore terminal settings.
-    if (tcsetattr(STDIN_FILENO, TCSANOW, &term_old) != 0) {
+    if (interactive && tcsetattr(STDIN_FILENO, TCSANOW, &term_old) != 0) {
         printf("Failed to restore terminal attributes\n");
         return 0;
     }

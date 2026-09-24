@@ -440,4 +440,261 @@ static inline pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state
 
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
+/**
+ * Size of a Bluetooth Classic device address.
+ */
+#define PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE (6)
+
+/**
+ * Size of the peer message header: one type byte plus one address.
+ */
+#define PBDRV_BLUETOOTH_PEER_HEADER_SIZE (1 + PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE)
+
+/**
+ * Largest user payload that fits in one peer message.
+ *
+ * A link preserves order and does not lose messages, so a program with more
+ * to say can simply say it in several messages rather than pay for a big
+ * buffer on every brick. Note that this only holds per link: a message that
+ * the coordinator relays can still go missing, so several messages that only
+ * mean something together are better sent as one.
+ */
+#define PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE (256)
+
+/**
+ * L2CAP MTU of a peer channel. Basic mode preserves SDU boundaries, so one
+ * message crosses a link in one piece and there is no framing layer.
+ */
+#define PBDRV_BLUETOOTH_PEER_MTU \
+    (PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE + PBDRV_BLUETOOTH_PEER_HEADER_SIZE)
+
+/**
+ * Bytes of bookkeeping the relay queue adds to each message it holds.
+ */
+#define PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD (12)
+
+/**
+ * Smallest relay buffer that is guaranteed to hold one message of any size.
+ */
+#define PBDRV_BLUETOOTH_PEER_RELAY_MIN_SIZE \
+    (PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD + PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE)
+
+/**
+ * Called for each message addressed to this brick, from the Bluetooth driver
+ * context.
+ *
+ * @param [in] src_address  Address of the brick that sent the message, which
+ *                          is not necessarily the brick it arrived from.
+ * @param [in] data         Message payload, valid only for this call.
+ * @param [in] size         Payload size.
+ */
+typedef void (*pbdrv_bluetooth_peer_receive_callback_t)(const uint8_t *src_address, const uint8_t *data, uint32_t size);
+
+#if PBDRV_CONFIG_BLUETOOTH_PEER
+
+/**
+ * Destination address meaning "every peer on the network except the sender".
+ */
+extern const uint8_t pbdrv_bluetooth_peer_address_all[PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE];
+
+/**
+ * Tests whether the controller is up, which is when the peer service is
+ * listening, the local address is known and a peer can be paged.
+ *
+ * Bluetooth takes a moment to come up after boot, so a program that connects
+ * to peers at its very first instruction has to wait for this.
+ *
+ * @return  True if ready.
+ */
+bool pbdrv_bluetooth_peer_is_ready(void);
+
+/**
+ * Sets the callback for received peer messages, or NULL to drop them.
+ *
+ * Peer links are established at boot and outlive programs, so messages can
+ * arrive while nothing is interested in them. With no callback set, they are
+ * silently discarded and the link stays up.
+ *
+ * @param [in] callback  The callback, or NULL.
+ */
+void pbdrv_bluetooth_peer_set_receive_callback(pbdrv_bluetooth_peer_receive_callback_t callback);
+
+/**
+ * Sets the storage for messages this brick passes on between two other
+ * bricks, or NULL to stop passing them on.
+ *
+ * Only the coordinator relays, and only while something is interested in the
+ * network, so the driver does not keep this around itself. Anything already
+ * queued lives in the old buffer and is dropped along with it, so the buffer
+ * may be freed once this has been called with NULL.
+ *
+ * @param [in] buffer  The storage, or NULL.
+ * @param [in] size    Size of @p buffer. Anything smaller than
+ *                     ::PBDRV_BLUETOOTH_PEER_RELAY_MIN_SIZE is refused as if
+ *                     it were NULL.
+ */
+void pbdrv_bluetooth_peer_set_relay_buffer(uint8_t *buffer, uint32_t size);
+
+/**
+ * Connects to a peer brick, making this brick the coordinator of the network.
+ *
+ * This is non-blocking. Poll pbdrv_bluetooth_peer_connect_status() for the
+ * result. Connecting to a peer that is already connected succeeds without
+ * touching the link, so this can be called again to complete a partially
+ * established network.
+ *
+ * @param [in] address  6-byte Bluetooth address of the peer.
+ * @return              ::PBIO_SUCCESS if connecting was initiated or the peer
+ *                      was already connected.
+ *                      ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on,
+ *                      or if this brick has accepted a link and is therefore
+ *                      already a peer in someone else's network.
+ *                      ::PBIO_ERROR_NO_DEV if there is no free peer slot.
+ *                      ::PBIO_ERROR_FAILED if the connection could not be
+ *                      started.
+ */
+pbio_error_t pbdrv_bluetooth_peer_connect(const uint8_t *address);
+
+/**
+ * Gets the status of a connection started with pbdrv_bluetooth_peer_connect().
+ *
+ * @param [in] address  6-byte Bluetooth address of the peer.
+ * @return              ::PBIO_ERROR_AGAIN while connecting, ::PBIO_SUCCESS
+ *                      once connected, or ::PBIO_ERROR_FAILED if the attempt
+ *                      failed or the peer is not known.
+ */
+pbio_error_t pbdrv_bluetooth_peer_connect_status(const uint8_t *address);
+
+/**
+ * Tests whether the given peer is connected.
+ *
+ * @param [in] address  6-byte Bluetooth address of the peer.
+ * @return              True if connected.
+ */
+bool pbdrv_bluetooth_peer_is_connected(const uint8_t *address);
+
+/**
+ * Gets the number of connected peers. On a peer this is 1 once the
+ * coordinator has connected, which is what makes it a peer.
+ *
+ * @return  Number of connected peers.
+ */
+uint32_t pbdrv_bluetooth_peer_get_count(void);
+
+/**
+ * Gets the address of the connected peer in the given slot, to enumerate the
+ * network.
+ *
+ * @param [in] index  Slot index, less than ::PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS.
+ * @return            The 6-byte address, or NULL if the slot is not connected.
+ */
+const uint8_t *pbdrv_bluetooth_peer_get_address(uint32_t index);
+
+/**
+ * Gets this brick's own Bluetooth Classic address, which is what other bricks
+ * use to reach it.
+ *
+ * @param [out] address  Buffer of ::PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE bytes.
+ */
+void pbdrv_bluetooth_peer_get_local_address(uint8_t *address);
+
+/**
+ * Disconnects the given peer, or aborts an ongoing connection attempt.
+ *
+ * @param [in] address  6-byte Bluetooth address of the peer.
+ */
+void pbdrv_bluetooth_peer_disconnect(const uint8_t *address);
+
+/**
+ * Disconnects every peer.
+ */
+void pbdrv_bluetooth_peer_disconnect_all(void);
+
+/**
+ * Sends a message to one peer or to the whole network.
+ *
+ * Completes once the message has been handed to the stack for every
+ * destination, which takes one turn of the run loop each. @p data is borrowed
+ * rather than copied, so it must stay put until this completes or
+ * pbdrv_bluetooth_peer_send_cancel() has been called.
+ *
+ * Delivery is reliable per link but not end to end: a relayed message crosses
+ * two links, and is dropped without notice if the second one cannot take it.
+ *
+ * @param [in] state         Protothread state.
+ * @param [in] dest_address  6-byte address of the destination brick, or
+ *                           ::pbdrv_bluetooth_peer_address_all to send to
+ *                           everyone but this brick.
+ * @param [in] data          Payload, borrowed until this completes.
+ * @param [in] size          Payload size, at most
+ *                           ::PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE.
+ * @return                   ::PBIO_ERROR_AGAIN while sending.
+ *                           ::PBIO_SUCCESS once sent.
+ *                           ::PBIO_ERROR_INVALID_ARG if @p size is too big.
+ *                           ::PBIO_ERROR_BUSY if another message is still
+ *                           being sent.
+ *                           ::PBIO_ERROR_NO_DEV if the destination is not on
+ *                           the network.
+ *                           ::PBIO_ERROR_INVALID_OP if this brick is not on a
+ *                           peer network at all.
+ */
+pbio_error_t pbdrv_bluetooth_peer_send(pbio_os_state_t *state, const uint8_t *dest_address, const uint8_t *data, uint32_t size);
+
+/**
+ * Abandons the message being sent, so that its payload may be freed.
+ *
+ * Destinations that already had it keep it; the rest do not get it.
+ */
+void pbdrv_bluetooth_peer_send_cancel(void);
+
+#else // PBDRV_CONFIG_BLUETOOTH_PEER
+
+static inline bool pbdrv_bluetooth_peer_is_ready(void) {
+    return false;
+}
+
+static inline void pbdrv_bluetooth_peer_set_receive_callback(pbdrv_bluetooth_peer_receive_callback_t callback) {
+}
+
+static inline void pbdrv_bluetooth_peer_set_relay_buffer(uint8_t *buffer, uint32_t size) {
+}
+
+static inline pbio_error_t pbdrv_bluetooth_peer_connect(const uint8_t *address) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_peer_connect_status(const uint8_t *address) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_bluetooth_peer_is_connected(const uint8_t *address) {
+    return false;
+}
+
+static inline uint32_t pbdrv_bluetooth_peer_get_count(void) {
+    return 0;
+}
+
+static inline const uint8_t *pbdrv_bluetooth_peer_get_address(uint32_t index) {
+    return NULL;
+}
+
+static inline void pbdrv_bluetooth_peer_get_local_address(uint8_t *address) {
+}
+
+static inline void pbdrv_bluetooth_peer_disconnect(const uint8_t *address) {
+}
+
+static inline void pbdrv_bluetooth_peer_disconnect_all(void) {
+}
+
+static inline pbio_error_t pbdrv_bluetooth_peer_send(pbio_os_state_t *state, const uint8_t *dest_address, const uint8_t *data, uint32_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_peer_send_cancel(void) {
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_PEER
+
 #endif // _INTERNAL_PBDRV_BLUETOOTH_H_

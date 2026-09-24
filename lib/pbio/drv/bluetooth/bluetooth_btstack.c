@@ -40,6 +40,20 @@
 
 #define DEBUG 0
 
+/**
+ * Traces the peer message path only: every message in, every packet out, and
+ * every place one can go missing. Separate from DEBUG so it is not drowned
+ * out by the rest of the stack. Temporary, for tracking down a lost message.
+ */
+#define PEER_DEBUG (0)
+
+#if PEER_DEBUG
+#include <pbio/debug.h>
+#define PEER_PRINT pbio_debug
+#else
+#define PEER_PRINT(...)
+#endif
+
 #if DEBUG
 #include <pbio/debug.h>
 #define DEBUG_PRINT pbio_debug
@@ -2141,6 +2155,765 @@ static const btstack_link_key_db_t pbdrv_bluetooth_btstack_link_key_db = {
     link_key_db_iterator_done,
 };
 
+#if PBDRV_CONFIG_BLUETOOTH_PEER
+
+// Brick-to-brick messaging over a dedicated L2CAP channel per peer.
+//
+// Basic mode preserves SDU boundaries by spec, so one l2cap_send() arrives as
+// one packet of the same length and there is no framing layer here.
+//
+// BR/EDR gives no slot in which one slave may address another, so the
+// topology is a star: only the coordinator pages, every other brick only
+// listens, and peer-to-peer traffic is relayed by the coordinator.
+
+/**
+ * Dynamic-range PSM: odd-valued, with the least significant bit of the most
+ * significant byte zero. Both ends are our own firmware, so the value only
+ * has to match. No SDP record is registered for it.
+ */
+#define PEER_PSM (0x1001)
+
+/**
+ * Message type byte. Only data is defined; the remaining values are reserved
+ * for control messages such as a roster push.
+ */
+#define PEER_MESSAGE_TYPE_DATA (0)
+
+const uint8_t pbdrv_bluetooth_peer_address_all[PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE] = {
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+};
+
+/**
+ * One L2CAP channel to one other brick.
+ */
+typedef struct {
+    /** L2CAP channel ID. Valid once the slot is in use. */
+    uint16_t cid;
+    /** Address of the brick at the other end. */
+    bd_addr_t address;
+    /** Whether this slot is taken, while connecting or after a failure. */
+    bool in_use;
+    /** Whether the channel is open. */
+    bool connected;
+    /**
+     * Whether this brick paged the other end, which makes it the coordinator
+     * of this link. Decides which address the header carries and whether
+     * messages arriving here are relayed.
+     */
+    bool is_coordinator;
+    /** Result of the connection attempt, ::PBIO_ERROR_AGAIN while pending. */
+    pbio_error_t err;
+} peer_channel_t;
+
+static peer_channel_t peer_channels[PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS];
+
+static pbdrv_bluetooth_peer_receive_callback_t peer_receive_callback;
+
+/**
+ * The message this brick is sending on its own behalf, if any.
+ *
+ * BTstack has a single outgoing packet buffer, and on an asynchronous
+ * transport, which is what both the UART and USB controllers here use, it
+ * holds that buffer until the transport reports the packet gone. Until then
+ * l2cap_can_send_packet_now() is false for *every* channel, whatever the
+ * controller's own buffers are doing. So a message for several peers cannot
+ * be written in one pass: it is spread over as many turns of the run loop,
+ * which is why this has to outlive the call that started it.
+ *
+ * The payload is borrowed from the caller, which awaits completion, so there
+ * is nothing to copy and only one of these can be in flight.
+ */
+static struct {
+    /** Payload, owned by the caller until ::pending is clear. */
+    const uint8_t *data;
+    /** Payload size. */
+    uint32_t size;
+    /** Address for the header, as described for ::peer_relay_enqueue. */
+    bd_addr_t address;
+    /** Channels still to be given this message, by slot index. 0 when idle. */
+    uint32_t pending;
+} peer_tx_local;
+
+/**
+ * Layout of the bookkeeping in front of each message in the relay queue:
+ * the channels still to be given it, the payload size, and the address for
+ * the header, which for a relayed message is its sender.
+ */
+#define PEER_RELAY_PENDING_OFFSET (0)
+#define PEER_RELAY_SIZE_OFFSET (4)
+#define PEER_RELAY_ADDRESS_OFFSET (6)
+
+_Static_assert(PEER_RELAY_ADDRESS_OFFSET + PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE == PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD,
+    "relay overhead must match what callers size their buffer by");
+
+/**
+ * Ring of messages this brick is passing on between two other bricks, oldest
+ * at ::peer_relay_tail.
+ *
+ * The storage belongs to whoever called
+ * pbdrv_bluetooth_peer_set_relay_buffer(). Only the coordinator relays, and
+ * only while something is interested in the network, so this is not worth
+ * keeping around for the lifetime of the firmware. Without it, messages are
+ * still delivered here but not passed on.
+ */
+static uint8_t *peer_relay_buf;
+static uint32_t peer_relay_capacity;
+static uint32_t peer_relay_tail;
+static uint32_t peer_relay_used;
+static uint32_t peer_relay_count;
+
+static bool peer_address_is_all(const uint8_t *address) {
+    return memcmp(address, pbdrv_bluetooth_peer_address_all, sizeof(bd_addr_t)) == 0;
+}
+
+static peer_channel_t *peer_channel_for_address(const uint8_t *address) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (ch->in_use && memcmp(ch->address, address, sizeof(bd_addr_t)) == 0) {
+            return ch;
+        }
+    }
+    return NULL;
+}
+
+static peer_channel_t *peer_channel_for_cid(uint16_t cid) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (ch->in_use && ch->cid == cid) {
+            return ch;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * Takes a free slot, else recycles one left behind by a failed attempt.
+ */
+static peer_channel_t *peer_channel_alloc(void) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        if (!peer_channels[i].in_use) {
+            return &peer_channels[i];
+        }
+    }
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (!ch->connected && ch->err != PBIO_ERROR_AGAIN) {
+            return ch;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * The channel to the coordinator, if this brick is a peer. A peer never
+ * pages, so it has exactly one channel and did not initiate it.
+ */
+static peer_channel_t *peer_channel_uplink(void) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (ch->connected && !ch->is_coordinator) {
+            return ch;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * Whether this brick already has a live channel that it initiated
+ * (@p initiated true) or accepted (false). A slot left behind by a failed
+ * attempt does not count, since it is only waiting to be recycled.
+ *
+ * The star has exactly one coordinator, so having either kind rules out the
+ * other. See pbdrv_bluetooth_peer_connect().
+ */
+static bool peer_has_live_channel(bool initiated) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (ch->in_use && ch->is_coordinator == initiated &&
+            (ch->connected || ch->err == PBIO_ERROR_AGAIN)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// The relay ring wraps, so everything in it is read and written byte by byte.
+
+static void peer_relay_read(uint32_t pos, void *dest, uint32_t size) {
+    uint8_t *bytes = dest;
+    for (uint32_t i = 0; i < size; i++) {
+        bytes[i] = peer_relay_buf[(pos + i) % peer_relay_capacity];
+    }
+}
+
+static void peer_relay_write(uint32_t pos, const void *src, uint32_t size) {
+    const uint8_t *bytes = src;
+    for (uint32_t i = 0; i < size; i++) {
+        peer_relay_buf[(pos + i) % peer_relay_capacity] = bytes[i];
+    }
+}
+
+/**
+ * Drops the oldest message in the relay queue, which must not be empty.
+ */
+static void peer_relay_discard(void) {
+    uint8_t size[2];
+    peer_relay_read(peer_relay_tail + PEER_RELAY_SIZE_OFFSET, size, sizeof(size));
+    uint32_t total = PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD + pbio_get_uint16_le(size);
+    peer_relay_tail = (peer_relay_tail + total) % peer_relay_capacity;
+    peer_relay_used -= total;
+    peer_relay_count--;
+}
+
+/**
+ * Updates which channels the oldest message in the relay queue still has to
+ * be given.
+ */
+static void peer_relay_set_head_pending(uint32_t pending) {
+    uint8_t field[4];
+    pbio_set_uint32_le(field, pending);
+    peer_relay_write(peer_relay_tail + PEER_RELAY_PENDING_OFFSET, field, sizeof(field));
+}
+
+/**
+ * Takes the next connected destination out of @p pending, forgetting any
+ * channel that closed while the message waited.
+ *
+ * The bit of the returned channel is left set; the caller clears it once the
+ * message has been written.
+ */
+static peer_channel_t *peer_tx_next_channel(uint32_t *pending) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        if (!(*pending & (1U << i))) {
+            continue;
+        }
+        if (peer_channels[i].connected) {
+            return &peer_channels[i];
+        }
+        *pending &= ~(1U << i);
+    }
+    return NULL;
+}
+
+/**
+ * Whether the stack can take a packet for this channel right now. If not, a
+ * can-send-now event is requested so that the pump resumes at this same
+ * channel.
+ */
+static bool peer_tx_can_send(peer_channel_t *ch) {
+    if (l2cap_can_send_packet_now(ch->cid)) {
+        return true;
+    }
+    PEER_PRINT("PEER tx-defer cid %u\n", ch->cid);
+    l2cap_request_can_send_now_event(ch->cid);
+    return false;
+}
+
+/**
+ * Claims the stack's outgoing buffer and writes the message header into it.
+ *
+ * Only valid right after peer_tx_can_send(), which is what makes claiming it
+ * certain to succeed. Must be followed by peer_tx_end().
+ *
+ * @return  Where the payload goes.
+ */
+static uint8_t *peer_tx_begin(const uint8_t *address) {
+    l2cap_reserve_packet_buffer();
+    uint8_t *out = l2cap_get_outgoing_buffer();
+    out[0] = PEER_MESSAGE_TYPE_DATA;
+    memcpy(&out[1], address, sizeof(bd_addr_t));
+    return &out[PBDRV_BLUETOOTH_PEER_HEADER_SIZE];
+}
+
+/**
+ * Sends what peer_tx_begin() staged, giving the buffer back either way.
+ */
+static void peer_tx_end(peer_channel_t *ch, uint32_t size) {
+
+    uint8_t btstack_error = l2cap_send_prepared(ch->cid, size + PBDRV_BLUETOOTH_PEER_HEADER_SIZE);
+    if (btstack_error == ERROR_CODE_SUCCESS) {
+        PEER_PRINT("PEER tx cid %u size %" PRIu32 "\n", ch->cid, size);
+        return;
+    }
+    PEER_PRINT("PEER tx-refused cid %u status 0x%02x\n", ch->cid, btstack_error);
+
+    // The stack refusing a packet it just said it would take. Retrying would
+    // stall everything behind it, so the message is lost instead.
+    DEBUG_PRINT("Peer message to %s dropped, status 0x%02x.\n",
+        bd_addr_to_str(ch->address), btstack_error);
+
+    // It only hands the buffer back itself on the failures it reaches after
+    // taking it, and holding on to it would wedge every transport on the hub.
+    if (hci_is_packet_buffer_reserved()) {
+        l2cap_release_packet_buffer();
+    }
+}
+
+/**
+ * Hands the stack at most one packet, then arranges to be called again.
+ *
+ * Relay traffic goes first. This brick is only passing that on, whereas its
+ * own message belongs to a caller that waits for it, and making that caller
+ * wait a little longer is what keeps it from adding to the congestion.
+ */
+static void peer_tx_pump(void) {
+
+    while (peer_relay_count) {
+
+        uint8_t header[PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD];
+        peer_relay_read(peer_relay_tail, header, sizeof(header));
+
+        uint32_t pending = pbio_get_uint32_le(&header[PEER_RELAY_PENDING_OFFSET]);
+        uint32_t size = pbio_get_uint16_le(&header[PEER_RELAY_SIZE_OFFSET]);
+
+        peer_channel_t *ch = peer_tx_next_channel(&pending);
+        if (!ch) {
+            peer_relay_discard();
+            continue;
+        }
+
+        if (!peer_tx_can_send(ch)) {
+            // Keep the channels it just forgot forgotten.
+            peer_relay_set_head_pending(pending);
+            return;
+        }
+
+        peer_relay_read(peer_relay_tail + sizeof(header),
+            peer_tx_begin(&header[PEER_RELAY_ADDRESS_OFFSET]), size);
+        peer_tx_end(ch, size);
+
+        peer_relay_set_head_pending(pending & ~(1U << (uint32_t)(ch - peer_channels)));
+    }
+
+    while (peer_tx_local.pending) {
+
+        peer_channel_t *ch = peer_tx_next_channel(&peer_tx_local.pending);
+        if (!ch) {
+            break;
+        }
+
+        if (!peer_tx_can_send(ch)) {
+            return;
+        }
+
+        memcpy(peer_tx_begin(peer_tx_local.address), peer_tx_local.data, peer_tx_local.size);
+        peer_tx_end(ch, peer_tx_local.size);
+
+        peer_tx_local.pending &= ~(1U << (uint32_t)(ch - peer_channels));
+    }
+
+    // Stop borrowing the caller's payload the moment it is no longer needed.
+    peer_tx_local.data = NULL;
+}
+
+/**
+ * Queues one message to be passed on to every channel in @p mask.
+ *
+ * Best effort: with no relay buffer, or with a full one, messages are
+ * dropped. Waiting for room instead would stall relaying for everyone.
+ *
+ * @param [in] mask     Channels to send to, by slot index.
+ * @param [in] address  Address for the header: the destination when sending
+ *                      to the coordinator, the original sender when sending
+ *                      to a peer.
+ * @param [in] data     Payload.
+ * @param [in] size     Payload size, at most the max message size.
+ */
+static void peer_relay_enqueue(uint32_t mask, const uint8_t *address, const uint8_t *data, uint32_t size) {
+
+    uint32_t total = PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD + size;
+
+    if (!mask) {
+        return;
+    }
+
+    if (!peer_relay_buf || total > peer_relay_capacity) {
+        PEER_PRINT("PEER relay-nowhere size %" PRIu32 "\n", size);
+        return;
+    }
+
+    uint8_t header[PBDRV_BLUETOOTH_PEER_RELAY_OVERHEAD];
+    pbio_set_uint32_le(&header[PEER_RELAY_PENDING_OFFSET], mask);
+    pbio_set_uint16_le(&header[PEER_RELAY_SIZE_OFFSET], size);
+    memcpy(&header[PEER_RELAY_ADDRESS_OFFSET], address, sizeof(bd_addr_t));
+
+    // Dropping the oldest keeps the freshest data moving, which is what
+    // bricks reacting to each other want.
+    while (peer_relay_used + total > peer_relay_capacity) {
+        PEER_PRINT("PEER relay-full, dropping oldest\n");
+        peer_relay_discard();
+    }
+
+    uint32_t pos = (peer_relay_tail + peer_relay_used) % peer_relay_capacity;
+    peer_relay_write(pos, header, sizeof(header));
+    peer_relay_write(pos + sizeof(header), data, size);
+    peer_relay_used += total;
+    peer_relay_count++;
+
+    peer_tx_pump();
+}
+
+/**
+ * Handles one received message, delivering it here and relaying it onward if
+ * this brick is the coordinator of the link it arrived on.
+ */
+static void peer_handle_message(peer_channel_t *ch, const uint8_t *packet, uint16_t size) {
+
+    if (size < PBDRV_BLUETOOTH_PEER_HEADER_SIZE || packet[0] != PEER_MESSAGE_TYPE_DATA) {
+        return;
+    }
+
+    const uint8_t *address = &packet[1];
+    const uint8_t *payload = &packet[PBDRV_BLUETOOTH_PEER_HEADER_SIZE];
+    uint32_t payload_size = size - PBDRV_BLUETOOTH_PEER_HEADER_SIZE;
+
+    PEER_PRINT("PEER rx cid %u from %s size %" PRIu32 " '%.*s'\n",
+        ch->cid, bd_addr_to_str(ch->address), payload_size, (int)payload_size, payload);
+
+    if (!ch->is_coordinator) {
+        // This brick is a peer, so the header carries the original sender,
+        // which it cannot infer from its one channel.
+        if (peer_receive_callback) {
+            peer_receive_callback(address, payload, payload_size);
+        }
+        return;
+    }
+
+    // This brick is the coordinator, so the header carries the final
+    // destination and the sender is whoever owns this channel.
+    const uint8_t *source = ch->address;
+    bool to_all = peer_address_is_all(address);
+
+    bd_addr_t local_address;
+    gap_local_bd_addr(local_address);
+
+    if (peer_receive_callback && (to_all || memcmp(address, local_address, sizeof(bd_addr_t)) == 0)) {
+        peer_receive_callback(source, payload, payload_size);
+    }
+
+    if (!to_all && memcmp(address, local_address, sizeof(bd_addr_t)) == 0) {
+        return;
+    }
+
+    // Relay, never back to the sender.
+    uint32_t mask = 0;
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *out = &peer_channels[i];
+        if (out == ch || !out->connected) {
+            continue;
+        }
+        if (!to_all && memcmp(out->address, address, sizeof(bd_addr_t)) != 0) {
+            continue;
+        }
+        mask |= 1U << i;
+    }
+
+    PEER_PRINT("PEER relay mask 0x%" PRIx32 " '%.*s'\n",
+        mask, (int)payload_size, payload);
+
+    peer_relay_enqueue(mask, source, payload, payload_size);
+}
+
+/**
+ * Handles events on the peer L2CAP service and on channels this brick opened.
+ */
+static void peer_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+
+    bd_addr_t event_addr;
+    peer_channel_t *ch;
+
+    switch (packet_type) {
+        case HCI_EVENT_PACKET:
+            switch (hci_event_packet_get_type(packet)) {
+
+                case L2CAP_EVENT_INCOMING_CONNECTION: {
+                    uint16_t cid = l2cap_event_incoming_connection_get_local_cid(packet);
+                    l2cap_event_incoming_connection_get_address(packet, event_addr);
+
+                    // This brick is already in a star, as its coordinator or
+                    // as a peer, and either way it may not take another link.
+                    // Two bricks paging each other therefore both fail rather
+                    // than ending up in a network that cannot route.
+                    if (peer_has_live_channel(true) || peer_has_live_channel(false)) {
+                        DEBUG_PRINT("Already on a network, declining %s.\n", bd_addr_to_str(event_addr));
+                        l2cap_decline_connection(cid);
+                        break;
+                    }
+
+                    ch = peer_channel_for_address(event_addr);
+                    if (!ch) {
+                        ch = peer_channel_alloc();
+                    }
+                    if (!ch) {
+                        DEBUG_PRINT("No free peer slot, declining %s.\n", bd_addr_to_str(event_addr));
+                        l2cap_decline_connection(cid);
+                        break;
+                    }
+
+                    DEBUG_PRINT("Incoming peer connection from %s.\n", bd_addr_to_str(event_addr));
+                    memcpy(ch->address, event_addr, sizeof(bd_addr_t));
+                    ch->cid = cid;
+                    ch->in_use = true;
+                    ch->connected = false;
+                    ch->is_coordinator = false;
+                    ch->err = PBIO_ERROR_AGAIN;
+                    l2cap_accept_connection(cid);
+                    break;
+                }
+
+                case L2CAP_EVENT_CHANNEL_OPENED: {
+                    if (l2cap_event_channel_opened_get_psm(packet) != PEER_PSM) {
+                        return;
+                    }
+                    l2cap_event_channel_opened_get_address(packet, event_addr);
+                    ch = peer_channel_for_address(event_addr);
+                    if (!ch) {
+                        return;
+                    }
+                    uint8_t status = l2cap_event_channel_opened_get_status(packet);
+                    if (status != ERROR_CODE_SUCCESS) {
+                        DEBUG_PRINT("Peer channel to %s failed, status 0x%02x.\n",
+                            bd_addr_to_str(event_addr), status);
+                        ch->connected = false;
+                        ch->err = PBIO_ERROR_FAILED;
+                        break;
+                    }
+                    ch->cid = l2cap_event_channel_opened_get_local_cid(packet);
+                    ch->connected = true;
+                    ch->err = PBIO_SUCCESS;
+                    DEBUG_PRINT("Peer channel to %s opened.\n", bd_addr_to_str(event_addr));
+                    break;
+                }
+
+                case L2CAP_EVENT_CAN_SEND_NOW:
+                    peer_tx_pump();
+                    break;
+
+                case L2CAP_EVENT_CHANNEL_CLOSED: {
+                    ch = peer_channel_for_cid(l2cap_event_channel_closed_get_local_cid(packet));
+                    if (!ch || !ch->connected) {
+                        return;
+                    }
+                    DEBUG_PRINT("Peer channel to %s closed.\n", bd_addr_to_str(ch->address));
+                    // The slot is released entirely: there is no
+                    // auto-reconnect, so nothing is waiting on this address.
+                    memset(ch, 0, sizeof(*ch));
+                    // The queue may have been waiting on this channel, so it
+                    // has to be moved along rather than left stalled.
+                    peer_tx_pump();
+                    break;
+                }
+
+                default:
+                    return;
+            }
+            break;
+
+        case L2CAP_DATA_PACKET:
+            ch = peer_channel_for_cid(channel);
+            if (ch && ch->connected) {
+                peer_handle_message(ch, packet, size);
+            }
+            break;
+
+        default:
+            return;
+    }
+
+    pbio_os_request_poll();
+}
+
+bool pbdrv_bluetooth_peer_is_ready(void) {
+    // Not the same as the driver thread running: the controller is brought up
+    // asynchronously after that, and only then is the local address known,
+    // page scan enabled and the registered service actually listening.
+    return pbdrv_bluetooth_hci_is_enabled() && hci_get_state() == HCI_STATE_WORKING;
+}
+
+void pbdrv_bluetooth_peer_set_receive_callback(pbdrv_bluetooth_peer_receive_callback_t callback) {
+    peer_receive_callback = callback;
+}
+
+void pbdrv_bluetooth_peer_set_relay_buffer(uint8_t *buffer, uint32_t size) {
+    // Whatever is queued lives in the old buffer, so it goes with it.
+    peer_relay_buf = size >= PBDRV_BLUETOOTH_PEER_RELAY_MIN_SIZE ? buffer : NULL;
+    peer_relay_capacity = peer_relay_buf ? size : 0;
+    peer_relay_tail = 0;
+    peer_relay_used = 0;
+    peer_relay_count = 0;
+}
+
+pbio_error_t pbdrv_bluetooth_peer_connect(const uint8_t *address) {
+
+    if (!pbdrv_bluetooth_peer_is_ready()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Only the coordinator pages, so a brick that has accepted a link is
+    // already a peer in someone else's star and cannot start one of its own.
+    if (peer_has_live_channel(false)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Idempotent, so a partially established network can be completed by
+    // calling this again for every peer.
+    peer_channel_t *ch = peer_channel_for_address(address);
+    if (ch && (ch->connected || ch->err == PBIO_ERROR_AGAIN)) {
+        return PBIO_SUCCESS;
+    }
+
+    if (!ch) {
+        ch = peer_channel_alloc();
+    }
+    if (!ch) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    memset(ch, 0, sizeof(*ch));
+    memcpy(ch->address, address, sizeof(bd_addr_t));
+    ch->in_use = true;
+    ch->is_coordinator = true;
+    ch->err = PBIO_ERROR_AGAIN;
+
+    DEBUG_PRINT("Connecting to peer %s.\n", bd_addr_to_str(ch->address));
+
+    // No pairing: connecting is just paging a known address.
+    if (l2cap_create_channel(peer_packet_handler, ch->address, PEER_PSM,
+        PBDRV_BLUETOOTH_PEER_MTU, &ch->cid) != ERROR_CODE_SUCCESS) {
+        DEBUG_PRINT("Peer connection failed to start.\n");
+        ch->err = PBIO_ERROR_FAILED;
+        return PBIO_ERROR_FAILED;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_bluetooth_peer_connect_status(const uint8_t *address) {
+    peer_channel_t *ch = peer_channel_for_address(address);
+    if (!ch) {
+        return PBIO_ERROR_FAILED;
+    }
+    return ch->err;
+}
+
+bool pbdrv_bluetooth_peer_is_connected(const uint8_t *address) {
+    peer_channel_t *ch = peer_channel_for_address(address);
+    return ch && ch->connected;
+}
+
+uint32_t pbdrv_bluetooth_peer_get_count(void) {
+    uint32_t count = 0;
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        if (peer_channels[i].connected) {
+            count++;
+        }
+    }
+    return count;
+}
+
+const uint8_t *pbdrv_bluetooth_peer_get_address(uint32_t index) {
+    if (index >= PBIO_ARRAY_SIZE(peer_channels) || !peer_channels[index].connected) {
+        return NULL;
+    }
+    return peer_channels[index].address;
+}
+
+void pbdrv_bluetooth_peer_get_local_address(uint8_t *address) {
+    gap_local_bd_addr(address);
+}
+
+void pbdrv_bluetooth_peer_disconnect(const uint8_t *address) {
+
+    peer_channel_t *ch = peer_channel_for_address(address);
+    if (!ch) {
+        return;
+    }
+
+    DEBUG_PRINT("Disconnecting peer %s.\n", bd_addr_to_str(ch->address));
+
+    if (ch->connected) {
+        l2cap_disconnect(ch->cid);
+    }
+
+    // Released here rather than on the close event, so that a slot reserved
+    // for an attempt that never opened is freed too.
+    memset(ch, 0, sizeof(*ch));
+
+    // Anything queued for this channel has nowhere to go now.
+    peer_tx_pump();
+}
+
+void pbdrv_bluetooth_peer_disconnect_all(void) {
+    for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+        peer_channel_t *ch = &peer_channels[i];
+        if (ch->in_use) {
+            pbdrv_bluetooth_peer_disconnect(ch->address);
+        }
+    }
+}
+
+pbio_error_t pbdrv_bluetooth_peer_send(pbio_os_state_t *state, const uint8_t *dest_address, const uint8_t *data, uint32_t size) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    if (size > PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    if (peer_tx_local.pending) {
+        PEER_PRINT("PEER send-busy pending 0x%" PRIx32 "\n", peer_tx_local.pending);
+        return PBIO_ERROR_BUSY;
+    }
+
+    if (pbdrv_bluetooth_peer_get_count() == 0) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    uint32_t mask = 0;
+    peer_channel_t *uplink = peer_channel_uplink();
+
+    if (uplink) {
+        // A peer sends everything to the coordinator, which delivers it
+        // locally or relays it, so the header carries the final destination.
+        mask = 1U << (uint32_t)(uplink - peer_channels);
+        memcpy(peer_tx_local.address, dest_address, sizeof(bd_addr_t));
+    } else {
+        // The coordinator addresses its peers directly, so the header carries
+        // its own address as the sender.
+        if (peer_address_is_all(dest_address)) {
+            for (uint32_t i = 0; i < PBIO_ARRAY_SIZE(peer_channels); i++) {
+                if (peer_channels[i].connected) {
+                    mask |= 1U << i;
+                }
+            }
+        } else {
+            peer_channel_t *ch = peer_channel_for_address(dest_address);
+            if (!ch || !ch->connected) {
+                return PBIO_ERROR_NO_DEV;
+            }
+            mask = 1U << (uint32_t)(ch - peer_channels);
+        }
+        gap_local_bd_addr(peer_tx_local.address);
+    }
+
+    peer_tx_local.data = data;
+    peer_tx_local.size = size;
+    peer_tx_local.pending = mask;
+
+    peer_tx_pump();
+
+    PBIO_OS_AWAIT_UNTIL(state, peer_tx_local.pending == 0);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbdrv_bluetooth_peer_send_cancel(void) {
+    peer_tx_local.pending = 0;
+    peer_tx_local.data = NULL;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_PEER
+
 #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
 
 const char *pbdrv_bluetooth_get_fw_version(void) {
@@ -2433,6 +3206,15 @@ void pbdrv_bluetooth_init(void) {
     // and the Pybricks GATT service UUID would match every BLE-only hub too.
     spp_create_custom_sdp_record(spp_sdp_record, 0x10002, pbio_pybricks_rfcomm_service_class_uuid, RFCOMM_SERVER_CHANNEL, "Pybricks");
     sdp_register_service(spp_sdp_record);
+
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    // Brick-to-brick messaging. Registered at boot rather than by a program,
+    // so peer links outlive programs and a peer's link may already exist
+    // before its program runs. No SDP record: the coordinator connects by
+    // address to this fixed PSM, so there is nothing to discover. LEVEL_0
+    // means no pairing and no user interaction.
+    l2cap_register_service(peer_packet_handler, PEER_PSM, PBDRV_BLUETOOTH_PEER_MTU, LEVEL_0);
+    #endif
 
     // Identify with the hub name and as a toy robot instead. The decorated
     // name distinguishes this from the same hub connected over USB in host

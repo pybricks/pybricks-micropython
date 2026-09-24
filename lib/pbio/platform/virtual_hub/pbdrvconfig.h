@@ -13,6 +13,10 @@
 #ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC                      (1)
+// Peer-to-peer messaging, so two virtual hubs on two USB dongles can stand in
+// for two EV3 bricks.
+#define PBDRV_CONFIG_BLUETOOTH_PEER                         (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS               (7)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE                 515
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)

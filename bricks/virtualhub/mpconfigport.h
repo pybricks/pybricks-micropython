@@ -44,6 +44,13 @@
 #define PYBRICKS_PY_MESSAGING_RFCOMM            (1)
 #define PYBRICKS_PY_MESSAGING_BLE_RADIO         (1)
 #define PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD     (1)
+// Follows PBDRV_CONFIG_BLUETOOTH_PEER, which is only available in the local
+// build that drives a real USB dongle.
+#ifdef PBDRV_CONFIG_RUN_ON_CI
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK         (0)
+#else
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK         (1)
+#endif
 #define PYBRICKS_PY_NXTDEVICES                  (0)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)

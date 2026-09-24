@@ -22,14 +22,18 @@
 #define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
 #define MAX_ATT_DB_SIZE 512
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES 0
-#define MAX_NR_HCI_CONNECTIONS 3
+// Host computer + HID gamepad + one per peer brick, plus headroom for a link
+// that is on its way out while a replacement is paged. The baseband ceiling
+// is 7 slaves regardless of what is configured here.
+#define MAX_NR_HCI_CONNECTIONS 10
 #define MAX_NR_GATT_CLIENTS 2
 #define MAX_NR_HFP_CONNECTIONS 0
 #define MAX_NR_HID_HOST_CONNECTIONS 1
-// SDP client/server + HID control + HID interrupt channels.
-#define MAX_NR_L2CAP_CHANNELS 6
-// SDP server + HID control + HID interrupt services.
-#define MAX_NR_L2CAP_SERVICES 4
+// SDP client/server + HID control + HID interrupt channels, plus one peer
+// channel per peer brick.
+#define MAX_NR_L2CAP_CHANNELS 13
+// SDP server + HID control + HID interrupt + peer services.
+#define MAX_NR_L2CAP_SERVICES 5
 #define MAX_NR_RFCOMM_CHANNELS 4
 #define MAX_NR_RFCOMM_MULTIPLEXERS 1
 #define MAX_NR_RFCOMM_SERVICES 1

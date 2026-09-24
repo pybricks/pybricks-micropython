@@ -46,6 +46,7 @@
 #define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
 #define PYBRICKS_PY_MESSAGING_RFCOMM            (1)
 #define PYBRICKS_PY_MESSAGING_BLE_RADIO         (0)
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK         (1)
 #define PYBRICKS_PY_NXTDEVICES                  (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)

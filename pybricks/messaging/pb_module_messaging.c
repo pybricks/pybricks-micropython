@@ -43,6 +43,9 @@ static const mp_rom_map_elem_t messaging_globals_table[] = {
     #if PYBRICKS_PY_MESSAGING_BLE_RADIO
     { MP_ROM_QSTR(MP_QSTR_BLERadio), MP_ROM_PTR(&pb_type_ble_radio) },
     #endif // PYBRICKS_PY_MESSAGING_BLE_RADIO
+    #if PYBRICKS_PY_MESSAGING_HUB_NETWORK
+    { MP_ROM_QSTR(MP_QSTR_HubNetwork), MP_ROM_PTR(&pb_type_hub_network) },
+    #endif // PYBRICKS_PY_MESSAGING_HUB_NETWORK
 };
 static MP_DEFINE_CONST_DICT(pb_module_messaging_globals, messaging_globals_table);
 

@@ -54,6 +54,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	messaging/pb_module_messaging.c \
 	messaging/pb_type_app_data.c \
 	messaging/pb_type_ble_radio.c \
+	messaging/pb_type_hub_network.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
 	nxtdevices/pb_type_nxtdevices_energymeter.c \

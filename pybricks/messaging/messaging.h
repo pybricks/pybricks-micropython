@@ -22,6 +22,10 @@ mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channel
 extern const mp_obj_type_t pb_type_app_data;
 #endif
 
+#if PYBRICKS_PY_MESSAGING_HUB_NETWORK
+extern const mp_obj_type_t pb_type_hub_network;
+#endif
+
 #endif // PYBRICKS_PY_MESSAGING
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_MESSAGING_H

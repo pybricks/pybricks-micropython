@@ -47,6 +47,10 @@
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC              (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER                 (1)
+// Baseband ceiling: the 3-bit LT_ADDR allows 7 slaves per piconet. Whether
+// the CC2560 firmware sustains that many is still to be measured.
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS       (7)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (2)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         515
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
