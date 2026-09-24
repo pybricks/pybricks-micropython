@@ -51,6 +51,13 @@
 // Packet size of the CDC notification (interrupt IN) endpoint. We never send
 // notifications, so this only needs to be large enough to be valid.
 #define NOTIF_EP_PKT_SZ         8
+// Polling interval of the notification endpoint. The units differ by speed:
+// at full speed bInterval counts 1 ms frames, but at high speed it is an
+// exponent selecting 2^(bInterval-1) microframes of 125 us. Both of these
+// mean 16 ms; using the full-speed value at high speed would ask for 2^15
+// microframes, i.e. 4096 ms.
+#define NOTIF_EP_INTERVAL_FS    16
+#define NOTIF_EP_INTERVAL_HS    8
 
 
 /**
@@ -116,7 +123,7 @@ PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_conf_1);
 
 // The high-speed and full-speed configuration descriptors are identical apart
 // from the bulk endpoint max packet size, so a macro fills in the common parts.
-#define PBDRV_USB_EV3_CONF_1_COMMON(bulk_pkt_size) \
+#define PBDRV_USB_EV3_CONF_1_COMMON(bulk_pkt_size, notif_interval) \
     .conf_desc = { \
         .bLength = sizeof(pbdrv_usb_conf_desc_t), \
         .bDescriptorType = DESC_TYPE_CONFIGURATION, \
@@ -183,7 +190,7 @@ PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_conf_1);
         .bEndpointAddress = 0x82, \
         .bmAttributes = PBDRV_USB_EP_TYPE_INTR, \
         .wMaxPacketSize = NOTIF_EP_PKT_SZ, \
-        .bInterval = 16, \
+        .bInterval = (notif_interval), \
     }, \
     /* Data interface */ \
     .data_iface = { \
@@ -216,13 +223,13 @@ PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_ev3_conf_1);
 
 static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_hs = {
     .s = {
-        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_HS),
+        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_HS, NOTIF_EP_INTERVAL_HS),
     }
 };
 
 static const pbdrv_usb_ev3_conf_1_union_t configuration_1_desc_fs = {
     .s = {
-        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_FS),
+        PBDRV_USB_EV3_CONF_1_COMMON(PYBRICKS_EP_PKT_SZ_FS, NOTIF_EP_INTERVAL_FS),
     }
 };
 
