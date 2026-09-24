@@ -240,12 +240,18 @@ static void uart_rx_interrupt_handler(void) {
         // RX buffer full, disable further RX interrupts until btstack consumes
         // some of the data.
         uart_rx_interrupt_set_enabled(false);
-        btstack_run_loop_poll_data_sources_from_irq();
-        return;
     }
-    if (read_buf && (size_t)read_buf_len <= lwrb_get_full(&uart_rx_pending_ring_buffer)) {
-        btstack_run_loop_poll_data_sources_from_irq();
-    }
+
+    // Unconditionally, rather than only when what has arrived would finish the
+    // read the stack is waiting on. That test reads read_buf_len, which the
+    // reader below updates in a separate statement from the buffer pointer, so
+    // an interrupt landing between the two compares the bytes it just added
+    // against a length that has not been decremented yet, decides they are not
+    // enough, and asks for nothing. Nothing else drives the data sources, so
+    // those bytes then sit in the ring buffer until the next byte arrives from
+    // the controller, which is the next message: both are delivered at once,
+    // or neither if the traffic stops.
+    btstack_run_loop_poll_data_sources_from_irq();
 }
 
 static void pbdrv_bluetooth_btstack_classic_drive_read() {
