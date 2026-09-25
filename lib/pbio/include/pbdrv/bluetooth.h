@@ -15,7 +15,26 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#if PBDRV_CONFIG_BLUETOOTH || PBDRV_CONFIG_BLUETOOTH_CLASSIC
+// There is no single flag for Bluetooth Classic. A hub enables only the parts
+// it uses, and the shared setup they need is guarded on their combination:
+//
+// - PBDRV_CONFIG_BLUETOOTH_INQUIRY:      device discovery. Only pairing needs
+//   it, so a hub that just talks to known addresses can leave it out.
+// - PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID:  HID host, for gamepads.
+// - PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST: RFCOMM/SPP serial to a host
+//   computer. Hubs that reach the host over BLE do not need it.
+// - PBDRV_CONFIG_BLUETOOTH_PEER:         brick-to-brick messaging, which uses
+//   L2CAP directly and pairs with nothing, so it needs neither of the above.
+//
+// HID and HOST are what pair with an outside device, so the bonding store and
+// the SDP server follow (HID || HOST) rather than having flags of their own.
+
+// PBDRV_CONFIG_BLUETOOTH says a Bluetooth driver is present; the flag naming
+// the driver (PBDRV_CONFIG_BLUETOOTH_BTSTACK, _NXT, ...) selects which one.
+// What that driver can do is a separate question: PBDRV_CONFIG_BLUETOOTH_LE
+// below, and the Classic flags further down. The NXT BlueCore is the one
+// driver so far with no LE at all.
+#if PBDRV_CONFIG_BLUETOOTH
 
 void pbdrv_bluetooth_init(void);
 
@@ -26,7 +45,7 @@ static inline void pbdrv_bluetooth_init(void) {
 
 #endif
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_BLUETOOTH_LE
 
 /**
  * Gets the Bluetooth chip firmware version.
@@ -115,7 +134,7 @@ extern pbio_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callbac
 
 pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context);
 
-#else // PBDRV_CONFIG_BLUETOOTH
+#else // PBDRV_CONFIG_BLUETOOTH_LE
 
 static inline const char *pbdrv_bluetooth_get_fw_version(void) {
     return NULL;
@@ -137,7 +156,7 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
     return false;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH
+#endif // PBDRV_CONFIG_BLUETOOTH_LE
 
 /**
  * Maximum number of inquiry scan results stored by the driver.
@@ -155,7 +174,7 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
  */
 #define PBDRV_BLUETOOTH_HID_NUM_REPORTS (4)
 
-#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+#if PBDRV_CONFIG_BLUETOOTH_INQUIRY
 
 /**
  * Starts an inquiry scan for Bluetooth Classic devices.
@@ -184,6 +203,23 @@ void pbdrv_bluetooth_inquiry_stop(void);
  *                       ::PBIO_ERROR_INVALID_OP if no scan is in progress.
  */
 pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results);
+
+#else // PBDRV_CONFIG_BLUETOOTH_INQUIRY
+
+static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_inquiry_stop(void) {
+}
+
+static inline pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_INQUIRY
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
 
 /**
  * Starts pairing with a Bluetooth Classic HID device such as a gamepad.
@@ -266,6 +302,42 @@ const char *pbdrv_bluetooth_classic_hid_get_connected_name(void);
  * connection attempt, if any.
  */
 void pbdrv_bluetooth_classic_hid_disconnect(void);
+
+#else // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
+static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
+}
+
+static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
+    return false;
+}
+
+static inline uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size) {
+    return 0;
+}
+
+static inline bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id) {
+    return false;
+}
+
+static inline const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
+    return NULL;
+}
+
+static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
 /**
  * Starts pairing with a host computer (PC).
@@ -361,48 +433,7 @@ uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size);
  */
 pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size);
 
-#else // PBDRV_CONFIG_BLUETOOTH_CLASSIC
-
-static inline pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbdrv_bluetooth_inquiry_stop(void) {
-}
-
-static inline pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
-}
-
-static inline bool pbdrv_bluetooth_classic_hid_is_connected(void) {
-    return false;
-}
-
-static inline uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size) {
-    return 0;
-}
-
-static inline bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id) {
-    return false;
-}
-
-static inline const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
-    return NULL;
-}
-
-static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
-}
+#else // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
 static inline pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
     return PBIO_ERROR_NOT_SUPPORTED;
@@ -438,7 +469,7 @@ static inline pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
 /**
  * Size of a Bluetooth Classic device address.

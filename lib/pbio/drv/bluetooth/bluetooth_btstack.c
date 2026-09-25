@@ -364,6 +364,14 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 pbdrv_bluetooth_derive_static_address(derived, static_addr);
                 reverse_48(derived, static_addr);
                 gap_random_address_set(static_addr);
+
+                #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || \
+                PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST || PBDRV_CONFIG_BLUETOOTH_PEER
+                // Enable page scan, so a paired HID device (e.g. PS5), a
+                // bonded host computer or the coordinator of a peer network
+                // can all open the link by paging the hub.
+                gap_connectable_control(1);
+                #endif
             }
             break;
         case HCI_EVENT_COMMAND_COMPLETE: {
@@ -1241,7 +1249,7 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+#if PBDRV_CONFIG_BLUETOOTH_INQUIRY
 
 /**
  * Duration of one inquiry scan in units of 1.28 seconds. This is the maximum
@@ -1377,6 +1385,10 @@ pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_i
     return PBIO_SUCCESS;
 }
 
+#endif // PBDRV_CONFIG_BLUETOOTH_INQUIRY
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
 // Storage for the HID descriptor of the connected device, managed by hid_host.
 static uint8_t hid_descriptor_storage[512];
 
@@ -1492,14 +1504,6 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
     uint8_t status;
 
     switch (hci_event_packet_get_type(packet)) {
-        case BTSTACK_EVENT_STATE:
-            if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-                // Allow already-paired classic HID devices (e.g. PS5) to
-                // initiate reconnection by paging the hub.
-                gap_connectable_control(1);
-            }
-            break;
-
         case HCI_EVENT_PIN_CODE_REQUEST:
             // Legacy pairing fallback for devices without SSP.
             DEBUG_PRINT("Pin code request - using '0000'\n");
@@ -1772,6 +1776,10 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
 
     hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
 }
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
 /**
  * RFCOMM server channel for the serial connection from a host computer (PC).
@@ -2082,6 +2090,10 @@ void pbdrv_bluetooth_classic_host_disconnect(void) {
     rfcomm_disconnect(host_connection.rfcomm_cid);
 }
 
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
+
 // Adapts BTstack's link key DB interface to the stack-agnostic pbio store,
 // which is backed by pbsys persistent storage.
 
@@ -2154,6 +2166,8 @@ static const btstack_link_key_db_t pbdrv_bluetooth_btstack_link_key_db = {
     link_key_db_iterator_get_next,
     link_key_db_iterator_done,
 };
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
 
 #if PBDRV_CONFIG_BLUETOOTH_PEER
 
@@ -2914,8 +2928,6 @@ void pbdrv_bluetooth_peer_send_cancel(void) {
 
 #endif // PBDRV_CONFIG_BLUETOOTH_PEER
 
-#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     // REVISIT: this should be linked to the init script as it can be updated in software
     // init script version
@@ -3128,13 +3140,13 @@ void pbdrv_bluetooth_init(void) {
     hci_event_callback_registration.callback = &main_packet_handler;
     hci_add_event_handler(&hci_event_callback_registration);
 
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
     // Needed to get device names.
     hci_set_inquiry_mode(INQUIRY_MODE_RSSI_AND_EIR);
     static btstack_packet_callback_registration_t inquiry_event_callback_registration;
     inquiry_event_callback_registration.callback = &inquiry_packet_handler;
     hci_add_event_handler(&inquiry_event_callback_registration);
-    #endif
+    #endif // PBDRV_CONFIG_BLUETOOTH_INQUIRY
 
     l2cap_init();
 
@@ -3178,7 +3190,11 @@ void pbdrv_bluetooth_init(void) {
     (void)sm_packet_handler;
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_LE
 
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    // Everything below is Bluetooth Classic setup shared by the profiles.
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || \
+    PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST || PBDRV_CONFIG_BLUETOOTH_PEER
+
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
     // Run an SDP server. When a paired classic HID device (e.g. PS5) pages
     // the hub to reconnect, it is the L2CAP initiator and performs its own
     // SDP query against the hub. Without an SDP server the hub rejects that
@@ -3190,10 +3206,14 @@ void pbdrv_bluetooth_init(void) {
     device_id_create_sdp_record(device_id_sdp_record, 0x10001,
         DEVICE_ID_VENDOR_ID_SOURCE_BLUETOOTH, LWP3_LEGO_COMPANY_ID, PBDRV_CONFIG_HUB_KIND, 0x00);
     sdp_register_service(device_id_sdp_record);
+    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
     hid_host_init(hid_descriptor_storage, sizeof(hid_descriptor_storage));
     hid_host_register_packet_handler(hid_host_packet_handler);
+    #endif
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
     // RFCOMM serial server for the host computer connection. The paired host
     // initiates the connection.
     rfcomm_init();
@@ -3206,6 +3226,7 @@ void pbdrv_bluetooth_init(void) {
     // and the Pybricks GATT service UUID would match every BLE-only hub too.
     spp_create_custom_sdp_record(spp_sdp_record, 0x10002, pbio_pybricks_rfcomm_service_class_uuid, RFCOMM_SERVER_CHANNEL, "Pybricks");
     sdp_register_service(spp_sdp_record);
+    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
     #if PBDRV_CONFIG_BLUETOOTH_PEER
     // Brick-to-brick messaging. Registered at boot rather than by a program,
@@ -3238,19 +3259,26 @@ void pbdrv_bluetooth_init(void) {
     // attempting to become master (0).
     hci_set_master_slave_policy(1);
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
     // Also register for general HCI events for pairing/security requests.
     static btstack_packet_callback_registration_t hid_event_callback_registration;
     hid_event_callback_registration.callback = &hid_host_packet_handler;
     hci_add_event_handler(&hid_event_callback_registration);
+    #endif
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
     // Dedicated bonding results arrive as general HCI events.
     static btstack_packet_callback_registration_t host_event_callback_registration;
     host_event_callback_registration.callback = &host_packet_handler;
     hci_add_event_handler(&host_event_callback_registration);
+    #endif
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
     // Persist pairing link keys in pbsys storage instead of the stack default.
     hci_set_link_key_db(&pbdrv_bluetooth_btstack_link_key_db);
-    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #endif
+
+    #endif // Bluetooth Classic setup
 
     bluetooth_thread_err = PBIO_ERROR_AGAIN;
     bluetooth_thread_state = 0;

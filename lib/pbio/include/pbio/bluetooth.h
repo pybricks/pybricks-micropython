@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbdrv/config.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
@@ -243,7 +244,7 @@ typedef struct {
     char name[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE];
 } pbio_bluetooth_classic_link_key_t;
 
-#if PBIO_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_BLUETOOTH_LE
 
 //
 // General purpose functions: initialization and power/connected state.
@@ -455,6 +456,82 @@ pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *sta
  */
 pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer);
 
+#else // PBDRV_CONFIG_BLUETOOTH_LE
+
+static inline void pbio_bluetooth_deinit(void) {
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_get_connected(pbio_bluetooth_peripheral_t **peripheral, void *user, pbio_bluetooth_peripheral_connect_config_t *config) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbio_bluetooth_peripheral_release(pbio_bluetooth_peripheral_t *peripheral, void *user) {
+}
+
+static inline const char *pbio_bluetooth_peripheral_get_name(pbio_bluetooth_peripheral_t *peripheral) {
+    return "";
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_scan_and_connect(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_connect_config_t *config) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_disconnect(pbio_bluetooth_peripheral_t *peripheral) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_discover_characteristic(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_char_discovery_t *characteristic) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline uint16_t pbio_bluetooth_peripheral_discover_characteristic_get_result(pbio_bluetooth_peripheral_t *peri) {
+    return 0;
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_read_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_peripheral_write_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_start_advertising(bool start) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_start_observing(pbio_bluetooth_start_observing_callback_t callback) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbio_bluetooth_restart_observing_request(void) {
+}
+
+static inline pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+    // Don't hold up anything since Bluetooth is not used.
+    return PBIO_SUCCESS;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_LE
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
+
 /**
  * Registers the persisted bonding records, called by pbsys once on boot
  * after loading stored settings.
@@ -530,79 +607,7 @@ void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr);
  */
 const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(uint32_t index);
 
-#else // PBIO_CONFIG_BLUETOOTH
-
-static inline void pbio_bluetooth_deinit(void) {
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_get_connected(pbio_bluetooth_peripheral_t **peripheral, void *user, pbio_bluetooth_peripheral_connect_config_t *config) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbio_bluetooth_peripheral_release(pbio_bluetooth_peripheral_t *peripheral, void *user) {
-}
-
-static inline const char *pbio_bluetooth_peripheral_get_name(pbio_bluetooth_peripheral_t *peripheral) {
-    return "";
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_scan_and_connect(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_connect_config_t *config) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_disconnect(pbio_bluetooth_peripheral_t *peripheral) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_discover_characteristic(pbio_bluetooth_peripheral_t *peripheral, pbio_bluetooth_peripheral_char_discovery_t *characteristic) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline uint16_t pbio_bluetooth_peripheral_discover_characteristic_get_result(pbio_bluetooth_peripheral_t *peri) {
-    return 0;
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_read_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_peripheral_write_characteristic(pbio_bluetooth_peripheral_t *peripheral, uint16_t handle, const uint8_t *data, size_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_start_advertising(bool start) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_start_observing(pbio_bluetooth_start_observing_callback_t callback) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline void pbio_bluetooth_restart_observing_request(void) {
-}
-
-static inline pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
-    // Don't hold up anything since Bluetooth is not used.
-    return PBIO_SUCCESS;
-}
-
-#endif // PBIO_CONFIG_BLUETOOTH
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
 
 #endif // _PBIO_BLUETOOTH_H_
 

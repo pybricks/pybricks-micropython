@@ -130,7 +130,7 @@ static pbio_serial_connection_t pbio_serial_connections[] = {
         .deinit = pbdrv_usb_deinit,
     },
     #endif // PBIO_CONFIG_USB
-    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
     {
         .transport = PBSYS_HOST_TRANSPORT_TYPE_RFCOMM,
         .rx_read = pbdrv_bluetooth_classic_host_rx_read,
@@ -142,7 +142,7 @@ static pbio_serial_connection_t pbio_serial_connections[] = {
         .is_ready = pbdrv_bluetooth_classic_host_is_connected,
         .deinit = pbdrv_bluetooth_classic_host_disconnect,
     },
-    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
+    #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 };
 
 static pbio_serial_connection_t *pbio_serial_get_connection(pbsys_host_transport_type_t transport) {

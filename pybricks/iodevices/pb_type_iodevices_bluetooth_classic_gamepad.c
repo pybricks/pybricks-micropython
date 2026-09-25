@@ -21,6 +21,10 @@
 #include "py/runtime.h"
 #include "py/mperrno.h"
 
+#if !PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+#error "PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD needs PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID"
+#endif
+
 typedef struct _pb_type_bluetooth_classic_gamepad_obj_t {
     mp_obj_base_t base;
 } pb_type_bluetooth_classic_gamepad_obj_t;

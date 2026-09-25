@@ -46,9 +46,13 @@
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
-#define PBDRV_CONFIG_BLUETOOTH_CLASSIC              (1)
+#define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
+#define PBDRV_CONFIG_BLUETOOTH_INQUIRY              (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID          (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST         (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS        (1)
 #define PBDRV_CONFIG_BLUETOOTH_PEER                 (1)
-// Baseband ceiling: the 3-bit LT_ADDR allows 7 slaves per piconet. Whether
+// Baseband ceiling: the 3-bit LT_ADDR allows 7 peers per piconet. Whether
 // the CC2560 firmware sustains that many is still to be measured.
 #define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS       (7)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (2)

@@ -12,7 +12,14 @@
 // Use Bluetooth simulation locally.
 #ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
-#define PBDRV_CONFIG_BLUETOOTH_CLASSIC                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_LE                           (1)
+#define PBDRV_CONFIG_BLUETOOTH_INQUIRY                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID                  (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST                 (1)
+// BTstack has no bonding store of its own, so the link keys are kept in
+// pbsys settings. Chips that keep their own, like the NXT BlueCore, do not
+// set this.
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS               (1)
 // Peer-to-peer messaging, so two virtual hubs on two USB dongles can stand in
 // for two EV3 bricks.
 #define PBDRV_CONFIG_BLUETOOTH_PEER                         (1)

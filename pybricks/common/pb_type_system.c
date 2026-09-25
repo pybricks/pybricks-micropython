@@ -52,9 +52,9 @@ static mp_obj_t pb_type_System_info(void) {
         #if PBDRV_CONFIG_RESET
         {MP_OBJ_NEW_QSTR(MP_QSTR_reset_reason), mp_obj_new_int(pbdrv_reset_get_reason())},
         #endif // PBDRV_CONFIG_RESET
-        #if PBDRV_CONFIG_BLUETOOTH
+        #if PBDRV_CONFIG_BLUETOOTH_LE
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_ble), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED))},
-        #endif // PBDRV_CONFIG_BLUETOOTH
+        #endif // PBDRV_CONFIG_BLUETOOTH_LE
         #if PBDRV_CONFIG_USB
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_usb), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED))},
         #endif // PBDRV_CONFIG_USB

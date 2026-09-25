@@ -20,6 +20,7 @@
 #define PBIO_CONFIG_PORT_LUMP               (0)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (0)
 #define PBIO_CONFIG_PORT_LUMP_NUM_DEV       (0)
+#define PBIO_CONFIG_SERIAL                  (1)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (0)
@@ -29,9 +30,3 @@
 #define PBIO_CONFIG_USB                     (1)
 
 #define PBIO_CONFIG_ENABLE_SYS              (1)
-
-#ifndef PBDRV_CONFIG_RUN_ON_CI
-#define PBIO_CONFIG_BLUETOOTH               (1)
-#else
-#define PBIO_CONFIG_BLUETOOTH               (0)
-#endif

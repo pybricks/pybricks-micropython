@@ -455,16 +455,32 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 	btstack_chipset_cc256x.c \
 	)
 
-# Bluetooth Classic profiles (HID host etc.). Requires ENABLE_CLASSIC in the
-# platform btstack_config.h.
-ifeq ($(PB_LIB_BTSTACK_CLASSIC),1)
+# Bluetooth Classic profiles. Each requires ENABLE_CLASSIC in the platform
+# btstack_config.h, but ENABLE_CLASSIC on its own needs none of these sources:
+# peer-to-peer messaging talks L2CAP, which is already in the base sources.
+ifneq ($(filter 1,$(PB_LIB_BTSTACK_CLASSIC_HID) $(PB_LIB_BTSTACK_CLASSIC_HOST)),)
+# SDP, needed by both profiles below: to be found by an outside device, and,
+# for HID, to fetch the report descriptor from it.
 BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
 	device_id_server.c \
-	hid_host.c \
-	rfcomm.c \
 	sdp_client.c \
 	sdp_server.c \
 	sdp_util.c \
+	)
+endif
+
+# HID host, for Bluetooth Classic gamepads.
+ifeq ($(PB_LIB_BTSTACK_CLASSIC_HID),1)
+BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
+	hid_host.c \
+	)
+endif
+
+# RFCOMM/SPP serial server, for the connection from a host computer. Hubs that
+# reach the host over BLE instead do not need it.
+ifeq ($(PB_LIB_BTSTACK_CLASSIC_HOST),1)
+BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
+	rfcomm.c \
 	spp_server.c \
 	)
 endif

@@ -32,6 +32,10 @@
 #error "messages are packed and unpacked with the struct module"
 #endif
 
+#if !PBDRV_CONFIG_BLUETOOTH_PEER
+#error "PYBRICKS_PY_MESSAGING_HUB_NETWORK needs PBDRV_CONFIG_BLUETOOTH_PEER"
+#endif
+
 /** Number of characters in an address such as "00:16:53:12:34:56". */
 #define ADDRESS_STR_SIZE (17)
 

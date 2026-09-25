@@ -5,8 +5,6 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_BLUETOOTH
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +34,9 @@
 #define DEBUG_PRINT(...)
 #endif
 
-#if PBDRV_CONFIG_BLUETOOTH && (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE)
+#if PBDRV_CONFIG_BLUETOOTH_LE
+
+#if PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE
 #error "Host event message must fit in one BLE packet".
 #endif
 
@@ -576,7 +576,9 @@ void pbio_bluetooth_deinit(void) {
     pbio_os_request_poll();
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_CLASSIC
+#endif // PBDRV_CONFIG_BLUETOOTH_LE
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
 
 // Stack-agnostic Bluetooth Classic link key store, backed by the persisted
 // bonding records in pbsys storage settings. A record is registered (address,
@@ -723,6 +725,4 @@ const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_rec
     return link_key_is_set(record) ? record : NULL;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC
-
-#endif // PBIO_CONFIG_BLUETOOTH
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS

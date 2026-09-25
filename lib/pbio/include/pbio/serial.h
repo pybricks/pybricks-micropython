@@ -14,12 +14,8 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/config.h>
 #include <pbio/config.h>
 #include <pbsys/host.h>
-
-/** Whether any serial host transport is enabled. */
-#define PBIO_CONFIG_SERIAL (PBIO_CONFIG_USB || PBDRV_CONFIG_BLUETOOTH_CLASSIC)
 
 #if PBIO_CONFIG_SERIAL
 

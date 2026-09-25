@@ -2,7 +2,6 @@
 // Copyright (c) 2019-2026 The Pybricks Authors
 
 #define PBIO_CONFIG_BATTERY                 (1)
-#define PBIO_CONFIG_BLUETOOTH               (1)
 #define PBIO_CONFIG_DCMOTOR                 (1)
 #define PBIO_CONFIG_DCMOTOR_NUM_DEV         (6)
 #define PBIO_CONFIG_DRIVEBASE_SPIKE         (1)
@@ -21,6 +20,7 @@
 #define PBIO_CONFIG_PORT_LUMP               (1)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (1)
 #define PBIO_CONFIG_PORT_LUMP_NUM_DEV       (PBIO_CONFIG_PORT_NUM_DEV)
+#define PBIO_CONFIG_SERIAL                  (1)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (6)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (0)

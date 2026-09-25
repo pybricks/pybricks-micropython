@@ -37,7 +37,6 @@
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
 #define PYBRICKS_PY_MESSAGING                   (1)
 #define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
-#define PYBRICKS_PY_MESSAGING_RFCOMM            (0)
 #define PYBRICKS_PY_MESSAGING_BLE_RADIO         (0)
 #define PYBRICKS_PY_NXTDEVICES                  (0)
 #define PYBRICKS_PY_PARAMETERS                  (1)
