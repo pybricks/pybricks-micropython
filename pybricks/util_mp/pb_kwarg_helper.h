@@ -1,107 +1,159 @@
 // SPDX-License-Identifier: MIT
-// SPDX-License-Identifier: CC-BY-SA-4.0
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2026 The Pybricks Authors
 
-#ifndef PYBRICKS_INCLUDED_PBKWARG_H
-#define PYBRICKS_INCLUDED_PBKWARG_H
+// Keyword argument parsing helpers for MicroPython functions and methods.
+//
+// Usage, at the top of a function that takes (n_args, pos_args, kw_args):
+//
+//     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+//         PB_ARG_REQUIRED(foo),
+//         PB_ARG_DEFAULT_INT(bar, 100));
+//
+// This parses the arguments with mp_arg_parse_all() and then declares one
+// mp_obj_t variable per argument, named after the argument with an _in
+// suffix (foo_in and bar_in above). All arguments are parsed as objects and
+// may be given by position or by keyword.
+//
+// Variants:
+//
+//  - PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args, ...)
+//      For functions defined with MP_DEFINE_CONST_FUN_OBJ_KW.
+//  - PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, type, self, ...)
+//      Same, but pos_args[0] is the instance. It is not parsed as an
+//      argument; it is declared as `type *self` instead.
+//  - PB_PARSE_ARGS_CLASS(n_args, n_kw, args, ...)
+//      For make_new functions, where positional and keyword arguments are
+//      given as one array.
+//
+// Argument descriptors (between 1 and 16 per call):
+//
+//  - PB_ARG_REQUIRED(name)             Required argument.
+//  - PB_ARG_DEFAULT_INT(name, value)   Optional, default small int value.
+//  - PB_ARG_DEFAULT_OBJ(name, value)   Optional, default &value (a ROM object).
+//  - PB_ARG_DEFAULT_QSTR(name, value)  Optional, default string MP_QSTR_value.
+//  - PB_ARG_DEFAULT_FALSE(name)        Optional, default False.
+//  - PB_ARG_DEFAULT_TRUE(name)         Optional, default True.
+//  - PB_ARG_DEFAULT_NONE(name)         Optional, default None.
+//
+// After a PB_PARSE_ARGS_* call, PB_PARSE_ARGS_METHOD_ALL_NONE() evaluates to
+// true if every parsed argument (not counting self) is None.
+//
+// The macros also leave these locals in scope, which callers may use to parse
+// the same arguments again (for example with a shorter table):
+//
+//  - allowed_args: the static const mp_arg_t table.
+//  - parsed_args:  the mp_arg_val_t results.
+//  - kw_args:      PB_PARSE_ARGS_CLASS only, the mp_map_t of keyword arguments.
+
+#ifndef PYBRICKS_INCLUDED_PB_KWARG_HELPER_H
+#define PYBRICKS_INCLUDED_PB_KWARG_HELPER_H
 
 #include "py/obj.h"
 #include "py/runtime.h"
 
-// The following macro is a direct copy of https://stackoverflow.com/a/50371430/11744630
-#define EXPAND(x) x
-#define _GET_NTH_ARG(_1, _2, _3, _4, _5, _6, _7, _9, _10, N, ...) N
-#define NUM_ARGS(...) EXPAND(_GET_NTH_ARG(__VA_ARGS__, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+#include <pybricks/util_mp/pb_obj_helper.h>
 
-// Perform an action on a variable number of arguments. Extended from https://stackoverflow.com/a/11994395/11744630
-#define FI_1(WHAT, N, X)      WHAT(N - 1, X)
-#define FI_2(WHAT, N, X, ...) WHAT(N - 2, X) FI_1(WHAT, N, __VA_ARGS__)
-#define FI_3(WHAT, N, X, ...) WHAT(N - 3, X) FI_2(WHAT, N, __VA_ARGS__)
-#define FI_4(WHAT, N, X, ...) WHAT(N - 4, X) FI_3(WHAT, N, __VA_ARGS__)
-#define FI_5(WHAT, N, X, ...) WHAT(N - 5, X) FI_4(WHAT, N, __VA_ARGS__)
-#define FI_6(WHAT, N, X, ...) WHAT(N - 6, X) FI_5(WHAT, N, __VA_ARGS__)
-#define FI_7(WHAT, N, X, ...) WHAT(N - 7, X) FI_6(WHAT, N, __VA_ARGS__)
-#define FI_8(WHAT, N, X, ...) WHAT(N - 8, X) FI_7(WHAT, N, __VA_ARGS__)
-#define FI_9(WHAT, N, X, ...) WHAT(N - 9, X) FI_8(WHAT, N, __VA_ARGS__)
-#define GET_MACRO(_1, _2, _3, _4, _5, _6, _7, _8, _9, NAME, ...) NAME
-#define PB_FOR_EACH_IDX(action, ...) \
-    GET_MACRO(__VA_ARGS__, FI_9, FI_8, FI_7, FI_6, FI_5, FI_4, FI_3, FI_2, FI_1, )(action, NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
+// Each descriptor expands to a parenthesized tuple:
+//
+//     (qstr, variable name, index constant name, flags, default value)
+//
+// The name is token-pasted right here, so an argument name that happens to
+// also be a macro name is never expanded.
 
-// Make a QSTR, even if the name is generated from a macro
-#define MAKE_QSTR_(name) MP_QSTR_##name
-#define MAKE_QSTR(name) MAKE_QSTR_(name)
+#define PB_ARG_REQUIRED(name) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_REQUIRED | MP_ARG_OBJ, MP_ROM_PTR(NULL))
 
-// Parse given positional and keyword arguments against a list of allowed arguments
-// First n_ignore arguments are required arguments for which no keyword can be given.
-#define PB_PARSE_ARGS(parsed_args, n_args, pos_args, kw_args, allowed_args, n_ignore) \
-    mp_arg_val_t parsed_args[MP_ARRAY_SIZE(allowed_args)]; \
-    mp_arg_parse_all(n_args - n_ignore, pos_args + n_ignore, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, parsed_args)
+#define PB_ARG_DEFAULT_INT(name, value) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_INT(value))
 
-// The following functions make use of the aforementioned PB_PARSE_ARGS macro, but they first
-// auto-generate the allowed_args table to simplify notation in the pybricks modules.
+#define PB_ARG_DEFAULT_OBJ(name, value) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_PTR(&value))
 
-// Generate table entry from an argument name, its requirements, and its default value
-#define GET_ARG_NAME(name, required, value) name##_in
-#define GET_ARG_SPEC(name, required, value) { \
-        .qst = MAKE_QSTR(name), \
-        .flags = required, \
-        .defval = value, \
-}
+#define PB_ARG_DEFAULT_QSTR(name, value) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_QSTR(MP_QSTR_##value))
 
-// Unpack a table entry into three arguments
-#define PB_ARG_DO(IDX, arg_spec) GET_ARG_SPEC arg_spec,
+#define PB_ARG_DEFAULT_FALSE(name) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_FALSE)
 
-// Auto-declare a mp_obj_t for an argument
-#define GEN_ARG_OBJ(IDX, arg_spec) mp_obj_t GET_ARG_NAME arg_spec = parsed_args[IDX].u_obj;
+#define PB_ARG_DEFAULT_TRUE(name) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_TRUE)
 
-// Create the arguments table, parse it, and declare mp_obj_t's for each one
-#define PB_PARSE_GENERIC(n_args, pos_args, kw_args, n_ignore, ...) static const mp_arg_t allowed_args[] = { \
-        PB_FOR_EACH_IDX(PB_ARG_DO, __VA_ARGS__) \
-}; \
-    PB_PARSE_ARGS(parsed_args, n_args, pos_args, kw_args, allowed_args, n_ignore); \
-    PB_FOR_EACH_IDX(GEN_ARG_OBJ, __VA_ARGS__)
+#define PB_ARG_DEFAULT_NONE(name) \
+    (MP_QSTR_##name, name##_in, pb_kwarg_idx_##name, MP_ARG_OBJ, MP_ROM_NONE)
 
-// Parse the arguments of a function
+// Per-descriptor expansions. Each takes the tuple elements. The default value
+// is taken as the variadic tail, because in some object representations a ROM
+// object initializer is a braced list that itself contains commas.
+
+// Enumerator giving the position of the argument in the tables below.
+#define PB_KWARG_INDEX(qst, var, idx, flags, ...) idx,
+// Entry of the mp_arg_t table. The default of a required argument is never
+// read by mp_arg_parse_all(), so it is left as a null object.
+#define PB_KWARG_ENTRY(qst, var, idx, flags, ...) { qst, flags, { .u_rom_obj = __VA_ARGS__ } },
+// Local variable holding the parsed argument.
+#define PB_KWARG_LOCAL(qst, var, idx, flags, ...) mp_obj_t var = parsed_args[idx].u_obj;
+
+// Applies macro m to one tuple: m (a, b, c, d, e) -> m(a, b, c, d, e).
+#define PB_KWARG_APPLY(m, tuple) m tuple
+
+// Number of variadic arguments, 1 to 16.
+#define PB_KWARG_COUNT(...) \
+    PB_KWARG_COUNT_PICK(__VA_ARGS__, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define PB_KWARG_COUNT_PICK(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, n, ...) n
+
+#define PB_KWARG_JOIN(a, b) PB_KWARG_JOIN_(a, b)
+#define PB_KWARG_JOIN_(a, b) a##b
+
+// Applies macro m to each of the variadic tuples, in order.
+#define PB_KWARG_EACH(m, ...) PB_KWARG_JOIN(PB_KWARG_EACH_, PB_KWARG_COUNT(__VA_ARGS__))(m, __VA_ARGS__)
+#define PB_KWARG_EACH_1(m, t) PB_KWARG_APPLY(m, t)
+#define PB_KWARG_EACH_2(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_1(m, __VA_ARGS__)
+#define PB_KWARG_EACH_3(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_2(m, __VA_ARGS__)
+#define PB_KWARG_EACH_4(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_3(m, __VA_ARGS__)
+#define PB_KWARG_EACH_5(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_4(m, __VA_ARGS__)
+#define PB_KWARG_EACH_6(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_5(m, __VA_ARGS__)
+#define PB_KWARG_EACH_7(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_6(m, __VA_ARGS__)
+#define PB_KWARG_EACH_8(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_7(m, __VA_ARGS__)
+#define PB_KWARG_EACH_9(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_8(m, __VA_ARGS__)
+#define PB_KWARG_EACH_10(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_9(m, __VA_ARGS__)
+#define PB_KWARG_EACH_11(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_10(m, __VA_ARGS__)
+#define PB_KWARG_EACH_12(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_11(m, __VA_ARGS__)
+#define PB_KWARG_EACH_13(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_12(m, __VA_ARGS__)
+#define PB_KWARG_EACH_14(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_13(m, __VA_ARGS__)
+#define PB_KWARG_EACH_15(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_14(m, __VA_ARGS__)
+#define PB_KWARG_EACH_16(m, t, ...) PB_KWARG_APPLY(m, t) PB_KWARG_EACH_15(m, __VA_ARGS__)
+
+// Declares the index constants, the argument table and the output array.
+#define PB_KWARG_DECLARE(...) \
+    enum { PB_KWARG_EACH(PB_KWARG_INDEX, __VA_ARGS__) }; \
+    static const mp_arg_t allowed_args[] = { PB_KWARG_EACH(PB_KWARG_ENTRY, __VA_ARGS__) }; \
+    mp_arg_val_t parsed_args[MP_ARRAY_SIZE(allowed_args)]
+
 #define PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args, ...) \
-    PB_PARSE_GENERIC(n_args, pos_args, kw_args, 0, __VA_ARGS__)
+    PB_KWARG_DECLARE(__VA_ARGS__); \
+    mp_arg_parse_all((n_args), (pos_args), (kw_args), \
+    MP_ARRAY_SIZE(allowed_args), allowed_args, parsed_args); \
+    PB_KWARG_EACH(PB_KWARG_LOCAL, __VA_ARGS__)
 
-// Parse the arguments of a class method, skipping self
+#define PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, type, self, ...) \
+    type *self = MP_OBJ_TO_PTR((pos_args)[0]); \
+    PB_PARSE_ARGS_FUNCTION((n_args) - 1, (pos_args) + 1, (kw_args), __VA_ARGS__)
+
+// Like PB_PARSE_ARGS_METHOD, for a method that does not use its instance:
+// the instance is skipped, not converted, and no self variable is declared.
 #define PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args, ...) \
-    PB_PARSE_GENERIC(n_args, pos_args, kw_args, 1, __VA_ARGS__)
+    PB_PARSE_ARGS_FUNCTION((n_args) - 1, (pos_args) + 1, (kw_args), __VA_ARGS__)
 
-// Parse the arguments of a class method, including self
-#define PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, self_type, self_name, ...) \
-    PB_PARSE_GENERIC(n_args, pos_args, kw_args, 1, __VA_ARGS__) \
-    self_type *self_name = MP_OBJ_TO_PTR(pos_args[0]);
-
-// Parse the arguments of a __init__ (without parsing self)
-#define PB_PARSE_ARGS_CLASS(n_args, n_kw, pos_and_kw_args, ...) \
+// Like mp_arg_parse_all_kw_array(), but with the keyword map kept in scope.
+#define PB_PARSE_ARGS_CLASS(n_args, n_kw, args, ...) \
+    PB_KWARG_DECLARE(__VA_ARGS__); \
     mp_map_t kw_args; \
-    mp_map_init_fixed_table(&kw_args, n_kw, pos_and_kw_args + n_args); \
-    PB_PARSE_GENERIC(n_args, pos_and_kw_args, &kw_args, 0, __VA_ARGS__)
+    mp_map_init_fixed_table(&kw_args, (n_kw), (args) + (n_args)); \
+    mp_arg_parse_all((n_args), (args), &kw_args, \
+    MP_ARRAY_SIZE(allowed_args), allowed_args, parsed_args); \
+    PB_KWARG_EACH(PB_KWARG_LOCAL, __VA_ARGS__)
 
-// Required argument
-#define PB_ARG_REQUIRED(name) (name, MP_ARG_OBJ | MP_ARG_REQUIRED, { })
+#define PB_PARSE_ARGS_METHOD_ALL_NONE() \
+    pb_obj_parsed_args_all_none(parsed_args, MP_ARRAY_SIZE(parsed_args))
 
-// Optional keyword argument with default integer value
-#define PB_ARG_DEFAULT_INT(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_INT(value)})
-
-// Optional keyword argument with default enum value
-#define PB_ARG_DEFAULT_OBJ(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&value)})
-
-// Optional keyword argument with default qstr value
-#define PB_ARG_DEFAULT_QSTR(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR_##value)})
-
-// Optional keyword argument with default false value
-#define PB_ARG_DEFAULT_FALSE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_FALSE})
-
-// Optional keyword argument with default true value
-#define PB_ARG_DEFAULT_TRUE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_TRUE})
-
-// Optional keyword argument with default None value
-#define PB_ARG_DEFAULT_NONE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE})
-
-// Test if all parsed arguments are None.
-#define PB_PARSE_ARGS_METHOD_ALL_NONE() (pb_obj_parsed_args_all_none(parsed_args, MP_ARRAY_SIZE(parsed_args)))
-
-#endif // PYBRICKS_INCLUDED_PBKWARG_H
+#endif // PYBRICKS_INCLUDED_PB_KWARG_HELPER_H
