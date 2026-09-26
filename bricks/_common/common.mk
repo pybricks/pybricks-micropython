@@ -140,6 +140,9 @@ ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
 ifeq ($(PB_LIB_BTSTACK),1)
+# BTstack includes "btstack_config.h" by that fixed name; ours lives with the
+# driver and is shared by every platform.
+INC += -I$(PBTOP)/lib/pbio/drv/bluetooth
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
 ifeq ($(PB_MCU_FAMILY),native)
@@ -490,8 +493,6 @@ ifeq ($(PB_MCU_FAMILY),native)
 BTSTACK_SRC_C += $(addprefix lib/btstack/,\
 	platform/libusb/hci_transport_h2_libusb.c \
 	platform/posix/hci_dump_posix_stdout.c \
-	platform/posix/btstack_tlv_posix.c \
-	src/ble/le_device_db_tlv.c \
 	chipset/zephyr/btstack_chipset_zephyr.c \
 	chipset/realtek/btstack_chipset_realtek.c \
 	chipset/bcm/btstack_chipset_bcm.c \
@@ -499,8 +500,9 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/,\
 	3rd-party/rijndael/rijndael.c \
 	3rd-party/micro-ecc/uECC.c \
 	)
-# Suppress unused variable warning for this file
-$(BUILD)/lib/btstack/platform/libusb/hci_transport_h2_libusb.o: CFLAGS += -Wno-unused-variable
+# Suppress warnings about the parts of this file that the features we enable
+# do not reach, such as the SCO paths.
+$(BUILD)/lib/btstack/platform/libusb/hci_transport_h2_libusb.o: CFLAGS += -Wno-unused-variable -Wno-unused-function
 endif
 
 # STM32 HAL

@@ -23,9 +23,7 @@
 #include <pbio/util.h>
 
 #include "btstack.h"
-#include "ble/le_device_db_tlv.h"
 #include "btstack_chipset_realtek.h"
-#include "btstack_tlv_posix.h"
 #include "hci.h"
 #include "hci_transport_usb.h"
 #include "hci_dump_posix_stdout.h"
@@ -46,11 +44,6 @@ typedef struct {
     void (*set_chipset)(const pbdrv_bluetooth_btstack_local_version_info_t *info);
 } pbdrv_bluetooth_usb_dongle_t;
 
-#define TLV_DB_PATH_PREFIX "/tmp/btstack_"
-#define TLV_DB_PATH_POSTFIX ".tlv"
-static char tlv_db_path[100];
-static const btstack_tlv_t *tlv_impl;
-static btstack_tlv_posix_t tlv_context;
 static bd_addr_t local_addr;
 
 // Set by BTstack's packet handler when we get USB info and local version info.
@@ -340,21 +333,8 @@ void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16
             switch (btstack_event_state_get_state(packet)) {
                 case HCI_STATE_WORKING:
                     gap_local_bd_addr(local_addr);
-                    btstack_strcpy(tlv_db_path, sizeof(tlv_db_path), TLV_DB_PATH_PREFIX);
-                    btstack_strcat(tlv_db_path, sizeof(tlv_db_path), bd_addr_to_str_with_delimiter(local_addr, '-'));
-                    btstack_strcat(tlv_db_path, sizeof(tlv_db_path), TLV_DB_PATH_POSTFIX);
                     printf("\n");
-                    tlv_impl = btstack_tlv_posix_init_instance(&tlv_context, tlv_db_path);
-                    btstack_tlv_set_instance(tlv_impl, &tlv_context);
-                    // NB: Classic link keys are persisted in pbsys storage
-                    // via the link key db set by the main btstack driver.
-                    #ifdef ENABLE_BLE
-                    le_device_db_tlv_configure(tlv_impl, &tlv_context);
-                    #endif
                     printf("BTstack up and running on %s.\n", bd_addr_to_str(local_addr));
-                    break;
-                case HCI_STATE_OFF:
-                    btstack_tlv_posix_deinit(&tlv_context);
                     break;
                 default:
                     break;

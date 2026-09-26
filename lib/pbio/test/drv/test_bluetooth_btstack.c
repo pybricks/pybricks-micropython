@@ -491,6 +491,7 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                             }
 
                             (void)value;
+                            (void)size;
                             log_debug("ATT_HANDLE_VALUE_NOTIFICATION: attr_handle: %04x, size: %u", attr_handle, size);
                         }
                         break;

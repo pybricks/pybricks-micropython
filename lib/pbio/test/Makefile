@@ -106,7 +106,7 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
 
 # pbio library
 PBIO_DIR = ..
-PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
+PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR) -I$(PBIO_DIR)/drv/bluetooth
 PBIO_SRC = $(PBIO_DIR)/platform/test/platform.c \
 	$(shell find $(PBIO_DIR)/drv ! -wholename "*/uart_ev3_pru_lib/*" -and ! -wholename "*/stm32_usbd/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
