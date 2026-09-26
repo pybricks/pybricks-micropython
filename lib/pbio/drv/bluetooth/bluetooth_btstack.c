@@ -1787,19 +1787,11 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
 #define RFCOMM_SERVER_CHANNEL (1)
 
 /**
- * RFCOMM frame overhead inside an L2CAP packet: address, control, the 2-byte
- * (14-bit) length field and the FCS. This is how BTstack derives the frame
- * size it offers from the L2CAP MTU, and there is no API to ask it for the
- * number, so it is repeated here for the static assert below.
- */
-#define RFCOMM_FRAME_OVERHEAD (5)
-
-/**
  * Maximum RFCOMM frame size requested for the server channel.
  *
  * Sized so that a whole Pybricks packet fits in one frame. The value is only
- * a request: BTstack uses the smallest of it, the local L2CAP MTU minus
- * ::RFCOMM_FRAME_OVERHEAD, and whatever the host computer asks for during
+ * a request: BTstack uses the smallest of it, the local L2CAP MTU minus the
+ * RFCOMM frame overhead, and whatever the host computer asks for during
  * parameter negotiation. The assert keeps the first two from being the
  * binding constraint; a host that asks for less still splits packets over
  * frames, which works because RFCOMM is a byte stream either way: TX chunks
@@ -1808,7 +1800,11 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
  */
 #define RFCOMM_SERVER_MTU (PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE)
 
-_Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE - RFCOMM_FRAME_OVERHEAD >= RFCOMM_SERVER_MTU,
+// Also checks the header sizes the shared config assumes against the ones
+// BTstack actually uses, since the config cannot see BTstack's own headers.
+_Static_assert(PBDRV_BTSTACK_L2CAP_HEADER == L2CAP_HEADER_SIZE,
+    "the shared BTstack config assumes the wrong L2CAP header size");
+_Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE - PBDRV_BTSTACK_RFCOMM_HEADER >= RFCOMM_SERVER_MTU,
     "HCI_ACL_PAYLOAD_SIZE is too small to send a Pybricks packet in one RFCOMM frame");
 
 /**

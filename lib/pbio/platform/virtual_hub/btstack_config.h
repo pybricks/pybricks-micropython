@@ -20,45 +20,24 @@
 
 // BTstack features that can be enabled
 #define ENABLE_ATT_DELAYED_RESPONSE
-#define ENABLE_BLE
 #define ENABLE_BTSTACK_STDIN_LOGGING
-#define ENABLE_CLASSIC
 #define ENABLE_CROSS_TRANSPORT_KEY_DERIVATION
 #define ENABLE_HFP_WIDE_BAND_SPEECH
 #define ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
-#define ENABLE_LE_CENTRAL
 #define ENABLE_L2CAP_LE_CREDIT_BASED_FLOW_CONTROL_MODE
 #define ENABLE_LE_DATA_LENGTH_EXTENSION
-#define ENABLE_LE_PERIPHERAL
 #define ENABLE_LE_PRIVACY_ADDRESS_RESOLUTION
 #define ENABLE_LE_SECURE_CONNECTIONS
 #define ENABLE_LOG_ERROR
 #define ENABLE_LOG_INFO
 #define ENABLE_MICRO_ECC_FOR_LE_SECURE_CONNECTIONS
-#define ENABLE_PRINTF_HEXDUMP
 #define ENABLE_SCO_OVER_HCI
 #define ENABLE_SDP_DES_DUMP
 #define ENABLE_SOFTWARE_AES128
 
-// BTstack configuration. buffers, sizes, ...
-// Sized by the largest link, which here is Classic RFCOMM to a host computer:
-// one COBS-encoded Pybricks packet (521 bytes, being the 512-byte host event
-// message plus its endpoint byte, the COBS overhead and the frame delimiter),
-// plus the 5-byte RFCOMM frame overhead and the 4-byte L2CAP header. Anything
-// less splits every large packet over two frames for no good reason.
-//
-// The other two links need less: one whole peer message
-// (PBDRV_BLUETOOTH_PEER_MTU, 520) or one full ATT PDU at
-// PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515), each plus the same 4-byte L2CAP
-// header. The LE MTU no longer follows this number, since
-// pbdrv_bluetooth_init() pins it to the platform maximum.
-//
-// BTstack allocates this twice per HCI connection (ACL recombination buffer
-// plus the per-connection ATT server request buffer), so it sets the static
-// RAM cost of every extra connection. Platforms without a Classic host
-// connection stay at the smaller peer-sized value. bluetooth_btstack.c
-// static-asserts all three links.
-#define HCI_ACL_PAYLOAD_SIZE (521 + 5 + 4)
+// Sizes and static resources follow the Bluetooth features in pbdrvconfig.h.
+#include <drv/bluetooth/bluetooth_btstack_config.h>
+
 #define HCI_INCOMING_PRE_BUFFER_SIZE 14 // sizeof BNEP header, avoid memcpy
 
 #define NVM_NUM_DEVICE_DB_ENTRIES      16
