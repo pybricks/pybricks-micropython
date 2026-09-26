@@ -340,50 +340,28 @@ static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
 #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
 /**
- * Starts pairing with a host computer (PC).
+ * Sets whether the hub answers inquiry scans, so that it shows up in the
+ * Bluetooth panel of a nearby host computer (PC).
  *
- * Uses dedicated bonding: the hub connects only to establish the bond and
- * drops the link when done. The bonded host then initiates the actual
- * serial (RFCOMM) connection itself, e.g. from a web browser via the serial
- * port the OS exposes for the hub.
+ * This is all the hub does towards pairing: the host drives the exchange from
+ * there, which is what makes it learn the hub name and show its usual prompt.
+ * Pairing itself needs nothing from this, and works whenever a host that
+ * already knows the address connects, since the hub is always page scanning.
+ * So this is only needed to introduce the hub to a host the first time.
  *
- * This is non-blocking. Poll pbdrv_bluetooth_classic_host_pair_status() for
- * the result.
+ * Has no effect while Bluetooth is not powered on. The caller can tell from
+ * pbdrv_bluetooth_classic_host_is_discoverable() and ask again.
  *
- * @param [in] bdaddr  6-byte Bluetooth address of the host, as found with
- *                     an inquiry scan.
- * @param [in] name    Host name for the bonding record.
- * @return             ::PBIO_SUCCESS if pairing was initiated.
- *                     ::PBIO_ERROR_INVALID_OP if Bluetooth is not powered on.
- *                     ::PBIO_ERROR_BUSY if pairing or already connected.
- *                     ::PBIO_ERROR_FAILED if pairing could not be started.
+ * @param [in] discoverable  Whether the hub should answer inquiry scans.
  */
-pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name);
+void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable);
 
 /**
- * Gets the status of pairing started with pbdrv_bluetooth_classic_host_pair().
+ * Tests whether the hub currently answers inquiry scans.
  *
- * @return  ::PBIO_ERROR_AGAIN while pairing is in progress, ::PBIO_SUCCESS
- *          if the last attempt succeeded, ::PBIO_ERROR_TIMEDOUT or
- *          ::PBIO_ERROR_CANCELED if it timed out or was cancelled.
+ * @return  True if discoverable.
  */
-pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void);
-
-/**
- * Gets the numeric comparison passkey of the ongoing host pairing, once
- * available, so it can be shown for the user to verify against the
- * confirmation prompt on the host.
- *
- * @param [out] passkey  The 6-digit passkey.
- * @return               True if a passkey is currently available.
- */
-bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey);
-
-/**
- * Cancels an ongoing host pairing attempt, if any, forgetting the
- * provisional bonding record.
- */
-void pbdrv_bluetooth_classic_host_pair_cancel(void);
+bool pbdrv_bluetooth_classic_host_is_discoverable(void);
 
 /**
  * Tests whether a host computer is connected over RFCOMM.
@@ -435,19 +413,11 @@ pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, con
 
 #else // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
-static inline pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
 }
 
-static inline pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey) {
+static inline bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
     return false;
-}
-
-static inline void pbdrv_bluetooth_classic_host_pair_cancel(void) {
 }
 
 static inline bool pbdrv_bluetooth_classic_host_is_connected(void) {

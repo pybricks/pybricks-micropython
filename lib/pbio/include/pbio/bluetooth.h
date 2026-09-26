@@ -560,6 +560,16 @@ const char *pbio_bluetooth_classic_link_key_get_name(const uint8_t *bdaddr);
 void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name);
 
 /**
+ * Updates the name of a registered device, without otherwise touching its
+ * record. Used when the name is only learned after registering, such as when
+ * a host computer initiates pairing and the name is requested afterwards.
+ *
+ * @param [in]  bdaddr  Bluetooth address of the remote device (6 bytes).
+ * @param [in]  name    Device name.
+ */
+void pbio_bluetooth_classic_link_key_set_name(const uint8_t *bdaddr, const char *name);
+
+/**
  * Forgets a bonding record entirely, e.g. when pairing was cancelled or
  * timed out. Unlike pbio_bluetooth_classic_link_key_delete(), this also drops
  * the user's registration, so no new key will be stored for the device.

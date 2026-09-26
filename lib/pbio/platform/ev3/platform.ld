@@ -61,9 +61,13 @@ SECTIONS
         *(.data.*)
     } > DDR
 
+    /* The firmware metadata reports this section's start and size as where
+       to patch the hub name, so it must hold the name and nothing else. In
+       particular, do not align inside the section: that would pad between
+       the section start and the name, and the patched name would land that
+       many bytes early. */
     .name :
     {
-        . = ALIGN(4);
         *(.name) /* customizable hub name */
     } > DDR
 

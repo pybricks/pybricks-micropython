@@ -58,6 +58,14 @@ typedef struct {
     bool (*is_ready)(void);
     /** De-initializes the transport driver on soft-poweroff. Optional. */
     void (*deinit)(void);
+    /**
+     * Milliseconds the host has to identify itself as a Pybricks app after
+     * opening the port, before reject() drops it. Zero to accept whoever
+     * opens the port and wait indefinitely.
+     */
+    uint32_t handshake_timeout;
+    /** Drops a connection whose opener never identified itself. Optional. */
+    void (*reject)(void);
 
     /** The process running this connection. */
     pbio_os_process_t process;
@@ -81,6 +89,14 @@ typedef struct {
      * opened.
      */
     bool subscribed;
+    /**
+     * Whether it is settled who opened the port: either a Pybricks message
+     * arrived, or the grace period ran out and the connection was dropped.
+     * Keeps the check to once per connection.
+     */
+    bool handshake_settled;
+    /** Runs out when the opener has not identified itself in time. */
+    pbio_os_timer_t handshake_timer;
     /** Incoming COBS frame assembly buffer (encoded bytes, delimiter excluded). */
     uint8_t rx_frame[PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE];
     uint32_t rx_frame_len;
@@ -116,6 +132,13 @@ typedef struct {
     uint32_t tx_frame_len;
 } pbio_serial_connection_t;
 
+/**
+ * Grace period for a host to send its first Pybricks message after opening
+ * the port. A Pybricks app reads device information as soon as the port is
+ * open, so this only has to cover transport latency, not user interaction.
+ */
+#define PBIO_SERIAL_HANDSHAKE_TIMEOUT_MS (5000)
+
 static pbio_serial_connection_t pbio_serial_connections[] = {
     #if PBIO_CONFIG_USB
     {
@@ -141,6 +164,15 @@ static pbio_serial_connection_t pbio_serial_connections[] = {
         // host sees a disconnect rather than a silent timeout.
         .is_ready = pbdrv_bluetooth_classic_host_is_connected,
         .deinit = pbdrv_bluetooth_classic_host_disconnect,
+        // Unlike USB, where opening the port is a deliberate act by an app,
+        // a host OS can open this one by itself, as part of connecting to
+        // the hub from its Bluetooth panel. Only one RFCOMM connection fits,
+        // so such an opener would lock out the Pybricks app the user is
+        // actually trying to connect with, and leave the hub looking
+        // connected in the Bluetooth panel to boot. Drop whoever does not
+        // speak Pybricks, so the channel is free for whoever does.
+        .handshake_timeout = PBIO_SERIAL_HANDSHAKE_TIMEOUT_MS,
+        .reject = pbdrv_bluetooth_classic_host_disconnect,
     },
     #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 };
@@ -170,6 +202,10 @@ void pbio_serial_port_changed(pbsys_host_transport_type_t transport, bool open) 
     }
 
     con->port_open = open;
+
+    // Whoever just opened the port has yet to prove they are a Pybricks app.
+    con->handshake_settled = !open;
+    pbio_os_timer_set(&con->handshake_timer, con->handshake_timeout);
 
     // Drop any partially-assembled incoming frame. Otherwise stray bytes from a
     // previous port opener (e.g. an OS modem probe like ModemManager, which
@@ -254,7 +290,11 @@ static void pbio_serial_handle_data_in(pbio_serial_connection_t *con) {
                     con->rx_frame, con->rx_frame_len, &msg_type, msg, sizeof(msg));
 
                 // The decoded prefix is the host-to-hub message type and the rest
-                // is its payload.
+                // is its payload. Any of them identifies the opener as a
+                // Pybricks app, which is more permissive than requiring a
+                // subscription: an app is free to only read, say.
+                con->handshake_settled = true;
+
                 if (msg_size >= 1 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE) {
                     // Subscribe or unsubscribe to event notifications. The payload
                     // is a single byte: 1 to subscribe, 0 to unsubscribe.
@@ -295,6 +335,21 @@ static void pbio_serial_handle_data_in(pbio_serial_connection_t *con) {
     }
 }
 
+/**
+ * Drops the connection if whoever opened the port never spoke Pybricks.
+ *
+ * The port stays open until the transport confirms the disconnect, so this
+ * settles the question first to act on it only once.
+ */
+static void pbio_serial_enforce_handshake(pbio_serial_connection_t *con) {
+    if (!con->handshake_timeout || con->handshake_settled || !con->port_open ||
+        !pbio_os_timer_is_expired(&con->handshake_timer)) {
+        return;
+    }
+    con->handshake_settled = true;
+    con->reject();
+}
+
 static void pbio_serial_reset_state(pbio_serial_connection_t *con) {
     pbio_serial_port_changed(con->transport, false);
     con->subscribed = false;
@@ -312,6 +367,7 @@ static pbio_error_t pbio_serial_process_thread(pbio_os_state_t *state, void *con
 
     // Runs every time. If there is no connection, there just won't be data.
     pbio_serial_handle_data_in(con);
+    pbio_serial_enforce_handshake(con);
 
     PBIO_OS_ASYNC_BEGIN(state);
 

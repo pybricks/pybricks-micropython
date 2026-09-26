@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
@@ -1511,13 +1512,6 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
             gap_pin_code_response(event_addr, "0000");
             break;
 
-        case HCI_EVENT_USER_CONFIRMATION_REQUEST:
-            // SSP numeric comparison. Auto-accept since gamepads have no display.
-            DEBUG_PRINT("SSP user confirmation auto accept\n");
-            hci_event_user_confirmation_request_get_bd_addr(packet, event_addr);
-            hci_send_cmd(&hci_user_confirmation_request_reply, event_addr);
-            break;
-
         case HCI_EVENT_HID_META:
             switch (hci_event_hid_meta_get_subevent_code(packet)) {
 
@@ -1808,17 +1802,16 @@ _Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE - PBDRV_BTSTACK_RFCOMM_H
     "HCI_ACL_PAYLOAD_SIZE is too small to send a Pybricks packet in one RFCOMM frame");
 
 /**
- * Pairing needs the user to accept a prompt on the host computer, so allow
- * ample time before giving up.
+ * Name for a bonding record until the device's real name is known.
  */
-#define HOST_PAIR_TIMEOUT_MS (30000)
+#define HOST_DEFAULT_NAME "Computer"
 
 /**
  * The one supported connection to a host computer.
  *
- * Pairing uses GAP dedicated bonding: the hub connects only to establish the
- * bond and the link is dropped when done. The bonded host initiates the
- * actual RFCOMM connection itself later.
+ * The host drives pairing from its own Bluetooth settings; the hub only makes
+ * itself discoverable so it can be found the first time. The host initiates
+ * the RFCOMM connection later, when an app on it opens the serial port.
  */
 static struct {
     /** RFCOMM channel ID. Valid while connected. */
@@ -1827,15 +1820,11 @@ static struct {
     bd_addr_t bdaddr;
     /** Whether the RFCOMM channel is open. */
     bool connected;
-    /** Whether a dedicated bonding session is in progress. */
-    bool pairing;
-    /** SSP numeric comparison passkey, valid while pair_passkey_valid. */
-    uint32_t pair_passkey;
-    bool pair_passkey_valid;
-    /** Result of the last pairing session. */
-    pbio_error_t pair_err;
-    /** Ends the pairing session if bonding never completes. */
-    btstack_timer_source_t pair_timeout;
+    /** Whether the hub answers inquiry scans. */
+    bool discoverable;
+    /** Bonding record registered when pairing started, undone if it fails. */
+    bd_addr_t bond_addr;
+    bool bond_provisional;
     /**
      * Incoming byte stream, drained by the pbio serial process. Holds a whole
      * packet plus the start of the next one, and one slot for lwrb to tell
@@ -1848,12 +1837,40 @@ static struct {
     uint32_t tx_size;
 } host_connection;
 
-static void host_pair_end(pbio_error_t err);
+/**
+ * Whether a device's bonding record still carries the placeholder name,
+ * meaning its real name has yet to be asked for.
+ */
+static bool host_bond_name_is_placeholder(const uint8_t *bdaddr) {
+    const char *name = pbio_bluetooth_classic_link_key_get_name(bdaddr);
+    return name && strcmp(name, HOST_DEFAULT_NAME) == 0;
+}
+
+/**
+ * Whether the bonding record registered when pairing started belongs to
+ * @p bdaddr, so that only that device's pairing settles it.
+ */
+static bool host_bond_is_provisional(const uint8_t *bdaddr) {
+    return host_connection.bond_provisional &&
+           memcmp(bdaddr, host_connection.bond_addr, sizeof(bd_addr_t)) == 0;
+}
+
+/**
+ * Forgets the bonding record registered for a device whose pairing did not
+ * complete, so it cannot claim a slot from a device that does pair.
+ */
+static void host_bond_forget_provisional(void) {
+    if (!host_connection.bond_provisional) {
+        return;
+    }
+    pbio_bluetooth_classic_link_key_unregister(host_connection.bond_addr);
+    host_connection.bond_provisional = false;
+}
 
 /**
  * Handles host computer events. Registered both as a general HCI event
- * handler (for dedicated bonding results) and as the RFCOMM service packet
- * handler (for RFCOMM events and data).
+ * handler (for pairing events) and as the RFCOMM service packet handler (for
+ * RFCOMM events and data).
  */
 static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
     UNUSED(channel);
@@ -1865,32 +1882,65 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
         case HCI_EVENT_PACKET:
             switch (hci_event_packet_get_type(packet)) {
 
-                case GAP_EVENT_DEDICATED_BONDING_COMPLETED:
-                    gap_event_dedicated_bonding_completed_get_address(packet, event_addr);
-                    if (!host_connection.pairing ||
-                        memcmp(event_addr, host_connection.bdaddr, sizeof(bd_addr_t)) != 0) {
+                case HCI_EVENT_IO_CAPABILITY_RESPONSE:
+                    // Secure Simple Pairing is starting with this device.
+                    // Only registered devices get their link key stored, so
+                    // register one now for a device we do not know yet: the
+                    // stack stores the key into it a few events from here.
+                    // Gating this on anything the user did would defeat it,
+                    // since pairing also happens on its own when a host that
+                    // still has the hub in its list connects after the hub
+                    // lost its key, such as on a firmware update. Peer hubs
+                    // and other links that need no pairing never get here.
+                    hci_event_io_capability_response_get_bd_addr(packet, event_addr);
+                    if (pbio_bluetooth_classic_link_key_get_name(event_addr)) {
+                        // Known device, e.g. a gamepad or a host re-pairing.
+                        // Keep its record, and with it its name; only the key
+                        // is replaced, which is what re-pairing means.
                         break;
                     }
-                    status = gap_event_dedicated_bonding_completed_get_status(packet);
-                    DEBUG_PRINT("Dedicated bonding completed, status 0x%02x.\n", status);
-                    host_pair_end(status == ERROR_CODE_SUCCESS ? PBIO_SUCCESS : PBIO_ERROR_FAILED);
+                    DEBUG_PRINT("Pairing started with new device %s.\n", bd_addr_to_str(event_addr));
+                    host_bond_forget_provisional();
+                    pbio_bluetooth_classic_link_key_register(event_addr, HOST_DEFAULT_NAME);
+                    memcpy(host_connection.bond_addr, event_addr, sizeof(bd_addr_t));
+                    host_connection.bond_provisional = true;
                     break;
 
-                case HCI_EVENT_USER_CONFIRMATION_REQUEST:
-                    // Reply is sent by the shared handler; only capture the
-                    // passkey here so the UI can show it during pairing.
-                    hci_event_user_confirmation_request_get_bd_addr(packet, event_addr);
-                    if (host_connection.pairing &&
-                        memcmp(event_addr, host_connection.bdaddr, sizeof(bd_addr_t)) == 0) {
-                        host_connection.pair_passkey = hci_event_user_confirmation_request_get_numeric_value(packet);
-                        host_connection.pair_passkey_valid = true;
+                case HCI_EVENT_SIMPLE_PAIRING_COMPLETE:
+                    hci_event_simple_pairing_complete_get_bd_addr(packet, event_addr);
+                    status = hci_event_simple_pairing_complete_get_status(packet);
+                    DEBUG_PRINT("Pairing with %s completed, status 0x%02x.\n", bd_addr_to_str(event_addr), status);
+                    if (status != ERROR_CODE_SUCCESS) {
+                        if (host_bond_is_provisional(event_addr)) {
+                            host_bond_forget_provisional();
+                        }
+                        break;
                     }
+                    if (host_bond_is_provisional(event_addr)) {
+                        // The record earned its keep, so don't undo it later.
+                        host_connection.bond_provisional = false;
+                    }
+                    // The device never sends its name, so ask for it while
+                    // the link is up, to replace the placeholder above.
+                    if (host_bond_name_is_placeholder(event_addr)) {
+                        gap_remote_name_request(event_addr, 0, 0);
+                    }
+                    break;
+
+                case HCI_EVENT_REMOTE_NAME_REQUEST_COMPLETE:
+                    // Also fires for devices found by an inquiry scan, which
+                    // is harmless: naming a record after the device is what
+                    // this does either way, and unknown devices are ignored.
+                    if (hci_event_remote_name_request_complete_get_status(packet) != ERROR_CODE_SUCCESS) {
+                        break;
+                    }
+                    hci_event_remote_name_request_complete_get_bd_addr(packet, event_addr);
+                    pbio_bluetooth_classic_link_key_set_name(event_addr,
+                        hci_event_remote_name_request_complete_get_remote_name(packet));
                     break;
 
                 case RFCOMM_EVENT_INCOMING_CONNECTION:
-                    // Also declined while pairing, since that session owns
-                    // the address and timer state of this struct.
-                    if (host_connection.connected || host_connection.pairing) {
+                    if (host_connection.connected) {
                         DEBUG_PRINT("RFCOMM channel in use, declining.\n");
                         rfcomm_decline_connection(rfcomm_event_incoming_connection_get_rfcomm_cid(packet));
                         break;
@@ -1969,95 +2019,26 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
     pbio_os_request_poll();
 }
 
-/**
- * Ends the host pairing session with the given result. On failure, drops the
- * bonding link and forgets the provisional bonding record, whose link key
- * was never (fully) negotiated.
- */
-static void host_pair_end(pbio_error_t err) {
-    btstack_run_loop_remove_timer(&host_connection.pair_timeout);
-    host_connection.pairing = false;
-    host_connection.pair_passkey_valid = false;
-    host_connection.pair_err = err;
-    if (err != PBIO_SUCCESS) {
-        // There is no API to abort dedicated bonding, so drop the link.
-        hci_connection_t *acl = hci_connection_for_bd_addr_and_type(host_connection.bdaddr, BD_ADDR_TYPE_ACL);
-        if (acl && acl->con_handle != HCI_CON_HANDLE_INVALID) {
-            gap_disconnect(acl->con_handle);
-        }
-        pbio_bluetooth_classic_link_key_unregister(host_connection.bdaddr);
-    }
-}
+void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
 
-static void host_pair_timeout_handler(btstack_timer_source_t *ts) {
-    UNUSED(ts);
-    if (!host_connection.pairing) {
-        return;
-    }
-    DEBUG_PRINT("Host pairing timed out.\n");
-    host_pair_end(PBIO_ERROR_TIMEDOUT);
-    pbio_os_request_poll();
-}
-
-pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
-
+    // Nothing to set up yet, and nothing set up that needs undoing. Staying
+    // false lets the caller notice and ask again.
     if (!pbdrv_bluetooth_hci_is_enabled()) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    if (host_connection.pairing || host_connection.connected) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    // Provisional bonding record; the stack stores the negotiated link key
-    // into it via the pbio link key store.
-    pbio_bluetooth_classic_link_key_register(bdaddr, name);
-
-    memcpy(host_connection.bdaddr, bdaddr, sizeof(bd_addr_t));
-    host_connection.pairing = true;
-    host_connection.pair_err = PBIO_ERROR_AGAIN;
-
-    DEBUG_PRINT("Start host pairing with %s.\n", bd_addr_to_str(host_connection.bdaddr));
-
-    // Dedicated bonding connects only to establish the bond and disconnects
-    // when done. The host initiates the RFCOMM connection itself later.
-    // Requiring MITM forces numeric comparison so the host shows a prompt.
-    if (gap_dedicated_bonding(host_connection.bdaddr, 1) != ERROR_CODE_SUCCESS) {
-        DEBUG_PRINT("Dedicated bonding failed to start.\n");
-        host_connection.pairing = false;
-        host_connection.pair_err = PBIO_ERROR_FAILED;
-        pbio_bluetooth_classic_link_key_unregister(host_connection.bdaddr);
-        return PBIO_ERROR_FAILED;
-    }
-
-    btstack_run_loop_set_timer_handler(&host_connection.pair_timeout, host_pair_timeout_handler);
-    btstack_run_loop_set_timer(&host_connection.pair_timeout, HOST_PAIR_TIMEOUT_MS);
-    btstack_run_loop_add_timer(&host_connection.pair_timeout);
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void) {
-    if (host_connection.pairing) {
-        return PBIO_ERROR_AGAIN;
-    }
-    return host_connection.pair_err;
-}
-
-bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey) {
-    if (!host_connection.pairing || !host_connection.pair_passkey_valid) {
-        return false;
-    }
-    *passkey = host_connection.pair_passkey;
-    return true;
-}
-
-void pbdrv_bluetooth_classic_host_pair_cancel(void) {
-    if (!host_connection.pairing) {
+        host_connection.discoverable = false;
         return;
     }
-    DEBUG_PRINT("Host pairing cancelled.\n");
-    host_pair_end(PBIO_ERROR_CANCELED);
+
+    if (discoverable == host_connection.discoverable) {
+        return;
+    }
+
+    DEBUG_PRINT("%s discoverable.\n", discoverable ? "Now" : "No longer");
+    host_connection.discoverable = discoverable;
+    gap_discoverable_control(discoverable);
+}
+
+bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
+    return host_connection.discoverable;
 }
 
 bool pbdrv_bluetooth_classic_host_is_connected(void) {
@@ -3278,11 +3259,12 @@ void pbdrv_bluetooth_init(void) {
     gap_set_local_name(pbsys_host_get_hub_display_name());
     gap_set_class_of_device(0x000804);
 
-    // Claim yes/no capability (auto-accepted below) so that pairing with a
-    // host uses numeric comparison, which shows a confirmation prompt on the
-    // host. Silent "just works" pairing is ignored by some hosts. Pairing
-    // with display-less gamepads still falls back to "just works".
-    gap_ssp_set_io_capability(SSP_IO_CAPABILITY_DISPLAY_YES_NO);
+    // The hub has no way for the user to enter or compare a code during
+    // pairing, so claim exactly that and let pairing be "just works". A host
+    // computer initiates pairing from its own Bluetooth settings, so the user
+    // has already confirmed it there; a matching code on both sides would add
+    // a step without adding trust. Gamepads have no display either.
+    gap_ssp_set_io_capability(SSP_IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
 
     // Allow sniff mode requests by HID devices and support role switch.
     gap_set_default_link_policy_settings(LM_LINK_POLICY_ENABLE_SNIFF_MODE | LM_LINK_POLICY_ENABLE_ROLE_SWITCH);
@@ -3302,7 +3284,7 @@ void pbdrv_bluetooth_init(void) {
     #endif
 
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
-    // Dedicated bonding results arrive as general HCI events.
+    // Host connection and pairing results arrive as general HCI events.
     static btstack_packet_callback_registration_t host_event_callback_registration;
     host_event_callback_registration.callback = &host_packet_handler;
     hci_add_event_handler(&host_event_callback_registration);

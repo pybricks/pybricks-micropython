@@ -664,24 +664,16 @@ pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, con
 }
 
 //
-// Not implemented yet: pairing initiated by the hub. Inquiry scanning and HID
+// Not implemented yet: pairing managed from the hub. Inquiry scanning and HID
 // devices are not supported by the BC4 firmware at all, so those flags are off
 // and the stubs in pbdrv/bluetooth.h cover them.
 //
 
-pbio_error_t pbdrv_bluetooth_classic_host_pair(const uint8_t *bdaddr, const char *name) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
 }
 
-pbio_error_t pbdrv_bluetooth_classic_host_pair_status(void) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-bool pbdrv_bluetooth_classic_host_pair_passkey(uint32_t *passkey) {
+bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
     return false;
-}
-
-void pbdrv_bluetooth_classic_host_pair_cancel(void) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_NXT

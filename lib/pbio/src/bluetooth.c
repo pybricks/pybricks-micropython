@@ -554,7 +554,7 @@ pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_tim
     // Cancel Bluetooth Classic pairing and scanning, if ongoing. Established
     // classic connections are kept.
     pbdrv_bluetooth_classic_hid_pair_cancel();
-    pbdrv_bluetooth_classic_host_pair_cancel();
+    pbdrv_bluetooth_classic_host_set_discoverable(false);
     pbdrv_bluetooth_inquiry_stop();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
@@ -665,6 +665,15 @@ void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char 
     pbio_bluetooth_classic_link_key_t *record = &link_key_records[0];
     memset(record, 0, sizeof(*record));
     memcpy(record->bdaddr, bdaddr, sizeof(record->bdaddr));
+    snprintf(record->name, sizeof(record->name), "%s", name);
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_set_name(const uint8_t *bdaddr, const char *name) {
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record || strncmp(record->name, name, sizeof(record->name)) == 0) {
+        return;
+    }
     snprintf(record->name, sizeof(record->name), "%s", name);
     pbsys_storage_request_write();
 }
