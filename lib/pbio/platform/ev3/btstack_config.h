@@ -19,13 +19,22 @@
 // #define ENABLE_LOG_INFO
 
 // BTstack configuration. buffers, sizes, ...
-// One full ATT PDU at PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515) plus the
-// 4-byte L2CAP header, which is the most any link here negotiates. BTstack
-// allocates this twice per HCI connection (ACL recombination buffer plus the
-// per-connection ATT server request buffer), so it sets the static RAM cost
-// of every extra connection. Kept the same on every platform so that links
-// behave identically, even where there is RAM to spare.
-#define HCI_ACL_PAYLOAD_SIZE (515 + 4)
+// Sized by the largest link, which here is Classic RFCOMM to a host computer:
+// one COBS-encoded Pybricks packet (521 bytes, being the 512-byte host event
+// message plus its endpoint byte, the COBS overhead and the frame delimiter),
+// plus the 5-byte RFCOMM frame overhead and the 4-byte L2CAP header. Anything
+// less splits every large packet over two frames for no good reason.
+//
+// BLE needs less: one full ATT PDU at PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE
+// (515) plus the same 4-byte L2CAP header. The LE MTU no longer follows this
+// number, since pbdrv_bluetooth_init() pins it to the platform maximum.
+//
+// BTstack allocates this twice per HCI connection (ACL recombination buffer
+// plus the per-connection ATT server request buffer), so it sets the static
+// RAM cost of every extra connection. Platforms without a Classic host
+// connection stay at the smaller BLE-sized value. bluetooth_btstack.c
+// static-asserts that a whole packet fits in one RFCOMM frame.
+#define HCI_ACL_PAYLOAD_SIZE (521 + 5 + 4)
 #define MAX_ATT_DB_SIZE 512
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES 0
 // Host computer + HID gamepad + one per peer brick, plus headroom for a link

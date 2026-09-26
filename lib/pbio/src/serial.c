@@ -26,10 +26,10 @@
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
-// Host event size (already includes its 1 event byte) + 1 EP type byte.
+// Host event size (already includes its 1 event byte) + 1 EP type byte. The
+// encoded counterpart is ::PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE, which is in
+// the header because transports size their buffers by it too.
 #define PBIO_SERIAL_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1)
-// The EP type byte is the COBS prefix, so the payload bound excludes it.
-#define PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
 
 /** Number of header bytes before the value in a read reply. */
 #define PBIO_SERIAL_READ_REPLY_HEADER_SIZE 3

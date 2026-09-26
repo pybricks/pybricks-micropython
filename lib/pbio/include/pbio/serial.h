@@ -14,10 +14,26 @@
 
 #include <stdbool.h>
 
+#include <pbio/cobs.h>
 #include <pbio/config.h>
 #include <pbsys/host.h>
 
 #if PBIO_CONFIG_SERIAL
+
+/**
+ * Upper bound on one COBS-encoded Pybricks packet, including its trailing
+ * frame delimiter.
+ *
+ * A packet is a host event message (which already includes its own event
+ * byte) preceded by the endpoint type byte, which is encoded as the COBS
+ * prefix and so is not counted in the payload bound here.
+ *
+ * This is the largest thing any serial transport has to carry in one piece.
+ * Transports are free to split it, since the stream is reframed on the COBS
+ * delimiters, but sizing a transport to this avoids the split.
+ */
+#define PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE \
+    (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
 
 /**
  * Initializes the serial connection processes on boot.

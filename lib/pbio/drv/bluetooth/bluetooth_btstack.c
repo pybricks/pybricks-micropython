@@ -1787,19 +1787,29 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
 #define RFCOMM_SERVER_CHANNEL (1)
 
 /**
- * Requested maximum RFCOMM frame size.
- *
- * This is a request: BTstack negotiates the smaller of it and the L2CAP MTU
- * minus 5, so the frame size actually used follows HCI_ACL_PAYLOAD_SIZE.
- *
- * A Pybricks packet does not fit in one frame at either value. The largest
- * COBS encoded packet is a few bytes longer than the host event size, which
- * is already 512 here, so both directions span frames regardless: TX chunks
- * in the can-send-now handler, and RX is a byte stream that the pbio serial
- * process reframes on COBS delimiters. What has to hold a whole packet is
- * ::rx_buf, which is sized from this constant with room to spare.
+ * RFCOMM frame overhead inside an L2CAP packet: address, control, the 2-byte
+ * (14-bit) length field and the FCS. This is how BTstack derives the frame
+ * size it offers from the L2CAP MTU, and there is no API to ask it for the
+ * number, so it is repeated here for the static assert below.
  */
-#define RFCOMM_SERVER_MTU (512)
+#define RFCOMM_FRAME_OVERHEAD (5)
+
+/**
+ * Maximum RFCOMM frame size requested for the server channel.
+ *
+ * Sized so that a whole Pybricks packet fits in one frame. The value is only
+ * a request: BTstack uses the smallest of it, the local L2CAP MTU minus
+ * ::RFCOMM_FRAME_OVERHEAD, and whatever the host computer asks for during
+ * parameter negotiation. The assert keeps the first two from being the
+ * binding constraint; a host that asks for less still splits packets over
+ * frames, which works because RFCOMM is a byte stream either way: TX chunks
+ * in the can-send-now handler, and RX is reframed on COBS delimiters by the
+ * pbio serial process.
+ */
+#define RFCOMM_SERVER_MTU (PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE)
+
+_Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE - RFCOMM_FRAME_OVERHEAD >= RFCOMM_SERVER_MTU,
+    "HCI_ACL_PAYLOAD_SIZE is too small to send a Pybricks packet in one RFCOMM frame");
 
 /**
  * Pairing needs the user to accept a prompt on the host computer, so allow
@@ -1830,9 +1840,13 @@ static struct {
     pbio_error_t pair_err;
     /** Ends the pairing session if bonding never completes. */
     btstack_timer_source_t pair_timeout;
-    /** Incoming byte stream, drained by the pbio serial process. */
+    /**
+     * Incoming byte stream, drained by the pbio serial process. Holds a whole
+     * packet plus the start of the next one, and one slot for lwrb to tell
+     * full from empty.
+     */
     lwrb_t rx_ring;
-    uint8_t rx_buf[RFCOMM_SERVER_MTU * 2 + 1];
+    uint8_t rx_buf[PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE * 2 + 1];
     /** Outgoing message in flight. tx_size is what remains to be sent. */
     const uint8_t *tx_data;
     uint32_t tx_size;
@@ -3159,6 +3173,12 @@ void pbdrv_bluetooth_init(void) {
     #endif // PBDRV_CONFIG_BLUETOOTH_INQUIRY
 
     l2cap_init();
+
+    // BTstack otherwise offers HCI_ACL_PAYLOAD_SIZE minus the L2CAP header as
+    // the ATT MTU, which is more than the platform maximum on any platform
+    // that sizes HCI_ACL_PAYLOAD_SIZE for a Classic link instead. Pin it so
+    // the negotiated ATT MTU is the same everywhere.
+    l2cap_set_max_le_mtu(PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
 
     // setup LE device DB
     le_device_db_init();
