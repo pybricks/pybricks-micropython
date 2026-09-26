@@ -20,13 +20,19 @@
 // #define ENABLE_LOG_INFO
 
 // BTstack configuration. buffers, sizes, ...
-// One full ATT PDU at PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515) plus the
-// 4-byte L2CAP header. The peer channels need far less than that.
+// Sized by the largest link, which here is a peer channel: one whole peer
+// message (PBDRV_BLUETOOTH_PEER_MTU, 520) plus the 4-byte L2CAP header.
+// BTstack would otherwise silently cap the channel MTU rather than refuse
+// it. BLE needs slightly less: one full ATT PDU at
+// PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515) plus the same 4-byte L2CAP
+// header. The LE MTU no longer follows this number, since
+// pbdrv_bluetooth_init() pins it to the platform maximum.
+//
 // This is allocated twice per HCI connection (ACL recombination buffer plus
 // the per-connection ATT server request buffer), so it dominates the static
 // RAM cost of every extra connection. At BTstack's Classic default of 1691
 // the three peer links would cost about 11K of RAM the hub does not have.
-#define HCI_ACL_PAYLOAD_SIZE (515 + 4)
+#define HCI_ACL_PAYLOAD_SIZE (520 + 4)
 #define MAX_ATT_DB_SIZE 512
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
 #define MAX_NR_GATT_CLIENTS 2

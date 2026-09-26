@@ -2217,6 +2217,12 @@ static const btstack_link_key_db_t pbdrv_bluetooth_btstack_link_key_db = {
  */
 #define PEER_MESSAGE_TYPE_DATA (0)
 
+// BTstack silently caps a channel's local MTU at the L2CAP maximum instead of
+// refusing to register the service, so without this a too-small ACL buffer
+// would show up only as messages that are a little too big to send.
+_Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE >= PBDRV_BLUETOOTH_PEER_MTU,
+    "HCI_ACL_PAYLOAD_SIZE is too small to carry a whole peer message");
+
 const uint8_t pbdrv_bluetooth_peer_address_all[PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
@@ -3177,7 +3183,10 @@ void pbdrv_bluetooth_init(void) {
     // BTstack otherwise offers HCI_ACL_PAYLOAD_SIZE minus the L2CAP header as
     // the ATT MTU, which is more than the platform maximum on any platform
     // that sizes HCI_ACL_PAYLOAD_SIZE for a Classic link instead. Pin it so
-    // the negotiated ATT MTU is the same everywhere.
+    // the negotiated ATT MTU is the same everywhere. This call does nothing
+    // if the ACL buffer cannot hold that much to begin with, hence the assert.
+    _Static_assert(HCI_ACL_PAYLOAD_SIZE - L2CAP_HEADER_SIZE >= PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE,
+        "HCI_ACL_PAYLOAD_SIZE is too small for one full ATT PDU");
     l2cap_set_max_le_mtu(PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
 
     // setup LE device DB

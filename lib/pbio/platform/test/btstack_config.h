@@ -26,8 +26,9 @@
 // 4-byte L2CAP header, which is the most any link here negotiates. BTstack
 // allocates this twice per HCI connection (ACL recombination buffer plus the
 // per-connection ATT server request buffer), so it sets the static RAM cost
-// of every extra connection. Platforms that also serve a host computer over
-// Classic RFCOMM need a larger value; see the EV3 config.
+// of every extra connection. Platforms that link bricks to each other, or
+// serve a host computer over Classic RFCOMM, need a larger value; see the
+// Prime Hub and EV3 configs.
 #define HCI_ACL_PAYLOAD_SIZE (515 + 4)
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
 #define MAX_NR_GATT_CLIENTS 1

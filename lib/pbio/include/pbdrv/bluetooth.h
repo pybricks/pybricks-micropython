@@ -484,13 +484,16 @@ static inline pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state
 /**
  * Largest user payload that fits in one peer message.
  *
- * A link preserves order and does not lose messages, so a program with more
- * to say can simply say it in several messages rather than pay for a big
- * buffer on every brick. Note that this only holds per link: a message that
- * the coordinator relays can still go missing, so several messages that only
- * mean something together are better sent as one.
+ * This is the payload only. The type byte and source address that go over
+ * the air with it are ::PBDRV_BLUETOOTH_PEER_HEADER_SIZE on top, and it is
+ * ::PBDRV_BLUETOOTH_PEER_MTU that has to fit in one L2CAP packet.
+ *
+ * A link preserves order and does not lose messages, so a sender with more to
+ * say can simply say it in several messages. Note that this only holds per
+ * link: a message that the coordinator relays can still go missing, so
+ * several messages that only mean something together are better sent as one.
  */
-#define PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE (256)
+#define PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE (513)
 
 /**
  * L2CAP MTU of a peer channel. Basic mode preserves SDU boundaries, so one

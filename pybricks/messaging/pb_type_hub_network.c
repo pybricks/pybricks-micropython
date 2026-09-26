@@ -66,7 +66,13 @@
 _Static_assert(MIN_INBOX_SIZE >= MESSAGE_HEADER_SIZE + PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE,
     "an inbox must hold one largest message too");
 
-/** Default inbox size per sending brick. Several messages of any size. */
+/**
+ * Default inbox size per sending brick. Holds one message of any size with
+ * room to spare, or many of the small ones a program usually sends. This is
+ * allocated per brick we can hear from, so the default trades a program that
+ * sends the largest messages back to back, and can pass a bigger size, for
+ * every other program's heap.
+ */
 #define DEFAULT_INBOX_SIZE (1024)
 
 /**
@@ -83,6 +89,9 @@ _Static_assert(MIN_INBOX_SIZE >= MESSAGE_HEADER_SIZE + PBDRV_BLUETOOTH_PEER_MAX_
  */
 #define FORMAT_SIZE_MASK (0x7f)
 #define FORMAT_TUPLE_FLAG (0x80)
+
+_Static_assert(PBDRV_BLUETOOTH_PEER_MAX_MESSAGE_SIZE >= 512 + 1,
+    "a program must be able to send 512 bytes, which go behind the header byte");
 
 /**
  * What one object looks like in a format.
