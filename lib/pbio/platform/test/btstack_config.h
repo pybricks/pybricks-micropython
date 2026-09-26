@@ -22,7 +22,13 @@
 #define ENABLE_LOG_ERROR
 
 // BTstack configuration. buffers, sizes, ...
-#define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
+// One full ATT PDU at PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515) plus the
+// 4-byte L2CAP header, which is the most any link here negotiates. BTstack
+// allocates this twice per HCI connection (ACL recombination buffer plus the
+// per-connection ATT server request buffer), so it sets the static RAM cost
+// of every extra connection. Kept the same on every platform so that links
+// behave identically, even where there is RAM to spare.
+#define HCI_ACL_PAYLOAD_SIZE (515 + 4)
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
 #define MAX_NR_GATT_CLIENTS 1
 #define MAX_NR_HCI_CONNECTIONS 1

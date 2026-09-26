@@ -8,7 +8,8 @@
 
 // BTstack features that can be enabled
 #define ENABLE_BLE
-// #define ENABLE_CLASSIC
+// Only for the peer-to-peer L2CAP channels; no Classic profiles are built in.
+#define ENABLE_CLASSIC
 // #define ENABLE_CC256X_BAUDRATE_CHANGE_FLOWCONTROL_BUG_WORKAROUND
 #define ENABLE_LE_CENTRAL
 #define ENABLE_LE_PERIPHERAL
@@ -19,14 +20,26 @@
 // #define ENABLE_LOG_INFO
 
 // BTstack configuration. buffers, sizes, ...
-#define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
+// One full ATT PDU at PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE (515) plus the
+// 4-byte L2CAP header. The peer channels need far less than that.
+// This is allocated twice per HCI connection (ACL recombination buffer plus
+// the per-connection ATT server request buffer), so it dominates the static
+// RAM cost of every extra connection. At BTstack's Classic default of 1691
+// the three peer links would cost about 11K of RAM the hub does not have.
+#define HCI_ACL_PAYLOAD_SIZE (515 + 4)
 #define MAX_ATT_DB_SIZE 512
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
 #define MAX_NR_GATT_CLIENTS 2
-#define MAX_NR_HCI_CONNECTIONS 3 // CC2564C can have up to 10 connections
+// BLE host and peripherals as before, plus one per peer hub. Each one costs a
+// btstack hci_connection_t, which is dominated by two HCI_ACL_PAYLOAD_SIZE
+// buffers, so this is the main static RAM knob.
+#define MAX_NR_HCI_CONNECTIONS 6 // CC2564C can have up to 10 connections
 #define MAX_NR_HFP_CONNECTIONS 0
-#define MAX_NR_L2CAP_CHANNELS  0
-#define MAX_NR_L2CAP_SERVICES  0
+// One peer channel per peer hub.
+#define MAX_NR_L2CAP_CHANNELS  3
+// The peer PSM.
+#define MAX_NR_L2CAP_SERVICES  1
+// No Classic profiles, so no RFCOMM and no SDP records.
 #define MAX_NR_RFCOMM_CHANNELS 0
 #define MAX_NR_RFCOMM_MULTIPLEXERS 0
 #define MAX_NR_RFCOMM_SERVICES 0

@@ -1787,7 +1787,17 @@ void pbdrv_bluetooth_classic_hid_disconnect(void) {
 #define RFCOMM_SERVER_CHANNEL (1)
 
 /**
- * Maximum RFCOMM frame size.
+ * Requested maximum RFCOMM frame size.
+ *
+ * This is a request: BTstack negotiates the smaller of it and the L2CAP MTU
+ * minus 5, so the frame size actually used follows HCI_ACL_PAYLOAD_SIZE.
+ *
+ * A Pybricks packet does not fit in one frame at either value. The largest
+ * COBS encoded packet is a few bytes longer than the host event size, which
+ * is already 512 here, so both directions span frames regardless: TX chunks
+ * in the can-send-now handler, and RX is a byte stream that the pbio serial
+ * process reframes on COBS delimiters. What has to hold a whole packet is
+ * ::rx_buf, which is sized from this constant with room to spare.
  */
 #define RFCOMM_SERVER_MTU (512)
 
