@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+- Added `pybricks.messaging.HubNetwork` to EV3, Prime, Inventor, Essential Hub.
+- Added hub info view on EV3 to show firmware and hardware version and address.
+- Added hub name to the top of the screen.
+
+### Fixed
+- Fixed EV3 not using the correct MAC address.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 
 ## [4.1.0b4] - 2026-09-21

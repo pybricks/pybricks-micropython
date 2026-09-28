@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025 The Pybricks Authors
+// Copyright (c) 2026 The Pybricks Authors
 
 #include <errno.h>
 #include <fcntl.h>
@@ -10,14 +10,18 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <pbdrv/config.h>
+
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
+
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/bluetooth/bluetooth_btstack_posix.h"
+#endif
 
 #include "pbio_os_config.h"
 
 #include <pbio/port.h>
-#include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
 #include <umm_malloc.h>
@@ -144,6 +148,8 @@ const pbdrv_motor_driver_virtual_simulation_platform_data_t
     },
 };
 
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
+
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
     .transport_instance = pbdrv_bluetooth_btstack_posix_transport_instance,
     .transport_config = pbdrv_bluetooth_btstack_posix_transport_config,
@@ -152,6 +158,8 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
     .er_key = (const uint8_t *)"placeholderplaceholder",
     .ir_key = (const uint8_t *)"placeholderplaceholder",
 };
+
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
 // The 'embedded' main.
 extern void pbsys_main(void);
