@@ -624,13 +624,13 @@ static pbio_error_t pbio_port_dcm_get_calibrated_rgba(pbio_port_dcm_t *dcm, pbio
 
     pbio_port_dcm_analog_rgba_t *rgba = &dcm->nxt_rgba;
 
-    // These sensors are driven by a background process, which needs at least
-    // one cycle to produce data.
-    if (!rgba->last_sample_time) {
-        return PBIO_ERROR_AGAIN;
-    }
-
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+
+        // No sample ready yet.
+        if (!rgba->last_sample_time) {
+            return PBIO_ERROR_AGAIN;
+        }
+
         // Intensity is inverted.
         uint32_t ambient = 5000 - rgba->a;
         uint32_t reflection = 5000 - rgba->r;
@@ -651,6 +651,11 @@ static pbio_error_t pbio_port_dcm_get_calibrated_rgba(pbio_port_dcm_t *dcm, pbio
 
     if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
         pbio_port_dcm_nxt_color_sensor_data_t *data = &dcm->nxt_color_state.data;
+
+        // No sample ready yet.
+        if (!rgba->last_sample_time) {
+            return PBIO_ERROR_AGAIN;
+        }
 
         // Select calibration row based on ambient light, similar to NXT firmware.
         uint8_t row = NXT_COLOR_CALIBRATION_HIGH_AMBIENT;

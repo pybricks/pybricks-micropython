@@ -11,6 +11,8 @@
 
 ### Fixed
 - Fixed EV3 not using the correct MAC address.
+- Fixed NXT Light Sensor not initializing, which also caused EV3 port view to
+  pause indefinitely.
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 
