@@ -8,6 +8,7 @@
 
 #if PBSYS_CONFIG_HMI_EV3_UI
 
+#include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
@@ -52,6 +53,8 @@ typedef enum {
     PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM,
     /** Feature coming soon. */
     PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON,
+    /** Hub information such as the Bluetooth address and version. */
+    PBSYS_HMI_EV3_UI_OVERLAY_INFO,
     /** Shutdown. Yes highlighted. */
     PBSYS_HMI_EV3_UI_OVERLAY_SHUTDOWN_YES,
     /** Shutdown. No highlighted. */
@@ -100,7 +103,7 @@ static const char *apps[] = {
  * Available settings on settings tab.
  */
 static const char *settings[] = {
-    " Version",
+    " Hub information",
     " Add new computer",
     " Add new gamepad",
 };
@@ -172,19 +175,6 @@ static const char *pbsys_hmi_ev3_ui_get_tab_entry_text(pbsys_hmi_ev3_ui_tab_t ta
         case PBSYS_HMI_EV3_UI_TAB_APPS:
             return apps[entry];
         case PBSYS_HMI_EV3_UI_TAB_SETTINGS:
-            if (entry == 0) {
-                static char version[36];
-                if (PBIO_VERSION_LEVEL_HEX == 0xF) {
-                    snprintf(version, sizeof(version), " Version                  %d.%d.%d",
-                        PBIO_VERSION_MAJOR, PBIO_VERSION_MINOR, PBIO_VERSION_MICRO);
-                } else {
-                    snprintf(version, sizeof(version), " Version %d.%d.%d%x%d-%.6s",
-                        PBIO_VERSION_MAJOR, PBIO_VERSION_MINOR, PBIO_VERSION_MICRO,
-                        PBIO_VERSION_LEVEL_HEX,
-                        PBIO_VERSION_SERIAL, PBIO_VERSION_HASH);
-                }
-                return version;
-            }
             return settings[entry];
         default:
             return "";
@@ -206,6 +196,25 @@ static void pbsys_hmi_ev3_ui_increment_entry_on_current_tab(bool increment) {
     } else if (!increment && *selection > 0) {
         (*selection)--;
     }
+}
+
+/**
+ * Hub information overlay.
+ *
+ * Everything shown here is fixed at build time except the Bluetooth address,
+ * which the controller only knows once it has finished starting up. So this
+ * keeps refreshing until then, letting the address fill itself in rather than
+ * leaving the user with a blank one if they get here quickly after boot.
+ */
+static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_info_button(pbio_button_flags_t button) {
+
+    if (button == PBIO_BUTTON_LEFT_UP || button == PBIO_BUTTON_CENTER) {
+        state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_NONE;
+        return PBSYS_HMI_EV3_UI_ACTION_NONE;
+    }
+
+    return pbdrv_bluetooth_peer_is_ready() ?
+           PBSYS_HMI_EV3_UI_ACTION_NONE : PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
 
 /**
@@ -390,6 +399,8 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
     // Given the current state of the overlay and the button that is pressed,
     // update the state and return an action if applicable.
     switch (state.overlay) {
+        case PBSYS_HMI_EV3_UI_OVERLAY_INFO:
+            return pbsys_hmi_ev3_ui_handle_info_button(button);
         case PBSYS_HMI_EV3_UI_OVERLAY_NO_PROGRAM:
         // fallthrough
         case PBSYS_HMI_EV3_UI_OVERLAY_COMING_SOON:
@@ -476,6 +487,9 @@ pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_button(pbio_button_flags_t but
             }
         } else if (state.tab == PBSYS_HMI_EV3_UI_TAB_SETTINGS) {
             switch (state.selection[PBSYS_HMI_EV3_UI_TAB_SETTINGS]) {
+                case 0:
+                    state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_INFO;
+                    return pbsys_hmi_ev3_ui_handle_info_button(0);
                 case 1:
                     return pbsys_hmi_ev3_ui_handle_host_open();
                 case 2:
@@ -519,6 +533,38 @@ static void pbsys_hmi_ev3_ui_draw_centered_text(const pbio_font_t *font, const c
     pbio_image_bbox_text(font, text, strlen(text), &rect);
     int x = (display->width - rect.width) / 2 + x_offset;
     pbio_image_draw_text(display, font, x, y, text, strlen(text), BLACK);
+}
+
+/**
+ * Draws text, cut off with an ellipsis if it does not fit the given width.
+ *
+ * Only used for the hub name, which is what the scratch buffer is sized for.
+ *
+ * @param [in] font       Font to use for drawing.
+ * @param [in] text       Text string.
+ * @param [in] x          X coordinate of the left of the text.
+ * @param [in] y          Y coordinate of the baseline.
+ * @param [in] max_width  Width available for the text.
+ */
+static void pbsys_hmi_ev3_ui_draw_truncated_text(const pbio_font_t *font, const char *text, int x, int y, int max_width) {
+    pbio_image_t *display = pbdrv_display_get_image();
+    pbio_image_rect_t rect;
+    size_t len = strlen(text);
+
+    pbio_image_bbox_text(font, text, len, &rect);
+    if (rect.width <= max_width) {
+        pbio_image_draw_text(display, font, x, y, text, len, BLACK);
+        return;
+    }
+
+    // Drop characters until the text and the ellipsis together fit.
+    char buf[PBSYS_HOST_HUB_NAME_SIZE + 3];
+    do {
+        snprintf(buf, sizeof(buf), "%.*s...", (int)--len, text);
+        pbio_image_bbox_text(font, buf, strlen(buf), &rect);
+    } while (len > 0 && rect.width > max_width);
+
+    pbio_image_draw_text(display, font, x, y, buf, strlen(buf), BLACK);
 }
 
 static uint8_t pbsys_hmi_ev3_ui_draw_overlay_box(uint8_t width, uint8_t height, bool divider) {
@@ -716,6 +762,68 @@ static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {
 }
 
 /**
+ * Width of the hub information overlay, matching the other large overlays.
+ */
+#define PBSYS_HMI_EV3_UI_INFO_WIDTH (160)
+
+/**
+ * Left edge of the text inside the hub information overlay.
+ */
+#define PBSYS_HMI_EV3_UI_INFO_X ((178 - PBSYS_HMI_EV3_UI_INFO_WIDTH) / 2 + 8)
+
+/**
+ * Draws the hub information overlay.
+ *
+ * The Bluetooth address is what this is mainly for: it is the one thing here
+ * that the user has to copy into their program to reach this brick from
+ * another one, so it gets the big monospace font. There is no bold font, so
+ * the labels and the remaining details are set apart by being small instead.
+ */
+static void pbsys_hmi_ev3_ui_draw_info_overlay(void) {
+
+    pbio_image_t *display = pbdrv_display_get_image();
+
+    uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(PBSYS_HMI_EV3_UI_INFO_WIDTH, 100, true);
+
+    const pbio_font_t *label_font = &pbio_font_mono_8x5_8;
+    const pbio_font_t *value_font = &pbio_font_terminus_normal_16;
+    const int x = PBSYS_HMI_EV3_UI_INFO_X;
+
+    char buf[40];
+
+    const char *heading = "Bluetooth address:";
+    pbio_image_draw_text(display, label_font, x, 39, heading, strlen(heading), BLACK);
+
+    uint8_t address[PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE];
+    if (pbdrv_bluetooth_peer_is_ready()) {
+        pbdrv_bluetooth_peer_get_local_address(address);
+        snprintf(buf, sizeof(buf), "%02X:%02X:%02X:%02X:%02X:%02X",
+            address[0], address[1], address[2], address[3], address[4], address[5]);
+    } else {
+        // Same shape, so the overlay does not jump when it becomes known.
+        snprintf(buf, sizeof(buf), "--:--:--:--:--:--");
+    }
+    pbio_image_draw_text(display, value_font, x, 57, buf, strlen(buf), BLACK);
+
+    // Plain version for a release, otherwise with the build and commit hash.
+    if (PBIO_VERSION_LEVEL_HEX == 0xF) {
+        snprintf(buf, sizeof(buf), "Firmware: %d.%d.%d",
+            PBIO_VERSION_MAJOR, PBIO_VERSION_MINOR, PBIO_VERSION_MICRO);
+    } else {
+        snprintf(buf, sizeof(buf), "Firmware: %d.%d.%d%x%d-%.6s",
+            PBIO_VERSION_MAJOR, PBIO_VERSION_MINOR, PBIO_VERSION_MICRO,
+            PBIO_VERSION_LEVEL_HEX, PBIO_VERSION_SERIAL, PBIO_VERSION_HASH);
+    }
+    pbio_image_draw_text(display, label_font, x, 75, buf, strlen(buf), BLACK);
+
+    // REVISIT: There is no hardware version detection yet.
+    const char *hardware = "Hardware: 2013";
+    pbio_image_draw_text(display, label_font, x, 89, hardware, strlen(hardware), BLACK);
+
+    pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
+}
+
+/**
  * Draws the overlay.
  *
  * @param  [in]  overlay The overlay to draw.
@@ -734,6 +842,11 @@ static void pbsys_hmi_ev3_ui_draw_overlay(pbsys_hmi_ev3_ui_overlay_type_t overla
 
     if (overlay == PBSYS_HMI_EV3_UI_OVERLAY_GAMEPAD) {
         pbsys_hmi_ev3_ui_draw_gamepad_overlay();
+        return;
+    }
+
+    if (overlay == PBSYS_HMI_EV3_UI_OVERLAY_INFO) {
+        pbsys_hmi_ev3_ui_draw_info_overlay();
         return;
     }
 
@@ -852,6 +965,11 @@ void pbsys_hmi_ev3_ui_draw(void) {
         right_align -= pbio_image_media__gamepad_small.width + 2;
         pbio_image_draw_image_transparent_from_monochrome(display, &pbio_image_media__gamepad_small, right_align, 2, BLACK);
     }
+
+    // Hub name on the left, in whatever space the icons leave over. This is
+    // almost always on screen, so the hub information overlay does not repeat
+    // it.
+    pbsys_hmi_ev3_ui_draw_truncated_text(&pbio_font_mono_8x5_8, pbsys_host_get_hub_name(), 2, 9, right_align - 4);
 
     // Draw the overlay on top of everything else.
     pbsys_hmi_ev3_ui_draw_overlay(state.overlay);
