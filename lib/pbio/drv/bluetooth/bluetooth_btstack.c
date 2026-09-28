@@ -3279,7 +3279,12 @@ void pbdrv_bluetooth_init(void) {
     // name distinguishes this from the same hub connected over USB in host
     // OS device pickers.
     gap_set_local_name(pbsys_host_get_hub_display_name());
-    gap_set_class_of_device(0x000804);
+
+    // Choosing 0x000804 (toy robot) would match NXT, but it gets hidden by
+    // Windows 11 by default. So we choose "Handheld PC" which is somewhat
+    // close enough, and gets readily listed. Input devices also get listed,
+    // but usually show a keyboard icon which would be more confusing.
+    gap_set_class_of_device(0x000110);
 
     // The hub has no way for the user to enter or compare a code during
     // pairing, so claim exactly that and let pairing be "just works". A host
