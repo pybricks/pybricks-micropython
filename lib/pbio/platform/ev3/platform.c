@@ -768,6 +768,12 @@ enum {
 };
 uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
+/**
+ * Hardware version and its bitwise complement, as stored in the boot EEPROM
+ * at 0x3f00. Consumed by the EV3 hardware version driver.
+ */
+uint8_t pbdrv_ev3_eeprom_hardware_version[2];
+
 const uint8_t UID_BASE[16];
 
 const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
@@ -857,6 +863,7 @@ void SystemInit(void) {
 
     // Check for presence of hardware version number according to notes at
     // https://www.ev3dev.org/docs/kernel-hackers-notebook/ev3-eeprom/
+    memcpy(pbdrv_ev3_eeprom_hardware_version, &i2c_buf[0], 2);
     unsigned int b0 = i2c_buf[0];
     unsigned int b1 = i2c_buf[1] ^ 0xff;
     if (b0 == b1) {

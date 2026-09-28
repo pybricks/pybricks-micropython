@@ -16,6 +16,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/display.h>
+#include <pbdrv/hardware.h>
 
 #include <pbio/battery.h>
 #include <pbio/busy_count.h>
@@ -816,9 +817,9 @@ static void pbsys_hmi_ev3_ui_draw_info_overlay(void) {
     }
     pbio_image_draw_text(display, label_font, x, 75, buf, strlen(buf), BLACK);
 
-    // REVISIT: There is no hardware version detection yet.
-    const char *hardware = "Hardware: 2013";
-    pbio_image_draw_text(display, label_font, x, 89, hardware, strlen(hardware), BLACK);
+    const char *hardware = pbdrv_hardware_get_version();
+    snprintf(buf, sizeof(buf), "Hardware: %s", hardware ? hardware : "Unknown");
+    pbio_image_draw_text(display, label_font, x, 89, buf, strlen(buf), BLACK);
 
     pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
 }

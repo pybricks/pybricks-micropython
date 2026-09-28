@@ -62,7 +62,18 @@ void pbdrv_bluetooth_btstack_platform_poll(void) {
 void pbdrv_bluetooth_btstack_platform_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
 }
 
+static pbdrv_bluetooth_btstack_local_version_info_t local_version_info;
+static bool local_version_info_valid;
+
+const pbdrv_bluetooth_btstack_local_version_info_t *pbdrv_bluetooth_btstack_ev3_get_local_version_info(void) {
+    return local_version_info_valid ? &local_version_info : NULL;
+}
+
 const pbdrv_bluetooth_btstack_chipset_info_t *pbdrv_bluetooth_btstack_set_chipset(pbdrv_bluetooth_btstack_local_version_info_t *device_info) {
+    // Keep a copy so that hardware version detection can use it too.
+    local_version_info = *device_info;
+    local_version_info_valid = true;
+
     const pbdrv_bluetooth_btstack_chipset_info_t *info = device_info->lmp_pal_subversion == cc2560_info.lmp_version ?
         &cc2560_info : &cc2560a_info;
     btstack_chipset_cc256x_set_init_script((uint8_t *)info->init_script, info->init_script_size);
