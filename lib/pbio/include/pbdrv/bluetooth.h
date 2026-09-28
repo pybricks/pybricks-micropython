@@ -443,6 +443,11 @@ static inline pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state
 
 /**
  * Size of a Bluetooth Classic device address.
+ *
+ * Every address in this API is stored most significant byte first, so that
+ * printing it from index 0 gives the usual written form, and byte 0 of
+ * 00:16:53:12:34:56 is 0x00. Note that the Bluetooth Classic HCI wire format
+ * is the other way around, so stacks reverse it on the way in and out.
  */
 #define PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE (6)
 

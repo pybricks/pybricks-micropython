@@ -64,6 +64,7 @@
 
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
+#include <pbdrv/hardware.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 
@@ -766,8 +767,6 @@ static void mmu_init(void) {
 enum {
     BOOT_EEPROM_I2C_ADDRESS = 0x50,
 };
-uint8_t pbdrv_ev3_bluetooth_mac_address[6];
-
 /**
  * Hardware version and its bitwise complement, as stored in the boot EEPROM
  * at 0x3f00. Consumed by the EV3 hardware version driver.
@@ -866,11 +865,8 @@ void SystemInit(void) {
     memcpy(pbdrv_ev3_eeprom_hardware_version, &i2c_buf[0], 2);
     unsigned int b0 = i2c_buf[0];
     unsigned int b1 = i2c_buf[1] ^ 0xff;
-    if (b0 == b1) {
-        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[6], 6);
-    } else {
-        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[0], 6);
-    }
+    // The Bluetooth MAC address follows the version field where there is one.
+    pbdrv_hardware_set_mac_address(b0 == b1 ? &i2c_buf[6] : &i2c_buf[0]);
 
     // Separate heap for large allocations - defined in linker script.
     extern char pb_umm_heap_start;

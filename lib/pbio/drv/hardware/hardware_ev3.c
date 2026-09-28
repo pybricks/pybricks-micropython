@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <pbdrv/gpio.h>
 #include <pbdrv/hardware.h>
@@ -37,18 +38,23 @@ static const pbdrv_gpio_t hardware_id_pins[] = {
     PBDRV_GPIO_EV3_PIN(9, 23, 20, 4, 10), // HWID3
 };
 
+static uint8_t mac_address[PBDRV_HARDWARE_MAC_ADDRESS_SIZE];
+static bool mac_address_known;
+
+const uint8_t *pbdrv_hardware_get_mac_address(void) {
+    return mac_address_known ? mac_address : NULL;
+}
+
+void pbdrv_hardware_set_mac_address(const uint8_t *address) {
+    memcpy(mac_address, address, sizeof(mac_address));
+    mac_address_known = true;
+}
+
 /**
  * Hardware version and its bitwise complement, read from the boot EEPROM at
  * 0x3f00 during early boot. Defined in platform.c.
  */
 extern uint8_t pbdrv_ev3_eeprom_hardware_version[2];
-
-/**
- * Bluetooth MAC address, read from the boot EEPROM at 0x3f06 during early
- * boot, or at 0x3f00 on boards without the hardware version field. Defined in
- * platform.c.
- */
-extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
 const char *pbdrv_hardware_get_version(void) {
 
@@ -71,10 +77,11 @@ const char *pbdrv_hardware_get_version(void) {
         pbdrv_ev3_eeprom_hardware_version[0], pbdrv_ev3_eeprom_hardware_version[1],
         eeprom_version_valid ? "valid" : "absent, assuming V0.30");
 
+    #if DEBUG
+    const uint8_t *mac = pbdrv_hardware_get_mac_address();
     DEBUG_PRINT("EV3 hardware: Bluetooth address %02X:%02X:%02X:%02X:%02X:%02X\n",
-        pbdrv_ev3_bluetooth_mac_address[0], pbdrv_ev3_bluetooth_mac_address[1],
-        pbdrv_ev3_bluetooth_mac_address[2], pbdrv_ev3_bluetooth_mac_address[3],
-        pbdrv_ev3_bluetooth_mac_address[4], pbdrv_ev3_bluetooth_mac_address[5]);
+        mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    #endif
 
     // Not known until the Bluetooth chip has been read out, which is well
     // before the user can get to any screen that shows this.

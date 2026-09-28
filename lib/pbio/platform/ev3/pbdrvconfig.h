@@ -46,6 +46,10 @@
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+// REVISIT: The CC2560 is Bluetooth Classic only, so this hub has no BLE at
+// all. The flag stays set anyway because it currently also selects the shared
+// driver framework in pbdrv/bluetooth.h (the process thread, controller
+// bring-up, HCI state) that this driver needs regardless of BLE.
 #define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
 #define PBDRV_CONFIG_BLUETOOTH_INQUIRY              (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID          (1)

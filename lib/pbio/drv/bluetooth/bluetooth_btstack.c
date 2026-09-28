@@ -28,6 +28,7 @@
 #include <pbio/version.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/hardware.h>
 #include <pbsys/host.h>
 #include "bluetooth_address.h"
 #include "bluetooth_btstack.h"
@@ -355,16 +356,19 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
     switch (hci_event_packet_get_type(packet)) {
         case BTSTACK_EVENT_STATE:
             if (btstack_event_state_get_state(packet) == HCI_STATE_WORKING) {
-                // Set a static random address derived from the chip address
-                // and firmware version, so it persists across reboots but
-                // changes on firmware update. Bluetooth Classic is unaffected
-                // as it always uses the chip's public address.
-                bd_addr_t static_addr;
-                uint8_t derived[6];
-                gap_local_bd_addr(static_addr);
-                pbdrv_bluetooth_derive_static_address(derived, static_addr);
-                reverse_48(derived, static_addr);
-                gap_random_address_set(static_addr);
+                if (pbdrv_bluetooth_btstack_ble_supported()) {
+                    // Set a static random address derived from the public
+                    // address and firmware version, so it persists across
+                    // reboots but changes on firmware update. Bluetooth
+                    // Classic is unaffected as it always uses the public
+                    // address.
+                    bd_addr_t static_addr;
+                    uint8_t derived[PBDRV_HARDWARE_MAC_ADDRESS_SIZE];
+                    gap_local_bd_addr(static_addr);
+                    pbdrv_bluetooth_derive_static_address(derived, static_addr);
+                    reverse_48(derived, static_addr);
+                    gap_random_address_set(static_addr);
+                }
 
                 #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || \
                 PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST || PBDRV_CONFIG_BLUETOOTH_PEER
@@ -3141,6 +3145,24 @@ void pbdrv_bluetooth_init(void) {
     // local version information.
     hci_init(pdata->transport_instance(), pdata->transport_config());
     hci_set_control(pdata->control_instance());
+
+    // The Bluetooth chips need their addresses set from the hub. Write
+    // with a chipset specific vendor command during HCI init. That happens
+    // after the local version information comes back, so the chipset has been
+    // set by then even though it is not known here yet. Without this the chip
+    // keeps its built-in default address, which is registered to nobody and is
+    // not guaranteed to differ between hubs.
+    const uint8_t *mac_address = pbdrv_hardware_get_mac_address();
+    if (mac_address) {
+        // TI's HCI_VS_Write_BD_ADDR takes the address most significant byte
+        // first, but BTstack reverses it on the way out like it does for any
+        // standard HCI address parameter. Hand it the reverse so the two
+        // cancel, otherwise the chip ends up with the address backwards and
+        // every reader of gap_local_bd_addr() sees it that way.
+        bd_addr_t write_address;
+        reverse_bd_addr(mac_address, write_address);
+        hci_set_bd_addr(write_address);
+    }
 
     // REVISIT: do we need to call btstack_chipset_cc256x_set_power() or btstack_chipset_cc256x_set_power_vector()?
 

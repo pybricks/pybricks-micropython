@@ -28,6 +28,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
+#include <pbdrv/hardware.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
@@ -38,7 +39,6 @@
 
 #include <pbsys/host.h>
 
-#include "bluetooth_nxt.h"
 
 #include "../rproc/rproc.h"
 
@@ -121,10 +121,6 @@ typedef enum {
     /** Not a BC4 message: used to mean that no reply is expected. */
     BT_MSG_NONE = 0xFF,
 } bt_msg_t;
-
-/** Address of this hub, once the BC4 has reported it. */
-static uint8_t bt_local_addr[6];
-static bool bt_local_addr_valid;
 
 /** Received stream bytes, written by the interrupt and drained by pbio serial. */
 static lwrb_t bt_rx_ring;
@@ -500,8 +496,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
         // before anything else.
         PBIO_OS_AWAIT(state, &sub, err = bt_command(&sub, BT_MSG_GET_LOCAL_ADDR, NULL, 0, BT_MSG_GET_LOCAL_ADDR_RESULT));
         if (err == PBIO_SUCCESS) {
-            memcpy(bt_local_addr, (const void *)bt.reply_args, sizeof(bt_local_addr));
-            bt_local_addr_valid = true;
+            pbdrv_hardware_set_mac_address((const uint8_t *)bt.reply_args);
         }
 
         // The BC4 name is fixed-length and padded with zeros. It is all the
@@ -604,16 +599,6 @@ void pbdrv_bluetooth_init(void) {
     // The hardware is claimed from the process instead of here, which runs
     // before the display is up and so cannot report anything.
     pbio_os_process_start(&bt_process, bt_process_thread, NULL);
-}
-
-bool pbdrv_bluetooth_nxt_get_local_address(uint8_t *addr) {
-
-    if (!bt_local_addr_valid) {
-        return false;
-    }
-
-    memcpy(addr, bt_local_addr, sizeof(bt_local_addr));
-    return true;
 }
 
 //

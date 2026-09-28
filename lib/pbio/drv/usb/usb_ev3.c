@@ -14,6 +14,7 @@
 
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
+#include <pbdrv/hardware.h>
 #include <pbio/serial.h>
 #include <pbio/os.h>
 
@@ -253,9 +254,6 @@ static union {
 
 // Set while EP0 is waiting for the host to send the SET_LINE_CODING data stage.
 static bool pbdrv_usb_ep0_expect_line_coding;
-
-// Defined in pbio/platform/ev3/platform.c
-extern uint8_t pbdrv_ev3_bluetooth_mac_address[6];
 
 // USB stack state
 
@@ -531,19 +529,21 @@ static bool usb_get_descriptor(uint16_t wValue) {
                     return true;
                 }
 
-                case STRING_DESC_SERIAL:
-                    pbdrv_usb_ev3_ep0_buffer.b[0] = 2 * 2 * 6 + 2;
+                case STRING_DESC_SERIAL: {
+                    const uint8_t *mac_address = pbdrv_hardware_get_mac_address();
+                    pbdrv_usb_ev3_ep0_buffer.b[0] = 2 * 2 * PBDRV_HARDWARE_MAC_ADDRESS_SIZE + 2;
                     pbdrv_usb_ev3_ep0_buffer.b[1] = DESC_TYPE_STRING;
-                    for (i = 0; i < 6; i++) {
-                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] >> 4];
+                    for (i = 0; i < PBDRV_HARDWARE_MAC_ADDRESS_SIZE; i++) {
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 0] = "0123456789ABCDEF"[mac_address[i] >> 4];
                         pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 1] = 0;
-                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[pbdrv_ev3_bluetooth_mac_address[i] & 0xf];
+                        pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 2] = "0123456789ABCDEF"[mac_address[i] & 0xf];
                         pbdrv_usb_ev3_ep0_buffer.b[2 + 4 * i + 3] = 0;
                     }
 
                     pbdrv_usb_setup_data_to_send = pbdrv_usb_ev3_ep0_buffer.u;
                     pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_ev3_ep0_buffer.b[0];
                     return true;
+                }
             }
             break;
     }

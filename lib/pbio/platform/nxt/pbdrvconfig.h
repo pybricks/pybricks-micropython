@@ -42,6 +42,9 @@
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_NXT                       (1)
 
+#define PBDRV_CONFIG_HARDWARE                       (1)
+#define PBDRV_CONFIG_HARDWARE_NXT                   (1)
+
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
 #define PBDRV_CONFIG_IOPORT_HAS_UART                (0)

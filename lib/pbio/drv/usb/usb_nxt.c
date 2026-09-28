@@ -22,6 +22,7 @@
 
 #include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
+#include <pbdrv/hardware.h>
 
 #include <pbio/os.h>
 #include <pbio/util.h>
@@ -38,7 +39,6 @@
 #include <pbdrv/usb.h>
 
 #include "../adc/adc_nxt.h"
-#include "../bluetooth/bluetooth_nxt.h"
 
 #include "usb_ch9.h"
 #include "usb_common_desc.h"
@@ -834,18 +834,23 @@ static pbio_os_process_t pbdrv_usb_nxt_process;
 static pbio_error_t pbdrv_usb_nxt_process_thread(pbio_os_state_t *state, void *context) {
 
     static pbio_os_timer_t timer;
-    static uint8_t addr[6];
+    static const uint8_t *addr;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
     pbdrv_usb_nxt_deinit();
 
-    // Falls back to an all-zero address if the Bluetooth chip never comes up,
-    // so that USB works even then.
+    // The address comes from the Bluetooth chip, so it takes a moment to
+    // become known. Falls back to an all-zero address if that chip never
+    // comes up, so that USB works even then.
+    static const uint8_t no_addr[PBDRV_HARDWARE_MAC_ADDRESS_SIZE] = { 0 };
     pbio_os_timer_set(&timer, PBDRV_USB_NXT_ADDRESS_TIMEOUT);
-    PBIO_OS_AWAIT_UNTIL(state, pbdrv_bluetooth_nxt_get_local_address(addr) || pbio_os_timer_is_expired(&timer));
+    PBIO_OS_AWAIT_UNTIL(state, (addr = pbdrv_hardware_get_mac_address()) || pbio_os_timer_is_expired(&timer));
+    if (!addr) {
+        addr = no_addr;
+    }
 
-    for (uint8_t i = 0; i < PBIO_ARRAY_SIZE(addr); i++) {
+    for (uint8_t i = 0; i < PBDRV_HARDWARE_MAC_ADDRESS_SIZE; i++) {
         pbdrv_usb_str_desc_serial.wString[2 * i] = "0123456789ABCDEF"[addr[i] >> 4];
         pbdrv_usb_str_desc_serial.wString[2 * i + 1] = "0123456789ABCDEF"[addr[i] & 0xF];
     }
