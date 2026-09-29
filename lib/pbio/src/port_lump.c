@@ -1172,6 +1172,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW;
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_GYRO_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
