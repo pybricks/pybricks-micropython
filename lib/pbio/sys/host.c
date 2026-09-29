@@ -436,6 +436,15 @@ bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **b
         return false;
     }
 
+    // REVISIT: Some Bluetooth drivers (cc2640, bluenrg) drop responses to host
+    // commands if we are busy sending events. This needs fixing at the driver
+    // level, but just suppress events while downloading programs for now. This
+    // means that program downloads will not get stuck, but other collisions
+    // like app data and stdout can still lead to missing replies.
+    if (pbsys_status_test(PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS)) {
+        return false;
+    }
+
     static uint8_t *current_buf;
 
     // Re-send status occasionally for if missed on flaky connection.

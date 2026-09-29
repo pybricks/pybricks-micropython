@@ -13,7 +13,10 @@
 - Fixed EV3 not using the correct MAC address.
 - Fixed NXT Light Sensor not initializing, which also caused EV3 port view to
   pause indefinitely.
+- Fixed program downloads sometimes getting stuck on Technic, City, and
+  Move Hubs ([support#2833]).
 
+[support#2833]: https://github.com/pybricks/support/issues/2833
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 
 ## [4.1.0b4] - 2026-09-21
@@ -55,7 +58,7 @@
 [support#2822]: https://github.com/orgs/pybricks/discussions/2822
 [support#2826]: https://github.com/pybricks/support/issues/2826
 
-[4.1.0b3]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...v4.1.0b4
+[4.1.0b4]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b3...v4.1.0b4
 
 ## [4.1.0b3] - 2026-08-25
 
