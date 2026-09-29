@@ -52,7 +52,19 @@ typedef enum {
     PBIO_COLOR_TRANSPARENT = PBIO_COLOR_ENCODE(360, 0, 0),
     /** Not a color, but a sentinel that marks the end of an array of colors. */
     PBIO_COLOR_ARRAY_END = PBIO_COLOR_ENCODE(361, 0, 0),
+    /**
+     * Not a color, but a sentinel for a sensor that does not measure color, or
+     * does not measure it in the way that is currently active.
+     */
+    PBIO_COLOR_NOT_AVAILABLE = PBIO_COLOR_ENCODE(362, 0, 0),
 } pbio_color_t;
+
+/**
+ * Light intensity, in permille, that means the sensor does not measure it, or
+ * does not measure it in the way that is currently active. Chosen so that it
+ * is still distinguishable after scaling down to a percentage.
+ */
+#define PBIO_LIGHT_INTENSITY_NOT_AVAILABLE (2550)
 
 /** Color hues for HSV color space. Values are in degrees (0 to 359). */
 typedef enum {

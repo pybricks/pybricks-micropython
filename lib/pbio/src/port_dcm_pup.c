@@ -352,12 +352,14 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return dcm->sensor_data;
 }
 
-pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
+    // This platform has no analog color sensors.
+    return PBIO_ERROR_NO_DEV;
 }
 
-pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+    // This platform has no analog light sensors.
+    return PBIO_ERROR_NO_DEV;
 }
 
 pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {

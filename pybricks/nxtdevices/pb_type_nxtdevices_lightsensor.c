@@ -25,8 +25,8 @@ typedef struct _nxtdevices_LightSensor_obj_t {
 // pybricks.nxtdevices.LightSensor.ambient
 static mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, false));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, NULL, &intensity, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
@@ -34,8 +34,8 @@ static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_
 // pybricks.nxtdevices.LightSensor.reflection
 static mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, true));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, NULL, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
@@ -58,8 +58,8 @@ static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     // with autodetection this never waits in practice. On NXT we activate this
     // sensor process manually the first time, so we need to wait a little while.
     pbio_error_t err;
-    int32_t intensity;
-    while ((err = pbio_port_get_light_intensity(self->port, &intensity, true)) == PBIO_ERROR_AGAIN) {
+    uint32_t intensity;
+    while ((err = pbio_port_get_light_intensity(self->port, &intensity, NULL, NULL, NULL)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
     pb_assert(err);

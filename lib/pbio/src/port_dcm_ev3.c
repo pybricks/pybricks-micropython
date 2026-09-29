@@ -691,16 +691,10 @@ static pbio_error_t pbio_port_dcm_get_calibrated_rgba(pbio_port_dcm_t *dcm, pbio
     return PBIO_ERROR_NO_DEV;
 }
 
-pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected) {
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
 
     if (dcm->category != DCM_CATEGORY_NXT_COLOR) {
         return PBIO_ERROR_NO_DEV;
-    }
-
-    // The ambient measurement is taken with all sensor lights off, so it does
-    // not provide color information.
-    if (!reflected) {
-        return PBIO_ERROR_NOT_SUPPORTED;
     }
 
     pbio_port_dcm_analog_rgba_t rgba;
@@ -716,10 +710,23 @@ pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_h
         .b = rgba.b >> 2,
     };
     *color_hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
+    if (id) {
+        *id = LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR;
+    }
+    if (mode) {
+        // This sensor measures everything at once, so it has only one mode.
+        // The ambient measurement is taken with all sensor lights off, so it
+        // does not provide color information.
+        *mode = 0;
+    }
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected) {
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+
+    if (dcm->category != DCM_CATEGORY_NXT_COLOR && dcm->category != DCM_CATEGORY_NXT_LIGHT) {
+        return PBIO_ERROR_NO_DEV;
+    }
 
     pbio_port_dcm_analog_rgba_t rgba;
     pbio_error_t err = pbio_port_dcm_get_calibrated_rgba(dcm, &rgba);
@@ -727,13 +734,22 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *in
         return err;
     }
 
-    if (!reflected) {
-        *intensity = rgba.a;
-    } else if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
+    if (reflected) {
         // With the sensor light on, all three color channels contribute.
-        *intensity = (rgba.r + rgba.g + rgba.b) / 3;
-    } else {
-        *intensity = rgba.r;
+        *reflected = dcm->category == DCM_CATEGORY_NXT_COLOR ?
+            (rgba.r + rgba.g + rgba.b) / 3 : rgba.r;
+    }
+    if (ambient) {
+        *ambient = rgba.a;
+    }
+    if (id) {
+        *id = dcm->category == DCM_CATEGORY_NXT_COLOR ?
+            LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR : LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR;
+    }
+    if (mode) {
+        // These sensors measure reflection and ambient light at once, so they
+        // have only one mode.
+        *mode = 0;
     }
     return PBIO_SUCCESS;
 }

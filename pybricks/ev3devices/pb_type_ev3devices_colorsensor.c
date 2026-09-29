@@ -37,7 +37,7 @@ static mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 static mp_obj_t get_color(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_color_t matched;
-    pb_assert(pbio_port_get_color(self->device_base.port, NULL, &matched, true));
+    pb_assert(pbio_port_get_color(self->device_base.port, NULL, &matched, NULL, NULL));
     return pb_color_map_get_color(self->color_map, matched);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW, get_color);
@@ -46,7 +46,7 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_color_obj, LEGO_DEVICE_MODE_EV
 static mp_obj_t get_hsv(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_color_t hsv;
-    pb_assert(pbio_port_get_color(self->device_base.port, &hsv, NULL, true));
+    pb_assert(pbio_port_get_color(self->device_base.port, &hsv, NULL, NULL, NULL));
     return pb_type_Color_new(hsv);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW, get_hsv);
@@ -54,8 +54,8 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_hsv_obj, LEGO_DEVICE_MODE_EV3_
 // pybricks.ev3devices.ColorSensor.ambient
 static mp_obj_t get_ambient(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, false));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, NULL, &intensity, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT, get_ambient);
@@ -63,8 +63,8 @@ static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_ambient_obj, LEGO_DEVICE_MODE_
 // pybricks.ev3devices.ColorSensor.reflection
 static mp_obj_t get_reflection(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, true));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->device_base.port, &intensity, NULL, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_reflection_obj, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW, get_reflection);

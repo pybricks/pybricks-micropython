@@ -23,6 +23,10 @@
 - Added `hsv()` and `detectable_colors()` to the EV3 Color Sensor.
 
 ### Changed
+- All color and light sensors now report the same live telemetry payload:
+  reflection, ambient light, measured color, and matched color, with sentinel
+  values for whatever a given sensor does not measure. The NXT Color Sensor and
+  NXT Light Sensor now report live values too.
 - The EV3 Color Sensor now measures color like the other color sensors, using
   its raw RGB output and the configurable color map, instead of reporting the
   color index built into the sensor. Its `reflection()` is derived from the

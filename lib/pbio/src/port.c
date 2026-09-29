@@ -431,23 +431,27 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
  * Gets the color measured by a color sensor on this port, in a device
  * independent HSV format that is comparable across sensors.
  *
- * Does not change sensor modes. The caller is responsible for first selecting
- * the mode that provides the requested measurement.
+ * Does not change sensor modes. Whatever the sensor measures in the mode that
+ * is currently active is what gets returned, and @p mode says which
+ * measurement that is.
  *
  * @param [in]  port          The port instance.
  * @param [out] color_hsv     The measured color, or NULL to skip.
  * @param [out] color_mapped  The closest match from the color map of this
- *                            port, or NULL to skip.
- * @param [in]  reflected     Whether to measure the surface lit by the sensor
- *                            light (true) or the ambient light (false).
+ *                            port, or NULL to skip. Set to
+ *                            ::PBIO_COLOR_NOT_AVAILABLE if this port has no
+ *                            color map.
+ * @param [out] id            The type of the attached sensor, or NULL to skip.
+ * @param [out] mode          The Pybricks measurement mode, or NULL to skip.
+ *                            See ::pbio_port_lump_get_color.
  * @return                    ::PBIO_SUCCESS on success, otherwise
- *                            ::PBIO_ERROR_NO_DEV if no sensor is attached,
- *                            ::PBIO_ERROR_NOT_SUPPORTED if the sensor cannot
- *                            measure color in this way, or
- *                            ::PBIO_ERROR_INVALID_OP if the port or sensor is
- *                            not in a mode that provides this measurement.
+ *                            ::PBIO_ERROR_NO_DEV if no sensor is attached or
+ *                            it does not measure color in the way that is
+ *                            currently active, or ::PBIO_ERROR_INVALID_OP if
+ *                            the port is not in a mode that provides this
+ *                            measurement.
  */
-pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, bool reflected) {
+pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, lego_device_type_id_t *id, uint8_t *mode) {
 
     if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
@@ -457,11 +461,11 @@ pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbi
     pbio_error_t err = PBIO_ERROR_NO_DEV;
 
     if (port->lump_dev) {
-        err = pbio_port_lump_get_color(port->lump_dev, &hsv, reflected);
+        err = pbio_port_lump_get_color(port->lump_dev, &hsv, id, mode);
     }
     // Ports can have both, so fall back to analog sensors if no LUMP device.
     if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
-        err = pbio_port_dcm_get_color(port->connection_manager, &hsv, reflected);
+        err = pbio_port_dcm_get_color(port->connection_manager, &hsv, id, mode);
     }
     if (err != PBIO_SUCCESS) {
         return err;
@@ -471,10 +475,8 @@ pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbi
         *color_hsv = hsv;
     }
     if (color_mapped) {
-        if (!port->color_map) {
-            return PBIO_ERROR_NOT_SUPPORTED;
-        }
-        *color_mapped = pbio_color_map_find(port->color_map, hsv);
+        *color_mapped = port->color_map ?
+            pbio_color_map_find(port->color_map, hsv) : PBIO_COLOR_NOT_AVAILABLE;
     }
     return PBIO_SUCCESS;
 }
@@ -482,17 +484,20 @@ pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbi
 /**
  * Gets the light intensity measured by a sensor on this port.
  *
- * Does not change sensor modes. The caller is responsible for first selecting
- * the mode that provides the requested measurement.
+ * Does not change sensor modes. Whatever the sensor measures in the mode that
+ * is currently active is what gets returned. Values that the sensor does not
+ * measure that way are set to ::PBIO_LIGHT_INTENSITY_NOT_AVAILABLE.
  *
  * @param [in]  port        The port instance.
- * @param [out] intensity   The measured intensity, 0--1000.
- * @param [in]  reflected   Whether to measure the surface lit by the sensor
- *                          light (true) or the ambient light (false).
+ * @param [out] reflected   The measured reflection, 0--1000, or NULL to skip.
+ * @param [out] ambient     The measured ambient light, 0--1000, or NULL to skip.
+ * @param [out] id          The type of the attached sensor, or NULL to skip.
+ * @param [out] mode        The Pybricks measurement mode, or NULL to skip.
+ *                          See ::pbio_port_lump_get_color.
  * @return                  ::PBIO_SUCCESS on success, otherwise see
  *                          ::pbio_port_get_color for the error codes.
  */
-pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, int32_t *intensity, bool reflected) {
+pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
 
     if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
@@ -501,10 +506,10 @@ pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, int32_t *intensity
     pbio_error_t err = PBIO_ERROR_NO_DEV;
 
     if (port->lump_dev) {
-        err = pbio_port_lump_get_light_intensity(port->lump_dev, intensity, reflected);
+        err = pbio_port_lump_get_light_intensity(port->lump_dev, reflected, ambient, id, mode);
     }
     if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
-        err = pbio_port_dcm_get_light_intensity(port->connection_manager, intensity, reflected);
+        err = pbio_port_dcm_get_light_intensity(port->connection_manager, reflected, ambient, id, mode);
     }
     return err;
 }
@@ -778,10 +783,36 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
         return PBSYS_TELEMETRY_ERROR_NO_REPORT;
     }
 
-    // Delegate telemetry to LUMP or passive manager. The color map is owned by
-    // the port but needed to report the matched color.
+    // Color and light sensors are a generic class much like motors, so they
+    // are assembled here rather than per platform. A sensor that measures only
+    // some of these values still reports all of them, using the sentinels for
+    // the rest, so that clients can parse them all the same way. Both getters
+    // write id and mode only on success, and agree when both succeed.
+    pbio_color_t color_hsv = PBIO_COLOR_NOT_AVAILABLE;
+    pbio_color_t color_mapped = PBIO_COLOR_NOT_AVAILABLE;
+    uint32_t reflected = PBIO_LIGHT_INTENSITY_NOT_AVAILABLE;
+    uint32_t ambient = PBIO_LIGHT_INTENSITY_NOT_AVAILABLE;
+    lego_device_type_id_t sensor_id = LEGO_DEVICE_TYPE_ID_NONE;
+    uint8_t sensor_mode = 0;
+    bool has_color = pbio_port_get_color(port, &color_hsv, &color_mapped, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
+    bool has_light = pbio_port_get_light_intensity(port, &reflected, &ambient, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
+    if (has_color || has_light) {
+        if (*size < 2 * sizeof(uint8_t) + 2 * sizeof(uint32_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->id = sensor_id;
+        tel->mode = sensor_mode;
+        tel->payload[0] = reflected / 10;
+        tel->payload[1] = ambient / 10;
+        pbio_set_uint32_le(&tel->payload[2], color_hsv);
+        pbio_set_uint32_le(&tel->payload[6], color_mapped);
+        *size = 2 * sizeof(uint8_t) + 2 * sizeof(uint32_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    // Delegate remaining telemetry to LUMP or passive manager.
     return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
-           pbio_port_lump_get_telemetry(port->lump_dev, port->color_map, tel, size) :
+           pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
            pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
 }
 

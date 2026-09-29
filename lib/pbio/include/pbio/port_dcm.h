@@ -64,28 +64,38 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
  *
  * @param [in]  dcm         The device connection manager.
  * @param [out] color_hsv   The measured color.
- * @param [in]  reflected   Whether to measure the surface lit by the sensor
- *                          light (true) or the ambient light (false).
+ * @param [out] id          The type of the sensor that took the measurement,
+ *                          or NULL to skip.
+ * @param [out] mode        The measurement mode of that sensor, or NULL to
+ *                          skip. See ::pbio_port_lump_get_color.
  * @return                  ::PBIO_SUCCESS on success.
- *                          ::PBIO_ERROR_NO_DEV if no color sensor is attached.
- *                          ::PBIO_ERROR_NOT_SUPPORTED if the sensor cannot
- *                          measure color in this way.
+ *                          ::PBIO_ERROR_NO_DEV if no color sensor is attached
+ *                          or it does not measure color in the way that is
+ *                          currently active.
  *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
  */
-pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected);
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode);
 
 /**
  * Gets the light intensity measured by an analog light sensor on the port.
  *
  * @param [in]  dcm         The device connection manager.
- * @param [out] intensity   The measured intensity, 0--1000.
- * @param [in]  reflected   Whether to measure the surface lit by the sensor
- *                          light (true) or the ambient light (false).
+ * @param [out] reflected   The measured reflection, 0--1000, or
+ *                          ::PBIO_LIGHT_INTENSITY_NOT_AVAILABLE if the sensor
+ *                          does not measure it. May be NULL to skip.
+ * @param [out] ambient     The measured ambient light, same scale and sentinel
+ *                          as @p reflected. May be NULL to skip.
+ * @param [out] id          The type of the sensor that took the measurement,
+ *                          or NULL to skip.
+ * @param [out] mode        The measurement mode of that sensor, or NULL to
+ *                          skip. See ::pbio_port_lump_get_color.
  * @return                  ::PBIO_SUCCESS on success.
- *                          ::PBIO_ERROR_NO_DEV if no light sensor is attached.
+ *                          ::PBIO_ERROR_NO_DEV if no light sensor is attached
+ *                          or it measures neither value in the way that is
+ *                          currently active.
  *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
  */
-pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected);
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode);
 
 pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
@@ -111,12 +121,12 @@ static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, cons
     return 0;
 }
 
-static inline pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, bool reflected) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
 }
 
-static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, int32_t *intensity, bool reflected) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
 }
 
 static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {

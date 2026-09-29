@@ -28,8 +28,8 @@ typedef struct _pb_type_nxtdevices_colorsensor_obj_t {
 // pybricks.nxtdevices.ColorSensor.ambient
 static mp_obj_t pb_type_nxtdevices_colorsensor_ambient(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, false));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, NULL, &intensity, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_ambient_obj, pb_type_nxtdevices_colorsensor_ambient);
@@ -53,7 +53,7 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
     // sensor process manually the first time, so we need to wait a little while.
     pbio_error_t err;
     pbio_color_t hsv;
-    while ((err = pbio_port_get_color(self->port, &hsv, NULL, true)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_port_get_color(self->port, &hsv, NULL, NULL, NULL)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
     pb_assert(err);
@@ -68,7 +68,7 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
 static mp_obj_t pb_type_nxtdevices_colorsensor_color(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_color_t matched;
-    pb_assert(pbio_port_get_color(self->port, NULL, &matched, true));
+    pb_assert(pbio_port_get_color(self->port, NULL, &matched, NULL, NULL));
     return pb_color_map_get_color(self->color_map, matched);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_type_nxtdevices_colorsensor_color);
@@ -77,7 +77,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_color_obj, pb_ty
 static mp_obj_t pb_type_nxtdevices_colorsensor_hsv(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_color_t hsv;
-    pb_assert(pbio_port_get_color(self->port, &hsv, NULL, true));
+    pb_assert(pbio_port_get_color(self->port, &hsv, NULL, NULL, NULL));
     return pb_type_Color_new(hsv);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type_nxtdevices_colorsensor_hsv);
@@ -85,8 +85,8 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_hsv_obj, pb_type
 // pybricks.nxtdevices.ColorSensor.reflection
 static mp_obj_t pb_type_nxtdevices_colorsensor_reflection(mp_obj_t self_in) {
     pb_type_nxtdevices_colorsensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t intensity;
-    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, true));
+    uint32_t intensity;
+    pb_assert(pbio_port_get_light_intensity(self->port, &intensity, NULL, NULL, NULL));
     return pb_obj_new_fraction(intensity, 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_nxtdevices_colorsensor_reflection_obj, pb_type_nxtdevices_colorsensor_reflection);
