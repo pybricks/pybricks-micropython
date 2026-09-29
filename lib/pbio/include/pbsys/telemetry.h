@@ -112,11 +112,17 @@ typedef enum {
 
 uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size);
 
+uint32_t pbsys_telemetry_get_max_payload_size(void);
+
 pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t size);
 
 #else
 
 static inline uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
+    return 0;
+}
+
+static inline uint32_t pbsys_telemetry_get_max_payload_size(void) {
     return 0;
 }
 

@@ -784,10 +784,8 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     }
 
     // Color and light sensors are a generic class much like motors, so they
-    // are assembled here rather than per platform. A sensor that measures only
-    // some of these values still reports all of them, using the sentinels for
-    // the rest, so that clients can parse them all the same way. Both getters
-    // write id and mode only on success, and agree when both succeed.
+    // are assembled here rather than per platform. Both getters write id and
+    // mode only on success, and agree when both succeed.
     pbio_color_t color_hsv = PBIO_COLOR_NOT_AVAILABLE;
     pbio_color_t color_mapped = PBIO_COLOR_NOT_AVAILABLE;
     uint32_t reflected = PBIO_LIGHT_INTENSITY_NOT_AVAILABLE;
@@ -797,16 +795,37 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     bool has_color = pbio_port_get_color(port, &color_hsv, &color_mapped, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
     bool has_light = pbio_port_get_light_intensity(port, &reflected, &ambient, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
     if (has_color || has_light) {
-        if (*size < 2 * sizeof(uint8_t) + 2 * sizeof(uint32_t)) {
+
+        // The payload grows in three fixed parts. Light intensity is always
+        // there, with sentinels for what the sensor does not measure. Color
+        // follows only if measured, and the color map after that.
+        const uint32_t light_size = 2 * sizeof(uint8_t);
+        const uint32_t color_size = 2 * sizeof(uint32_t);
+
+        // Light and color together fit in one message on every hub, even at
+        // the smallest MTU, so only the map is optional.
+        pbio_color_map_t *map = has_color ? port->color_map : NULL;
+        uint32_t map_size = map ? map->num_colors * sizeof(uint32_t) : 0;
+        if (light_size + color_size + map_size > pbsys_telemetry_get_max_payload_size()) {
+            map_size = 0;
+        }
+
+        uint32_t payload_size = light_size + (has_color ? color_size : 0) + map_size;
+        if (*size < payload_size) {
             return PBSYS_TELEMETRY_ERROR_NO_ROOM;
         }
         tel->id = sensor_id;
         tel->mode = sensor_mode;
         tel->payload[0] = reflected / 10;
         tel->payload[1] = ambient / 10;
-        pbio_set_uint32_le(&tel->payload[2], color_hsv);
-        pbio_set_uint32_le(&tel->payload[6], color_mapped);
-        *size = 2 * sizeof(uint8_t) + 2 * sizeof(uint32_t);
+        if (has_color) {
+            pbio_set_uint32_le(&tel->payload[light_size], color_hsv);
+            pbio_set_uint32_le(&tel->payload[light_size + sizeof(uint32_t)], color_mapped);
+        }
+        for (uint32_t i = 0; i < map_size / sizeof(uint32_t); i++) {
+            pbio_set_uint32_le(&tel->payload[light_size + color_size + i * sizeof(uint32_t)], map->colors[i]);
+        }
+        *size = payload_size;
         return PBSYS_TELEMETRY_SUCCESS;
     }
 

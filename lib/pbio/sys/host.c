@@ -240,8 +240,10 @@ uint32_t pbsys_host_stdin_get_free(void) {
 /**
  * Gets the maximum message size that can be sent to the host on all active
  * connections. Accounts for event byte, so size is the payload.
+ *
+ * @return              The size in bytes.
  */
-static uint32_t pbsys_host_get_max_message_size(void) {
+uint32_t pbsys_host_get_max_message_size(void) {
     // USB limit is configured to allow configured host event size, so poses
     // no additional runtime limit.
     return pbio_int_math_min(pbdrv_bluetooth_get_max_message_size(), PBSYS_CONFIG_HOST_EVENT_OUT_SIZE) - 1;

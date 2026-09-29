@@ -111,6 +111,26 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
     PBIO_OS_ASYNC_END(false);
 }
 
+/**
+ * Gets the largest mode-specific payload that one telemetry message can ever
+ * carry on the currently active connections.
+ *
+ * Generators can use this to decide whether optional data is worth assembling
+ * at all. It says nothing about the room left in the message being filled
+ * right now, which is what the size argument of a generator is for. Payloads
+ * bigger than this never fit, so reporting them as not having room would stall
+ * the generator instead of deferring it.
+ *
+ * @return              The size in bytes, which may be 0.
+ */
+uint32_t pbsys_telemetry_get_max_payload_size(void) {
+    // Each payload is preceded by the event byte, the message size prefix,
+    // and the message header.
+    const uint32_t overhead = sizeof(uint8_t) + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+    uint32_t max_size = pbsys_host_get_max_message_size();
+    return max_size > overhead ? max_size - overhead : 0;
+}
+
 uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
 
     uint32_t next_index = 1;
