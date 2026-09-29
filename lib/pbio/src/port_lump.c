@@ -394,6 +394,24 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
 }
 
 /**
+ * Gets the raw RGB values of the EV3 color sensor, scaled to 0--255.
+ *
+ * The sensor has no white balancing, so the values are only roughly equalized
+ * by clamping each channel to the highest value seen in practice. This makes
+ * the sensor usable on the same generic color path as other color sensors,
+ * pending proper calibration.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance, in RGB_RAW mode.
+ * @param [out] rgb         The scaled color channels.
+ */
+static void ev3_color_sensor_get_rgb(pbio_port_lump_dev_t *lump_dev, pbio_color_rgb_t *rgb) {
+    const int16_t *data = (const int16_t *)lump_dev->bin_data;
+    rgb->r = pbio_int_math_bind(data[0], 0, 600) * 255 / 600;
+    rgb->g = pbio_int_math_bind(data[1], 0, 600) * 255 / 600;
+    rgb->b = pbio_int_math_bind(data[2], 0, 600) * 255 / 600;
+}
+
+/**
  * Gets the color measured by a LEGO UART color sensor, in a device independent
  * HSV format that is comparable across sensors.
  *
@@ -480,8 +498,22 @@ pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color
         return PBIO_SUCCESS;
     }
 
-    // The EV3 Color Sensor has no equalized or calibrated RGB output, so its
-    // own color index is used instead of a color map.
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+
+        // This sensor measures ambient light intensity but not ambient color.
+        if (!reflected) {
+            return PBIO_ERROR_NOT_SUPPORTED;
+        }
+
+        if (lump_dev->mode != LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW) {
+            return PBIO_ERROR_INVALID_OP;
+        }
+        pbio_color_rgb_t rgb;
+        ev3_color_sensor_get_rgb(lump_dev, &rgb);
+        *color_hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
+        return PBIO_SUCCESS;
+    }
+
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
@@ -548,12 +580,22 @@ pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, 
     }
 
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
-        uint8_t mode = reflected ?
-            LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT : LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
-        if (lump_dev->mode != mode) {
+        if (!reflected) {
+            if (lump_dev->mode != LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT) {
+                return PBIO_ERROR_INVALID_OP;
+            }
+            *intensity = data8[0] * 10;
+            return PBIO_SUCCESS;
+        }
+        // Reflection is derived from the raw color channels rather than the
+        // dedicated reflection mode, so that color and reflection can be read
+        // without changing modes, just like on other color sensors.
+        if (lump_dev->mode != LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW) {
             return PBIO_ERROR_INVALID_OP;
         }
-        *intensity = data8[0] * 10;
+        pbio_color_rgb_t rgb;
+        ev3_color_sensor_get_rgb(lump_dev, &rgb);
+        *intensity = (rgb.r + rgb.g + rgb.b) * 1000 / 765;
         return PBIO_SUCCESS;
     }
 
@@ -1714,22 +1756,15 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
     }
 
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
-        if (*size < sizeof(uint8_t)) {
-            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
-        }
-
-        if (lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT) {
-            tel->mode = 0;
-            tel->payload[0] = lump_dev->bin_data[0];
-            *size = sizeof(uint8_t);
-            return PBSYS_TELEMETRY_SUCCESS;
-        }
-
-        if (lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT) {
-            tel->mode = 1;
-            tel->payload[0] = lump_dev->bin_data[0];
-            *size = sizeof(uint8_t);
-            return PBSYS_TELEMETRY_SUCCESS;
+        switch (lump_dev->mode) {
+            case LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW:
+                tel->mode = 0;
+                return get_color_telemetry(lump_dev, color_map, tel, size, true);
+            case LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT:
+                tel->mode = 1;
+                return get_light_intensity_telemetry(lump_dev, tel, size, false);
+            default:
+                break;
         }
     }
 
@@ -1787,7 +1822,7 @@ pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *
         uint8_t mode;
         switch (tel->mode) {
             case 0:
-                mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT;
+                mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW;
                 break;
             case 1:
                 mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;

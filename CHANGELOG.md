@@ -19,6 +19,17 @@
 [support#2833]: https://github.com/pybricks/support/issues/2833
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 
+### Added
+- Added `hsv()` and `detectable_colors()` to the EV3 Color Sensor.
+
+### Changed
+- The EV3 Color Sensor now measures color like the other color sensors, using
+  its raw RGB output and the configurable color map, instead of reporting the
+  color index built into the sensor. Its `reflection()` is derived from the
+  same raw RGB output, so color and reflection no longer require separate
+  modes. These values are not white balanced yet, so they are less accurate
+  than they will be.
+
 ## [4.1.0b4] - 2026-09-21
 
 ### Added
