@@ -1170,6 +1170,8 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL;
+    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+        default_mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW;
     }
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
