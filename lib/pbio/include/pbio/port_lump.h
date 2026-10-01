@@ -32,6 +32,33 @@ typedef struct {
     char name[LUMP_MAX_NAME_SIZE + 1];
 } pbio_port_lump_mode_info_t;
 
+/**
+ * White balance gains for the raw RGB channels of one EV3 color sensor.
+ *
+ * The sensor does not apply its factory calibration to the raw RGB mode and
+ * does not expose the gains it uses elsewhere, so they are measured on the hub
+ * instead and stored here, per port.
+ */
+typedef struct {
+    /** Gains for the red, green and blue channel. Neutral is 1. */
+    float gain[3];
+} pbio_port_lump_ev3_color_calibration_t;
+
+#if PBIO_CONFIG_PORT_LUMP_EV3
+
+void pbio_port_lump_ev3_color_set_default_calibration(pbio_port_lump_ev3_color_calibration_t *calibration);
+
+void pbio_port_lump_ev3_color_apply_loaded_calibration(pbio_port_lump_ev3_color_calibration_t *calibration);
+
+#else // PBIO_CONFIG_PORT_LUMP_EV3
+
+static inline void pbio_port_lump_ev3_color_set_default_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+}
+static inline void pbio_port_lump_ev3_color_apply_loaded_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+}
+
+#endif // PBIO_CONFIG_PORT_LUMP_EV3
+
 #if PBIO_CONFIG_PORT_LUMP
 
 pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index);

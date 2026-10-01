@@ -13,6 +13,7 @@
 
 #include <pbio/error.h>
 #include <pbio/imu.h>
+#include <pbio/port_lump.h>
 #include <pbsys/status.h>
 #include <pbsys/storage.h>
 #include <pbsys/storage_settings.h>
@@ -37,6 +38,10 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings) {
     memset(settings->bluetooth_bonds, 0, sizeof(settings->bluetooth_bonds));
     #endif
 
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    pbio_port_lump_ev3_color_set_default_calibration(settings->ev3_color_calibration);
+    #endif
+
     // Always request save for this one off default setter.
     pbsys_storage_request_write();
 }
@@ -55,6 +60,10 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
     // use the pbio link key store.
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
     pbio_bluetooth_classic_apply_loaded_link_keys(settings->bluetooth_bonds);
+    #endif
+
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    pbio_port_lump_ev3_color_apply_loaded_calibration(settings->ev3_color_calibration);
     #endif
 }
 

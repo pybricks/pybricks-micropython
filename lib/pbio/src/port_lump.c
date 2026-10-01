@@ -19,6 +19,7 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/ioport.h>
 
+#include <pbsys/storage.h>
 #include <pbsys/telemetry.h>
 
 #define DEBUG 0
@@ -134,6 +135,42 @@ typedef struct {
     uint32_t time;
 } pbdrv_legodev_lump_data_set_t;
 
+#if PBIO_CONFIG_PORT_LUMP_EV3
+
+typedef enum {
+    EV3_COLOR_CALIBRATION_STATE_WAIT_FOR_USER,
+    EV3_COLOR_CALIBRATION_STATE_RGB_BALANCING,
+    EV3_COLOR_CALIBRATION_STATE_DONE_SUCCESS,
+    EV3_COLOR_CALIBRATION_STATE_DONE_FAILURE,
+} pbio_port_lump_ev3_color_calibration_state_t;
+
+// Calibration for the sensor on each port, owned by persistent storage, or
+// NULL if the settings have not been loaded (yet).
+static pbio_port_lump_ev3_color_calibration_t *ev3_color_calibration;
+
+/**
+ * Sets the calibration of all ports to neutral.
+ *
+ * @param [out] calibration  Array of ::PBIO_CONFIG_PORT_LUMP_NUM_DEV entries.
+ */
+void pbio_port_lump_ev3_color_set_default_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+    for (uint8_t i = 0; i < PBIO_CONFIG_PORT_LUMP_NUM_DEV; i++) {
+        for (uint8_t channel = 0; channel < 3; channel++) {
+            calibration[i].gain[channel] = 1.0f;
+        }
+    }
+}
+
+/**
+ * Takes ownership of the stored calibration, so it can be read when a sensor
+ * syncs up and updated when the user calibrates one.
+ *
+ * @param [in]  calibration  Array of ::PBIO_CONFIG_PORT_LUMP_NUM_DEV entries.
+ */
+void pbio_port_lump_ev3_color_apply_loaded_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+    ev3_color_calibration = calibration;
+}
+#endif // PBIO_CONFIG_PORT_LUMP_EV3
 
 // LUMP state for each port.
 struct _pbio_port_lump_dev_t {
@@ -154,6 +191,8 @@ struct _pbio_port_lump_dev_t {
      * the values could be foreign-endian.
      */
     uint8_t *bin_data;
+    /** Index of this device, used to find its settings in storage. */
+    uint8_t index;
     /**
      * NB: Everything below is reset to 0 when synchronizing with a new device.
      *     type_id field should remain first.
@@ -194,6 +233,24 @@ struct _pbio_port_lump_dev_t {
     /**< Information about the current mode. */
     pbio_port_lump_mode_info_t mode_info[(LUMP_MAX_EXT_MODE + 1)];
     #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    /** White balance gains, loaded from storage when this sensor syncs up. */
+    float ev3_color_gain[3];
+    /** Extra state used to track EV3 color sensor calibration progress. */
+    pbio_os_state_t ev3_color_thread_state;
+    pbio_port_lump_ev3_color_calibration_state_t ev3_color_calibration_state;
+    pbio_os_timer_t ev3_color_calibration_timer;
+    /** Running sums of the samples taken in the current calibration step. */
+    float ev3_color_sum[3];
+    /** Number of samples taken in the current calibration step. */
+    uint8_t ev3_color_count;
+    /** Spread of COL-REFLECT during its calibration step, to detect movement. */
+    int16_t ev3_color_reflect_min;
+    int16_t ev3_color_reflect_max;
+    /** Mean COL-REFLECT and mean raw red-on/red-off difference. */
+    float ev3_color_reflect;
+    float ev3_color_delta;
+    #endif // PBIO_CONFIG_PORT_LUMP_EV3
 };
 
 pbio_port_lump_dev_t lump_devices[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
@@ -221,6 +278,7 @@ pbio_port_lump_dev_t *pbio_port_lump_init_instance(uint8_t device_index) {
     lump_dev->err_count = 0;
     lump_dev->data_set = &data_set_bufs[device_index];
     lump_dev->bin_data = data_read_bufs[device_index];
+    lump_dev->index = device_index;
     return lump_dev;
 }
 
@@ -262,6 +320,257 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     return size;
 }
 
+#if PBIO_CONFIG_PORT_LUMP_EV3
+
+// COL-REFLECT reports (uint8_t)(|red off - red on| * redFactor / 4.09), where
+// redFactor is the factory white balance constant that the sensor keeps to
+// itself. Comparing that against the same measurement in REF-RAW recovers the
+// constant, which puts the raw RGB channels on an absolute scale.
+#define EV3_COLOR_CAL_REFLECT_DIV       (4.09f)
+
+// The factory stores redFactor = 409 / raw red of its reference white, so 409
+// is the raw red level that LEGO's white produced at their chosen distance.
+// It is the full scale of the calibrated channels.
+#define EV3_COLOR_CAL_WHITE_LEVEL       (409.0f)
+
+#define EV3_COLOR_CAL_SAMPLES           (40)
+#define EV3_COLOR_CAL_WHITE_SAMPLES     (10)
+#define EV3_COLOR_CAL_USER_TIMEOUT      (30000)
+#define EV3_COLOR_CAL_MEASURE_TIMEOUT   (10000)
+#define EV3_COLOR_CAL_RESULT_TIME       (3000)
+
+// Value of COL-COLOR when the sensor sees white.
+#define EV3_COLOR_CAL_WHITE_INDEX       (6)
+
+// Requests a mode and waits until fresh data for it comes in. Only for use
+// inside the calibration protothread.
+#define EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, desired)                                   \
+    do {                                                                                     \
+        PBIO_OS_AWAIT_UNTIL(state, pbio_port_lump_set_mode(lump_dev, desired) == PBIO_SUCCESS); \
+        PBIO_OS_AWAIT_UNTIL(state, pbio_port_lump_is_ready(lump_dev) == PBIO_SUCCESS &&      \
+    lump_dev->mode == (desired));                                                    \
+    } while (0)
+
+// Waits for the next sample in the given mode, giving up on the whole
+// calibration if it does not arrive before the timer expires. Only for use
+// inside the calibration protothread.
+#define EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, desired, fail_label)              \
+    do {                                                                                     \
+        do {                                                                                 \
+            PBIO_OS_AWAIT_ONCE(state);                                                       \
+            if (pbio_os_timer_is_expired(timer)) {                                           \
+                debug_pr("EV3 color calibration: timed out.\n");                             \
+                goto fail_label;                                                             \
+            }                                                                                \
+        } while (lump_dev->mode != (desired));                                               \
+    } while (0)
+
+static bool pbio_port_lump_ev3_calibrate_color_sensor_busy(pbio_port_lump_dev_t *lump_dev) {
+    return lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR && lump_dev->ev3_color_thread_state != 0;
+}
+
+static void pbio_port_lump_ev3_calibrate_color_sensor_stop(pbio_port_lump_dev_t *lump_dev) {
+    PBIO_OS_ASYNC_RESET(&lump_dev->ev3_color_thread_state);
+}
+
+/** Copies the stored calibration of this port into the device that synced up. */
+static void pbio_port_lump_ev3_color_load_calibration(pbio_port_lump_dev_t *lump_dev) {
+    for (uint8_t channel = 0; channel < 3; channel++) {
+        lump_dev->ev3_color_gain[channel] = ev3_color_calibration ?
+            ev3_color_calibration[lump_dev->index].gain[channel] : 1.0f;
+    }
+}
+
+/** Copies a newly measured calibration back into storage for this port. */
+static void pbio_port_lump_ev3_color_save_calibration(pbio_port_lump_dev_t *lump_dev) {
+    if (!ev3_color_calibration) {
+        return;
+    }
+    memcpy(ev3_color_calibration[lump_dev->index].gain, lump_dev->ev3_color_gain,
+        sizeof(lump_dev->ev3_color_gain));
+    pbsys_storage_request_write();
+}
+
+/**
+ * Measures the white balance gains of the EV3 color sensor.
+ *
+ * The sensor applies its factory calibration only to the modes that report a
+ * precomputed color index, not to the raw RGB mode that we use. Those gains
+ * are not readable, so this reconstructs equivalent ones by measuring a white
+ * surface that the user holds in front of the sensor. The result is only valid
+ * for the raw RGB mode; the sensor itself is left untouched.
+ *
+ * This is iterated once for every sample received from the sensor.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance.
+ * @return                  ::PBIO_ERROR_AGAIN while calibrating, else
+ *                          ::PBIO_SUCCESS when done, successfully or not.
+ */
+static pbio_error_t pbio_port_lump_ev3_calibrate_color_sensor(pbio_port_lump_dev_t *lump_dev) {
+
+    pbio_os_state_t *state = &lump_dev->ev3_color_thread_state;
+    pbio_os_timer_t *timer = &lump_dev->ev3_color_calibration_timer;
+    const int16_t *data16 = (const int16_t *)lump_dev->bin_data;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    lump_dev->ev3_color_calibration_state = EV3_COLOR_CALIBRATION_STATE_WAIT_FOR_USER;
+
+    // The precomputed color index does respect the factory calibration, so it
+    // is a trustworthy way to tell that the sensor now sees white at a
+    // workable distance.
+    EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__COLOR);
+    pbio_os_timer_set(timer, EV3_COLOR_CAL_USER_TIMEOUT);
+    lump_dev->ev3_color_count = 0;
+    while (lump_dev->ev3_color_count < EV3_COLOR_CAL_WHITE_SAMPLES) {
+        EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__COLOR, fail);
+        // Must be white several samples in a row, not just on average.
+        lump_dev->ev3_color_count = lump_dev->bin_data[0] == EV3_COLOR_CAL_WHITE_INDEX ?
+            lump_dev->ev3_color_count + 1 : 0;
+    }
+
+    lump_dev->ev3_color_calibration_state = EV3_COLOR_CALIBRATION_STATE_RGB_BALANCING;
+    pbio_os_timer_set(timer, EV3_COLOR_CAL_MEASURE_TIMEOUT);
+
+    EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT);
+    lump_dev->ev3_color_sum[0] = 0;
+    lump_dev->ev3_color_count = 0;
+    lump_dev->ev3_color_reflect_min = INT16_MAX;
+    lump_dev->ev3_color_reflect_max = INT16_MIN;
+    while (lump_dev->ev3_color_count < EV3_COLOR_CAL_SAMPLES) {
+        EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REFLECT, fail);
+        int16_t reflect = lump_dev->bin_data[0];
+        lump_dev->ev3_color_sum[0] += reflect;
+        lump_dev->ev3_color_reflect_min = pbio_int_math_min(lump_dev->ev3_color_reflect_min, reflect);
+        lump_dev->ev3_color_reflect_max = pbio_int_math_max(lump_dev->ev3_color_reflect_max, reflect);
+        lump_dev->ev3_color_count++;
+    }
+    lump_dev->ev3_color_reflect = lump_dev->ev3_color_sum[0] / EV3_COLOR_CAL_SAMPLES;
+
+    // Same acquisition as COL-REFLECT but without the factory scaling applied.
+    EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REF_RAW);
+    lump_dev->ev3_color_sum[0] = 0;
+    lump_dev->ev3_color_count = 0;
+    while (lump_dev->ev3_color_count < EV3_COLOR_CAL_SAMPLES) {
+        EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__REF_RAW, fail);
+        lump_dev->ev3_color_sum[0] += pbio_int_math_abs(data16[1] - data16[0]);
+        lump_dev->ev3_color_count++;
+    }
+    lump_dev->ev3_color_delta = lump_dev->ev3_color_sum[0] / EV3_COLOR_CAL_SAMPLES;
+
+    EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW);
+    lump_dev->ev3_color_sum[0] = 0;
+    lump_dev->ev3_color_sum[1] = 0;
+    lump_dev->ev3_color_sum[2] = 0;
+    lump_dev->ev3_color_count = 0;
+    while (lump_dev->ev3_color_count < EV3_COLOR_CAL_SAMPLES) {
+        EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW, fail);
+        for (uint8_t i = 0; i < 3; i++) {
+            lump_dev->ev3_color_sum[i] += data16[i];
+        }
+        lump_dev->ev3_color_count++;
+    }
+
+    // Confirm that the sensor did not move away from the white surface while
+    // all of the above was measured.
+    EV3_COLOR_CAL_AWAIT_MODE(state, lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__COLOR);
+    lump_dev->ev3_color_count = 0;
+    while (lump_dev->ev3_color_count < EV3_COLOR_CAL_WHITE_SAMPLES) {
+        EV3_COLOR_CAL_AWAIT_SAMPLE(state, lump_dev, timer, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__COLOR, fail);
+        if (lump_dev->bin_data[0] != EV3_COLOR_CAL_WHITE_INDEX) {
+            debug_pr("EV3 color calibration: no longer looking at white.\n");
+            goto fail;
+        }
+        lump_dev->ev3_color_count++;
+    }
+
+    {
+        float red = lump_dev->ev3_color_sum[0] / EV3_COLOR_CAL_SAMPLES;
+        float green = lump_dev->ev3_color_sum[1] / EV3_COLOR_CAL_SAMPLES;
+        float blue = lump_dev->ev3_color_sum[2] / EV3_COLOR_CAL_SAMPLES;
+        float weakest = red < green ? (red < blue ? red : blue) : (green < blue ? green : blue);
+        float strongest = red > green ? (red > blue ? red : blue) : (green > blue ? green : blue);
+
+        if (lump_dev->ev3_color_reflect_max >= 100) {
+            debug_pr("EV3 color calibration: COL-REFLECT clamped, too close.\n");
+            goto fail;
+        }
+        if (lump_dev->ev3_color_reflect_min < 20 || weakest < 60) {
+            debug_pr("EV3 color calibration: too little light, too far away.\n");
+            goto fail;
+        }
+        if (lump_dev->ev3_color_reflect_max - lump_dev->ev3_color_reflect_min > 1) {
+            debug_pr("EV3 color calibration: sensor was not held still.\n");
+            goto fail;
+        }
+        if (strongest > 550 || lump_dev->ev3_color_delta < 40) {
+            debug_pr("EV3 color calibration: raw levels out of usable range.\n");
+            goto fail;
+        }
+
+        // COL-REFLECT is truncated to a whole number, so the true value lies
+        // halfway the measured mean and the next step up.
+        float red_factor = EV3_COLOR_CAL_REFLECT_DIV * (lump_dev->ev3_color_reflect + 0.5f) / lump_dev->ev3_color_delta;
+        lump_dev->ev3_color_gain[0] = red_factor;
+        lump_dev->ev3_color_gain[1] = red_factor * red / green;
+        lump_dev->ev3_color_gain[2] = red_factor * red / blue;
+    }
+
+    debug_pr("EV3 color gains (x1000): R=%d G=%d B=%d\n",
+        (int)(lump_dev->ev3_color_gain[0] * 1000),
+        (int)(lump_dev->ev3_color_gain[1] * 1000),
+        (int)(lump_dev->ev3_color_gain[2] * 1000));
+
+    pbio_port_lump_ev3_color_save_calibration(lump_dev);
+
+    lump_dev->ev3_color_calibration_state = EV3_COLOR_CALIBRATION_STATE_DONE_SUCCESS;
+    goto done;
+
+fail:
+    lump_dev->ev3_color_calibration_state = EV3_COLOR_CALIBRATION_STATE_DONE_FAILURE;
+
+done:
+    pbio_port_lump_request_mode(lump_dev, LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW);
+
+    // Keep reporting the result for a while so the host can show it.
+    PBIO_OS_AWAIT_MS(state, timer, EV3_COLOR_CAL_RESULT_TIME);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+/**
+ * Scales one white balanced EV3 color sensor channel to 0--255.
+ *
+ * @param [in]  raw         The raw channel value.
+ * @param [in]  gain        The white balance gain for this channel.
+ * @return                  The scaled channel value.
+ */
+static uint8_t ev3_color_sensor_scale(int16_t raw, float gain) {
+    float value = raw * gain * 255 / EV3_COLOR_CAL_WHITE_LEVEL;
+    if (value <= 0) {
+        return 0;
+    }
+    return value >= 255 ? 255 : (uint8_t)value;
+}
+
+/**
+ * Gets the white balanced RGB values of the EV3 color sensor, scaled to 0--255.
+ *
+ * The sensor does not apply its factory white balance to the raw RGB mode, so
+ * the gains measured by ::pbio_port_lump_ev3_calibrate_color_sensor are applied
+ * here. Until the user calibrates, the gains are 1 and only the overall scale
+ * is right, which makes the colors usable but not accurate.
+ *
+ * @param [in]  lump_dev    The LEGO UART device instance, in RGB_RAW mode.
+ * @param [out] rgb         The scaled color channels.
+ */
+static void ev3_color_sensor_get_rgb(pbio_port_lump_dev_t *lump_dev, pbio_color_rgb_t *rgb) {
+    const int16_t *data = (const int16_t *)lump_dev->bin_data;
+    rgb->r = ev3_color_sensor_scale(data[0], lump_dev->ev3_color_gain[0]);
+    rgb->g = ev3_color_sensor_scale(data[1], lump_dev->ev3_color_gain[1]);
+    rgb->b = ev3_color_sensor_scale(data[2], lump_dev->ev3_color_gain[2]);
+}
+#endif
 
 static bool pbio_port_lump_is_relative_motor(pbio_port_lump_dev_t *lump_dev) {
     return (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_INTERACTIVE_MOTOR) &&
@@ -323,6 +632,17 @@ static void pbio_port_lump_handle_known_data(pbio_port_lump_dev_t *lump_dev) {
         lump_dev->calibration_data[2] = ((int16_t)pbio_get_uint16_le(lump_dev->bin_data + 12)); // Raw end.
         pbio_port_lump_request_mode(lump_dev, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW);
     }
+
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    if (pbio_port_lump_ev3_calibrate_color_sensor_busy(lump_dev)) {
+        // Advance calibration state one step on receiving new data.
+        pbio_error_t err = pbio_port_lump_ev3_calibrate_color_sensor(lump_dev);
+        if (err != PBIO_ERROR_AGAIN) {
+            // Calibration completed, go back to reporting data.
+            pbio_port_lump_ev3_calibrate_color_sensor_stop(lump_dev);
+        }
+    }
+    #endif
 }
 
 pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance) {
@@ -391,24 +711,6 @@ pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle
     // Otherwise return angle as-is.
     *angle = lump_dev->angle;
     return PBIO_SUCCESS;
-}
-
-/**
- * Gets the raw RGB values of the EV3 color sensor, scaled to 0--255.
- *
- * The sensor has no white balancing, so the values are only roughly equalized
- * by clamping each channel to the highest value seen in practice. This makes
- * the sensor usable on the same generic color path as other color sensors,
- * pending proper calibration.
- *
- * @param [in]  lump_dev    The LEGO UART device instance, in RGB_RAW mode.
- * @param [out] rgb         The scaled color channels.
- */
-static void ev3_color_sensor_get_rgb(pbio_port_lump_dev_t *lump_dev, pbio_color_rgb_t *rgb) {
-    const int16_t *data = (const int16_t *)lump_dev->bin_data;
-    rgb->r = pbio_int_math_bind(data[0], 0, 600) * 255 / 600;
-    rgb->g = pbio_int_math_bind(data[1], 0, 600) * 255 / 600;
-    rgb->b = pbio_int_math_bind(data[2], 0, 600) * 255 / 600;
 }
 
 /**
@@ -491,15 +793,20 @@ pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color
         hsv = PBIO_COLOR_ENCODE(pbio_color_get_h(raw), pbio_color_get_s(raw), raw_v * (200 - raw_v) / 100);
         measurement = 0;
 
-    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR &&
-               lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW) {
+    }
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR &&
+             lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW &&
+             !pbio_port_lump_ev3_calibrate_color_sensor_busy(lump_dev)) {
 
         pbio_color_rgb_t rgb;
         ev3_color_sensor_get_rgb(lump_dev, &rgb);
         hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
         measurement = 0;
 
-    } else {
+    }
+    #endif
+    else {
         // This device does not measure color in the way that is active now.
         return PBIO_ERROR_NO_DEV;
     }
@@ -575,14 +882,17 @@ pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, 
         ref = pbio_int_math_min((data16[0] + data16[1] + data16[2]) * 10 / 12, 1000);
         measurement = 0;
 
-    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR &&
-               lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT) {
+    }
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR &&
+             lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT) {
 
         amb = data8[0] * 10;
         measurement = 1;
 
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR &&
-               lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW) {
+               lump_dev->mode == LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW &&
+               !pbio_port_lump_ev3_calibrate_color_sensor_busy(lump_dev)) {
 
         // Reflection is derived from the raw color channels rather than the
         // dedicated reflection mode, so that color and reflection can be read
@@ -591,8 +901,9 @@ pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, 
         ev3_color_sensor_get_rgb(lump_dev, &rgb);
         ref = (rgb.r + rgb.g + rgb.b) * 1000 / 765;
         measurement = 0;
-
-    } else {
+    }
+    #endif
+    else {
         // This device does not measure light in the way that is active now.
         return PBIO_ERROR_NO_DEV;
     }
@@ -658,16 +969,19 @@ static void pbio_port_lump_lump_parse_msg(pbio_port_lump_dev_t *lump_dev) {
             checksum ^= lump_dev->rx_msg[i];
         }
         if (checksum != lump_dev->rx_msg[msg_size - 1]) {
-            debug_pr("Bad checksum\n");
+            // debug_pr("Bad checksum\n");
             // if INFO messages are done and we are now receiving data, it is
             // OK to occasionally have a bad checksum
             if (lump_dev->status == PBDRV_LEGODEV_LUMP_STATUS_DATA) {
 
+                #if PBIO_CONFIG_PORT_LUMP_EV3
                 // The LEGO EV3 color sensor sends bad checksums
                 // for RGB-RAW data (mode 4). The check here could be
                 // improved if someone can find a pattern.
                 if (lump_dev->type_id != LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR
-                    || lump_dev->rx_msg[0] != (LUMP_MSG_TYPE_DATA | LUMP_MSG_SIZE_8 | 4)) {
+                    || lump_dev->rx_msg[0] != (LUMP_MSG_TYPE_DATA | LUMP_MSG_SIZE_8 | 4))
+                #endif
+                {
                     return;
                 }
             } else {
@@ -1115,10 +1429,12 @@ sync:
         lump_dev->rx_msg_size = ev3_uart_get_msg_size(lump_dev->rx_msg[0]);
         if (lump_dev->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
             debug_pr("Bad message size during info %d\n", lump_dev->rx_msg_size);
+            #if PBIO_CONFIG_PORT_LUMP_EV3
             if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR) {
                 // This sensor sends bad info messages, but we'll let it pass.
                 continue;
             }
+            #endif
             return err;
         }
 
@@ -1170,11 +1486,15 @@ sync:
         default_mode = LEGO_DEVICE_MODE_PUP_COLOR_SENSOR__RGB_I;
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__CAL;
-    } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
+    }
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__RGB_RAW;
+        pbio_port_lump_ev3_color_load_calibration(lump_dev);
     } else if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_GYRO_SENSOR) {
         default_mode = LEGO_DEVICE_MODE_EV3_GYRO_SENSOR__G_A;
     }
+    #endif
     if (default_mode) {
         pbio_port_lump_request_mode(lump_dev, default_mode);
     }
@@ -1680,7 +2000,7 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    #if PBIO_CONFIG_PORT_LUMP_EV3
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_IR_SENSOR && lump_dev->mode == LEGO_DEVICE_MODE_EV3_INFRARED_SENSOR__PROX) {
         if (*size < sizeof(uint8_t)) {
             return PBSYS_TELEMETRY_ERROR_NO_ROOM;
@@ -1705,7 +2025,18 @@ pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    // When calibrating, return only the calibration progress state.
+    if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR && pbio_port_lump_ev3_calibrate_color_sensor_busy(lump_dev)) {
+        if (*size < sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->payload[0] = lump_dev->ev3_color_calibration_state;
+        tel->mode = 2;
+        *size = sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    #endif // PBIO_CONFIG_PORT_LUMP_EV3
 
     // No specific encoding, so return device ID without payload for this mode.
     tel->mode = 0xFF;
@@ -1754,7 +2085,7 @@ pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    #if PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    #if PBIO_CONFIG_PORT_LUMP_EV3
     if (lump_dev->type_id == LEGO_DEVICE_TYPE_ID_EV3_COLOR_SENSOR) {
         uint8_t mode;
         switch (tel->mode) {
@@ -1764,13 +2095,20 @@ pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *
             case 1:
                 mode = LEGO_DEVICE_MODE_EV3_COLOR_SENSOR__AMBIENT;
                 break;
+            case 2:
+                // Calibration mode. If not active, set it in motion.
+                if (!pbio_port_lump_ev3_calibrate_color_sensor_busy(lump_dev)) {
+                    pbio_port_lump_ev3_calibrate_color_sensor_stop(lump_dev);
+                    pbio_port_lump_ev3_calibrate_color_sensor(lump_dev);
+                }
+                return PBSYS_TELEMETRY_SUCCESS;
             default:
                 return PBSYS_TELEMETRY_ERROR_NO_REPORT;
         }
         pbio_port_lump_set_mode(lump_dev, mode);
         return PBSYS_TELEMETRY_SUCCESS;
     }
-    #endif // PBIO_CONFIG_PORT_LUMP_MODE_INFO
+    #endif // PBIO_CONFIG_PORT_LUMP_EV3
 
     return PBSYS_TELEMETRY_SUCCESS;
 }

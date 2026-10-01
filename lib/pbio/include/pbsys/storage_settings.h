@@ -21,6 +21,7 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/imu.h>
+#include <pbio/port_lump.h>
 #include <pbsys/config.h>
 
 /**
@@ -50,6 +51,10 @@ typedef struct _pbsys_storage_settings_t {
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
     /** Bonding records for Bluetooth Classic devices, most recent first. */
     pbio_bluetooth_classic_link_key_t bluetooth_bonds[PBIO_BLUETOOTH_CLASSIC_NUM_BONDS];
+    #endif
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    /** EV3 color sensor white balance, for the sensor on each port. */
+    pbio_port_lump_ev3_color_calibration_t ev3_color_calibration[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
     #endif
 } pbsys_storage_settings_t;
 

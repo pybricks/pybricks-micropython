@@ -18,6 +18,7 @@
 #define PBIO_CONFIG_PORT_DCM_EV3            (0)
 #define PBIO_CONFIG_PORT_DCM_NUM_DEV        (0)
 #define PBIO_CONFIG_PORT_LUMP               (0)
+#define PBIO_CONFIG_PORT_LUMP_EV3           (0)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (0)
 #define PBIO_CONFIG_PORT_LUMP_NUM_DEV       (0)
 #define PBIO_CONFIG_SERIAL                  (1)
