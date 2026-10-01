@@ -8,6 +8,8 @@
 - Added `pybricks.messaging.HubNetwork` to EV3, Prime, Inventor, Essential Hub.
 - Added hub info view on EV3 to show firmware and hardware version and address.
 - Added hub name to the top of the screen.
+- Added `hsv()` and `detectable_colors()` to the EV3 Color Sensor.
+- Added EV3 color sensor calibration.
 
 ### Fixed
 - Fixed EV3 not using the correct MAC address.
@@ -15,17 +17,10 @@
   pause indefinitely.
 - Fixed program downloads sometimes getting stuck on Technic, City, and
   Move Hubs ([support#2833]).
+- Fixed early inactivity shutdown of EV3 when buttons are pressed.
 
 [support#2833]: https://github.com/pybricks/support/issues/2833
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
-
-### Added
-- Added `hsv()` and `detectable_colors()` to the EV3 Color Sensor.
-
-### Changed
-- All color and light sensors now report the same live telemetry payload. The
-  NXT Color Sensor and NXT Light Sensor now report live values too.
-- The EV3 Color Sensor now measures color like the other color sensors.
 
 ## [4.1.0b4] - 2026-09-21
 

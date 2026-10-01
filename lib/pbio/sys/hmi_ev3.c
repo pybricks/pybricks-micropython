@@ -91,6 +91,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         DEBUG_PRINT("Start HMI loop\n");
 
+        pbio_os_timer_reset(timer);
         pbsys_hmi_host_update_indications();
 
         pbsys_hmi_ev3_ui_draw();

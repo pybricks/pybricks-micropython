@@ -266,6 +266,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state) {
         #endif
 
         pbsys_hmi_host_update_indications();
+        pbio_os_timer_reset(&idle_timer);
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
