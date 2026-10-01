@@ -368,8 +368,4 @@ enum {
     LEGO_DEVICE_MODE_PUP_ABS_MOTOR__STATS = 5,
 };
 
-uint32_t lego_device_stale_data_delay(lego_device_type_id_t id, uint8_t mode);
-
-uint32_t lego_device_data_set_delay(lego_device_type_id_t id, uint8_t mode);
-
 #endif // _LEGO_DEVICES_H_

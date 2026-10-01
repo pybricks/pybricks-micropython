@@ -42,9 +42,6 @@ TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 # pbio dependency
 LEGO_DIR = ../../lego
 LEGO_INC = -I$(LEGO_DIR)
-LEGO_SRC = $(addprefix $(LEGO_DIR)/, \
-	device.c \
-	)
 
 # pbio dependency
 LWRB_DIR = ../../lwrb/src
@@ -162,7 +159,7 @@ ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-SRC = $(TINY_TEST_SRC) $(LEGO_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 

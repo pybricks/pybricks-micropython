@@ -239,7 +239,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/parent.c \
 	src/port_dcm_ev3.c \
 	src/port_dcm_pup.c \
-	src/port_lump.c \
+	src/port_lump/ev3_color.c \
+	src/port_lump/protocol.c \
+	src/port_lump/sensors.c \
+	src/port_lump/telemetry.c \
 	src/port.c \
 	src/protocol/nus.c \
 	src/protocol/pybricks.c \
@@ -266,12 +269,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/storage_settings.c \
 	sys/storage.c \
 	sys/telemetry.c \
-	)
-
-# LEGO specification library
-
-LEGO_SPEC_SRC_C = $(addprefix lib/lego/,\
-	device.c \
 	)
 
 # MicroPython math library
