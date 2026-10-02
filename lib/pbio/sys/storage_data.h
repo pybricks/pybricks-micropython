@@ -16,6 +16,14 @@
 #include <pbsys/storage_settings.h>
 
 /**
+ * Internal version of the data map below. Bump whenever the layout or the
+ * meaning of any field in the map changes, including the platform-specific
+ * parts of ::pbsys_storage_settings_t. When the stored version does not match,
+ * the data is erased.
+ */
+#define PBSYS_STORAGE_VERSION ('P' << 24 | 'B' << 16 | 0x0001)
+
+/**
  * Information about one code slot.
  *
  * A size of 0 means that this slot is not used. The offset indicates where
@@ -46,14 +54,14 @@ typedef struct {
      */
     uint8_t user_data[PBSYS_CONFIG_STORAGE_USER_DATA_SIZE];
     /**
-     * First 8 symbols of the git hash of the firmware version used to create
-     * this data map. If this does not match the version of the running
-     * firmware, user data will be reset to 0.
+     * Version of the layout used to create this data map. If this does not
+     * match ::PBSYS_STORAGE_VERSION of the running firmware, everything in
+     * this map is reset to 0.
      */
-    char stored_firmware_hash[8];
+    uint32_t storage_version;
     /**
-     * System settings. Settings will be reset to defaults when the firmware
-     * version changes due to an update.
+     * System settings. Settings will be reset to defaults when the storage
+     * version changes, not on every firmware update.
      */
     pbsys_storage_settings_t settings;
     /**

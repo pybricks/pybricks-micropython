@@ -55,9 +55,6 @@ static const uint8_t _program_data[] = {
     0x63,
 };
 
-#include "pbio_version_hash.h"
-
-
 static struct {
     // ensure that data is properly aligned for pbsys_storage_data_map_t
     pbsys_storage_data_map_t data_map;
@@ -78,7 +75,7 @@ pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
 
 void pbdrv_block_device_init(void) {
     ramdisk.data_map.slot_info[0].size = sizeof(_program_data);
-    memcpy(ramdisk.data_map.stored_firmware_hash, PBIO_VERSION_HASH, sizeof(ramdisk.data_map.stored_firmware_hash));
+    ramdisk.data_map.storage_version = PBSYS_STORAGE_VERSION;
     memcpy(ramdisk.data_map.program_data, _program_data, sizeof(_program_data));
 }
 

@@ -19,6 +19,11 @@
   Move Hubs ([support#2833]).
 - Fixed early inactivity shutdown of EV3 when buttons are pressed.
 
+### Changed
+- When sensor telemetry is paused, keep it paused on next boot.
+- When the firmware is updated, only erase storage if the data map has changed
+  in order to preserve Bluetooth settings most of the time.
+
 [support#2833]: https://github.com/pybricks/support/issues/2833
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 

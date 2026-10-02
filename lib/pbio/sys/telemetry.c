@@ -191,7 +191,7 @@ pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t s
             } else {
                 pbsys_status_clear(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE);
             }
-            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT, !!pbsys_telemetry_level);            
+            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT, !!pbsys_telemetry_level);
             return PBIO_PYBRICKS_ERROR_OK;
         case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
             // Command id followed by one telemetry message: the outgoing
