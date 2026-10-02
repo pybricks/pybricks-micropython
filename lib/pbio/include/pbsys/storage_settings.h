@@ -37,6 +37,10 @@ typedef enum {
      * electronics (defaults to false).
      */
     PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED = (1 << 1),
+    /**
+     * Telemetry begins automatically unless user disabled it.
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT = (1 << 2),
 } pbsys_storage_settings_flags_t;
 
 /**

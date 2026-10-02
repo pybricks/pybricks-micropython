@@ -394,6 +394,12 @@ typedef enum {
      * @since Pybricks Profile v1.5.0
      */
     PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS = 13,
+    /**
+     * Hub is currently transmitting sensor telemetry.
+     *
+     * @since Pybricks Profile v1.7.0
+     */
+    PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE = 14,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_flags_t;

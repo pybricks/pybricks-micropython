@@ -18,6 +18,8 @@
 
 #include <pbsys/host.h>
 
+#include <pbsys/status.h>
+#include <pbsys/storage_settings.h>
 #include <pbsys/telemetry.h>
 
 // Telemetry output level, controlled by the host via the set level command.
@@ -135,7 +137,7 @@ uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
 
     uint32_t next_index = 1;
 
-    if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_OFF) {
+    if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_OFF || !pbsys_status_test(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE)) {
         return 0;
     }
 
@@ -183,6 +185,13 @@ pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t s
                 return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
             }
             pbsys_telemetry_level = data[1];
+            // Host uses status to know activity state, even if never toggled.
+            if (pbsys_telemetry_level) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE);
+            } else {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE);
+            }
+            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT, !!pbsys_telemetry_level);            
             return PBIO_PYBRICKS_ERROR_OK;
         case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
             // Command id followed by one telemetry message: the outgoing
