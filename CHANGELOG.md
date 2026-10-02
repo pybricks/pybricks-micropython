@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b5...HEAD
+
+## [4.1.0b5] - 2026-10-02
+
 ### Added
 - Added `pybricks.messaging.HubNetwork` to EV3, Prime, Inventor, Essential Hub.
 - Added hub info view on EV3 to show firmware and hardware version and address.
@@ -27,7 +31,7 @@
 
 [support#2831]: https://github.com/pybricks/support/issues/2831
 [support#2833]: https://github.com/pybricks/support/issues/2833
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
+[4.1.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...v4.1.0b5
 
 ## [4.1.0b4] - 2026-09-21
 

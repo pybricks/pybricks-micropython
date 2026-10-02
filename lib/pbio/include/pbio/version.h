@@ -26,7 +26,7 @@
 #define PBIO_VERSION_LEVEL_HEX 0xB
 
 /** The current prerelease serial. */
-#define PBIO_VERSION_SERIAL 4
+#define PBIO_VERSION_SERIAL 5
 
 /**
  * The current prerelease level as a string.
