@@ -18,12 +18,14 @@
 - Fixed program downloads sometimes getting stuck on Technic, City, and
   Move Hubs ([support#2833]).
 - Fixed early inactivity shutdown of EV3 when buttons are pressed.
+- Fixed NXT USB stability issues ([support#2831]).
 
 ### Changed
 - When sensor telemetry is paused, keep it paused on next boot.
 - When the firmware is updated, only erase storage if the data map has changed
   in order to preserve Bluetooth settings most of the time.
 
+[support#2831]: https://github.com/pybricks/support/issues/2831
 [support#2833]: https://github.com/pybricks/support/issues/2833
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...HEAD
 

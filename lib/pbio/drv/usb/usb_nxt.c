@@ -264,6 +264,11 @@ static uint8_t pbdrv_usb_nxt_current_config;
 static uint8_t *pbdrv_usb_nxt_tx_data[PBDRV_USB_NXT_N_ENDPOINTS];
 static uint32_t pbdrv_usb_nxt_tx_len[PBDRV_USB_NXT_N_ENDPOINTS];
 
+/* Whether the transfer in progress has to end with an explicit zero-length
+ * packet. Decided once per transfer by the caller, since it depends on how
+ * much the host asked for, which the per-packet code no longer knows. */
+static bool pbdrv_usb_nxt_tx_zlp[PBDRV_USB_NXT_N_ENDPOINTS];
+
 /* CSR flags that the controller sets and software clears by writing zero.
  * Writing one to them has no effect, so a read-modify-write of CSR must OR
  * them all in. Otherwise a flag the controller raises between the read and
@@ -307,36 +312,32 @@ static void pbdrv_usb_nxt_csr_set_flag(uint8_t endpoint, uint32_t flags) {
  */
 static void pbdrv_usb_nxt_write_data(int endpoint, const void *ptr_, uint32_t length) {
     const uint8_t *ptr = ptr_;
-    uint32_t packet_size;
 
     if (endpoint != EP_CONTROL && endpoint != EP_BULK_IN) {
         return;
     }
 
-    if (endpoint == EP_CONTROL) {
-        packet_size = MIN(MAX_EP0_SIZE, length);
-    } else {
-        packet_size = MIN(MAX_SND_SIZE, length);
-    }
+    uint32_t max_packet_size = endpoint == EP_CONTROL ? MAX_EP0_SIZE : MAX_SND_SIZE;
+    uint32_t packet_size = MIN(max_packet_size, length);
 
     /* If there is more data than can fit in a single packet, queue the
      * rest up.
      */
     if (length > packet_size) {
-        length -= packet_size;
         pbdrv_usb_nxt_tx_data[endpoint] = (uint8_t *)(ptr + packet_size);
-        pbdrv_usb_nxt_tx_len[endpoint] = length;
-    } else {
-        if (length == packet_size && endpoint == EP_CONTROL) {
-            // If we are sending data to the control pipe, we must terminate the
-            // data with a ZLP. In order to do so, we set the data pointer to
-            // non-NULL but the length to 0. We do not want to send ZLPs on the
-            // CDC data pipe.
-            pbdrv_usb_nxt_tx_data[endpoint] = (uint8_t *)(ptr);
-        } else {
-            pbdrv_usb_nxt_tx_data[endpoint] = NULL;
-        }
+        pbdrv_usb_nxt_tx_len[endpoint] = length - packet_size;
+    } else if (pbdrv_usb_nxt_tx_zlp[endpoint] && packet_size == max_packet_size) {
+        /* This last packet fills the endpoint exactly, so by itself it does
+         * not tell the host the transfer is over. Queue the zero-length
+         * packet that does, encoded as a non-NULL pointer with zero length.
+         */
+        pbdrv_usb_nxt_tx_data[endpoint] = (uint8_t *)(ptr);
         pbdrv_usb_nxt_tx_len[endpoint] = 0;
+        pbdrv_usb_nxt_tx_zlp[endpoint] = false;
+    } else {
+        pbdrv_usb_nxt_tx_data[endpoint] = NULL;
+        pbdrv_usb_nxt_tx_len[endpoint] = 0;
+        pbdrv_usb_nxt_tx_zlp[endpoint] = false;
     }
 
     /* Push a packet into the USB FIFO, and tell the controller to send. */
@@ -406,7 +407,21 @@ static void pbdrv_usb_nxt_send_stall(int endpoint) {
 
 /* During setup, we need to send packets with null data. */
 static void pbdrv_usb_nxt_send_null(void) {
-    pbdrv_usb_nxt_write_data(0, NULL, 0);
+    pbdrv_usb_nxt_tx_zlp[EP_CONTROL] = false;
+    pbdrv_usb_nxt_write_data(EP_CONTROL, NULL, 0);
+}
+
+/* Sends the data stage of a control read, bounded by what the host asked for.
+ * The host knows the stage is over when it has received the requested length
+ * or a packet shorter than the endpoint size. Giving it less than it asked
+ * for therefore needs a short packet, and when the data happens to be an
+ * exact multiple of the endpoint size, that has to be an explicit
+ * zero-length one.
+ */
+static void pbdrv_usb_nxt_write_control_data(const void *ptr, uint32_t length, uint16_t requested) {
+    length = MIN(length, requested);
+    pbdrv_usb_nxt_tx_zlp[EP_CONTROL] = length < requested && length % MAX_EP0_SIZE == 0;
+    pbdrv_usb_nxt_write_data(EP_CONTROL, ptr, length);
 }
 
 static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
@@ -431,7 +446,7 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
                 response = 0;
             }
 
-            pbdrv_usb_nxt_write_data(EP_CONTROL, &response, 2);
+            pbdrv_usb_nxt_write_control_data(&response, sizeof(response), packet->wLength);
         }
         break;
 
@@ -471,14 +486,14 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
             switch (packet->wValue >> 8) {
                 case DESC_TYPE_DEVICE: /* Device descriptor */
                     size = sizeof(pbdrv_usb_nxt_device_descriptor);
-                    pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_device_descriptor,
-                        MIN(size, packet->wLength));
+                    pbdrv_usb_nxt_write_control_data(&pbdrv_usb_nxt_device_descriptor,
+                        size, packet->wLength);
                     break;
 
                 case DESC_TYPE_CONFIGURATION: /* Configuration descriptor */
                     size = sizeof(pbdrv_usb_nxt_full_config);
-                    pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_full_config,
-                        MIN(size, packet->wLength));
+                    pbdrv_usb_nxt_write_control_data(&pbdrv_usb_nxt_full_config,
+                        size, packet->wLength);
                     break;
 
                 case DESC_TYPE_STRING: /* String or language info. */
@@ -506,7 +521,7 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
                     }
 
                     if (desc) {
-                        pbdrv_usb_nxt_write_data(EP_CONTROL, desc, MIN(size, packet->wLength));
+                        pbdrv_usb_nxt_write_control_data(desc, size, packet->wLength);
                     } else {
                         pbdrv_usb_nxt_send_stall(EP_CONTROL);
                     }
@@ -520,7 +535,8 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
 
         case GET_CONFIGURATION:
             /* The host wants to know the ID of the current configuration. */
-            pbdrv_usb_nxt_write_data(EP_CONTROL, &pbdrv_usb_nxt_current_config, 1);
+            pbdrv_usb_nxt_write_control_data(&pbdrv_usb_nxt_current_config,
+                sizeof(pbdrv_usb_nxt_current_config), packet->wLength);
             break;
 
         case SET_CONFIGURATION:
@@ -577,8 +593,8 @@ static void pbdrv_usb_nxt_handle_class_request(pbdrv_usb_setup_packet_t *packet)
             break;
 
         case USB_CDC_REQ_GET_LINE_CODING:
-            pbdrv_usb_nxt_write_data(EP_CONTROL, pbdrv_usb_nxt_line_coding,
-                MIN(sizeof(pbdrv_usb_nxt_line_coding), packet->wLength));
+            pbdrv_usb_nxt_write_control_data(pbdrv_usb_nxt_line_coding,
+                sizeof(pbdrv_usb_nxt_line_coding), packet->wLength);
             break;
 
         case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
@@ -608,8 +624,15 @@ static void pbdrv_usb_nxt_manage_setup_packet(void) {
     packet.wIndex = (AT91C_UDP_FDR[EP_CONTROL] & 0xFF) | (AT91C_UDP_FDR[EP_CONTROL] << 8);
     packet.wLength = (AT91C_UDP_FDR[EP_CONTROL] & 0xFF) | (AT91C_UDP_FDR[EP_CONTROL] << 8);
 
+    /* DIR selects which way the data stage of this control transfer goes, and
+     * has to be settled before RXSETUP is acknowledged. It persists, so a
+     * host-to-device request must clear what a preceding device-to-host one
+     * set, or its OUT data stage is not accepted.
+     */
     if ((packet.bmRequestType & BM_REQ_DIR_MASK) == BM_REQ_DIR_D2H) {
-        pbdrv_usb_nxt_csr_set_flag(EP_CONTROL, AT91C_UDP_DIR); /* TODO: contradicts atmel doc p475 */
+        pbdrv_usb_nxt_csr_set_flag(EP_CONTROL, AT91C_UDP_DIR);
+    } else {
+        pbdrv_usb_nxt_csr_clear_flag(EP_CONTROL, AT91C_UDP_DIR);
     }
 
     pbdrv_usb_nxt_csr_clear_flag(EP_CONTROL, AT91C_UDP_RXSETUP);
@@ -769,13 +792,26 @@ static void pbdrv_usb_nxt_isr(void) {
 
         if (csr & AT91C_UDP_TXCOMP) {
 
-            /* so first we will reset this flag */
+            /* If this transfer has more packets, queue the next one before
+             * acknowledging. TXCOMP must be cleared only after TXPKTRDY has
+             * been set again, or the controller can drop the new packet and
+             * never raise TXCOMP for it, hanging the transfer.
+             */
+            if (pbdrv_usb_nxt_tx_data[endpoint] != NULL) {
+                pbdrv_usb_nxt_write_data(endpoint, pbdrv_usb_nxt_tx_data[endpoint],
+                    pbdrv_usb_nxt_tx_len[endpoint]);
+                pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_TXCOMP);
+                return;
+            }
+
+            /* Nothing left to send: the host has acknowledged all of it. */
             pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_TXCOMP);
 
             if (pbdrv_usb_nxt_new_device_address > 0) {
                 /* the previous message received was SET_ADDR */
                 /* now that the computer ACK our send_null(), we can
-                 * set this address for real */
+                 * set this address for real. The status stage must be
+                 * complete and TXCOMP cleared before this, which it now is. */
 
                 /* we set the specified usb address in the controller */
                 *AT91C_UDP_FADDR = AT91C_UDP_FEN | pbdrv_usb_nxt_new_device_address;
@@ -784,17 +820,10 @@ static void pbdrv_usb_nxt_isr(void) {
                 pbdrv_usb_nxt_new_device_address = 0;
             }
 
-            /* and we will send the following data */
-            if (pbdrv_usb_nxt_tx_data[endpoint] != NULL) {
-                pbdrv_usb_nxt_write_data(endpoint, pbdrv_usb_nxt_tx_data[endpoint],
-                    pbdrv_usb_nxt_tx_len[endpoint]);
-            } else {
-                /* then it means that we sent all the data and the host has acknowledged it */
-                if (endpoint == EP_BULK_IN) {
-                    pbdrv_usb_nxt_transmitting = false;
-                }
-                pbio_os_request_poll();
+            if (endpoint == EP_BULK_IN) {
+                pbdrv_usb_nxt_transmitting = false;
             }
+            pbio_os_request_poll();
             return;
         }
 
@@ -828,6 +857,7 @@ static void pbdrv_usb_nxt_hw_init(void) {
     for (int i = 0; i < PBDRV_USB_NXT_N_ENDPOINTS; i++) {
         pbdrv_usb_nxt_tx_data[i] = NULL;
         pbdrv_usb_nxt_tx_len[i] = 0;
+        pbdrv_usb_nxt_tx_zlp[i] = false;
     }
     pbdrv_usb_rx_len = 0;
     pbdrv_usb_rx_pos = 0;
@@ -973,6 +1003,7 @@ pbio_error_t pbdrv_usb_tx_message(pbio_os_state_t *state, const uint8_t *data, u
 pbio_error_t pbdrv_usb_tx_reset(pbio_os_state_t *state) {
     pbdrv_usb_nxt_tx_data[EP_BULK_IN] = NULL;
     pbdrv_usb_nxt_tx_len[EP_BULK_IN] = 0;
+    pbdrv_usb_nxt_tx_zlp[EP_BULK_IN] = false;
     pbdrv_usb_nxt_transmitting = false;
     return PBIO_SUCCESS;
 }
