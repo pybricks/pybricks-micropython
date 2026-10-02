@@ -9,8 +9,11 @@
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_NXT                    (1)
 
+// The RAM disk holds the saved data plus the MicroPython heap, so its size
+// sets how much memory user programs get. It is the largest single consumer
+// of the 64K of RAM; the supervisor stack takes whatever is left over.
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (18 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (24 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_NXT               (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_NXT_SIZE          (16 * 1024) // Must match FLASH_USER in linker script
 

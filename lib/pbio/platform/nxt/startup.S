@@ -210,12 +210,14 @@ wait_mclk_3:
 
         /* Set up the abort mode stack. */
         msr cpsr_c, #(MODE_ABT | IRQ_FIQ_MASK)
-        ldr sp, =__ram_userspace_end__
+        ldr sp, =__abort_stack__
         bic sp, sp, #7
 
-        /* Set up the supervisor mode stack. */
+        /* Set up the supervisor mode stack. This is the C stack for the
+         * whole firmware and grows down from the end of RAM.
+         */
         msr cpsr_c, #(MODE_SVC | IRQ_FIQ_MASK)
-        ldr sp, =__supervisor_stack__
+        ldr sp, =pbdrv_stack_end
         bic sp, sp, #7
 
         /* Set up initial frame pointers for C code in both Arm
