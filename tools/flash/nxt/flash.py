@@ -6,7 +6,6 @@ from importlib.resources import read_binary
 
 from nxt import resources
 
-from .firmware import Firmware
 from .samba import SambaBrick, SambaOpenError
 
 
@@ -37,6 +36,14 @@ FLASH_MEMORY_WRITE_SETTING = (0x34 << 16) | (0x1 << 8)
 # The base command to unlock a flash region, and a helper to generate the
 # correct region number.
 FLASH_REGION_UNLOCK_CMD = (0x5A << 24) | (0x4)
+
+# The AT91SAM7S256 flash plane is 256 KiB, programmed one 256-byte page at a
+# time. The firmware starts at the bottom of the plane; the last 16 KiB lock
+# region is reserved for the user data that the firmware writes at shutdown,
+# so the firmware itself must stay below that.
+FLASH_PAGE_SIZE = 256
+FIRMWARE_SIZE = 240 * 1024
+FIRMWARE_PAGE_COUNT = FIRMWARE_SIZE // FLASH_PAGE_SIZE
 
 
 def _unlock_region(region_num):
@@ -100,37 +107,38 @@ class FlashController(object):
         self._brick.write_buffer(FLASH_DRIVER_ADDR, driver)
 
     def flash(self, firmware):
-        self._prepare_flash()
+        num_pages = int(math.ceil(len(firmware) / FLASH_PAGE_SIZE))
+        if num_pages > FIRMWARE_PAGE_COUNT:
+            raise InvalidFirmwareImage(
+                f"firmware is {len(firmware)} bytes but only {FIRMWARE_SIZE} "
+                "bytes are reserved for it"
+            )
 
-        num_pages = int(math.ceil(len(firmware) / 256))
-        if num_pages > 1024:
-            raise InvalidFirmwareImage("The firmware image must be smaller than 256kB")
+        self._prepare_flash()
 
         for page_num in range(num_pages):
             self._brick.write_word(FLASH_TARGET_BLOCK_NUM_ADDR, page_num)
             self._brick.write_buffer(
-                FLASH_BLOCK_DATA_ADDR, firmware[page_num * 256 : (page_num + 1) * 256]
+                FLASH_BLOCK_DATA_ADDR,
+                firmware[page_num * FLASH_PAGE_SIZE : (page_num + 1) * FLASH_PAGE_SIZE],
             )
             self._brick.jump(FLASH_DRIVER_ADDR)
 
 
 def flash_nxt(firmwares: dict[str, bytes]) -> None:
     """
-    Flashes firmware to NXT using the Samba bootloader.
+    Flashes firmware to NXT using the SAM-BA bootloader.
+
+    The image is a plain binary that is written to the start of the flash
+    plane and executed from there; it carries no header of its own.
 
     Args:
-        firmware:
-            A firmware blob with the NxOS header appended to the end.
+        firmwares:
+            Firmware blobs by platform name. The NXT has only one.
     """
 
     # There is only one firmware for the NXT.
     firmware = firmwares["nxt"]
-
-    # parse the header
-    info = Firmware(firmware)
-
-    if info.samba:
-        raise ValueError("Firmware is not suitable for flashing.")
 
     s = SambaBrick()
 

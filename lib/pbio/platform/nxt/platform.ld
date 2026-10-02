@@ -122,25 +122,6 @@ SECTIONS {
         *(.name)
     } > FLASH_FIRMWARE
 
-    /* Header that tools/flash/nxt reads from the last 21 bytes of the
-       firmware image, so this must stay last in flash. Only the magic value
-       and the SAM-BA flag are checked; the sizes and addresses are carried
-       over from NxOS and are informational. */
-    .magic : {
-        LONG(0xDEADBEEF);
-        /* Kernel in-RAM size: all of it. */
-        LONG(LENGTH(RAM));
-        /* Kernel in-ROM size. */
-        LONG(SIZEOF(.vectors) + SIZEOF(.ram_text) + SIZEOF(.data) +
-             SIZEOF(.text) + SIZEOF(.name));
-        /* Write address. */
-        LONG(ORIGIN(FLASH_FIRMWARE));
-        /* Bootup address. */
-        LONG(ORIGIN(FLASH_FIRMWARE));
-        /* Not a SAM-BA helper kernel. */
-        BYTE(0);
-    } > FLASH_FIRMWARE
-
     /* Discard anything not mapped at this point, so that nothing unexpected
        can end up in the firmware image. Note that this also drops debug
        info, including in DEBUG=1 builds. */
