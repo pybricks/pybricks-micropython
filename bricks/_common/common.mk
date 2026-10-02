@@ -194,6 +194,8 @@ ifeq ($(CI_MODE),1)
 CFLAGS += -DPBDRV_CONFIG_RUN_ON_CI
 endif
 CFLAGS += $(INC) -Wall -Werror -Wdouble-promotion -Wfloat-conversion -std=gnu99 $(COPT) -D_GNU_SOURCE
+# The virtual hub compiles programs at runtime, from any working directory.
+CFLAGS += -DPBSYS_HMI_VIRTUAL_COMPILER='"$(abspath $(PBTOP)/tools/compile.py)"'
 # Newer glibc math.h no longer exposes __uint32_t/__int32_t used by fdlibm.h.
 $(BUILD)/lib/libm/%.o: CFLAGS += -include sys/types.h
 ifeq ($(UNAME_S),Linux)

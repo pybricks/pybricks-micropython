@@ -16,7 +16,7 @@
 #include <pbio/version.h>
 
 /**
-The following script is compiled using pybricksdev compile hello.py in MULTI_MPY_V6.
+The following script is compiled using tools/compile.py hello.py in MULTI_MPY_V6.
 
 from pybricks.tools import StopWatch, wait
 

@@ -48,12 +48,12 @@
 static uint32_t pbsys_hmi_num_programs;
 
 static void load_program(const char *path) {
-    // Pybricksdev helper script, pipes multi-mpy to us.
+    // Helper script, pipes multi-mpy to us.
     char command[512];
-    snprintf(command, sizeof(command), "pybricksdev compile --bin %s", path);
+    snprintf(command, sizeof(command), "%s %s", PBSYS_HMI_VIRTUAL_COMPILER, path);
     FILE *pipe = popen(command, "r");
     if (!pipe) {
-        printf("Failed to compile program with Pybricksdev\n");
+        printf("Failed to compile program\n");
         exit(0);
     }
 

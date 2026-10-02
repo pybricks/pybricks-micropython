@@ -21,8 +21,7 @@ remain available.
 
 Before attempting to build this, please follow the instructions to build the
 firmware for one of the other targets, such as the SPIKE Prime Hub, as
-explained [here](../../CONTRIBUTING.md). Make sure that `pybricksdev` is
-installed.
+explained [here](../../CONTRIBUTING.md).
 
 Unlike most other alternative EV3 firmware solutions, Pybricks does not require
 using a microSD card. Instead, Pybricks is installed as a firmware update.
@@ -44,14 +43,14 @@ cd pybricks-micropython
 # Optional: clean.
 make -C bricks/ev3 clean
 
-# Build firmware and deploy with Pybricksdev.
+# Build firmware and deploy.
 make -C bricks/ev3 -j deploy
 ```
 
 Instead, you can download the [latest nightly build](https://nightly.link/pybricks/pybricks-micropython/workflows/build/master). Install it as follows:
 
-```
-pybricksdev flash ~/Downloads/ev3-firmware-build-3782-git1bcea603.zip
+```bash
+poetry run python tools/flash ~/Downloads/ev3-firmware-build-3782-git1bcea603.zip
 ```
 
 ## Operating the brick

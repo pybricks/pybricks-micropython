@@ -180,8 +180,6 @@ jobs:
     needs: [mpy_cross]
     runs-on: ubuntu-24.04
     steps:
-    - name: Install Pybricksdev
-      run: pipx install pybricksdev
     - name: Checkout repo
       uses: actions/checkout@v7
       with:
