@@ -264,6 +264,15 @@ static uint8_t pbdrv_usb_nxt_current_config;
 static uint8_t *pbdrv_usb_nxt_tx_data[PBDRV_USB_NXT_N_ENDPOINTS];
 static uint32_t pbdrv_usb_nxt_tx_len[PBDRV_USB_NXT_N_ENDPOINTS];
 
+/* CSR flags that the controller sets and software clears by writing zero.
+ * Writing one to them has no effect, so a read-modify-write of CSR must OR
+ * them all in. Otherwise a flag the controller raises between the read and
+ * the write is written back as zero and silently cleared, losing the packet
+ * or completion it stood for.
+ */
+#define CSR_NO_EFFECT_1_ALL (AT91C_UDP_TXCOMP | AT91C_UDP_RX_DATA_BK0 | \
+    AT91C_UDP_RXSETUP | AT91C_UDP_ISOERROR | AT91C_UDP_RX_DATA_BK1)
+
 /* The flags in the UDP_CSR register are a little strange: writing to
  * them does not instantly change their value. Their value will change
  * to reflect the write when the USB controller has taken the change
@@ -274,14 +283,19 @@ static uint32_t pbdrv_usb_nxt_tx_len[PBDRV_USB_NXT_N_ENDPOINTS];
  * controller to synchronize
  */
 static void pbdrv_usb_nxt_csr_clear_flag(uint8_t endpoint, uint32_t flags) {
-    AT91C_UDP_CSR[endpoint] &= ~(flags);
+    uint32_t csr = AT91C_UDP_CSR[endpoint];
+    csr |= CSR_NO_EFFECT_1_ALL;
+    csr &= ~(flags);
+    AT91C_UDP_CSR[endpoint] = csr;
     while (AT91C_UDP_CSR[endpoint] & (flags)) {
         ;
     }
 }
 
 static void pbdrv_usb_nxt_csr_set_flag(uint8_t endpoint, uint32_t flags) {
-    AT91C_UDP_CSR[endpoint] |= (flags);
+    uint32_t csr = AT91C_UDP_CSR[endpoint];
+    csr |= CSR_NO_EFFECT_1_ALL | (flags);
+    AT91C_UDP_CSR[endpoint] = csr;
     while ((AT91C_UDP_CSR[endpoint] & (flags)) != (flags)) {
         ;
     }
@@ -340,6 +354,15 @@ static volatile uint32_t pbdrv_usb_rx_len;
 static uint32_t pbdrv_usb_rx_pos;
 
 /*
+ * The bulk OUT endpoint has ping-pong (dual bank) attributes, so the host can
+ * land a second packet in the other bank while the first is still unread. The
+ * controller sets one flag per bank, and each must be acknowledged separately,
+ * in the order the packets arrived. Clearing both at once acknowledges a bank
+ * that was never read and throws its packet away.
+ */
+static uint32_t pbdrv_usb_rx_bank;
+
+/*
  * Read one data packet from the USB controller.
  */
 static void pbdrv_usb_rx_update(int endpoint) {
@@ -352,16 +375,23 @@ static void pbdrv_usb_rx_update(int endpoint) {
         return;
     }
 
-    pbdrv_usb_rx_len = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
+    uint32_t len = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
 
     // Read all available bytes.
-    for (uint16_t i = 0; i < pbdrv_usb_rx_len; i++) {
+    for (uint32_t i = 0; i < len; i++) {
         pbdrv_usb_rx_buf[i] = AT91C_UDP_FDR[EP_BULK_OUT];
     }
 
-    // REVISIT: We could switch between RX banks to keep receiving data while
-    // we process it. At the moment, the higher level code does not use this.
-    pbdrv_usb_nxt_csr_clear_flag(endpoint, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
+    // Only now is the buffer valid to read from the process.
+    pbdrv_usb_rx_len = len;
+
+    // Hand this bank back to the controller and expect the next packet in the
+    // other one. If it is already full, the endpoint interrupt stays asserted
+    // and fires again as soon as this handler returns, by which time the
+    // buffer is busy, so it is masked rather than read.
+    pbdrv_usb_nxt_csr_clear_flag(endpoint, pbdrv_usb_rx_bank);
+    pbdrv_usb_rx_bank = pbdrv_usb_rx_bank == AT91C_UDP_RX_DATA_BK0 ?
+        AT91C_UDP_RX_DATA_BK1 : AT91C_UDP_RX_DATA_BK0;
 }
 
 /* On the endpoint 0: A stall is USB's way of sending
@@ -505,6 +535,7 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
                 (AT91C_UDP_CONFG | AT91C_UDP_FADDEN) :AT91C_UDP_FADDEN;
 
             /* Enable the CDC data and notification endpoints. */
+            pbdrv_usb_rx_bank = AT91C_UDP_RX_DATA_BK0;
             AT91C_UDP_CSR[EP_BULK_OUT] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
             while (AT91C_UDP_CSR[EP_BULK_OUT] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
                 ;
@@ -622,8 +653,13 @@ static void pbdrv_usb_nxt_isr(void) {
         *AT91C_UDP_RSTEP = ~0;
         *AT91C_UDP_RSTEP = 0;
 
-        /* Reset internal state. */
+        /* Reset internal state. The emptied bulk OUT FIFO will deliver the
+         * next packet in bank 0 again, and anything still held for the
+         * process belongs to a connection that no longer exists. */
         pbdrv_usb_nxt_current_config = 0;
+        pbdrv_usb_rx_bank = AT91C_UDP_RX_DATA_BK0;
+        pbdrv_usb_rx_pos = 0;
+        pbdrv_usb_rx_len = 0;
 
         /* Reset EP0 to a basic control endpoint. */
         /* TODO: The while is ugly. Fix it. */
@@ -714,11 +750,15 @@ static void pbdrv_usb_nxt_isr(void) {
         if (csr & AT91C_UDP_RX_DATA_BK0
             || csr & AT91C_UDP_RX_DATA_BK1) {
 
-            if (endpoint == EP_BULK_OUT) {
-                AT91C_UDP_CSR[EP_BULK_OUT] &= ~AT91C_UDP_EPEDS;
-                while (AT91C_UDP_CSR[EP_BULK_OUT] & AT91C_UDP_EPEDS) {
-                    ;
-                }
+            if (endpoint == EP_BULK_OUT && pbdrv_usb_rx_len) {
+                // The process has not drained the previous packet yet, so
+                // there is nowhere to put this one. Leave the bank flag set
+                // and mask the endpoint interrupt, which would otherwise
+                // re-assert forever. The controller NAKs further OUT packets
+                // once both banks are full, which is how the host is told to
+                // wait. pbdrv_usb_rx_read() unmasks again.
+                *AT91C_UDP_IDR = AT91C_UDP_EPINT1;
+                return;
             }
 
             pbdrv_usb_rx_update(endpoint);
@@ -790,6 +830,8 @@ static void pbdrv_usb_nxt_hw_init(void) {
         pbdrv_usb_nxt_tx_len[i] = 0;
     }
     pbdrv_usb_rx_len = 0;
+    pbdrv_usb_rx_pos = 0;
+    pbdrv_usb_rx_bank = AT91C_UDP_RX_DATA_BK0;
 
     uint32_t state = nx_interrupts_disable();
 
@@ -953,12 +995,12 @@ uint32_t pbdrv_usb_rx_read(uint8_t *data, uint32_t size) {
         return count;
     }
 
-    // Packet fully drained, get ready to receive the next one.
+    // Packet fully drained, get ready to receive the next one. Unmasking is
+    // harmless if the interrupt was never masked. If the other bank filled up
+    // in the meantime, its still-pending interrupt fires right away.
     pbdrv_usb_rx_pos = 0;
     pbdrv_usb_rx_len = 0;
-    if (pbdrv_usb_nxt_configured) {
-        AT91C_UDP_CSR[EP_BULK_OUT] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-    }
+    *AT91C_UDP_IER = AT91C_UDP_EPINT1;
 
     return count;
 }
