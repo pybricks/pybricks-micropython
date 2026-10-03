@@ -23,7 +23,7 @@ const pbdrv_usb_langid_union_t pbdrv_usb_str_desc_langid = {
 
 const pbdrv_usb_str_mfg_union_t pbdrv_usb_str_desc_mfg = {
     .s = {
-        .bLength = sizeof(pbdrv_usb_str_mfg_t),
+        .bLength = sizeof(pbdrv_usb_str_mfg_t) - sizeof(uint16_t),
         .bDescriptorType = DESC_TYPE_STRING,
         .str = PBDRV_CONFIG_USB_MFG_STR,
     }
