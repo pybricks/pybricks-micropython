@@ -42,7 +42,7 @@
 
 
 
-#ifndef __GPMC_H_
+#ifndef __GPMC_H__
 #define __GPMC_H__
 
 #include "hw_gpmc.h"
