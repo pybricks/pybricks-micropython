@@ -2,6 +2,7 @@
 // Copyright (c) 2025 The Pybricks Authors
 
 #ifndef _PBDRV_COMPILER_H_
+#define _PBDRV_COMPILER_H_
 
 // Marks a switch case that intentionally falls through to the next one
 #define PBDRV_FALL_THROUGH                  __attribute__((fallthrough))
