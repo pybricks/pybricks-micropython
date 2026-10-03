@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2023 The Pybricks Authors
 
+import contextlib
 import enum
 import itertools
 import struct
+import sys
 from typing import Callable
 
 import hid
@@ -54,6 +56,10 @@ class ReplyError(Exception):
         super().__init__(status.name, status.value)
 
 
+class BootloaderNotFoundError(Exception):
+    """The EV3 bootloader could not be found or could not be opened."""
+
+
 class EV3Bootloader:
     """
     Connection to LEGO MINDSTORMS EV3 bootloader for flashing firmware.
@@ -69,8 +75,30 @@ class EV3Bootloader:
     def open(self) -> None:
         """
         Opens an HID connection to the EV3 bootloader.
+
+        Raises:
+            BootloaderNotFoundError:
+                If no EV3 in firmware update mode was found or if it was found
+                but could not be opened.
         """
-        self._device.open(vendor_id=LEGO_USB_VID, product_id=EV3_BOOTLOADER_USB_PID)
+        if not hid.enumerate(LEGO_USB_VID, EV3_BOOTLOADER_USB_PID):
+            raise BootloaderNotFoundError(
+                "No EV3 in firmware update mode was found. To enter firmware "
+                "update mode:\n"
+                "  - Attach the USB cable.\n"
+                "  - Make sure the EV3 is off.\n"
+                "  - Hold the right button and start the EV3 with the center "
+                "button.\n"
+                '  - The display should now say "Updating.."'
+            )
+
+        try:
+            self._device.open(vendor_id=LEGO_USB_VID, product_id=EV3_BOOTLOADER_USB_PID)
+        except OSError as ex:
+            raise BootloaderNotFoundError(
+                "Found an EV3 in firmware update mode but failed to open it. "
+                "Make sure no other program is using it."
+            ) from ex
 
     def close(self) -> None:
         """
@@ -251,8 +279,13 @@ def flash_ev3(firmwares: dict[str, bytes]) -> None:
     # variations like Bluetooth chipsets at runtime.
     firmware = firmwares["ev3"]
 
-    # TODO: nice error message and exit(1) if EV3 is not found
-    with EV3Bootloader() as bootloader:
+    try:
+        bootloader = EV3Bootloader()
+        bootloader.open()
+    except BootloaderNotFoundError as ex:
+        sys.exit(str(ex))
+
+    with contextlib.closing(bootloader):
         fw, hw = bootloader.get_version()
         print(f"hwid: {hw}")
 
