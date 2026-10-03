@@ -200,7 +200,7 @@ static uint8_t *USBD_Pybricks_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed,
     /* Prevent unused argument(s) compilation warning */
     UNUSED(speed);
 
-    *length = sizeof(pbdrv_usb_str_desc_mfg.s);
+    *length = pbdrv_usb_str_desc_mfg.s.bLength;
     return (uint8_t *)&pbdrv_usb_str_desc_mfg;
 }
 

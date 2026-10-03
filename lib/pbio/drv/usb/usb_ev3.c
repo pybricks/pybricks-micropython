@@ -519,7 +519,7 @@ static bool usb_get_descriptor(uint16_t wValue) {
 
                 case STRING_DESC_MFG:
                     pbdrv_usb_setup_data_to_send = pbdrv_usb_str_desc_mfg.u;
-                    pbdrv_usb_setup_data_to_send_sz = sizeof(pbdrv_usb_str_desc_mfg.s);
+                    pbdrv_usb_setup_data_to_send_sz = pbdrv_usb_str_desc_mfg.s.bLength;
                     return true;
 
                 case STRING_DESC_PRODUCT: {
