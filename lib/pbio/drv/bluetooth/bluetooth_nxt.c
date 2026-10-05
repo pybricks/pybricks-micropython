@@ -81,6 +81,13 @@
 #define BT_RESET_TIMEOUT_MS (5000)
 
 /**
+ * Time that sending stream data may stall before the link is taken as lost.
+ * The BC4 can stop taking data without dropping the stream (e.g. when the host
+ * closes the connection during a transfer), so it does not always say.
+ */
+#define BT_TX_TIMEOUT_MS (1000)
+
+/**
  * PIN code sent when a host asks for one. The BC4 predates Secure Simple
  * Pairing, so the host always prompts for this.
  */
@@ -152,6 +159,8 @@ static volatile struct {
     bool streaming;
     /** Set when the host connection should be dropped, e.g. on soft-poweroff. */
     bool disconnect_requested;
+    /** Set when the BC4 stopped taking stream data. */
+    bool tx_stalled;
     /** Set when the BC4 sends a break condition. */
     bool break_received;
     /** Number of messages dropped because of a bad checksum. */
@@ -174,6 +183,18 @@ static void bt_uart_write(const uint8_t *data, uint32_t size) {
     *AT91C_US1_TNPR = (uint32_t)data;
     *AT91C_US1_TNCR = size;
     *AT91C_US1_IER = AT91C_US_TXBUFE;
+}
+
+/**
+ * Discards the remainder of a transfer that the BC4 is not accepting.
+ */
+static void bt_uart_abort_write(void) {
+    *AT91C_US1_PTCR = AT91C_PDC_TXTDIS;
+    *AT91C_US1_TCR = 0;
+    *AT91C_US1_TNCR = 0;
+    *AT91C_US1_CR = AT91C_US_RSTTX;
+    *AT91C_US1_CR = AT91C_US_TXEN;
+    *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 }
 
 /**
@@ -572,16 +593,21 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
             DEBUG_PRINT("disconn brk%u\n", bt.break_received);
             bt_set_streaming(false);
 
-            // The BC4 reports why it dropped the stream, and does not take
-            // commands until it has.
-            PBIO_OS_AWAIT_MS(state, &timer, 500);
+            // A BC4 that stopped taking data does not take commands either,
+            // so leave it to the reset that follows.
+            if (!bt.tx_stalled) {
+                // The BC4 reports why it dropped the stream, and does not take
+                // commands until it has.
+                PBIO_OS_AWAIT_MS(state, &timer, 500);
 
-            // Drop the link explicitly, so that the host sees a disconnect
-            // instead of waiting for a timeout.
-            if (bt.disconnect_requested && bt.handle >= 0) {
-                args[0] = bt.handle;
-                PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
+                // Drop the link explicitly, so that the host sees a disconnect
+                // instead of waiting for a timeout.
+                if (bt.disconnect_requested && bt.handle >= 0) {
+                    args[0] = bt.handle;
+                    PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
+                }
             }
+            bt.tx_stalled = false;
 
             // Start listening again.
             if (bt.disconnect_requested) {
@@ -637,6 +663,8 @@ uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size) {
 
 pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
+    static pbio_os_timer_t timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (!bt.streaming) {
@@ -645,7 +673,17 @@ pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, con
 
     PBIO_OS_AWAIT_UNTIL(state, !bt_uart_is_writing());
     bt_uart_write(data, size);
-    PBIO_OS_AWAIT_UNTIL(state, !bt.streaming || !bt_uart_is_writing());
+    pbio_os_timer_set(&timer, BT_TX_TIMEOUT_MS);
+    PBIO_OS_AWAIT_UNTIL(state, !bt.streaming || !bt_uart_is_writing() || pbio_os_timer_is_expired(&timer));
+
+    // The rest of the message is of no use to anyone now, and would block
+    // commands to the BC4.
+    if (bt_uart_is_writing()) {
+        bt_uart_abort_write();
+        bt.tx_stalled = bt.streaming;
+        pbdrv_bluetooth_classic_host_disconnect();
+        return PBIO_ERROR_TIMEDOUT;
+    }
 
     if (!bt.streaming) {
         return PBIO_ERROR_INVALID_OP;
