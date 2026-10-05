@@ -278,32 +278,29 @@ static bool pbdrv_usb_nxt_tx_zlp[PBDRV_USB_NXT_N_ENDPOINTS];
 #define CSR_NO_EFFECT_1_ALL (AT91C_UDP_TXCOMP | AT91C_UDP_RX_DATA_BK0 | \
     AT91C_UDP_RXSETUP | AT91C_UDP_ISOERROR | AT91C_UDP_RX_DATA_BK1)
 
-/* The flags in the UDP_CSR register are a little strange: writing to
- * them does not instantly change their value. Their value will change
- * to reflect the write when the USB controller has taken the change
- * into account. The driver must wait until the controller
- * acknowledges changes to CSR.
- *
- * These helpers set/clear CSR flags, and then loop waiting for the
- * controller to synchronize
+/* A CSR write takes effect only once it has crossed into the USB clock
+ * domain. The datasheet (doc6175, UDP_CSR) says to wait 3 UDPCK and 3 MCK
+ * cycles (125 ns) instead of polling for the new value. The controller may
+ * already have changed it back (e.g. TXPKTRDY once the packet is sent).
  */
+#define PBDRV_USB_NXT_CSR_SYNC_NS 150
+
+static void pbdrv_usb_nxt_csr_write(uint8_t endpoint, uint32_t csr) {
+    AT91C_UDP_CSR[endpoint] = csr;
+    nx_systick_wait_ns(PBDRV_USB_NXT_CSR_SYNC_NS);
+}
+
 static void pbdrv_usb_nxt_csr_clear_flag(uint8_t endpoint, uint32_t flags) {
     uint32_t csr = AT91C_UDP_CSR[endpoint];
     csr |= CSR_NO_EFFECT_1_ALL;
     csr &= ~(flags);
-    AT91C_UDP_CSR[endpoint] = csr;
-    while (AT91C_UDP_CSR[endpoint] & (flags)) {
-        ;
-    }
+    pbdrv_usb_nxt_csr_write(endpoint, csr);
 }
 
 static void pbdrv_usb_nxt_csr_set_flag(uint8_t endpoint, uint32_t flags) {
     uint32_t csr = AT91C_UDP_CSR[endpoint];
     csr |= CSR_NO_EFFECT_1_ALL | (flags);
-    AT91C_UDP_CSR[endpoint] = csr;
-    while ((AT91C_UDP_CSR[endpoint] & (flags)) != (flags)) {
-        ;
-    }
+    pbdrv_usb_nxt_csr_write(endpoint, csr);
 }
 
 /* Starts sending data to the host. If the data cannot fit into a
@@ -552,20 +549,9 @@ static void pbdrv_usb_handle_std_request(pbdrv_usb_setup_packet_t *packet) {
 
             /* Enable the CDC data and notification endpoints. */
             pbdrv_usb_rx_bank = AT91C_UDP_RX_DATA_BK0;
-            AT91C_UDP_CSR[EP_BULK_OUT] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-            while (AT91C_UDP_CSR[EP_BULK_OUT] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT)) {
-                ;
-            }
-
-            AT91C_UDP_CSR[EP_BULK_IN] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-            while (AT91C_UDP_CSR[EP_BULK_IN] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN)) {
-                ;
-            }
-
-            AT91C_UDP_CSR[EP_NOTIF] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_INT_IN;
-            while (AT91C_UDP_CSR[EP_NOTIF] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_INT_IN)) {
-                ;
-            }
+            pbdrv_usb_nxt_csr_write(EP_BULK_OUT, AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT);
+            pbdrv_usb_nxt_csr_write(EP_BULK_IN, AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN);
+            pbdrv_usb_nxt_csr_write(EP_NOTIF, AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_INT_IN);
 
             pbdrv_usb_nxt_configured = packet->wValue > 0;
             break;
@@ -685,11 +671,7 @@ static void pbdrv_usb_nxt_isr(void) {
         pbdrv_usb_rx_len = 0;
 
         /* Reset EP0 to a basic control endpoint. */
-        /* TODO: The while is ugly. Fix it. */
-        AT91C_UDP_CSR[0] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL;
-        while (AT91C_UDP_CSR[0] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL)) {
-            ;
-        }
+        pbdrv_usb_nxt_csr_write(EP_CONTROL, AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL);
 
         /* Enable interrupt handling for all three endpoints, as well as
          * suspend/resume.
