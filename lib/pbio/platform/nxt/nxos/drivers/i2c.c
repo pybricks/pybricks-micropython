@@ -349,6 +349,18 @@ i2c_txn_status nx_i2c_get_txn_status(uint32_t sensor)
 
   p = &i2c_state[sensor];
 
+  /* Once done, current_txn is n_txns (one past the end of txns). Fail if any
+   * sub transaction failed, since a NAKed address skips the remaining ones
+   * and leaves them looking successful.
+   */
+  if (p->n_txns && p->current_txn >= p->n_txns) {
+    for (uint32_t i = 0; i < p->n_txns; i++) {
+      if (p->txns[i].result != TXN_STAT_SUCCESS)
+        return p->txns[i].result;
+    }
+    return TXN_STAT_SUCCESS;
+  }
+
   /* If the current sub transaction was left in the FAILED state,
    * the whole transaction is failed.
    */
