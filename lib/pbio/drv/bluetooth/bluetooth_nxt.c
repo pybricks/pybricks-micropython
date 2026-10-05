@@ -150,8 +150,8 @@ static volatile struct {
     int8_t handle;
     /** Whether the UART carries a raw byte stream instead of commands. */
     bool streaming;
-    /** Set on soft-poweroff, to drop the link before the system goes down. */
-    bool closing;
+    /** Set when the host connection should be dropped, e.g. on soft-poweroff. */
+    bool disconnect_requested;
     /** Set when the BC4 sends a break condition. */
     bool break_received;
     /** Number of messages dropped because of a bad checksum. */
@@ -468,7 +468,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
     DEBUG_PRINT("pins ok\n");
 
-    while (!bt.closing) {
+    for (;;) {
 
         // Pulse reset so that the BC4 comes up in a known state, in command
         // mode. The UART is only enabled once it is out of reset, since a
@@ -525,7 +525,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
         DEBUG_PRINT("listening\n");
 
-        while (!bt.streaming && !bt.closing) {
+        while (!bt.streaming) {
 
             if (bt.pin_requested) {
                 DEBUG_PRINT("pin req\n");
@@ -567,7 +567,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
             PBIO_OS_AWAIT_UNTIL(state, bt_bc4_is_streaming() || pbio_os_timer_is_expired(&timer));
             DEBUG_PRINT("mode %u\n", bt_bc4_is_streaming());
 
-            PBIO_OS_AWAIT_UNTIL(state, !bt_bc4_is_streaming() || bt.closing);
+            PBIO_OS_AWAIT_UNTIL(state, !bt_bc4_is_streaming() || bt.disconnect_requested);
 
             DEBUG_PRINT("disconn brk%u\n", bt.break_received);
             bt_set_streaming(false);
@@ -575,19 +575,25 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
             // The BC4 reports why it dropped the stream, and does not take
             // commands until it has.
             PBIO_OS_AWAIT_MS(state, &timer, 500);
+
+            // Drop the link explicitly, so that the host sees a disconnect
+            // instead of waiting for a timeout.
+            if (bt.disconnect_requested && bt.handle >= 0) {
+                args[0] = bt.handle;
+                PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
+            }
+
+            // Start listening again.
+            if (bt.disconnect_requested) {
+                DEBUG_PRINT("dropped\n");
+                bt.disconnect_requested = false;
+                pbio_busy_count_down();
+            }
         }
     }
 
-    // Drop the link explicitly, so that the host sees a disconnect instead of
-    // waiting for a timeout.
-    if (bt.handle >= 0) {
-        args[0] = bt.handle;
-        PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
-    }
-    DEBUG_PRINT("closed\n");
-    pbio_busy_count_down();
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbdrv_bluetooth_init(void) {
@@ -615,12 +621,12 @@ const char *pbdrv_bluetooth_classic_host_get_connected_name(void) {
 }
 
 void pbdrv_bluetooth_classic_host_disconnect(void) {
-    if (bt.closing) {
+    if (!bt.streaming || bt.disconnect_requested) {
         return;
     }
-    // Closing takes a few exchanges with the BC4, so hold off the shutdown
-    // that called this until the process is done.
-    bt.closing = true;
+    // Dropping the link takes a few exchanges with the BC4, so hold off a
+    // shutdown that called this until the process is done.
+    bt.disconnect_requested = true;
     pbio_busy_count_up();
     pbio_os_request_poll();
 }
