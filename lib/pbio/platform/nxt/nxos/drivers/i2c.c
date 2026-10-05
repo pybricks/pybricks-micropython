@@ -27,6 +27,9 @@
 /** Length of the I2C pauses (in 4th of BUS_SPEED) */
 #define I2C_PAUSE_LEN 3
 
+/** Clock pulses to free a stuck SDA before a START, as in I2C bus recovery. */
+#define I2C_MAX_RECLOCKS 9
+
 /** Number of currently processed I2C transactions. */
 uint32_t i2c_txn_count = 0;
 
@@ -114,6 +117,9 @@ static volatile struct i2c_port {
    */
   uint8_t p_ticks;
   uint8_t p_next;
+
+  /* Clock pulses issued so far to free SDA before a START. */
+  uint8_t reclocks;
 
 } i2c_state[NXT_N_SENSORS];
 
@@ -563,6 +569,7 @@ static void i2c_isr(void) {
           }
 
           /* Prepare the first bit to be sent. */
+          p->reclocks = 0;
           p->processed = 0;
           p->current_byte = t->data[p->processed];
           p->current_pos = 7;
@@ -587,11 +594,20 @@ static void i2c_isr(void) {
           codr |= pins->sda;
 
           i2c_set_bus_state(sensor, I2C_SEND_START_BIT1);
-        } else {
+        } else if (p->reclocks < I2C_MAX_RECLOCKS) {
           /* Something is holding SDA low. Reclock until we get our data
            * line back.
            */
+          p->reclocks++;
           p->bus_state = I2C_RECLOCK0;
+        } else {
+          /* SDA is still low (e.g. no sensor attached, since sensors
+           * provide the pull-ups). Fail instead of reclocking forever.
+           */
+          t->result = TXN_STAT_FAILED;
+          p->current_txn = p->n_txns;
+          p->txn_state = TXN_NONE;
+          p->bus_state = I2C_IDLE;
         }
 
         break;
