@@ -16,8 +16,10 @@
 #include <pbdrv/display.h>
 #include <pbio/serial.h>
 
+#include <pbio/battery.h>
 #include <pbio/button.h>
 #include <pbio/image.h>
+#include <pbio/int_math.h>
 #include <pbio/os.h>
 #include <pbsys/hmi.h>
 #include <pbsys/host.h>
@@ -91,10 +93,41 @@ static void draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t width) {
     pbdrv_display_update();
 }
 
+// Battery voltages shown as empty and full, as on EV3.
+#define BATTERY_EMPTY_MV (5800)
+#define BATTERY_FULL_MV (8000)
+
+// Number of bars in a full battery indicator.
+#define BATTERY_NUM_BARS (9)
+
+// Bars currently shown, or -1 if the indicator is not shown.
+static int32_t battery_bars_shown = -1;
+
 static void draw_status_text(const char *status) {
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_fill_rect(display, 0, 48, 128, 32, 0);
     pbio_image_draw_text(display, &pbio_font_mono_8x5_8, 0, 60, status, strlen(status), pbdrv_display_get_max_value());
+    pbdrv_display_update();
+    battery_bars_shown = -1;
+}
+
+/**
+ * Draws the battery level at the end of the status line, if it has changed.
+ */
+static void draw_battery_indicator(void) {
+    int32_t voltage = pbio_int_math_bind(pbio_battery_get_average_voltage(), BATTERY_EMPTY_MV, BATTERY_FULL_MV);
+    int32_t bars = (voltage - BATTERY_EMPTY_MV) * BATTERY_NUM_BARS / (BATTERY_FULL_MV - BATTERY_EMPTY_MV);
+    if (bars == battery_bars_shown) {
+        return;
+    }
+    battery_bars_shown = bars;
+
+    pbio_image_t *display = pbdrv_display_get_image();
+    uint8_t v = pbdrv_display_get_max_value();
+    pbio_image_fill_rect(display, 85, 54, 14, 7, 0);
+    pbio_image_draw_rect(display, 85, 54, 13, 7, v);
+    pbio_image_draw_vline(display, 98, 56, 3, v);
+    pbio_image_fill_rect(display, 87, 56, bars, 3, v);
     pbdrv_display_update();
 }
 
@@ -148,6 +181,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         draw_status_text("     Ready.");
+        draw_battery_indicator();
 
         pbsys_hmi_host_update_indications();
         pbio_os_timer_reset(timer);
@@ -178,6 +212,8 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             } else if (pbio_os_timer_is_expired(timer)) {
                 return PBIO_ERROR_TIMEDOUT;
             }
+
+            draw_battery_indicator();
 
             // Wait for button press, external program start, or connection change.
             pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested() || pbsys_hmi_handle_connection_change;
