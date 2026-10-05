@@ -727,8 +727,14 @@ static void pbdrv_usb_nxt_isr(void) {
         isr &= ~AT91C_UDP_RXRSM;
     }
 
+    /* Skip endpoints whose interrupt is masked (e.g. the bulk OUT endpoint
+     * while a received packet waits for the process), which UDP_ISR still
+     * reports. These can repeatedly sidetrack handling of a real interrupt,
+     * causing a hang.
+     */
+    uint32_t pending = isr & *AT91C_UDP_IMR;
     for (endpoint = 0; endpoint < PBDRV_USB_NXT_N_ENDPOINTS; endpoint++) {
-        if (isr & (1 << endpoint)) {
+        if (pending & (1 << endpoint)) {
             break;
         }
     }
