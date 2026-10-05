@@ -27,7 +27,7 @@ extern const pbdrv_usb_langid_union_t pbdrv_usb_str_desc_langid;
 typedef struct PBDRV_PACKED {
     uint8_t bLength;
     uint8_t bDescriptorType;
-    uint16_t str[PBIO_ARRAY_SIZE(PBDRV_CONFIG_USB_MFG_STR) - 1];
+    uint16_t str[PBIO_ARRAY_SIZE(PBDRV_CONFIG_USB_MFG_STR)];
 } pbdrv_usb_str_mfg_t;
 PBDRV_USB_TYPE_PUNNING_HELPER(pbdrv_usb_str_mfg);
 
