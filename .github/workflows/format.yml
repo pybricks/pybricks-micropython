@@ -7,6 +7,8 @@ on:
     paths:
     - ".github/workflows/format.yml"
     - "bricks/**/*.[ch]"
+    - "lib/aeabi_div/**/*.[ch]"
+    - "lib/lego/**/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
     - "pybricks/**/*.[ch]"
@@ -17,6 +19,8 @@ on:
     paths:
     - ".github/workflows/format.yml"
     - "bricks/**/*.[ch]"
+    - "lib/aeabi_div/**/*.[ch]"
+    - "lib/lego/**/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
     - "pybricks/**/*.[ch]"
