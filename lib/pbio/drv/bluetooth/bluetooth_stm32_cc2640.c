@@ -59,6 +59,13 @@ static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 #define NPI_SPI_SOF             0xFE    // start of frame
 #define NPI_SPI_HEADER_LEN      3       // zero pad, SOF, length
 
+// Smallest link layer data length: payload octets and air time per packet.
+#define HCI_LE_MIN_DATA_OCTETS  27
+#define HCI_LE_MIN_DATA_TIME_US 328
+
+#define HCI_EVENT_LE_META               0x3E
+#define HCI_LE_META_DATA_LENGTH_CHANGE  0x07
+
 #define NO_CONNECTION           0xFFFF
 #define NO_AUTH                 0xFF
 #define GAP_BOND_ERR_OFFSET     0x600
@@ -928,6 +935,14 @@ static void handle_event(uint8_t *packet) {
             hci_command_complete = true;
             break;
 
+        case HCI_EVENT_LE_META:
+            if (data[0] == HCI_LE_META_DATA_LENGTH_CHANGE) {
+                DEBUG_PRINT("LE data length %04X: tx %d octets %d us, rx %d octets %d us\n",
+                    pbio_get_uint16_le(&data[1]), pbio_get_uint16_le(&data[3]), pbio_get_uint16_le(&data[5]),
+                    pbio_get_uint16_le(&data[7]), pbio_get_uint16_le(&data[9]));
+            }
+            break;
+
         case HCI_EVENT_VENDOR_SPECIFIC: {
             uint16_t event_code = (data[1] << 8) | data[0];
             HCI_StatusCodes_t status = data[2];
@@ -1401,6 +1416,7 @@ static void handle_event(uint8_t *packet) {
                 case GAP_DEVICE_INIT_DONE:
                 case HCI_EXT_SET_TX_POWER_EVENT:
                 case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
+                case HCI_EXT_SET_MAX_DATA_LENGTH_EVENT:
                 case HCI_EXT_SET_BDADDR_EVENT:
                 case GAP_ADVERT_DATA_UPDATE_DONE:
                 case GAP_MAKE_DISCOVERABLE_DONE:
@@ -1713,6 +1729,16 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     // firmware version is TI BLE-Stack SDK version
     snprintf(pbdrv_bluetooth_fw_version, sizeof(pbdrv_bluetooth_fw_version),
         "v%u.%02u.%02u", read_buf[12], read_buf[11] >> 4, read_buf[11] & 0xf);
+
+    // Limit link layer packets to the 27 byte minimum. Otherwise some hosts
+    // raise what we receive to 251 bytes, and the chip runs out of memory when
+    // it pairs with an Xbox controller. Must come before the next command,
+    // after which the chip refuses this but still accepts longer packets.
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    HCI_EXT_setMaxDataLength(HCI_LE_MIN_DATA_OCTETS, HCI_LE_MIN_DATA_TIME_US,
+        HCI_LE_MIN_DATA_OCTETS, HCI_LE_MIN_DATA_TIME_US);
+    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    DEBUG_PRINT("Set max data length: status 0x%02X\n", read_buf[8]);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     HCI_EXT_setLocalSupportedFeatures(HCI_EXT_LOCAL_FEATURE_ENCRYTION);

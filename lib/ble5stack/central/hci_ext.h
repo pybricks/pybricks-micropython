@@ -239,6 +239,7 @@ extern "C"
 #define HCI_EXT_OVERLAPPED_PROCESSING                  0xFC1E
 #define HCI_EXT_NUM_COMPLETED_PKTS_LIMIT               0xFC1F
 #define HCI_EXT_GET_CONNECTION_INFO                    0xFC20
+#define HCI_EXT_SET_MAX_DATA_LENGTH                    0xFC21
 #
 #define HCI_EXT_LL_TEST_MODE                           0xFC70
 
@@ -364,6 +365,7 @@ extern "C"
 #define HCI_EXT_OVERLAPPED_PROCESSING_EVENT            0x041E
 #define HCI_EXT_NUM_COMPLETED_PKTS_LIMIT_EVENT         0x041F
 #define HCI_EXT_GET_CONNECTION_INFO_EVENT              0x0420
+#define HCI_EXT_SET_MAX_DATA_LENGTH_EVENT              0x0421
 #
 #define HCI_EXT_LL_TEST_MODE_EVENT                     0x0470
 
@@ -378,6 +380,7 @@ extern "C"
 HCI_StatusCodes_t HCI_EXT_setTxPower(uint8_t power);
 HCI_StatusCodes_t HCI_EXT_setBdaddr(const uint8_t *bdaddr);
 HCI_StatusCodes_t HCI_EXT_setLocalSupportedFeatures(const uint32_t localFeatures);
+HCI_StatusCodes_t HCI_EXT_setMaxDataLength(uint16_t txOctets, uint16_t txTime, uint16_t rxOctets, uint16_t rxTime);
 
 /*********************************************************************
 *********************************************************************/
