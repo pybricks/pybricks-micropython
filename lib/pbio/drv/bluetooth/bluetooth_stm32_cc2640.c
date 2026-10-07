@@ -103,7 +103,6 @@ static bool device_discovery_done;
 // used to synchronize advertising data handler
 static bool advertising_data_received;
 // handle to connected Bluetooth device
-static bool busy_disconnecting;
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
 // Set while waiting for our reply to the central to go out, since only one
@@ -151,7 +150,7 @@ bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) 
 }
 
 bool pbdrv_bluetooth_host_is_connected(void) {
-    return pybricks_notify_en && !busy_disconnecting;
+    return pybricks_notify_en;
 }
 
 bool pbdrv_bluetooth_hci_is_enabled(void) {
@@ -389,19 +388,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     PBIO_OS_ASYNC_BEGIN(state);
 
     peri->con_handle = NO_CONNECTION;
-
-    // Optionally, disconnect from host (usually Pybricks Code).
-    if (conn_handle != NO_CONNECTION &&
-        (peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
-        DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
-        // Guard used in pbdrv_bluetooth_host_is_connected so higher level
-        // processes won't try to send anything while we are disconnecting.
-        busy_disconnecting = true;
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        GAP_TerminateLinkReq(conn_handle, 0x13);
-        PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
-        busy_disconnecting = false;
-    }
 
 restart_scan:
 

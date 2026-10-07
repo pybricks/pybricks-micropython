@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed `XboxController` failing to pair on Technic Hub while connected to
+  some computers and tablets.
+
+### Changed
+- Technic Hub no longer disconnects from the computer when connecting to the
+  `XboxController`. The unofficial `stay_connected` argument has been removed.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b5...HEAD
 
 ## [4.1.0b5] - 2026-10-02

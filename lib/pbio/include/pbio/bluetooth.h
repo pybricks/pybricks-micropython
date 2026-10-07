@@ -61,8 +61,6 @@ typedef enum {
     PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE = 0,
     /** Whether to initiate pairing after connecting. */
     PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR = 1 << 0,
-    /** Whether to disconnect from the host before connecting to peripheral. */
-    PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST = 1 << 1,
 } pbio_bluetooth_peripheral_options_t;
 
 typedef struct _pbio_bluetooth_peripheral_t pbio_bluetooth_peripheral_t;

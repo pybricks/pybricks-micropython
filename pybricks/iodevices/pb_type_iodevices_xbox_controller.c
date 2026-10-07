@@ -25,7 +25,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-#include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "py/mperrno.h"
@@ -67,10 +66,6 @@ typedef struct _pb_type_xbox_obj_t {
      * The timeout used during scan and connect.
      */
     uint32_t scan_timeout;
-    /**
-     * Whether to disconnect from host before connecting to controller.
-     **/
-    bool disconnect_host;
     /**
      * Timer used to delay between connection attempts.
      */
@@ -283,8 +278,7 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     pb_assert(pbio_bluetooth_peripheral_get_available(&self->peripheral, self));
     pbio_os_timer_set(&self->retry_timer, 0);
 
-    // Connect with bonding enabled. On Technic Hub, the driver will take care
-    // of disconnecting from Pybricks Code if needed.
+    // Connect with bonding enabled.
 retry:
     DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
     pbio_bluetooth_peripheral_connect_config_t scan_config = {
@@ -294,9 +288,6 @@ retry:
         .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
         .timeout = self->scan_timeout,
     };
-    if (self->disconnect_host) {
-        scan_config.options |= PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
-    }
 
     pb_assert(pbio_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
     PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
@@ -427,13 +418,7 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         PB_ARG_DEFAULT_INT(joystick_deadzone, 10),
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000),
-        PB_ARG_DEFAULT_TRUE(connect)
-        // Debug parameter to stay connected to the host on Technic Hub.
-        // Works only on some hosts for the moment, so False by default.
-        #if PYBRICKS_HUB_TECHNICHUB
-        , PB_ARG_DEFAULT_FALSE(stay_connected)
-        #endif // PYBRICKS_HUB_TECHNICHUB
-        );
+        PB_ARG_DEFAULT_TRUE(connect));
 
     pb_module_tools_assert_blocking();
 
@@ -460,16 +445,6 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
         strncpy(self->name, name, sizeof(self->name));
     }
-
-    // By default, disconnect Technic Hub from host, as this is required for
-    // most hosts. Stay connected only if the user explicitly requests it.
-    #if PYBRICKS_HUB_TECHNICHUB
-    self->disconnect_host = !mp_obj_is_true(stay_connected_in);
-    if (self->disconnect_host) {
-        mp_printf(&mp_plat_print, "The hub may disconnect from the computer for better connectivity with the controller.\n");
-        mp_hal_delay_ms(500);
-    }
-    #endif // PYBRICKS_HUB_TECHNICHUB
 
     bool want_connection = mp_obj_is_true(connect_in);
 
