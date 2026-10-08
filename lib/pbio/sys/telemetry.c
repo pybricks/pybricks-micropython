@@ -106,7 +106,7 @@ static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t
         }
 
         // Idle between sequences of samples.
-        PBSYS_TELEMETRY_IDLE(&state, &timer, 40);
+        PBSYS_TELEMETRY_IDLE(&state, &timer, 100);
     }
 
     // Unreachable
