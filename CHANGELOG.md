@@ -4,21 +4,28 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b6...HEAD
+
+## [4.1.0b6] - 2026-10-08
+
 ### Fixed
 - Fixed `XboxController` failing to pair on Technic Hub while connected to
-  some computers and tablets.
+  some computers and tablets ([pybricks-micropython#515]).
 - Fixed Technic Hub and City Hub getting stuck or disconnecting when sending
   a lot of output, such as printing or sensor telemetry, especially while
-  receiving data.
+  receiving data ([support#2848]).
 - Fixed Move Hub Hub getting stuck or disconnecting when sending
   a lot of output, such as printing or sensor telemetry, especially while
-  receiving data.
+  receiving data ([support#2833]).
 
 ### Changed
 - Technic Hub no longer disconnects from the computer when connecting to the
   `XboxController`. The unofficial `stay_connected` argument has been removed.
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b5...HEAD
+[support#2833]: https://github.com/pybricks/support/issues/2833
+[support#2848]: https://github.com/pybricks/support/issues/2848
+[pybricks-micropython#515]: https://github.com/pybricks/pybricks-micropython/pull/515
+[4.1.0b6]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b5...v4.1.0b6
 
 ## [4.1.0b5] - 2026-10-02
 
@@ -45,7 +52,7 @@
 
 [support#2831]: https://github.com/pybricks/support/issues/2831
 [support#2833]: https://github.com/pybricks/support/issues/2833
-[4.1.0b5]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b4...v4.1.0b5
+
 
 ## [4.1.0b4] - 2026-09-21
 
