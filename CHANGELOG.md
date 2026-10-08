@@ -10,6 +10,9 @@
 - Fixed Technic Hub and City Hub getting stuck or disconnecting when sending
   a lot of output, such as printing or sensor telemetry, especially while
   receiving data.
+- Fixed Move Hub Hub getting stuck or disconnecting when sending
+  a lot of output, such as printing or sensor telemetry, especially while
+  receiving data.
 
 ### Changed
 - Technic Hub no longer disconnects from the computer when connecting to the

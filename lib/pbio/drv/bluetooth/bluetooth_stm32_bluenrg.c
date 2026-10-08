@@ -85,6 +85,11 @@ static uint8_t reply_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + 7 + ATT_MTU - 3];
 // size of pending reply, set to 0 when Tx is complete
 static uint8_t reply_xfer_size;
 
+// The chip takes one command at a time, so nothing else is sent until it has
+// reported the last command as completed (or its status). This applies to
+// replies and the main thread's commands alike.
+static bool hci_command_in_flight;
+
 // reflects state of SPI_IRQ pin
 volatile bool spi_irq;
 // set to false when xfer is started and true when xfer is complete
@@ -1069,6 +1074,7 @@ static void handle_event(hci_event_pckt *event) {
 
         case EVT_CMD_COMPLETE:
             DEBUG_PRINT("cc %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[1]), event->data[3], event->data[0]);
+            hci_command_in_flight = false;
             // Completion of a reply is not that of the main thread's command.
             if (pbio_get_uint16_le(&event->data[1]) == WRITE_RESPONSE_OPCODE) {
                 break;
@@ -1078,6 +1084,7 @@ static void handle_event(hci_event_pckt *event) {
 
         case EVT_CMD_STATUS:
             DEBUG_PRINT("cs %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[2]), event->data[0], event->data[1]);
+            hci_command_in_flight = false;
             hci_command_status = true;
             break;
 
@@ -1407,6 +1414,8 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 void pbdrv_bluetooth_controller_reset_hard(void) {
     pybricks_notify_en = false;
     conn_handle = peripheral_singleton.con_handle = 0;
+    // A reset chip won't complete what was in flight.
+    hci_command_in_flight = false;
     spi_disable_cs();
     bluetooth_reset(true);
 }
@@ -1497,19 +1506,24 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
             //   driven above above wants to send something. This doesn't poll
             //   the process because we are already here.
             // - reply_xfer_size is set when the event handler wants to reply.
-            spi_irq || reply_xfer_size || write_xfer_size;
+            // - Either is sent only once the previous command is done.
+            spi_irq || (!hci_command_in_flight && (reply_xfer_size || write_xfer_size));
         });
 
         // if there is a pending read message
         if (spi_irq) {
             PBIO_OS_AWAIT(state, &sub, spi_read(&sub));
+            continue;
         }
+
+        hci_command_in_flight = true;
+
         // if there is a pending reply, which the central is waiting for
-        else if (reply_xfer_size) {
+        if (reply_xfer_size) {
             PBIO_OS_AWAIT(state, &sub, spi_write(&sub, reply_buf, &reply_xfer_size));
         }
-        // if there is a pending write message
-        else if (write_xfer_size) {
+        // otherwise there is a pending write message
+        else {
             PBIO_OS_AWAIT(state, &sub, spi_write(&sub, write_buf, &write_xfer_size));
         }
     }
