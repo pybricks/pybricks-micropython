@@ -244,7 +244,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/port_lump/sensors.c \
 	src/port_lump/telemetry.c \
 	src/port.c \
-	src/protocol/nus.c \
 	src/protocol/pybricks.c \
 	src/servo.c \
 	src/tacho.c \

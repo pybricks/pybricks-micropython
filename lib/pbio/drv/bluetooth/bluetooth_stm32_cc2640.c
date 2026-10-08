@@ -133,10 +133,6 @@ static uint16_t pybricks_service_handle, pybricks_service_end_handle;
 static uint16_t pybricks_command_event_char_handle, pybricks_capabilities_char_handle;
 // Pybricks tx notifications enabled
 static bool pybricks_notify_en;
-// Nordic UART service handles
-static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handle, uart_tx_char_handle;
-// Nordic UART tx notifications enabled
-static bool uart_tx_notify_en;
 
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
@@ -1031,12 +1027,6 @@ static void handle_event(uint8_t *packet) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 4,
                                     GATT_PROP_READ,
                                     pbio_pybricks_hub_capabilities_char_uuid);
-                            } else if (start_handle <= uart_service_handle + 1) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP, pbio_nus_rx_char_uuid);
-                            } else if (start_handle <= uart_service_handle + 3) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 3,
-                                    GATT_PROP_NOTIFY, pbio_nus_tx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -1164,15 +1154,6 @@ static void handle_event(uint8_t *packet) {
                         rsp.len = sizeof(buf);
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    } else if (handle == uart_tx_char_handle + 1) {
-                        attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE - 1];
-
-                        buf[0] = uart_tx_notify_en;
-                        buf[1] = 0;
-                        rsp.len = 2;
-                        rsp.pValue = buf;
-                        ATT_ReadRsp(connection_handle, &rsp);
                     } else {
                         DBG("unhandled read req: %04X", handle);
                     }
@@ -1233,17 +1214,6 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 20;
                                 ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle <= uart_service_handle) {
-                                attReadByGrpTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                pbio_set_uint16_le(&buf[0], uart_service_handle);
-                                pbio_set_uint16_le(&buf[2], uart_service_end_handle);
-                                pbio_uuid128_reverse_copy(&buf[4], pbio_nus_service_uuid);
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 20;
-                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -1273,7 +1243,7 @@ static void handle_event(uint8_t *packet) {
                     uint16_t char_handle = (data[9] << 8) | data[8];
                     pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 
-                    DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
+                    DBG("w: %04X %d", char_handle, pdu_len - 4);
                     if (char_handle == pybricks_command_event_char_handle) {
                         err = pbio_bluetooth_receive_handler(&data[10], pdu_len - 4);
                     } else if (char_handle == pybricks_command_event_char_handle + 1) {
@@ -1281,12 +1251,6 @@ static void handle_event(uint8_t *packet) {
                         err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", pybricks_notify_en);
                         pbio_bluetooth_host_connection_changed();
-                    } else if (char_handle == uart_rx_char_handle) {
-                        // Not implemented
-                    } else if (char_handle == uart_tx_char_handle + 1) {
-                        uart_tx_notify_en = data[10];
-                        err = PBIO_PYBRICKS_ERROR_OK;
-                        DBG("noti: %d", uart_tx_notify_en);
                     } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
@@ -1382,7 +1346,6 @@ static void handle_event(uint8_t *packet) {
                     if (conn_handle == connection_handle) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
-                        uart_tx_notify_en = false;
                         pbio_bluetooth_host_connection_changed();
                     } else if (peri->con_handle == connection_handle) {
                         peri->con_handle = NO_CONNECTION;
@@ -1853,59 +1816,8 @@ static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context)
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static const gatt_add_attribute_t uart_gatt_attributes[] = {
-    {
-        .uuid16 = GATT_CHARACTER_UUID,
-        .permissions = GATT_PERMIT_READ,
-    },
-    {
-        .uuid128 = pbio_nus_rx_char_uuid,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-    {
-        .uuid16 = GATT_CHARACTER_UUID,
-        .permissions = GATT_PERMIT_READ,
-    },
-    {
-        .uuid128 = pbio_nus_tx_char_uuid,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-    {
-        .uuid16 = GATT_CLIENT_CHAR_CFG_UUID,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-};
-
-static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
-
-    static pbio_os_state_t sub;
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // add the Nordic UART service (inspired by Add_Sample_Service() from
-    // sample_service.c in BlueNRG vendor sample code and Adafruit config file
-    // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 6, GATT_MIN_ENCRYPT_KEY_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
-    // ignoring response data
-
-    PBIO_OS_AWAIT(state, &sub, gatt_add_attributes(&sub, uart_gatt_attributes, PBIO_ARRAY_SIZE(uart_gatt_attributes)));
-
-    // the response to the last GATT_AddAttribute contains the first and last handles
-    // that were allocated.
-    uart_service_handle = (read_buf[13] << 8) | read_buf[12];
-    uart_service_end_handle = (read_buf[15] << 8) | read_buf[14];
-    uart_rx_char_handle = uart_service_handle + 2;
-    uart_tx_char_handle = uart_service_handle + 4;
-    DBG("uart: %04X", uart_service_handle);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
 void pbdrv_bluetooth_controller_reset_hard(void) {
-    pybricks_notify_en = uart_tx_notify_en = false;
+    pybricks_notify_en = false;
     exchange_mtu_rsp_pending = false;
     conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
 
@@ -1951,7 +1863,6 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
         gap_init,
         init_device_information_service,
         init_pybricks_service,
-        init_uart_service,
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));

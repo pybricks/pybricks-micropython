@@ -558,10 +558,6 @@ enum {
     PBIO_GATT_PNP_ID_CHAR_UUID = 0x2A50,
 };
 
-extern const uint8_t pbio_nus_service_uuid[];
-extern const uint8_t pbio_nus_rx_char_uuid[];
-extern const uint8_t pbio_nus_tx_char_uuid[];
-
 /**
  * Characteristic namespace for characteristic read requests.
  *
