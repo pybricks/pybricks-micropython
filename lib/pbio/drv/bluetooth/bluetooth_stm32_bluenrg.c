@@ -76,6 +76,15 @@ static uint8_t dummy_read_buf[1];
 // value is set to 0 when Tx is complete
 static uint8_t write_xfer_size;
 
+// Write responses to the central are sent from the event handler, possibly
+// while the main thread has a command in write_buf or awaits the completion
+// of one. They get their own buffer so neither overwrites the other, and their
+// completion events are not mistaken for those of the main thread.
+#define WRITE_RESPONSE_OPCODE cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_RESPONSE)
+static uint8_t reply_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + 7 + ATT_MTU - 3];
+// size of pending reply, set to 0 when Tx is complete
+static uint8_t reply_xfer_size;
+
 // reflects state of SPI_IRQ pin
 volatile bool spi_irq;
 // set to false when xfer is started and true when xfer is complete
@@ -1059,10 +1068,16 @@ static void handle_event(hci_event_pckt *event) {
         break;
 
         case EVT_CMD_COMPLETE:
+            DEBUG_PRINT("cc %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[1]), event->data[3], event->data[0]);
+            // Completion of a reply is not that of the main thread's command.
+            if (pbio_get_uint16_le(&event->data[1]) == WRITE_RESPONSE_OPCODE) {
+                break;
+            }
             hci_command_complete = true;
             break;
 
         case EVT_CMD_STATUS:
+            DEBUG_PRINT("cs %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[2]), event->data[0], event->data[1]);
             hci_command_status = true;
             break;
 
@@ -1107,6 +1122,7 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
+                    DEBUG_PRINT("mod h=%04x len=%d d0=%02x\n", subevt->attr_handle, subevt->data_length, subevt->att_data[0]);
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
                         pbio_bluetooth_host_connection_changed();
@@ -1135,6 +1151,7 @@ static void handle_event(hci_event_pckt *event) {
                 break;
 
                 case EVT_BLUE_GATT_TX_POOL_AVAILABLE: {
+                    DEBUG_PRINT("pool\n");
                     // REVISIT: We might need to look at the event args for
                     // connection handle if we need to handle this in multiple
                     // places, e.g. for notifications and write without response.
@@ -1190,8 +1207,8 @@ retry:
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-// write message to BlueNRG chip
-static pbio_error_t spi_write(pbio_os_state_t *state) {
+// write message to BlueNRG chip, setting *size to 0 when done
+static pbio_error_t spi_write(pbio_os_state_t *state, const uint8_t *buf, uint8_t *size) {
     uint8_t wbuf, rbuf;
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -1204,34 +1221,46 @@ retry:
     PBIO_OS_AWAIT_UNTIL(state, spi_xfer_complete);
 
     // keep retrying until the chip is ready to write
-    if (!get_bluenrg_buf_size(&wbuf, &rbuf) || wbuf < write_xfer_size) {
+    if (!get_bluenrg_buf_size(&wbuf, &rbuf) || wbuf < *size) {
         // TODO: should probably have a timeout (and reset the chip after that?)
         spi_disable_cs();
         goto retry;
     }
 
     // write the message
-    spi_start_xfer(write_buf, dummy_read_buf, write_xfer_size);
+    spi_start_xfer(buf, dummy_read_buf, *size);
     PBIO_OS_AWAIT_UNTIL(state, spi_xfer_complete);
 
     spi_disable_cs();
 
     // set to 0 to indicate that xfer is complete
-    write_xfer_size = 0;
+    *size = 0;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // implements function for BlueNRG library
 void hci_send_req(struct hci_request *r) {
-    hci_uart_pckt *pckt = (hci_uart_pckt *)write_buf;
+    bool is_reply = r->opcode == WRITE_RESPONSE_OPCODE;
+    uint8_t *buf = is_reply ? reply_buf : write_buf;
+    hci_uart_pckt *pckt = (hci_uart_pckt *)buf;
     hci_command_hdr *hdr = (hci_command_hdr *)pckt->data;
-    void *cmd = &write_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE];
+    void *cmd = &buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE];
 
     pckt->type = HCI_COMMAND_PKT;
     hdr->opcode = r->opcode;
     hdr->plen = r->clen;
     memcpy(cmd, r->cparam, r->clen);
+
+    DEBUG_PRINT("tx %04x\n", r->opcode);
+
+    // Replies are fire-and-forget, so they leave the state of the command
+    // that the main thread may be awaiting alone.
+    if (is_reply) {
+        reply_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
+        return;
+    }
+
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = hci_command_status = false;
@@ -1467,16 +1496,21 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
             // - write_xfer_size is set when main thread
             //   driven above above wants to send something. This doesn't poll
             //   the process because we are already here.
-            spi_irq || write_xfer_size;
+            // - reply_xfer_size is set when the event handler wants to reply.
+            spi_irq || reply_xfer_size || write_xfer_size;
         });
 
         // if there is a pending read message
         if (spi_irq) {
             PBIO_OS_AWAIT(state, &sub, spi_read(&sub));
         }
+        // if there is a pending reply, which the central is waiting for
+        else if (reply_xfer_size) {
+            PBIO_OS_AWAIT(state, &sub, spi_write(&sub, reply_buf, &reply_xfer_size));
+        }
         // if there is a pending write message
         else if (write_xfer_size) {
-            PBIO_OS_AWAIT(state, &sub, spi_write(&sub));
+            PBIO_OS_AWAIT(state, &sub, spi_write(&sub, write_buf, &write_xfer_size));
         }
     }
 
