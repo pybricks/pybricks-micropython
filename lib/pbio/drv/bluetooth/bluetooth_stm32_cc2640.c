@@ -98,6 +98,15 @@ static uint16_t hci_command_opcode;
 static bool hci_command_status;
 // set to false when hci command is started and true when command is completed
 static bool hci_command_complete;
+// Set while handle_event() runs. Commands sent from there (replies to the
+// central) must not touch the state above, which belongs to the command that
+// the main thread may be awaiting.
+static bool in_event_handler;
+// Copy of the last (small) command sent from the event handler. The chip may
+// reject it, for example while its transmit queue is full of notifications,
+// in which case it is sent again.
+static uint8_t evt_cmd_buf[32];
+static uint8_t evt_cmd_size;
 // used to wait for device discovery done event
 static bool device_discovery_done;
 // used to synchronize advertising data handler
@@ -360,10 +369,11 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    notification.handle = pybricks_command_event_char_handle,
+    notification.handle = pybricks_command_event_char_handle;
     notification.pValue = data;
     notification.len = size;
 
+    // Pending means the chip can't queue it yet, so try again.
     do {
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         ATT_HandleValueNoti(conn_handle, &notification);
@@ -1432,6 +1442,17 @@ static void handle_event(uint8_t *packet) {
                     if (opcode == hci_command_opcode) {
                         hci_command_status = true;
                     }
+                    // Replies from the event handler were not queued if
+                    // pending or out of memory, so send again. Nothing else
+                    // may be sent from this event, so the MTU request waits
+                    // for the next status.
+                    if ((status == blePending || status == bleMsgBufferNotAvailable ||
+                         status == bleMemAllocError || status == bleNoResources) &&
+                        evt_cmd_size && opcode == pbio_get_uint16_le(&evt_cmd_buf[3])) {
+                        memcpy(write_buf, evt_cmd_buf, evt_cmd_size);
+                        write_xfer_size = evt_cmd_size;
+                        break;
+                    }
                     if (opcode == ATT_CMD_EXCHANGE_MTU_RSP && exchange_mtu_rsp_pending && conn_handle != NO_CONNECTION) {
                         exchange_mtu_rsp_pending = false;
                         attExchangeMTUReq_t req;
@@ -2049,7 +2070,9 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
         if (read_xfer_size) {
             // handle the received data
             if (read_buf[NPI_SPI_HEADER_LEN] == HCI_EVENT_PACKET) {
+                in_event_handler = true;
                 handle_event(&read_buf[NPI_SPI_HEADER_LEN + 1]);
+                in_event_handler = false;
             }
         }
     }
@@ -2082,6 +2105,14 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *payload_data, uin
     write_buf[data_length + 6] = checksum;
 
     write_xfer_size = data_length + 7;
+
+    // Replies sent from the event handler are fire-and-forget. Their status
+    // must not be mistaken for that of the command the main thread awaits.
+    if (in_event_handler) {
+        evt_cmd_size = write_xfer_size <= sizeof(evt_cmd_buf) ? write_xfer_size : 0;
+        memcpy(evt_cmd_buf, write_buf, evt_cmd_size);
+        return bleSUCCESS;
+    }
 
     // NB: some commands only receive CommandStatus, others only receive specific
     // reply, others receive both
