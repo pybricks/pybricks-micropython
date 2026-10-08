@@ -635,6 +635,10 @@ def main():
     print(
         f"\nTo refresh size data first: git -C {SIZE_DATA_DIR} pull origin {SIZE_BRANCH}\n"
     )
+    print("To remove all traces of the size data worktree and branch afterwards:")
+    print(f"    git worktree remove {SIZE_DATA_DIR}")
+    print(f"    git branch -D {SIZE_BRANCH}")
+    print(f"    git branch -dr origin/{SIZE_BRANCH}\n")
 
     # the tree has multiple independent histories that have been merged
     # we only want commits that belong the the mainline
