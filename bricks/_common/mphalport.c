@@ -11,6 +11,7 @@
 #include <pbdrv/config.h>
 #include <pbio/main.h>
 #include <pbsys/host.h>
+#include <pbsys/status.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
@@ -83,8 +84,9 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, size_t len) {
 }
 
 static void pb_stdout_flush(void) {
-    // Don't raise, just wait for data to clear.
-    while (!pbsys_host_tx_is_idle()) {
+    // Don't raise, just wait for data to clear. Give up on shutdown request,
+    // so that a stalled transport can't keep the hub from turning off.
+    while (!pbsys_host_tx_is_idle() && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN_REQUEST)) {
         MICROPY_VM_HOOK_LOOP;
     }
 }
