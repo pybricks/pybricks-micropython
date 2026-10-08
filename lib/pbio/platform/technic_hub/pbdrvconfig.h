@@ -31,8 +31,13 @@
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
-#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         158 // 158 matches LEGO firmware - could go up to ~251 - see ATT_MAX_MTU_SIZE
+// Outgoing messages are kept to one link layer packet. Longer ones get split
+// up, which makes the chip run out of memory and hang under load.
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         (23)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
+// Incoming messages such as program downloads can be larger. 158 matches LEGO
+// firmware - could go up to ~251 - see ATT_MAX_MTU_SIZE.
+#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_MAX_MTU_SIZE_IN (158)
 #define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_TECHNIC
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
@@ -83,7 +88,7 @@
 #define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (1)
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
+#define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (1)
 #define PBDRV_CONFIG_UART_STM32L4_LL_DMA            (1)
 #define PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART   (4)
 

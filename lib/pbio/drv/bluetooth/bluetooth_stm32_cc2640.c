@@ -345,8 +345,8 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
 
 uint16_t pbdrv_bluetooth_get_max_message_size(void) {
     // conn_mtu is the negotiated ATT MTU (defaults to the 23-byte minimum on
-    // connect). Cap it at the platform maximum and subtract the 3-byte ATT
-    // notification header.
+    // connect). Cap it at the platform maximum for outgoing messages and
+    // subtract the 3-byte ATT notification header.
     uint16_t mtu = conn_mtu >= ATT_MTU_SIZE ? conn_mtu : ATT_MTU_SIZE;
     if (mtu > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE) {
         mtu = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
@@ -945,7 +945,7 @@ static void handle_event(uint8_t *packet) {
                     // Reply with what we can receive. The client applies the
                     // minimum of that and its own size itself.
                     attExchangeMTURsp_t rsp;
-                    rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                    rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_MAX_MTU_SIZE_IN;
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
 
                     DEBUG_PRINT("MTU req on %04X: client %d, ours %d\n",
@@ -955,7 +955,7 @@ static void handle_event(uint8_t *packet) {
                     // If we allow multiple connections, this will need to be
                     // changed.
                     if (connection_handle == conn_handle) {
-                        conn_mtu = MIN(client_mtu, PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
+                        conn_mtu = MIN(client_mtu, PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_MAX_MTU_SIZE_IN);
                         // This exchange only tells the central what we accept.
                         // The chip applies the size it may send only for an
                         // exchange that it runs itself, so ask for one too.
@@ -1435,7 +1435,7 @@ static void handle_event(uint8_t *packet) {
                     if (opcode == ATT_CMD_EXCHANGE_MTU_RSP && exchange_mtu_rsp_pending && conn_handle != NO_CONNECTION) {
                         exchange_mtu_rsp_pending = false;
                         attExchangeMTUReq_t req;
-                        req.clientRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                        req.clientRxMTU = PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_MAX_MTU_SIZE_IN;
                         ATT_ExchangeMTUReq(conn_handle, &req);
                         DEBUG_PRINT("MTU rsp status 0x%02X, requesting %d\n", status, req.clientRxMTU);
                     }
