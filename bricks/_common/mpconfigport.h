@@ -110,6 +110,9 @@
 #endif
 #define MICROPY_KBD_EXCEPTION                   (1)
 #define MICROPY_ENABLE_VM_ABORT                 (1)
+// Makes pyexec return the value passed to sys.exit() so that it can be
+// reported to the host as the program exit code.
+#define MICROPY_PYEXEC_ENABLE_EXIT_CODE_HANDLING (1)
 #define MICROPY_ENABLE_SCHEDULER                (0)
 #define MICROPY_PY_INSTANCE_ATTRS               (1)
 

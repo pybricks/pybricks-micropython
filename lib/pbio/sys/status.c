@@ -27,6 +27,8 @@ static struct {
     pbio_pybricks_user_program_id_t program_id;
     /** Currently selected program slot */
     pbio_pybricks_user_program_id_t slot;
+    /** Exit code of the program that ran most recently. */
+    uint8_t program_exit_code;
 } pbsys_status;
 
 /**
@@ -35,7 +37,7 @@ static struct {
 void pbsys_status_update_emit(void) {
 
     uint8_t buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
-    pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
+    pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot, pbsys_status.program_exit_code);
     pbsys_host_schedule_status_update(buf);
 
     // Other processes may be awaiting status changes, so poll.
@@ -143,6 +145,21 @@ void pbsys_status_set(pbio_pybricks_status_flags_t status) {
 void pbsys_status_clear(pbio_pybricks_status_flags_t status) {
     assert(status < NUM_PBIO_PYBRICKS_STATUS);
     pbsys_status_update_flag(status, false);
+}
+
+/**
+ * Clears the user program running status indication and records the exit code
+ * of the program that just ended.
+ *
+ * The exit code is set before the flag is cleared so that hosts receive both
+ * in the same status update, meaning that the exit code is always up to date
+ * by the time they see that the program is no longer running.
+ *
+ * @param [in]  exit_code   The exit code of the program that just ended.
+ */
+void pbsys_status_clear_program_running(uint8_t exit_code) {
+    pbsys_status.program_exit_code = exit_code;
+    pbsys_status_update_flag(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING, false);
 }
 
 /**

@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added
+- Added the exit code of the most recently ended program to the status report
+  event. Stopping a program now also gives it a distinct exit code, so hosts
+  can tell it apart from a program that ran to completion.
+
 ### Changed
 - EV3 now identifies as a gamepad instead of a computer over Bluetooth, so
   that ChromeOS lists it when pairing.
