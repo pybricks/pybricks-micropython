@@ -81,6 +81,13 @@
 #define BT_RESET_TIMEOUT_MS (5000)
 
 /**
+ * Time that sending stream data may stall before the link is taken as lost.
+ * The BC4 can stop taking data without dropping the stream (e.g. when the host
+ * closes the connection during a transfer), so it does not always say.
+ */
+#define BT_TX_TIMEOUT_MS (1000)
+
+/**
  * PIN code sent when a host asks for one. The BC4 predates Secure Simple
  * Pairing, so the host always prompts for this.
  */
@@ -150,8 +157,10 @@ static volatile struct {
     int8_t handle;
     /** Whether the UART carries a raw byte stream instead of commands. */
     bool streaming;
-    /** Set on soft-poweroff, to drop the link before the system goes down. */
-    bool closing;
+    /** Set when the host connection should be dropped, e.g. on soft-poweroff. */
+    bool disconnect_requested;
+    /** Set when the BC4 stopped taking stream data. */
+    bool tx_stalled;
     /** Set when the BC4 sends a break condition. */
     bool break_received;
     /** Number of messages dropped because of a bad checksum. */
@@ -174,6 +183,18 @@ static void bt_uart_write(const uint8_t *data, uint32_t size) {
     *AT91C_US1_TNPR = (uint32_t)data;
     *AT91C_US1_TNCR = size;
     *AT91C_US1_IER = AT91C_US_TXBUFE;
+}
+
+/**
+ * Discards the remainder of a transfer that the BC4 is not accepting.
+ */
+static void bt_uart_abort_write(void) {
+    *AT91C_US1_PTCR = AT91C_PDC_TXTDIS;
+    *AT91C_US1_TCR = 0;
+    *AT91C_US1_TNCR = 0;
+    *AT91C_US1_CR = AT91C_US_RSTTX;
+    *AT91C_US1_CR = AT91C_US_TXEN;
+    *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 }
 
 /**
@@ -468,7 +489,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
     DEBUG_PRINT("pins ok\n");
 
-    while (!bt.closing) {
+    for (;;) {
 
         // Pulse reset so that the BC4 comes up in a known state, in command
         // mode. The UART is only enabled once it is out of reset, since a
@@ -523,71 +544,94 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
             continue;
         }
 
-        DEBUG_PRINT("listening\n");
+        // Serve one connection after another, until the BC4 needs a reset.
+        for (;;) {
+            DEBUG_PRINT("listening\n");
 
-        while (!bt.streaming && !bt.closing) {
+            while (!bt.streaming) {
 
-            if (bt.pin_requested) {
-                DEBUG_PRINT("pin req\n");
-                memcpy(args, (const void *)bt.request_addr, BT_ADDR_SIZE);
-                memset(&args[BT_ADDR_SIZE], 0, BT_PIN_SIZE);
-                strncpy((char *)&args[BT_ADDR_SIZE], BT_PIN_CODE, BT_PIN_SIZE);
-                bt.pin_requested = false;
-                PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_PIN_CODE, args, BT_ADDR_SIZE + BT_PIN_SIZE, BT_MSG_PIN_CODE_ACK));
-                continue;
+                if (bt.pin_requested) {
+                    DEBUG_PRINT("pin req\n");
+                    memcpy(args, (const void *)bt.request_addr, BT_ADDR_SIZE);
+                    memset(&args[BT_ADDR_SIZE], 0, BT_PIN_SIZE);
+                    strncpy((char *)&args[BT_ADDR_SIZE], BT_PIN_CODE, BT_PIN_SIZE);
+                    bt.pin_requested = false;
+                    PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_PIN_CODE, args, BT_ADDR_SIZE + BT_PIN_SIZE, BT_MSG_PIN_CODE_ACK));
+                    continue;
+                }
+
+                if (bt.connection_requested) {
+                    DEBUG_PRINT("conn req\n");
+                    args[0] = true;
+                    bt.connection_requested = false;
+                    PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_ACCEPT_CONNECTION, args, 1, BT_MSG_NONE));
+                    continue;
+                }
+
+                if (bt.handle >= 0) {
+                    DEBUG_PRINT("stream h%d\n", bt.handle);
+                    args[0] = bt.handle;
+                    PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_OPEN_STREAM, args, 1, BT_MSG_NONE));
+
+                    // The BC4 only switches once it has the whole command.
+                    pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
+                    PBIO_OS_AWAIT_UNTIL(state, !bt_uart_is_writing() || pbio_os_timer_is_expired(&timer));
+                    bt_set_streaming(true);
+                    continue;
+                }
+
+                PBIO_OS_AWAIT_MS(state, &timer, 50);
             }
 
-            if (bt.connection_requested) {
-                DEBUG_PRINT("conn req\n");
-                args[0] = true;
-                bt.connection_requested = false;
-                PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_ACCEPT_CONNECTION, args, 1, BT_MSG_NONE));
-                continue;
-            }
-
-            if (bt.handle >= 0) {
-                DEBUG_PRINT("stream h%d\n", bt.handle);
-                args[0] = bt.handle;
-                PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_OPEN_STREAM, args, 1, BT_MSG_NONE));
-
-                // The BC4 only switches once it has the whole command.
-                pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
-                PBIO_OS_AWAIT_UNTIL(state, !bt_uart_is_writing() || pbio_os_timer_is_expired(&timer));
-                bt_set_streaming(true);
-                continue;
-            }
-
-            PBIO_OS_AWAIT_MS(state, &timer, 50);
-        }
-
-        if (bt.streaming) {
             // The mode line follows the switch with some delay, so wait for it
             // to come up before taking it dropping as a disconnect.
             pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
             PBIO_OS_AWAIT_UNTIL(state, bt_bc4_is_streaming() || pbio_os_timer_is_expired(&timer));
             DEBUG_PRINT("mode %u\n", bt_bc4_is_streaming());
 
-            PBIO_OS_AWAIT_UNTIL(state, !bt_bc4_is_streaming() || bt.closing);
+            PBIO_OS_AWAIT_UNTIL(state, !bt_bc4_is_streaming() || bt.disconnect_requested);
 
             DEBUG_PRINT("disconn brk%u\n", bt.break_received);
             bt_set_streaming(false);
 
-            // The BC4 reports why it dropped the stream, and does not take
-            // commands until it has.
-            PBIO_OS_AWAIT_MS(state, &timer, 500);
+            // A BC4 that stopped taking data does not take commands either,
+            // so leave it to the reset that follows.
+            if (!bt.tx_stalled) {
+                // The BC4 reports why it dropped the stream, and does not take
+                // commands until it has.
+                PBIO_OS_AWAIT_MS(state, &timer, 500);
+
+                // Drop the link explicitly, so that the host sees a disconnect
+                // instead of waiting for a timeout.
+                if (bt.disconnect_requested && bt.handle >= 0) {
+                    args[0] = bt.handle;
+                    PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
+                }
+
+                // Once the BC4 reports the connection closed, it can take the
+                // next one.
+                pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
+                PBIO_OS_AWAIT_UNTIL(state, bt.handle < 0 || pbio_os_timer_is_expired(&timer));
+            }
+
+            if (bt.disconnect_requested) {
+                DEBUG_PRINT("dropped\n");
+                bt.disconnect_requested = false;
+                pbio_busy_count_down();
+            }
+
+            // A reset drops the radio link without telling the host, which
+            // can keep it from connecting again for a while. So only reset
+            // the BC4 if it stopped responding.
+            if (bt.tx_stalled || bt.handle >= 0) {
+                bt.tx_stalled = false;
+                break;
+            }
         }
     }
 
-    // Drop the link explicitly, so that the host sees a disconnect instead of
-    // waiting for a timeout.
-    if (bt.handle >= 0) {
-        args[0] = bt.handle;
-        PBIO_OS_AWAIT(state, &sub, bt_command(&sub, BT_MSG_CLOSE_CONNECTION, args, 1, BT_MSG_CLOSE_CONNECTION_RESULT));
-    }
-    DEBUG_PRINT("closed\n");
-    pbio_busy_count_down();
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 void pbdrv_bluetooth_init(void) {
@@ -615,12 +659,12 @@ const char *pbdrv_bluetooth_classic_host_get_connected_name(void) {
 }
 
 void pbdrv_bluetooth_classic_host_disconnect(void) {
-    if (bt.closing) {
+    if (!bt.streaming || bt.disconnect_requested) {
         return;
     }
-    // Closing takes a few exchanges with the BC4, so hold off the shutdown
-    // that called this until the process is done.
-    bt.closing = true;
+    // Dropping the link takes a few exchanges with the BC4, so hold off a
+    // shutdown that called this until the process is done.
+    bt.disconnect_requested = true;
     pbio_busy_count_up();
     pbio_os_request_poll();
 }
@@ -631,6 +675,8 @@ uint32_t pbdrv_bluetooth_classic_host_rx_read(uint8_t *data, uint32_t size) {
 
 pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, const uint8_t *data, uint32_t size) {
 
+    static pbio_os_timer_t timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     if (!bt.streaming) {
@@ -639,7 +685,17 @@ pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, con
 
     PBIO_OS_AWAIT_UNTIL(state, !bt_uart_is_writing());
     bt_uart_write(data, size);
-    PBIO_OS_AWAIT_UNTIL(state, !bt.streaming || !bt_uart_is_writing());
+    pbio_os_timer_set(&timer, BT_TX_TIMEOUT_MS);
+    PBIO_OS_AWAIT_UNTIL(state, !bt.streaming || !bt_uart_is_writing() || pbio_os_timer_is_expired(&timer));
+
+    // The rest of the message is of no use to anyone now, and would block
+    // commands to the BC4.
+    if (bt_uart_is_writing()) {
+        bt_uart_abort_write();
+        bt.tx_stalled = bt.streaming;
+        pbdrv_bluetooth_classic_host_disconnect();
+        return PBIO_ERROR_TIMEDOUT;
+    }
 
     if (!bt.streaming) {
         return PBIO_ERROR_INVALID_OP;
