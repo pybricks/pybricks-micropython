@@ -8,6 +8,11 @@
 - EV3 now identifies as a gamepad instead of a computer over Bluetooth, so
   that ChromeOS lists it when pairing.
 
+### Fixed
+- Fixed Technic Hub and City Hub falling back to low download speed ([support#2850]).
+
+[support#2850]: https://github.com/pybricks/support/issues/2850
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b6...HEAD
 
 ## [4.1.0b6] - 2026-10-08

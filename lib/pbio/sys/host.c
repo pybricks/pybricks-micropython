@@ -67,8 +67,14 @@ const char *pbsys_host_get_hub_display_name(void) {
 static bool pbsys_host_initialized;
 
 void pbsys_host_init(void) {
-    // Buffer needs 1 byte of headroom, but command drops 1 command.
+    // Buffer needs 1 byte of headroom, but command drops 1 type byte. Incoming
+    // messages are the same size as outgoing ones, unless configured larger,
+    // e.g. if the Bluetooth chip can receive more than it can safely send.
+    #ifdef PBSYS_CONFIG_HOST_EVENT_IN_SIZE
+    static uint8_t stdin_buf[PBSYS_CONFIG_HOST_EVENT_IN_SIZE + 1 - 1];
+    #else
     static uint8_t stdin_buf[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1 - 1];
+    #endif
     lwrb_init(&pbsys_host_stdin_ring_buf, stdin_buf, PBIO_ARRAY_SIZE(stdin_buf));
 
     // There is no technical constraint on this one. Can be reduced to save on
@@ -239,7 +245,10 @@ uint32_t pbsys_host_stdin_get_free(void) {
 
 /**
  * Gets the maximum message size that can be sent to the host on all active
- * connections. Accounts for event byte, so size is the payload.
+ * connections.
+ *
+ * Unlike the driver-level sizes, this EXCLUDES the leading event byte (such as
+ * ::PBIO_PYBRICKS_EVENT_WRITE_STDOUT), so it is the payload size after it.
  *
  * @return              The size in bytes.
  */

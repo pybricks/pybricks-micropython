@@ -16,7 +16,8 @@
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HUB_LIGHT_MATRIX               (0)
 #define PBSYS_CONFIG_HOST                           (1)
-#define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - 3)
+#define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (20) // One BLE packet. Larger crashes cc2640, see driver.
+#define PBSYS_CONFIG_HOST_EVENT_IN_SIZE             (PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - 3)
 #define PBSYS_CONFIG_HUB_TYPE_STR                   "Technic Hub"
 #define PBSYS_CONFIG_MAIN                           (1)
 #define PBSYS_CONFIG_STORAGE                        (1)

@@ -75,13 +75,20 @@ bool pbdrv_bluetooth_host_is_connected(void);
 bool pbdrv_bluetooth_hci_is_enabled(void);
 
 /**
- * Gets the maximum Pybricks message size (the full notification value,
- * including the leading event type byte) that can be sent to the host.
+ * Gets the maximum Pybricks message size the link allows, in either direction.
  *
- * For BLE this is the negotiated ATT MTU minus the 3-byte notification header,
- * taken as the minimum over all connected hosts and capped at the platform's
- * maximum MTU. Callers must not send more than this many bytes in a single
- * notification. The actual user payload is one byte less (the event type byte).
+ * This size INCLUDES the leading command byte (such as
+ * ::PBIO_PYBRICKS_COMMAND_WRITE_STDIN) or event byte (such as
+ * ::PBIO_PYBRICKS_EVENT_WRITE_STDOUT), so the payload after it can be at most
+ * one byte less.
+ *
+ * For BLE this is the negotiated ATT MTU minus the 3-byte ATT header, taken as
+ * the minimum over all connected hosts and capped at the platform's maximum
+ * MTU.
+ *
+ * This is only the link limit. Senders must use
+ * ::pbsys_host_get_max_message_size, which also applies the outgoing size,
+ * since some drivers cannot reliably send messages as large as they receive.
  *
  * @return              The maximum message size in bytes.
  */
