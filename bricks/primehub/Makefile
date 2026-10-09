@@ -10,6 +10,7 @@ BUILD = build
 PYTHON = python3
 COMBINE = ../../tools/combine_firmware.py
 FLASH = $(PYTHON) ../../tools/flash
+NAME ?= primehub
 VARIANT_ZIPS = $(foreach v,$(VARIANTS),../$(v)/build/firmware.zip)
 
 all: $(BUILD)/firmware.zip
@@ -29,7 +30,7 @@ $(BUILD)/firmware.zip: $(VARIANTS)
 	$(PYTHON) $(COMBINE) $@ $(VARIANT_ZIPS)
 
 deploy: $(BUILD)/firmware.zip
-	$(FLASH) $< --name primehub
+	$(FLASH) $< --name $(NAME)
 
 clean:
 	for variant in $(VARIANTS); do $(MAKE) -C ../$$variant clean; done
