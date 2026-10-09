@@ -1436,11 +1436,12 @@ typedef enum {
 } pbdrv_bluetooth_hid_state_t;
 
 /**
- * Generous pairing timeout: some devices (e.g. PS5) reject the hub-initiated
- * attempt while pairing and then page back to connect on their own, so a
- * briefly idle connection does not mean failure.
+ * Pairing timeout. It must outlast paging the device (BTstack's page timeout
+ * is about 15 s), SDP and SSP, because a page in progress cannot be aborted:
+ * if the session ends first, the attempt carries on and opens a connection
+ * that no longer belongs to any session.
  */
-#define HID_PAIR_TIMEOUT_MS (10000)
+#define HID_PAIR_TIMEOUT_MS (30000)
 
 /**
  * The one supported Bluetooth Classic HID device connection, such as a gamepad.
@@ -1551,10 +1552,9 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
             switch (hci_event_hid_meta_get_subevent_code(packet)) {
 
                 case HID_SUBEVENT_INCOMING_CONNECTION:
-                    // An already-paired device reconnecting, or a device we
-                    // just paired with reinitiating the HID channels itself
-                    // after rejecting the hub-initiated attempt. Either way
-                    // we must not race it with hid_host_connect().
+                    // An already-paired device reconnecting, or a device being
+                    // paired that opens the HID channels itself. Either way we
+                    // must not race it with hid_host_connect().
                     if (hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED) {
                         DEBUG_PRINT("HID connection in use, declining.\n");
                         hid_host_decline_connection(hid_subevent_incoming_connection_get_hid_cid(packet));
@@ -1576,9 +1576,9 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                     }
                     status = hid_subevent_connection_opened_get_status(packet);
                     if (status != ERROR_CODE_SUCCESS) {
-                        // While pairing this is expected (e.g. PS5 rejects
-                        // with 0x11); keep the session going until the device
-                        // pages back and connects, or the session times out.
+                        // While pairing, the device may still connect on its
+                        // own, so keep the session going until it does or the
+                        // session times out.
                         DEBUG_PRINT("HID connection failed, status 0x%02x.\n", status);
                         if (hid_connection.state != PBDRV_BLUETOOTH_HID_STATE_PAIRING) {
                             hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
@@ -1638,8 +1638,7 @@ static void hid_host_packet_handler(uint8_t packet_type, uint16_t channel, uint8
                 }
 
                 case HID_SUBEVENT_CONNECTION_CLOSED:
-                    // While pairing, closure of the rejected attempt is
-                    // expected; that session ends by success, cancel, or
+                    // While pairing, the session ends by success, cancel, or
                     // timeout instead.
                     if ((hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTING ||
                          hid_connection.state == PBDRV_BLUETOOTH_HID_STATE_CONNECTED) &&
@@ -1707,11 +1706,11 @@ pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char 
     DEBUG_PRINT("Start HID pairing with %s.\n", bd_addr_to_str(hid_connection.bdaddr));
 
     // For a device in pairing mode, the hub pages it and initiates the HID
-    // channels. Pairing (SSP) happens along the way. The remaining steps,
-    // including the device closing this attempt and reinitiating the HID
-    // channels itself (e.g. PS5), are driven by hid_host_packet_handler().
+    // channels. Pairing (SSP) happens along the way. The remaining steps are
+    // driven by hid_host_packet_handler(). Devices start in report protocol,
+    // so this mode has BTstack connect without setting the protocol.
     uint8_t btstack_error = hid_host_connect(hid_connection.bdaddr,
-        HID_PROTOCOL_MODE_REPORT_WITH_FALLBACK_TO_BOOT, &hid_connection.hid_cid);
+        HID_PROTOCOL_MODE_REPORT, &hid_connection.hid_cid);
     if (btstack_error != ERROR_CODE_SUCCESS) {
         DEBUG_PRINT("HID host connect failed, status 0x%02x.\n", btstack_error);
         hid_connection.state = PBDRV_BLUETOOTH_HID_STATE_IDLE;
