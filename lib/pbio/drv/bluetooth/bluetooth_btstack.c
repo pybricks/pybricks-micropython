@@ -340,6 +340,23 @@ static bool pbdrv_bluetooth_btstack_ble_supported(void) {
     return chipset_info && chipset_info->supports_ble;
 }
 
+/**
+ * Inquiry scan interval and window while discoverable, in units of 0.625 ms.
+ *
+ * The controller default listens for 11.25 ms every 2.56 s, which is often
+ * too little to be heard within one inquiry of a host, which lasts about
+ * 10 s. Hosts drop devices from their list when one inquiry misses them, so
+ * the hub would be slow to show up and then come and go. The hub is only
+ * discoverable while the user is asking for it, so listening for longer and
+ * more often costs nothing that matters.
+ *
+ * Interlaced scanning would find the hub sooner still, but then the EV3
+ * controller drops the EIR packet from most of its responses, so the host
+ * gets no name with them.
+ */
+#define INQUIRY_SCAN_INTERVAL (0x0400) // 640 ms
+#define INQUIRY_SCAN_WINDOW (0x0024) // 22.5 ms
+
 // Defined alongside the scan and connect thread below.
 static void scan_and_connect_match_advertising_report(pbio_bluetooth_peripheral_t *peri, uint8_t *packet);
 
@@ -377,6 +394,12 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                 // can all open the link by paging the hub.
                 gap_connectable_control(1);
                 #endif
+
+                #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
+                // Applied here since BTstack resets its pending settings
+                // when it powers on the controller.
+                gap_inquiry_set_scan_activity(INQUIRY_SCAN_INTERVAL, INQUIRY_SCAN_WINDOW);
+                #endif
             }
             break;
         case HCI_EVENT_COMMAND_COMPLETE: {
@@ -396,6 +419,14 @@ static void main_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                     recorded_events.advertising_data_complete = true;
                     pbio_os_request_poll();
                     break;
+                #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
+                case HCI_OPCODE_HCI_WRITE_INQUIRY_SCAN_ACTIVITY:
+                    DEBUG_PRINT("Write inquiry scan activity, status 0x%02x.\n", rp[0]);
+                    break;
+                case HCI_OPCODE_HCI_WRITE_SCAN_ENABLE:
+                    DEBUG_PRINT("Write scan enable, status 0x%02x.\n", rp[0]);
+                    break;
+                #endif
                 default:
                     break;
             }
@@ -2025,13 +2056,8 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
 
 void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
 
-    // Nothing to set up yet, and nothing set up that needs undoing. Staying
-    // false lets the caller notice and ask again.
-    if (!pbdrv_bluetooth_hci_is_enabled()) {
-        host_connection.discoverable = false;
-        return;
-    }
-
+    // BTstack holds on to this until the controller can take it, so it is
+    // safe to call at any time after init.
     if (discoverable == host_connection.discoverable) {
         return;
     }

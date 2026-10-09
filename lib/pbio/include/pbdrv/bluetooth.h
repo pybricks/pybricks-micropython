@@ -356,9 +356,6 @@ static inline void pbdrv_bluetooth_classic_hid_disconnect(void) {
  * already knows the address connects, since the hub is always page scanning.
  * So this is only needed to introduce the hub to a host the first time.
  *
- * Has no effect while Bluetooth is not powered on. The caller can tell from
- * pbdrv_bluetooth_classic_host_is_discoverable() and ask again.
- *
  * @param [in] discoverable  Whether the hub should answer inquiry scans.
  */
 void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable);

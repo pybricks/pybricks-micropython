@@ -246,8 +246,8 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_host_button(pbio_button
     }
 
     // Discoverable only while this is open and there is nothing connected.
-    // Set on every refresh rather than once, so that it still takes effect if
-    // Bluetooth was not ready yet when the user opened this.
+    // Set on every refresh rather than once, so that it follows the
+    // connection state while this stays open.
     pbdrv_bluetooth_classic_host_set_discoverable(!pbdrv_bluetooth_classic_host_is_connected());
     return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
