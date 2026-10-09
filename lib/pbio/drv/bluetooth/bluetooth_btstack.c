@@ -3281,10 +3281,13 @@ void pbdrv_bluetooth_init(void) {
     gap_set_local_name(pbsys_host_get_hub_display_name());
 
     // Choosing 0x000804 (toy robot) would match NXT, but it gets hidden by
-    // Windows 11 by default. So we choose "Handheld PC" which is somewhat
-    // close enough, and gets readily listed. Input devices also get listed,
-    // but usually show a keyboard icon which would be more confusing.
-    gap_set_class_of_device(0x000110);
+    // Windows 11 by default. Computer and phone classes get hidden by
+    // ChromeOS. Input devices are listed by both, so we choose gamepad, the
+    // closest fit for a handheld brick with buttons. Leaving the minor class
+    // uncategorized would show a keyboard icon, which is more confusing. The
+    // keyboard and pointing bits are left clear so that hosts don't ask for a
+    // passkey.
+    gap_set_class_of_device(0x000508);
 
     // The hub has no way for the user to enter or compare a code during
     // pairing, so claim exactly that and let pairing be "just works". A host

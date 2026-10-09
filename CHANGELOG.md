@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+- EV3 now identifies as a gamepad instead of a computer over Bluetooth, so
+  that ChromeOS lists it when pairing.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b6...HEAD
 
 ## [4.1.0b6] - 2026-10-08
