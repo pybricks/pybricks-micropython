@@ -661,4 +661,12 @@ bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
     return false;
 }
 
+uint32_t pbdrv_bluetooth_classic_host_get_pair_count(void) {
+    return 0;
+}
+
+const char *pbdrv_bluetooth_classic_host_get_paired_name(void) {
+    return NULL;
+}
+
 #endif // PBDRV_CONFIG_BLUETOOTH_NXT

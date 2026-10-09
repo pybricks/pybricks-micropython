@@ -227,16 +227,42 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_info_button(pbio_button
  * also a one-off: afterwards the connection is always opened from a Pybricks
  * app, never from the computer's Bluetooth menu.
  *
- * All the hub does here is make itself discoverable, which is what gets it
- * into that menu. It cannot tell whether the user got what they came for:
- * pairing needs nothing from the hub and happens off its own bat, including
+ * So this walks the user through three steps, each drawn from live state:
+ * pair from the computer, then connect from the app, then done. The hub makes
+ * itself discoverable for the first step, which is what gets it into that
+ * menu. The computer drops the link again right after pairing, since it has
+ * no use for it yet, so the second step is also what tells the user that this
+ * was expected and what to do next.
+ *
+ * Pairing needs nothing from the hub and can also happen on its own, such as
  * when a computer that still has the hub in its list reconnects after a
- * firmware update wiped the hub's key. So there is no state to keep, and no
- * success to report. What the hub does know is whether a computer is
- * connected right now, which is worth saying because it answers the question
- * either way: nothing to do if they open this later, and confirmation the
- * moment they do connect, since this is drawn from live state.
+ * firmware update wiped the hub's key. If that happens while this is open,
+ * moving on to the next step is still right.
  */
+typedef enum {
+    /** Waiting for the computer to pair. */
+    PBSYS_HMI_EV3_UI_HOST_PHASE_PAIR,
+    /** Paired, waiting for the app to connect. */
+    PBSYS_HMI_EV3_UI_HOST_PHASE_CONNECT,
+    /** Connected. */
+    PBSYS_HMI_EV3_UI_HOST_PHASE_READY,
+} pbsys_hmi_ev3_ui_host_phase_t;
+
+static struct {
+    /** Pairing count when this was opened, to tell if one happened since. */
+    uint32_t pair_count;
+} host_ui;
+
+static pbsys_hmi_ev3_ui_host_phase_t pbsys_hmi_ev3_ui_get_host_phase(void) {
+    if (pbdrv_bluetooth_classic_host_is_connected()) {
+        return PBSYS_HMI_EV3_UI_HOST_PHASE_READY;
+    }
+    if (pbdrv_bluetooth_classic_host_get_pair_count() != host_ui.pair_count) {
+        return PBSYS_HMI_EV3_UI_HOST_PHASE_CONNECT;
+    }
+    return PBSYS_HMI_EV3_UI_HOST_PHASE_PAIR;
+}
+
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_host_button(pbio_button_flags_t button) {
 
     if (button == PBIO_BUTTON_LEFT_UP || button == PBIO_BUTTON_CENTER) {
@@ -245,15 +271,15 @@ static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_host_button(pbio_button
         return PBSYS_HMI_EV3_UI_ACTION_NONE;
     }
 
-    // Discoverable only while this is open and there is nothing connected.
-    // Set on every refresh rather than once, so that it follows the
-    // connection state while this stays open.
-    pbdrv_bluetooth_classic_host_set_discoverable(!pbdrv_bluetooth_classic_host_is_connected());
+    // Discoverable only while waiting for pairing. Set on every refresh
+    // rather than once, so that it follows the phase while this stays open.
+    pbdrv_bluetooth_classic_host_set_discoverable(pbsys_hmi_ev3_ui_get_host_phase() == PBSYS_HMI_EV3_UI_HOST_PHASE_PAIR);
     return PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON;
 }
 
 static pbsys_hmi_ev3_ui_action_t pbsys_hmi_ev3_ui_handle_host_open(void) {
     state.overlay = PBSYS_HMI_EV3_UI_OVERLAY_HOST;
+    host_ui.pair_count = pbdrv_bluetooth_classic_host_get_pair_count();
     return pbsys_hmi_ev3_ui_handle_host_button(0);
 }
 
@@ -683,20 +709,41 @@ static void pbsys_hmi_ev3_ui_draw_activity_status(const char *text) {
 static void pbsys_hmi_ev3_ui_draw_host_overlay(void) {
 
     const pbio_font_t *font = &pbio_font_liberationsans_regular_14;
+    const char *name;
 
-    // The same gate as the Bluetooth icon in the status bar.
-    if (pbdrv_bluetooth_classic_host_is_connected()) {
-        uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, true);
-        pbsys_hmi_ev3_ui_draw_centered_text(font, "Already connected!", 0, 60);
-        pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
-        return;
+    switch (pbsys_hmi_ev3_ui_get_host_phase()) {
+
+        case PBSYS_HMI_EV3_UI_HOST_PHASE_READY: {
+            uint8_t separator_y = pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, true);
+            name = pbdrv_bluetooth_classic_host_get_connected_name();
+            pbsys_hmi_ev3_ui_draw_device_name(font, name ? name : "Computer", 44, 60, 150, false);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "Connected", 0, 80);
+            pbsys_hmi_ev3_ui_draw_overlay_box_draw_accept(separator_y);
+            return;
+        }
+
+        case PBSYS_HMI_EV3_UI_HOST_PHASE_CONNECT: {
+            // Drawn on every refresh, so the placeholder name gets replaced
+            // as soon as the real one comes in.
+            pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, false);
+            name = pbdrv_bluetooth_classic_host_get_paired_name();
+            pbsys_hmi_ev3_ui_draw_device_name(font, name ? name : "Computer", 44, 60, 150, false);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "Saved! Now connect", 0, 82);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "in the Pybricks app", 0, 98);
+            pbsys_hmi_ev3_ui_draw_activity_animation(110);
+            return;
+        }
+
+        case PBSYS_HMI_EV3_UI_HOST_PHASE_PAIR:
+        default: {
+            pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, false);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "Connect with the", 0, 48);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "Bluetooth menu", 0, 66);
+            pbsys_hmi_ev3_ui_draw_centered_text(font, "on your computer", 0, 84);
+            pbsys_hmi_ev3_ui_draw_activity_animation(104);
+            return;
+        }
     }
-
-    pbsys_hmi_ev3_ui_draw_overlay_box(160, 100, false);
-    pbsys_hmi_ev3_ui_draw_centered_text(font, "Connect with the", 0, 48);
-    pbsys_hmi_ev3_ui_draw_centered_text(font, "Bluetooth menu", 0, 66);
-    pbsys_hmi_ev3_ui_draw_centered_text(font, "on your computer", 0, 84);
-    pbsys_hmi_ev3_ui_draw_activity_animation(104);
 }
 
 static void pbsys_hmi_ev3_ui_draw_gamepad_overlay(void) {

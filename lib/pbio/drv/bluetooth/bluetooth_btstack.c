@@ -1859,6 +1859,10 @@ static struct {
     /** Bonding record registered when pairing started, undone if it fails. */
     bd_addr_t bond_addr;
     bool bond_provisional;
+    /** Number of devices that completed pairing since boot. */
+    uint32_t pair_count;
+    /** Bluetooth address of the device that most recently completed pairing. */
+    bd_addr_t paired_addr;
     /**
      * Incoming byte stream, drained by the pbio serial process. Holds a whole
      * packet plus the start of the next one, and one slot for lwrb to tell
@@ -1954,6 +1958,10 @@ static void host_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *
                         // The record earned its keep, so don't undo it later.
                         host_connection.bond_provisional = false;
                     }
+                    // Gamepads pair through here too, but only from their own
+                    // overlay, so this can count everything.
+                    memcpy(host_connection.paired_addr, event_addr, sizeof(bd_addr_t));
+                    host_connection.pair_count++;
                     // The device never sends its name, so ask for it while
                     // the link is up, to replace the placeholder above.
                     if (host_bond_name_is_placeholder(event_addr)) {
@@ -2068,6 +2076,17 @@ void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
 
 bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
     return host_connection.discoverable;
+}
+
+uint32_t pbdrv_bluetooth_classic_host_get_pair_count(void) {
+    return host_connection.pair_count;
+}
+
+const char *pbdrv_bluetooth_classic_host_get_paired_name(void) {
+    if (host_connection.pair_count == 0) {
+        return NULL;
+    }
+    return pbio_bluetooth_classic_link_key_get_name(host_connection.paired_addr);
 }
 
 bool pbdrv_bluetooth_classic_host_is_connected(void) {

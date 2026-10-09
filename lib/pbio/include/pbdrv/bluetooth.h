@@ -368,6 +368,28 @@ void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable);
 bool pbdrv_bluetooth_classic_host_is_discoverable(void);
 
 /**
+ * Gets the number of times a host computer completed pairing since boot.
+ *
+ * Pairing happens on the host's initiative, so this is how to find out that
+ * it did: take this before and compare it after. Gamepad pairings count too,
+ * so only compare while no gamepad is being paired.
+ *
+ * @return  The number of completed pairings.
+ */
+uint32_t pbdrv_bluetooth_classic_host_get_pair_count(void);
+
+/**
+ * Gets the name of the host computer that most recently completed pairing.
+ *
+ * This is a placeholder until the host's name has been asked for, which
+ * happens just after pairing.
+ *
+ * @return  The name, or NULL if no host has paired since boot or its record
+ *          has since been removed.
+ */
+const char *pbdrv_bluetooth_classic_host_get_paired_name(void);
+
+/**
  * Tests whether a host computer is connected over RFCOMM.
  *
  * @return  True if connected.
@@ -422,6 +444,14 @@ static inline void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverab
 
 static inline bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
     return false;
+}
+
+static inline uint32_t pbdrv_bluetooth_classic_host_get_pair_count(void) {
+    return 0;
+}
+
+static inline const char *pbdrv_bluetooth_classic_host_get_paired_name(void) {
+    return NULL;
 }
 
 static inline bool pbdrv_bluetooth_classic_host_is_connected(void) {
