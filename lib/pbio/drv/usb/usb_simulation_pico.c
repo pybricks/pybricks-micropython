@@ -31,7 +31,7 @@ static volatile bool pbdrv_usb_simulation_tx_ready;
 // Size of the UART receive ring buffer. This is a mock with no real USB
 // hardware, so the value is arbitrary.
 #define PBDRV_USB_SIMULATION_PICO_RX_RINGBUF_SIZE (128)
-#define BUFFER_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
+#define BUFFER_SIZE (PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE)
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
@@ -133,13 +133,15 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
 
         // Wrap the raw UART bytes as a write stdin command and COBS-encode it,
         // the same way a real host would, so the common driver can decode it.
-        static uint8_t cmd[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
-        cmd[0] = 0; // correlation tag (opaque; unused here)
-        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        available = pbio_int_math_clamp(available, sizeof(cmd) - 2);
-        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[2], available);
+        static uint8_t cmd[PBIO_SERIAL_MAX_PAYLOAD_SIZE];
+        // Tag (opaque; unused here), then the command byte.
+        const size_t header_size = PBIO_SERIAL_TAG_SIZE + 1;
+        memset(cmd, 0, PBIO_SERIAL_TAG_SIZE);
+        cmd[PBIO_SERIAL_TAG_SIZE] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        available = pbio_int_math_clamp(available, sizeof(cmd) - header_size);
+        lwrb_read(&pbdrv_usb_simulation_pico_in_ringbuf, &cmd[header_size], available);
         pbdrv_usb_simulation_pico_in_size = pbio_cobs_encode_prefixed(
-            PBIO_PYBRICKS_OUT_EP_MSG_COMMAND, cmd, 2 + available,
+            PBIO_PYBRICKS_OUT_EP_MSG_COMMAND, cmd, header_size + available,
             pbdrv_usb_simulation_pico_in_buf);
     }
 

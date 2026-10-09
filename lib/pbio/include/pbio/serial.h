@@ -21,19 +21,36 @@
 #if PBIO_CONFIG_SERIAL
 
 /**
+ * Size of the correlation tag that precedes the host command in a command
+ * message. The host picks it and the hub echoes it in the response, see
+ * ::PBIO_PYBRICKS_OUT_EP_MSG_COMMAND.
+ */
+#define PBIO_SERIAL_TAG_SIZE (1)
+
+/**
+ * Upper bound on the payload of one serial message, which follows its
+ * message type (subscribe, command, read, ...).
+ *
+ * The largest payload is a command, laid out as:
+ *
+ *     [tag] [host command]
+ *
+ * The host command is the same as a BLE command write, so its size already
+ * includes its command byte. Events (which include their event byte) and read
+ * replies are no larger.
+ */
+#define PBIO_SERIAL_MAX_PAYLOAD_SIZE (PBIO_SERIAL_TAG_SIZE + PBSYS_CONFIG_HOST_EVENT_OUT_SIZE)
+
+/**
  * Upper bound on one COBS-encoded Pybricks packet, including its trailing
  * frame delimiter.
- *
- * A packet is a host event message (which already includes its own event
- * byte) preceded by the endpoint type byte, which is encoded as the COBS
- * prefix and so is not counted in the payload bound here.
  *
  * This is the largest thing any serial transport has to carry in one piece.
  * Transports are free to split it, since the stream is reframed on the COBS
  * delimiters, but sizing a transport to this avoids the split.
  */
 #define PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE \
-    (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
+    (PBIO_COBS_ENCODED_BUFFER_SIZE(PBIO_SERIAL_MAX_PAYLOAD_SIZE))
 
 /**
  * Initializes the serial connection processes on boot.

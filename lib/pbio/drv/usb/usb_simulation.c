@@ -20,7 +20,7 @@
 
 #include <pbsys/config.h>
 
-#define BUFFER_SIZE (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE))
+#define BUFFER_SIZE (PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE)
 
 pbio_error_t pbdrv_usb_wait_until_configured(pbio_os_state_t *state) {
     return PBIO_ERROR_NOT_SUPPORTED;
@@ -126,13 +126,15 @@ static pbio_error_t pbdrv_usb_test_process_thread(pbio_os_state_t *state, void *
         // Read raw bytes from native stdin and present them to the common
         // driver as a COBS-framed write stdin command, the same way a real
         // host would. This has been made non-blocking in platform.c.
-        static uint8_t cmd[PBSYS_CONFIG_HOST_EVENT_OUT_SIZE];
-        cmd[0] = 0; // correlation tag (opaque; unused here)
-        cmd[1] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
-        ssize_t num_read = read(STDIN_FILENO, &cmd[2], sizeof(cmd) - 2);
+        static uint8_t cmd[PBIO_SERIAL_MAX_PAYLOAD_SIZE];
+        // Tag (opaque; unused here), then the command byte.
+        const size_t header_size = PBIO_SERIAL_TAG_SIZE + 1;
+        memset(cmd, 0, PBIO_SERIAL_TAG_SIZE);
+        cmd[PBIO_SERIAL_TAG_SIZE] = PBIO_PYBRICKS_COMMAND_WRITE_STDIN;
+        ssize_t num_read = read(STDIN_FILENO, &cmd[header_size], sizeof(cmd) - header_size);
         if (num_read > 0) {
             usb_in_size = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_OUT_EP_MSG_COMMAND,
-                cmd, 2 + num_read, usb_in_buf);
+                cmd, header_size + num_read, usb_in_buf);
         }
     }
 

@@ -18,7 +18,7 @@
 #define _PBDRV_BLUETOOTH_BTSTACK_CONFIG_H_
 
 #include <pbdrv/bluetooth.h>
-#include <pbio/cobs.h>
+#include <pbio/serial.h>
 #include <pbsys/config.h>
 
 // ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@
  * packet over two frames for no good reason.
  */
 #define PBDRV_BTSTACK_RFCOMM_BUDGET \
-    (PBIO_COBS_ENCODED_BUFFER_SIZE(PBSYS_CONFIG_HOST_EVENT_OUT_SIZE) + \
+    (PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE + \
     PBDRV_BTSTACK_RFCOMM_HEADER + PBDRV_BTSTACK_L2CAP_HEADER)
 
 #if PBDRV_BTSTACK_HOST

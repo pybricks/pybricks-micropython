@@ -161,11 +161,12 @@ bool pbsys_host_is_connected(void) {
  */
 void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport) {
 
-    // Serial transports are configured to allow the configured host event
-    // size, while BLE is limited by the negotiated MTU.
+    // This is the maximum command write size, including the command byte.
+    // Serial transports are sized for the configured host event size, while
+    // BLE is limited by the negotiated MTU. Both include the command byte.
     uint32_t max_receive_size = transport == PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH ?
-        pbdrv_bluetooth_get_max_message_size():
-        PBSYS_CONFIG_HOST_EVENT_OUT_SIZE - 1;
+        pbdrv_bluetooth_get_max_message_size() :
+        PBSYS_CONFIG_HOST_EVENT_OUT_SIZE;
 
     pbio_pybricks_hub_capabilities(buf, max_receive_size,
         PBSYS_CONFIG_APP_FEATURE_FLAGS,

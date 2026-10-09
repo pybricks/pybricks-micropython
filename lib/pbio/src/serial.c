@@ -26,11 +26,6 @@
 #include <pbsys/host.h>
 #include <pbsys/status.h>
 
-// Host event size (already includes its 1 event byte) + 1 EP type byte. The
-// encoded counterpart is ::PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE, which is in
-// the header because transports size their buffers by it too.
-#define PBIO_SERIAL_MAX_DECODED_MESSAGE_SIZE (PBSYS_CONFIG_HOST_EVENT_OUT_SIZE + 1)
-
 /** Number of header bytes before the value in a read reply. */
 #define PBIO_SERIAL_READ_REPLY_HEADER_SIZE 3
 
@@ -111,7 +106,7 @@ typedef struct {
      * the byte from the command that produced this response so the host can
      * correlate them.
      */
-    uint8_t command_response_buf[sizeof(uint8_t) + sizeof(uint32_t) + 1];
+    uint8_t command_response_buf[PBIO_SERIAL_TAG_SIZE + sizeof(uint32_t)];
     bool command_response_pending;
     /**
      * Pending reply to the most recently received read request.
@@ -121,7 +116,7 @@ typedef struct {
      * `[service, char_id_lo, char_id_hi, value...]`; the READ_REPLY message
      * type is added as the COBS prefix at transmit time.
      */
-    uint8_t read_reply_buf[PBIO_SERIAL_MAX_DECODED_MESSAGE_SIZE];
+    uint8_t read_reply_buf[PBIO_SERIAL_MAX_PAYLOAD_SIZE];
     uint32_t read_reply_len;
     bool read_reply_pending;
     /** Staged event shared with pbsys host, and this transport's size latch. */
@@ -266,7 +261,7 @@ static void pbio_serial_handle_data_in(pbio_serial_connection_t *con) {
     // sharing static buffers is safe and keeps the worst-case read off the
     // stack while only occupying the memory once.
     static uint8_t data_in[PBIO_SERIAL_MAX_ENCODED_PACKET_SIZE];
-    static uint8_t msg[PBIO_SERIAL_MAX_DECODED_MESSAGE_SIZE];
+    static uint8_t msg[PBIO_SERIAL_MAX_PAYLOAD_SIZE];
     uint32_t size;
 
     while ((size = con->rx_read(data_in, sizeof(data_in))) > 0) {
@@ -299,14 +294,14 @@ static void pbio_serial_handle_data_in(pbio_serial_connection_t *con) {
                     // Subscribe or unsubscribe to event notifications. The payload
                     // is a single byte: 1 to subscribe, 0 to unsubscribe.
                     pbio_serial_set_subscribed(con, msg[0]);
-                } else if (msg_size >= 2 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
+                } else if (msg_size > PBIO_SERIAL_TAG_SIZE && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_COMMAND) {
                     // The command payload is [tag, ...payload]. The tag is opaque
                     // to us: echo it back in the response so the host can correlate
                     // a late response with the command that produced it. The
                     // payload after the tag is the same as a BLE command write.
-                    con->command_response_buf[0] = msg[0];
-                    pbio_set_uint32_le(&con->command_response_buf[1],
-                        pbsys_handle_command(&msg[1], msg_size - 1));
+                    memcpy(con->command_response_buf, msg, PBIO_SERIAL_TAG_SIZE);
+                    pbio_set_uint32_le(&con->command_response_buf[PBIO_SERIAL_TAG_SIZE],
+                        pbsys_handle_command(&msg[PBIO_SERIAL_TAG_SIZE], msg_size - PBIO_SERIAL_TAG_SIZE));
                     con->command_response_pending = true;
                     pbio_os_request_poll();
                 } else if (msg_size >= 3 && msg_type == PBIO_PYBRICKS_OUT_EP_MSG_READ) {
@@ -318,11 +313,10 @@ static void pbio_serial_handle_data_in(pbio_serial_connection_t *con) {
                     con->read_reply_buf[0] = service;
                     con->read_reply_buf[1] = msg[1];
                     con->read_reply_buf[2] = msg[2];
-                    // The value bound excludes the EP type byte and the reply header.
                     uint32_t value_size = pbsys_host_read_characteristic(
                         service, char_id, con->transport,
                         &con->read_reply_buf[PBIO_SERIAL_READ_REPLY_HEADER_SIZE],
-                        PBIO_SERIAL_MAX_DECODED_MESSAGE_SIZE - 1 - PBIO_SERIAL_READ_REPLY_HEADER_SIZE);
+                        sizeof(con->read_reply_buf) - PBIO_SERIAL_READ_REPLY_HEADER_SIZE);
                     con->read_reply_len = PBIO_SERIAL_READ_REPLY_HEADER_SIZE + value_size;
                     con->read_reply_pending = true;
                     pbio_os_request_poll();
@@ -392,7 +386,7 @@ static pbio_error_t pbio_serial_process_thread(pbio_os_state_t *state, void *con
             // received.
             if (con->command_response_pending) {
                 con->tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
-                    con->command_response_buf, sizeof(con->command_response_buf) - 1, con->tx_frame);
+                    con->command_response_buf, sizeof(con->command_response_buf), con->tx_frame);
 
                 PBIO_OS_AWAIT(state, &con->sub, err = con->tx_message(&con->sub, con->tx_frame, con->tx_frame_len));
                 con->command_response_pending = false;
