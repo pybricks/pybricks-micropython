@@ -4,16 +4,21 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b7...HEAD
+
+## [4.1.0b7] - 2026-10-11
+
 ### Changed
 - EV3 now identifies as a gamepad instead of a computer over Bluetooth, so
   that ChromeOS lists it when pairing.
+- Improved EV3 pairing instructions on screen and discoverability.
 
 ### Fixed
 - Fixed Technic Hub and City Hub falling back to low download speed ([support#2850]).
+- Fixed pairing with some gamepads.
 
 [support#2850]: https://github.com/pybricks/support/issues/2850
-
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b6...HEAD
+[4.1.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.06...v4.1.0b7
 
 ## [4.1.0b6] - 2026-10-08
 
