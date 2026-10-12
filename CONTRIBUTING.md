@@ -139,11 +139,11 @@ source code, then run:
 
     poetry env info
 
-Verify that the Python version listed is 3.10.x. If it is not, run:
+Verify that the Python version listed is 3.11 or newer. If it is not, run:
 
-    poetry env use <path-to-python3.10>
+    poetry env use <path-to-python3>
 
-where `<path-to-python3.10>` is the full path to the Python 3.10 installation.
+where `<path-to-python3>` is the full path to a Python 3.11 or newer installation.
 
 Then run the following to set up the Python environment:
 
