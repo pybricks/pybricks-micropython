@@ -4,7 +4,14 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b7...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0...HEAD
+
+## [4.1.0] - 2026-10-12
+
+### Changed
+- Released current version on stable channel without further changes.
+
+[4.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b7...v4.1.0
 
 ## [4.1.0b7] - 2026-10-11
 
@@ -18,7 +25,7 @@
 - Fixed pairing with some gamepads.
 
 [support#2850]: https://github.com/pybricks/support/issues/2850
-[4.1.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.06...v4.1.0b7
+[4.1.0b7]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0b6...v4.1.0b7
 
 ## [4.1.0b6] - 2026-10-08
 
