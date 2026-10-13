@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2023 The Pybricks Authors
+# Copyright (c) 2019-2026 The Pybricks Authors
 
 # This file contains the sources common to all Pybricks MicroPython ports.
+
+# Compact AEABI division helpers
+
+AEABI_DIV_SRC_C = lib/aeabi_div/aeabi_div.c
 
 # Ring buffer
 
