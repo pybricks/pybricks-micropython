@@ -36,9 +36,10 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
  *
  * @param [in]  state          Protothread state.
  * @param [out] start_time_us  Persistent value used by this function to store the start time (µs).
+ * @param [in]  ch             The A/DC channel that the sample is awaited for.
  * @param [in]  future_us      How far into the future the sample should be (µs).
  */
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us);
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us);
 
 #else
 
@@ -47,7 +48,7 @@ static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

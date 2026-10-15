@@ -12,7 +12,6 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
-#define PYBRICKS_PY_COMMON_BLE                  (1)
 #define PYBRICKS_PY_COMMON_CHARGER              (1)
 #define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)
@@ -33,14 +32,30 @@
 #define PYBRICKS_PY_IODEVICES                   (1)
 #define PYBRICKS_PY_IODEVICES_ANALOG_SENSOR     (0)
 #define PYBRICKS_PY_IODEVICES_DC_MOTOR          (0)
+// Follows PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID, which is only available in the
+// local build that drives a real USB dongle.
+#ifdef PBDRV_CONFIG_RUN_ON_CI
+#define PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD       (0)
+#else
+#define PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD       (1)
+#endif
 #define PYBRICKS_PY_IODEVICES_I2C_DEVICE        (0)
 #define PYBRICKS_PY_IODEVICES_LUMP_DEVICE       (0)
 #define PYBRICKS_PY_IODEVICES_LWP3_DEVICE       (1)
 #define PYBRICKS_PY_IODEVICES_PUP_DEVICE        (0)
 #define PYBRICKS_PY_IODEVICES_UART_DEVICE       (0)
-#define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (1)
+#define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
 #define PYBRICKS_PY_MESSAGING                   (1)
-#define PYBRICKS_PY_MESSAGING_RFCOMM            (1)
+#define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO         (1)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD     (1)
+// Follows PBDRV_CONFIG_BLUETOOTH_PEER, which is only available in the local
+// build that drives a real USB dongle.
+#ifdef PBDRV_CONFIG_RUN_ON_CI
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK       (0)
+#else
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK       (1)
+#endif
 #define PYBRICKS_PY_NXTDEVICES                  (0)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
@@ -56,8 +71,8 @@
 #define PYBRICKS_PY_ROBOTICS                    (1)
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE    (0)
 #define PYBRICKS_PY_TOOLS                       (1)
+#define PYBRICKS_PY_TOOLS_COBS                  (1)
 #define PYBRICKS_PY_TOOLS_HUB_MENU              (0)
-#define PYBRICKS_PY_TOOLS_APP_DATA              (1)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)
@@ -67,7 +82,7 @@
 #define PYBRICKS_OPT_TERSE_ERR                  (0)
 #define PYBRICKS_OPT_EXTRA_LEVEL1               (1)
 #define PYBRICKS_OPT_EXTRA_LEVEL2               (1)
-#define PYBRICKS_OPT_CUSTOM_IMPORT              (0)
+#define PYBRICKS_OPT_CUSTOM_IMPORT              (1)
 #define PYBRICKS_OPT_NATIVE_MOD                 (0)
 
 // The Virtual Hub has no hardware interrupt that requests polling every 1ms.

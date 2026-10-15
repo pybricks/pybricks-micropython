@@ -12,7 +12,6 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
-#define PYBRICKS_PY_COMMON_BLE                  (1)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
 #define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (0)
@@ -28,6 +27,10 @@
 #define PYBRICKS_PY_EXPERIMENTAL                (0)
 #define PYBRICKS_PY_HUBS                        (1)
 #define PYBRICKS_PY_IODEVICES                   (0)
+#define PYBRICKS_PY_MESSAGING                   (1)
+#define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO         (1)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO_OLD     (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON_REMOTE_ONLY (1)
@@ -43,8 +46,8 @@
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO     (0)
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE    (0)
 #define PYBRICKS_PY_TOOLS                       (1)
+#define PYBRICKS_PY_TOOLS_COBS                  (0)
 #define PYBRICKS_PY_TOOLS_HUB_MENU              (0)
-#define PYBRICKS_PY_TOOLS_APP_DATA              (0)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (0)

@@ -17,14 +17,17 @@
 #define PBIO_CONFIG_PORT_DCM_EV3            (0)
 #define PBIO_CONFIG_PORT_DCM_NUM_DEV        (2)
 #define PBIO_CONFIG_PORT_LUMP               (1)
+#define PBIO_CONFIG_PORT_LUMP_EV3           (0)
 #define PBIO_CONFIG_PORT_LUMP_MODE_INFO     (0)
 #define PBIO_CONFIG_PORT_LUMP_NUM_DEV       (2)
+#define PBIO_CONFIG_SERIAL                  (0)
 #define PBIO_CONFIG_SERVO                   (1)
 #define PBIO_CONFIG_SERVO_NUM_DEV           (4)
 #define PBIO_CONFIG_SERVO_EV3_NXT           (0)
 #define PBIO_CONFIG_SERVO_PUP               (1)
 #define PBIO_CONFIG_SERVO_PUP_MOVE_HUB      (1)
 #define PBIO_CONFIG_TACHO                   (1)
+#define PBIO_CONFIG_USB                     (0)
 #define PBIO_CONFIG_CONTROL_MINIMAL         (1)
 
 

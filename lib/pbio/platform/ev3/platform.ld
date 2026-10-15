@@ -12,7 +12,9 @@ MEMORY
 }
 
 _minimal_stack_size = 4M;
-pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 4;
+/* AAPCS requires 8-byte stack alignment. All mode stacks in start.S are carved
+   from here by subtracting multiples of 8, so this must be 8-byte aligned. */
+pbdrv_stack_end = ORIGIN(DDR) + LENGTH(DDR) - 8;
 /* Extra heap for large allocations (images, etc). */
 pb_umm_heap_size = 2M;
 /*
@@ -57,6 +59,16 @@ SECTIONS
         . = ALIGN(4);
         *(.data)
         *(.data.*)
+    } > DDR
+
+    /* The firmware metadata reports this section's start and size as where
+       to patch the hub name, so it must hold the name and nothing else. In
+       particular, do not align inside the section: that would pad between
+       the section start and the name, and the patched name would land that
+       many bytes early. */
+    .name :
+    {
+        *(.name) /* customizable hub name */
     } > DDR
 
     .bss (NOLOAD) :

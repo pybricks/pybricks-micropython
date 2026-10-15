@@ -13,8 +13,9 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
-#include <pbdrv/usb.h>
+#include <pbio/serial.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/button.h>
@@ -42,7 +43,7 @@
 #endif
 
 static void pbsys_hmi_host_update_indications(void) {
-    if (pbdrv_usb_connection_is_active()) {
+    if (pbio_serial_connection_is_active(PBSYS_HOST_TRANSPORT_TYPE_USB)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
@@ -54,7 +55,7 @@ static bool pbsys_hmi_handle_connection_change;
 /**
  * Called from the USB and Bluetooth driver if a host connection state changes.
  */
-static void pbsys_hmi_connection_changed_callback(void) {
+void pbsys_hmi_connection_changed_handler(void) {
     DEBUG_PRINT("A host connected or disconnected.\n");
     pbsys_hmi_handle_connection_change = true;
     pbsys_hmi_host_update_indications();
@@ -62,12 +63,10 @@ static void pbsys_hmi_connection_changed_callback(void) {
 
 
 void pbsys_hmi_init(void) {
-    pbdrv_usb_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
 }
 
 void pbsys_hmi_deinit(void) {
 
-    pbdrv_usb_set_host_connection_changed_callback(NULL);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 
     // Start shutdown animation and wait for completion.
@@ -82,6 +81,8 @@ void pbsys_hmi_stop_animation(void) {
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
+    static pbio_os_timer_t refresh_timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     pbsys_hmi_ev3_ui_initialize();
@@ -90,6 +91,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         DEBUG_PRINT("Start HMI loop\n");
 
+        pbio_os_timer_reset(timer);
         pbsys_hmi_host_update_indications();
 
         pbsys_hmi_ev3_ui_draw();
@@ -122,7 +124,10 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             }
 
             // Wait for button press, external program start, or connection change.
-            pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested() || pbsys_hmi_handle_connection_change;
+            pbdrv_button_get_pressed() ||
+            pbsys_main_program_start_is_requested() ||
+            pbio_os_timer_is_expired(&refresh_timer) ||
+            pbsys_hmi_handle_connection_change;
         }));
 
         // On setting or closing a connection, start from a clean slate.
@@ -140,6 +145,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         // Update UI state for buttons.
         uint8_t payload;
         pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
 
         if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
             pbsys_status_set_selected_slot(payload);
@@ -163,6 +169,12 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             break;
         }
     }
+
+    // A program is about to start, so stop scanning and pairing if we were
+    // doing that. Established connections are kept.
+    pbdrv_bluetooth_inquiry_stop();
+    pbdrv_bluetooth_classic_hid_pair_cancel();
+    pbdrv_bluetooth_classic_host_set_discoverable(false);
 
     // Wait for all buttons to be released so the user doesn't accidentally
     // push their robot off course.

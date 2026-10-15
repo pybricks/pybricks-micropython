@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // PWM driver using TI TLC5955 LED driver connected to STM32 MCU via SPI.
 
@@ -22,16 +22,27 @@ typedef struct {
     SPI_TypeDef *spi;
     /** Interrupt number for SPI IRQ. */
     IRQn_Type spi_irq;
+    #if defined(STM32H5)
+    /** The SPI Rx DMA channel to use. */
+    DMA_Channel_TypeDef *rx_dma;
+    /** Request number for Rx DMA. */
+    uint32_t rx_dma_req;
+    /** The SPI Tx DMA channel to use. */
+    DMA_Channel_TypeDef *tx_dma;
+    /** Request number for Tx DMA. */
+    uint32_t tx_dma_req;
+    #else
     /** The SPI Rx DMA peripheral to use. */
     DMA_Stream_TypeDef *rx_dma;
     /** Channel number for Rx DMA. */
     uint32_t rx_dma_ch;
-    /** Interrupt number for Rx DMA IRQ. */
-    IRQn_Type rx_dma_irq;
     /** The SPI Tx DMA peripheral to use. */
     DMA_Stream_TypeDef *tx_dma;
     /** Channel number for Tx DMA. */
     uint32_t tx_dma_ch;
+    #endif
+    /** Interrupt number for Rx DMA IRQ. */
+    IRQn_Type rx_dma_irq;
     /** Interrupt number for Tx DMA IRQ. */
     IRQn_Type tx_dma_irq;
     /** LAT signal GPIO bank. */

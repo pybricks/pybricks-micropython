@@ -1,7 +1,19 @@
 /*
 Modified from
 pico-sdk/src/rp2_common/pico_standard_link/memmap_no_flash.ld
-to limit RAM use to 240K for use with bootloader.
+for use with the Build HAT bootloader (BHBL).
+
+The firmware runs entirely from RAM. While loading it, BHBL uses the top
+16 KiB of RAM (0x2003C000-0x20040000) for its own stack and data.
+
+Once BHBL hands control to the firmware, it is no longer running, so that
+16 KiB is unused. Thus, the RAM entry in the MEMORY code block in this file ends at
+the end of RAM rather than at 0x2003C000. Since the GC heap runs to the end
+of that entry, the reclaimed 16 KiB becomes heap.
+
+The loaded image (.text through .data) must still end below 0x2003C000, or
+BHBL would overwrite itself during loading. An ASSERT at the end of this
+file checks that at link time.
 */
 /* Based on GCC ARM embedded samples.
    Defines the following symbols for use by code:
@@ -28,7 +40,7 @@ to limit RAM use to 240K for use with bootloader.
 
 MEMORY
 {
-    RAM(rwx) : ORIGIN =  0x20000000, LENGTH = 240k      /* <--- changed here */
+    RAM(rwx) : ORIGIN =  0x20000000, LENGTH = 256k
     SCRATCH_X(rwx) : ORIGIN = 0x20040000, LENGTH = 4k
     SCRATCH_Y(rwx) : ORIGIN = 0x20041000, LENGTH = 4k
 }
@@ -250,6 +262,11 @@ SECTIONS
      * lower demand for memory at runtime.
      */
     ASSERT((pbsys_storage_heap_end - pbsys_storage_heap_start) > 32*1024, "GcHeap is too small")
+
+    /* The loaded image must not reach the RAM that BHBL uses while loading
+     * it. See the comment at the top of this file. */
+    __bootloader_ram_start = 0x2003C000;
+    ASSERT(__data_end__ <= __bootloader_ram_start, "Firmware image is too large: it must end below 0x2003C000 (see the comment at the top of rpi_build_hat.ld). Link aborted, no firmware.bin or firmware.elf created.")
 
     ASSERT( __binary_info_header_end - __logical_binary_start <= 256, "Binary info must be in first 256 bytes of the binary")
     /* todo assert on extra code */

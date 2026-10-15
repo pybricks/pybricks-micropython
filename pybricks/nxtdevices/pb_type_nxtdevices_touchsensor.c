@@ -6,7 +6,7 @@
 
 #if PYBRICKS_PY_NXTDEVICES
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_dcm.h>
 
 #include <pybricks/common.h>

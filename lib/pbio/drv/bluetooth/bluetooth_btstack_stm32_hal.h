@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // STM32 HAL UART driver for BlueKitchen BTStack.
 
 #ifndef _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_STM32_HAL_H_
 #define _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_STM32_HAL_H_
 
-#include <stm32f4xx.h>
+#include <stdint.h>
+
+#include STM32_H
 #include <hci_transport.h>
 #include <btstack.h>
 
@@ -24,6 +26,16 @@ typedef struct {
     pbdrv_gpio_t enable_gpio;
     /** UART connected to the Bluetooth chip. */
     USART_TypeDef *uart;
+    #if defined(STM32H5)
+    /** UART transmit DMA channel. */
+    DMA_Channel_TypeDef *tx_dma;
+    /** UART receive DMA channel. */
+    DMA_Channel_TypeDef *rx_dma;
+    /** UART transmit DMA_Request_Selection */
+    uint32_t tx_dma_req;
+    /** UART receive DMA_Request_Selection */
+    uint32_t rx_dma_req;
+    #else
     /** UART transmit DMA stream. */
     DMA_Stream_TypeDef *tx_dma;
     /** UART receive DMA stream. */
@@ -32,6 +44,7 @@ typedef struct {
     uint32_t tx_dma_ch;
     /** UART receive DMA channel. */
     uint32_t rx_dma_ch;
+    #endif
     /** UART interrupt. */
     IRQn_Type uart_irq;
     /** UART transmit DMA interrupt. */

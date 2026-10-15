@@ -4,6 +4,7 @@
 #ifndef _INTERNAL_PBDRV_UART_DEBUG_FIRST_PORT_H_
 #define _INTERNAL_PBDRV_UART_DEBUG_FIRST_PORT_H_
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>

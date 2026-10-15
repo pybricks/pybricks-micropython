@@ -13,12 +13,15 @@
 #define _PBSYS_STORAGE_SETTINGS_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
-#include <pbio/error.h>
+#include <pbdrv/bluetooth.h>
 
 #include <pbio/config.h>
+#include <pbio/error.h>
 #include <pbio/imu.h>
+#include <pbio/port_lump.h>
 #include <pbsys/config.h>
 
 /**
@@ -29,6 +32,15 @@ typedef enum {
      * Bluetooth is enabled by the user (defaults to true).
      */
     PBSYS_STORAGE_SETTINGS_FLAGS_BLUETOOTH_ENABLED = (1 << 0),
+    /**
+     * User has accepted the safety prompt the first time they used custom
+     * electronics (defaults to false).
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_SENSOR_POWER_SAFETY_PROMPT_ACCEPTED = (1 << 1),
+    /**
+     * Telemetry begins automatically unless user disabled it.
+     */
+    PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT = (1 << 2),
 } pbsys_storage_settings_flags_t;
 
 /**
@@ -40,6 +52,14 @@ typedef struct _pbsys_storage_settings_t {
     #if PBIO_CONFIG_IMU
     pbio_imu_persistent_settings_t imu_settings;
     #endif
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
+    /** Bonding records for Bluetooth Classic devices, most recent first. */
+    pbio_bluetooth_classic_link_key_t bluetooth_bonds[PBIO_BLUETOOTH_CLASSIC_NUM_BONDS];
+    #endif
+    #if PBIO_CONFIG_PORT_LUMP_EV3
+    /** EV3 color sensor white balance, for the sensor on each port. */
+    pbio_port_lump_ev3_color_calibration_t ev3_color_calibration[PBIO_CONFIG_PORT_LUMP_NUM_DEV];
+    #endif
 } pbsys_storage_settings_t;
 
 #if PBSYS_CONFIG_STORAGE
@@ -48,9 +68,9 @@ void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t *settings);
 
 void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings);
 
-bool pbsys_storage_settings_bluetooth_enabled_get(void);
+bool pbsys_storage_settings_get_flag(pbsys_storage_settings_flags_t flag);
 
-void pbsys_storage_settings_bluetooth_enabled_set(bool enable);
+void pbsys_storage_settings_set_flag(pbsys_storage_settings_flags_t flag, bool value);
 
 #else
 
@@ -58,10 +78,10 @@ static inline void pbsys_storage_settings_set_defaults(pbsys_storage_settings_t 
 }
 static inline void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *settings) {
 }
-static inline bool pbsys_storage_settings_bluetooth_enabled_get(void) {
-    return true;
+static inline bool pbsys_storage_settings_get_flag(pbsys_storage_settings_flags_t flag) {
+    return false;
 }
-static inline void pbsys_storage_settings_bluetooth_enabled_set(bool enable) {
+static inline void pbsys_storage_settings_set_flag(pbsys_storage_settings_flags_t flag, bool value) {
 }
 
 #endif // PBSYS_CONFIG_STORAGE

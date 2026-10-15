@@ -2,6 +2,7 @@
 
 import importlib.util
 import os
+import sys
 
 # import codeformat from upstream micropython tools
 spec = importlib.util.spec_from_file_location(
@@ -35,4 +36,6 @@ codeformat.EXCLUSIONS = [
 codeformat.TOP = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 if __name__ == "__main__":
+    # Python code is formatted separately with ruff, so only do C here.
+    sys.argv.append("-c")
     codeformat.main()

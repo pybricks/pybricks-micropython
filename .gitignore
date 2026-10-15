@@ -32,6 +32,10 @@ _build/
 ######################
 tests/*.exp
 
+# Worktree for the size-data branch
+###################################
+size-data/
+
 # Python virtual environment
 ############################
 .venv/
@@ -76,3 +80,7 @@ Pipfile.lock
 # Clangd cache
 ######################
 .cache/
+
+# Libre office
+######################
+*.csv#   

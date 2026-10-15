@@ -7,8 +7,8 @@
 
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
 #include <pbdrv/reset.h>
+#include <pbsys/host.h>
 #include <pbsys/main.h>
 #include <pbsys/program_stop.h>
 #include <pbsys/status.h>
@@ -25,7 +25,7 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 static mp_obj_t pb_type_System_name(void) {
-    const char *hub_name = pbdrv_bluetooth_get_hub_name();
+    const char *hub_name = pbsys_host_get_hub_name();
     return mp_obj_new_str(hub_name, strlen(hub_name));
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
@@ -41,7 +41,7 @@ static MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System
 #endif // PBDRV_CONFIG_RESET
 
 static mp_obj_t pb_type_System_info(void) {
-    const char *hub_name = pbdrv_bluetooth_get_hub_name();
+    const char *hub_name = pbsys_host_get_hub_name();
 
     pbio_pybricks_user_program_id_t program_id;
     pbsys_main_program_start_request_type_t program_start_type;
@@ -52,9 +52,9 @@ static mp_obj_t pb_type_System_info(void) {
         #if PBDRV_CONFIG_RESET
         {MP_OBJ_NEW_QSTR(MP_QSTR_reset_reason), mp_obj_new_int(pbdrv_reset_get_reason())},
         #endif // PBDRV_CONFIG_RESET
-        #if PBDRV_CONFIG_BLUETOOTH
+        #if PBDRV_CONFIG_BLUETOOTH_LE
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_ble), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_HOST_CONNECTED))},
-        #endif // PBDRV_CONFIG_BLUETOOTH
+        #endif // PBDRV_CONFIG_BLUETOOTH_LE
         #if PBDRV_CONFIG_USB
         {MP_OBJ_NEW_QSTR(MP_QSTR_host_connected_usb), mp_obj_new_bool(pbsys_status_test(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED))},
         #endif // PBDRV_CONFIG_USB

@@ -18,8 +18,6 @@ void pb_module_tools_assert_blocking(void);
 
 extern const mp_obj_type_t pb_type_StopWatch;
 
-extern const mp_obj_type_t pb_type_app_data;
-
 extern const mp_obj_type_t pb_type_Task;
 
 #endif // PYBRICKS_PY_TOOLS

@@ -69,7 +69,7 @@ pbio_error_t pbdrv_led_get_dev(uint8_t id, pbdrv_led_dev_t **dev) {
  * @return              ::PBIO_SUCCESS if the call was successful,
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
+pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, pbio_color_t hsv) {
     return dev->funcs->set_hsv(dev, hsv);
 }
 

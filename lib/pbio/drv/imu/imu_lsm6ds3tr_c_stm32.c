@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2023 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // IMU driver for STMicroelectronics LSM6DS3TR-C accel/gyro connected to STM32 MCU.
 
@@ -23,6 +23,8 @@
 
 #if defined(STM32L4)
 #include <stm32l4xx_ll_i2c.h>
+#elif defined(STM32H5)
+#include <stm32h5xx_ll_i2c.h>
 #endif
 
 #include "./imu_lsm6ds3tr_c_stm32.h"
@@ -165,10 +167,18 @@ static pbio_error_t pbdrv_imu_lsm6ds3tr_c_stm32_init(pbio_os_state_t *state) {
 
     hi2c->Instance = pdata->i2c;
     #if defined(STM32L4)
-    // HACK: This is hard-coded for Technic hub.
+    // Hard-coded for Technic hub.
     // Clock is 5MHz, so these timing come out to 1 usec. When combined with
     // internal delays, this is slightly slower than 400kHz
     hi2c->Init.Timing = __LL_I2C_CONVERT_TIMINGS(0, 0, 0, 4, 4);
+    #elif defined(STM32H5)
+    // Hard-coded for Prime hub. I2C2 uses its reset-default
+    // kernel clock (PCLK1), which is 250MHz here. With PRESC=15 the timing
+    // prescaler tick is 64ns. SCLL=20 -> 1344ns low, SCLH=17 -> 1152ns high,
+    // giving ~400kHz fast mode (a touch slower in practice due to the
+    // setup/hold delays and bus rise time). SCLDEL=4 (data setup ~320ns) and
+    // SDADEL=2 (data hold ~128ns) satisfy the fast-mode timing margins.
+    hi2c->Init.Timing = __LL_I2C_CONVERT_TIMINGS(15, 4, 2, 17, 20);
     #else
     hi2c->Init.ClockSpeed = 400000;
     #endif

@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/display.h>
 #include <pbdrv/sound.h>
 
@@ -12,7 +12,8 @@
 #include <pbio/imu.h>
 #include <pbio/light_animation.h>
 #include <pbio/motor_process.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
+#include <pbio/serial.h>
 
 #define DEBUG 0
 
@@ -29,9 +30,9 @@
  * the library.
  */
 void pbio_init(void) {
-
     pbio_battery_init();
     pbio_imu_init();
+    pbio_serial_init();
 
     // This will also initialize the dcmotor and servo pbio object instances.
     pbio_port_init();
@@ -44,6 +45,7 @@ void pbio_init(void) {
  * Deinitialize pbio modules that are not needed after soft-poweroff.
  */
 void pbio_deinit(void) {
+    pbio_serial_deinit();
     // Power off sensors and motors, including the ones that are always powered.
     pbio_port_power_off();
 }
@@ -92,7 +94,7 @@ pbio_error_t pbio_main_stop_application_resources(void) {
     DEBUG_PRINT("Waiting for Bluetooth user tasks to close...\n");
 
     // Run event loop until Bluetooth is idle or times out.
-    while ((err = pbdrv_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_bluetooth_close_user_tasks(&state, &timer)) == PBIO_ERROR_AGAIN) {
         pbio_os_run_processes_and_wait_for_event();
     }
 

@@ -5,19 +5,34 @@
 #define PBDRV_CONFIG_BATTERY_TEST                           (1)
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                           (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (50 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST                      (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE                  (1 * 1024 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_VIRTUAL                   (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_VIRTUAL_SIZE              (1 * 1024 * 1024 * 3 / 4)
 
 // Use Bluetooth simulation locally.
 #ifndef PBDRV_CONFIG_RUN_ON_CI
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
-#define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS      (2)
+#define PBDRV_CONFIG_BLUETOOTH_LE                           (1)
+#define PBDRV_CONFIG_BLUETOOTH_INQUIRY                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID                  (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST                 (1)
+// BTstack has no bonding store of its own, so the link keys are kept in
+// pbsys settings. Chips that keep their own, like the NXT BlueCore, do not
+// set this.
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS               (1)
+// Peer-to-peer messaging, so two virtual hubs on two USB dongles can stand in
+// for two EV3 bricks.
+#define PBDRV_CONFIG_BLUETOOTH_PEER                         (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS               (7)
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE                 515
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (2)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS         (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_POSIX                (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND             (LWP3_HUB_KIND_TECHNIC_LARGE)
 #endif // PBDRV_CONFIG_RUN_ON_CI
+
+#define PBDRV_CONFIG_HUB_KIND                               (PBIO_PYBRICKS_HUB_KIND_PRIME)
+#define PBDRV_CONFIG_HUB_VARIANT                            (0x0000)
 
 #define PBDRV_CONFIG_BUTTON                                 (1)
 #define PBDRV_CONFIG_BUTTON_VIRTUAL                         (1)
@@ -59,7 +74,4 @@
 
 #define PBDRV_CONFIG_USB                                    (1)
 #define PBDRV_CONFIG_USB_SIMULATION                         (1)
-#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE                    (64)
-#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS               (2)
 #define PBDRV_CONFIG_USB_MFG_STR                            u"Pybricks"
-#define PBDRV_CONFIG_USB_PROD_STR                           u"Virtual Hub"

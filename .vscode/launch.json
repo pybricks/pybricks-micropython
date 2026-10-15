@@ -58,6 +58,7 @@
             "type":"debugpy",
             "request":"launch",
             "program":"${workspaceFolder}/lib/pbio/platform/virtual_hub/animation.py",
+            "python": "${workspaceFolder}/.venv/bin/python",
             "console":"integratedTerminal"
         },
         {
@@ -75,10 +76,19 @@
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
                 },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
+                },
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -98,7 +108,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
 {
-            "name": "virtualhub with menu (no bluetooth)",
+            "name": "virtualhub with menu and bluetooth",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -113,10 +123,23 @@
                     "name": "PBIO_TEST_CONNECT_SOCKET",
                     "value": "true"
                 },
+                {
+                    "name": "USB_BLE_INDEX",
+                    "value": "0"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
+                },
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -136,7 +159,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
         {
-            "name": "virtualhub (UB500_INDEX=0)",
+            "name": "virtualhub (USB_BLE_INDEX=0)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -151,13 +174,22 @@
                     "value": "true"
                 },
                 {
-                    "name": "UB500_INDEX",
+                    "name": "USB_BLE_INDEX",
                     "value": "0"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
                 }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -177,7 +209,7 @@
             "preLaunchTask": "build virtualhub (debug)"
         },
         {
-            "name": "virtualhub (UB500_INDEX=1)",
+            "name": "virtualhub (USB_BLE_INDEX=1)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bricks/virtualhub/build-debug/pybricks-virtualhub",
@@ -192,13 +224,22 @@
                     "value": "true"
                 },
                 {
-                    "name": "UB500_INDEX",
+                    "name": "USB_BLE_INDEX",
                     "value": "1"
+                },
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.venv/bin:${env:PATH}"
                 }
             ],
             "externalConsole": false,
             "MIMode": "gdb",
             "setupCommands": [
+                {
+                    "description": "Clear debuginfod URLs",
+                    "text": "set debuginfod urls ",
+                    "ignoreFailures": true
+                },
                 {
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
@@ -286,8 +327,8 @@
                 "src/port_lump/test_boost_interactive_motor",
                 "src/port_lump/test_technic_large_motor",
                 "src/port_lump/test_technic_xl_motor",
-                "drv/bluetooth/test_btstack_run_loop_contiki_timer",
-                "drv/bluetooth/test_btstack_run_loop_contiki_poll",
+                "drv/bluetooth/test_btstack_run_loop_timer",
+                "drv/bluetooth/test_btstack_run_loop_poll",
                 "drv/pwm/test_pwm_get",
                 "drv/pwm/test_pwm_set_duty",
                 "src/angle/test_scaling",

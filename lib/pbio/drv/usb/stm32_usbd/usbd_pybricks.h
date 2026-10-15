@@ -25,7 +25,11 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdbool.h>
+
 #include  "usbd_ioreq.h"
+
+#include "../usb_ch9.h"
 
 /** @addtogroup STM32_USB_DEVICE_LIBRARY
   * @{
@@ -38,8 +42,10 @@ extern "C" {
 
 #define USBD_PYBRICKS_IN_EP                0x81U  /* EP1 for data IN */
 #define USBD_PYBRICKS_OUT_EP               0x01U  /* EP1 for data OUT */
+#define USBD_PYBRICKS_CMD_EP               0x82U  /* EP2 for CDC notifications */
 
 #define USBD_PYBRICKS_MAX_PACKET_SIZE      64U
+#define USBD_PYBRICKS_CMD_PACKET_SIZE      8U
 
 /**
   * @}
@@ -59,7 +65,7 @@ typedef struct
     USBD_StatusTypeDef (*DeInit)(void);
     USBD_StatusTypeDef (*Receive)(uint8_t *Buf, uint32_t Len);
     USBD_StatusTypeDef (*TransmitCplt)(uint8_t *Buf, uint32_t Len, uint8_t epnum);
-    USBD_StatusTypeDef (*ReadCharacteristic)(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *req);
+    USBD_StatusTypeDef (*SetControlLineState)(bool dtr);
 } USBD_Pybricks_ItfTypeDef;
 
 
@@ -69,6 +75,9 @@ typedef struct
     uint8_t *TxBuffer;
     uint32_t RxLength;
     uint32_t TxLength;
+    uint8_t CmdOpCode;
+    uint8_t CmdLength;
+    uint8_t LineCoding[USB_CDC_LINE_CODING_SIZE];
 } USBD_Pybricks_HandleTypeDef;
 
 

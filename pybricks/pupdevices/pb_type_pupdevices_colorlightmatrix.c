@@ -5,6 +5,7 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
+#include <pybricks/util_pb/pb_error.h>
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -21,27 +22,21 @@ typedef struct _pupdevices_ColorLightMatrix_obj_t {
 
 // pybricks.pupdevices.ColorLightMatrix.__init__
 static mp_obj_t pupdevices_ColorLightMatrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_ColorLightMatrix_obj_t *self = mp_obj_malloc(pupdevices_ColorLightMatrix_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
-
-    return MP_OBJ_FROM_PTR(self);
+    return pb_type_device_make_new(type, n_args, n_kw, args, sizeof(pupdevices_ColorLightMatrix_obj_t), LEGO_DEVICE_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX);
 }
 
 // pybricks.pupdevices.ColorLightMatrix._get_color_id
 static uint8_t get_color_id(mp_obj_t color_in) {
 
     // Assert type and get hsv.
-    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
+    pbio_color_t hsv = pb_type_Color_get_hsv(color_in);
 
     // Brightness is defined in 10 increments.
-    uint8_t brightness = pbio_color_hsv_get_v(hsv) / 10;
+    uint8_t brightness = pbio_color_get_v_clamped(hsv) / 10;
     pb_powered_up_color_id_t color;
 
     // For low saturation, assume grayscale.
-    if (hsv->s < 30) {
+    if (pbio_color_get_s(hsv) < 30) {
         // Brightness 1 is broken (shows faint red), so assume 0.
         if (brightness == 1) {
             brightness = 0;
@@ -49,7 +44,7 @@ static uint8_t get_color_id(mp_obj_t color_in) {
         color = PB_PUP_COLOR_ID_WHITE;
     } else {
         // Everything else is rounded to nearest available hue.
-        color = pb_powered_up_color_id_from_hue(hsv->h);
+        color = pb_powered_up_color_id_from_hue(pbio_color_get_h(hsv));
     }
 
     // The light matrix data format is a 4-bit brightness in the MSBs and a
@@ -75,9 +70,17 @@ static mp_obj_t pupdevices_ColorLightMatrix_on(size_t n_args, const mp_obj_t *po
     // Sequence of 9 colors.
     else {
         mp_obj_iter_buf_t iter_buf;
+        int i;
         mp_obj_t colors_iter = mp_getiter(colors_in, &iter_buf);
-        for (int i = 0; i < 9; i++) {
-            color_ids[i] = get_color_id(mp_iternext(colors_iter));
+        for (i = 0; i < 9; i++) {
+            mp_obj_t color = mp_iternext(colors_iter);
+            if (color == MP_OBJ_STOP_ITERATION) {
+                break;
+            }
+            color_ids[i] = get_color_id(color);
+        }
+        if (i != 9) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
         }
     }
 

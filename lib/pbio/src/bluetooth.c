@@ -1,0 +1,737 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018-2026 The Pybricks Authors
+
+// Common Bluetooth driver code
+
+#include <pbio/config.h>
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <pbio/bluetooth.h>
+
+#include <pbio/busy_count.h>
+#include <pbio/error.h>
+#include <pbio/int_math.h>
+#include <pbio/os.h>
+#include <pbio/protocol.h>
+
+#include <lwrb/lwrb.h>
+
+#include <pbdrv/bluetooth.h>
+
+#include <pbsys/command.h>
+#include <pbsys/host.h>
+#include <pbsys/storage.h>
+
+#define DEBUG 0
+
+#if DEBUG
+#include <pbio/debug.h>
+#define DEBUG_PRINT pbio_debug
+#else
+#define DEBUG_PRINT(...)
+#endif
+
+#if PBDRV_CONFIG_BLUETOOTH_LE
+
+#if PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE
+#error "Host event message must fit in one BLE packet".
+#endif
+
+void pbio_bluetooth_host_connection_changed(void) {
+    pbsys_host_connection_changed();
+}
+
+pbio_pybricks_error_t pbio_bluetooth_receive_handler(const uint8_t *data, uint32_t size) {
+    return pbsys_handle_command(data, size);
+}
+
+//
+// Functions related to connections to peripherals.
+//
+
+pbio_error_t pbio_bluetooth_peripheral_get_available(pbio_bluetooth_peripheral_t **peripheral, void *user) {
+
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+
+        // Test if not already in use, not connected, and not busy.
+        if (!pbdrv_bluetooth_peripheral_is_connected(peri) && !peri->func) {
+            // Claim this device for new user.
+            peri->user = user;
+            *peripheral = peri;
+            return PBIO_SUCCESS;
+        }
+    }
+
+    // All instances are in use.
+    *peripheral = NULL;
+    return PBIO_ERROR_BUSY;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_get_connected(pbio_bluetooth_peripheral_t **peripheral, void *user, pbio_bluetooth_peripheral_connect_config_t *config) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; i++) {
+        pbio_bluetooth_peripheral_t *peri = pbdrv_bluetooth_peripheral_get_by_index(i);
+
+        // Should be connected and not already in use.
+        if (!pbdrv_bluetooth_peripheral_is_connected(peri) || peri->user) {
+            continue;
+        }
+
+        // Callbacks must be the same, and still match with the given user.
+        // This ensures that we fail as intended when the same classes are used
+        // but the user has configured different filters such as the name.
+        if (peri->config.match_adv != config->match_adv ||
+            peri->config.match_adv_rsp != config->match_adv_rsp ||
+            peri->config.notification_handler != config->notification_handler ||
+            !peri->config.match_adv(user, peri->config.match_adv_data, peri->config.match_adv_data_len) ||
+            !peri->config.match_adv_rsp(user, peri->config.match_adv_rsp_data, peri->config.match_adv_rsp_data_len)) {
+            continue;
+        }
+
+        // Claim this device for new user.
+        peri->user = user;
+        *peripheral = peri;
+        return PBIO_SUCCESS;
+    }
+
+    // No more connected devices available.
+    *peripheral = NULL;
+    return PBIO_ERROR_NO_DEV;
+}
+
+void pbio_bluetooth_peripheral_release(pbio_bluetooth_peripheral_t *peripheral, void *user) {
+    // Only release if the user matches. A new user may have already safely
+    // claimed it, and this call to release may come from an orphaned user.
+    if (!peripheral || peripheral->user != user) {
+        return;
+    }
+    peripheral->user = NULL;
+}
+
+const char *pbio_bluetooth_peripheral_get_name(pbio_bluetooth_peripheral_t *peri) {
+    return peri->name;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_scan_and_connect(pbio_bluetooth_peripheral_t *peri, pbio_bluetooth_peripheral_connect_config_t *config) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Can't connect if already connected or already busy.
+    if (pbdrv_bluetooth_peripheral_is_connected(peri) || peri->func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Must provide matchers.
+    if (!config || !config->match_adv || !config->match_adv_rsp) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Used to compare subsequent advertisements, so we should reset it.
+    memset(peri->bdaddr, 0, sizeof(peri->bdaddr));
+
+    // Initialize operation for handling on the main thread.
+    peri->config = *config;
+    peri->func = pbdrv_bluetooth_peripheral_scan_and_connect_func;
+    peri->err = PBIO_ERROR_AGAIN;
+    peri->cancel = false;
+    pbio_os_timer_set(&peri->timer, config->timeout);
+    pbio_os_request_poll();
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_disconnect(pbio_bluetooth_peripheral_t *peri) {
+
+    // Busy doing something else.
+    if (peri->func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Pass silently for already disconnected.
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
+        peri->err = PBIO_SUCCESS;
+        return PBIO_SUCCESS;
+    }
+
+    // Initialize operation for handling on the main thread.
+    peri->func = pbdrv_bluetooth_peripheral_disconnect_func;
+    peri->err = PBIO_ERROR_AGAIN;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_discover_characteristic(pbio_bluetooth_peripheral_t *peri, pbio_bluetooth_peripheral_char_discovery_t *characteristic) {
+
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    if (peri->func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Initialize operation for handling on the main thread, copying
+    // characteristic to persistent peripheral state.
+    peri->char_disc = *characteristic;
+    peri->char_disc.handle = 0;
+    peri->func = pbdrv_bluetooth_peripheral_discover_characteristic_func;
+    peri->err = PBIO_ERROR_AGAIN;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+uint16_t pbio_bluetooth_peripheral_discover_characteristic_get_result(pbio_bluetooth_peripheral_t *peri) {
+    return peri->char_disc.handle;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_read_characteristic(pbio_bluetooth_peripheral_t *peri, uint16_t handle) {
+
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    if (peri->func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Initialize operation for handling on the main thread.
+    peri->char_handle = handle;
+    peri->func = pbdrv_bluetooth_peripheral_read_characteristic_func;
+    peri->err = PBIO_ERROR_AGAIN;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_bluetooth_peripheral_write_characteristic(pbio_bluetooth_peripheral_t *peri, uint16_t handle, const uint8_t *data, size_t size) {
+
+    if (!pbdrv_bluetooth_peripheral_is_connected(peri)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    if (peri->func) {
+        return PBIO_ERROR_BUSY;
+    }
+    if (size > PBIO_ARRAY_SIZE(peri->char_data)) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Initialize operation for handling on the main thread.
+    peri->char_handle = handle;
+    memcpy(peri->char_data, data, size);
+    peri->char_size = size;
+
+    peri->func = pbdrv_bluetooth_peripheral_write_characteristic_func;
+    peri->err = PBIO_ERROR_AGAIN;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_bluetooth_await_peripheral_command(pbio_os_state_t *state, void *context) {
+
+    pbio_bluetooth_peripheral_t *peri = context;
+
+    // If the user is no longer calling this then the operation is no longer
+    // of interest and will be cancelled if the active function supports it.
+    pbio_os_timer_set(&peri->watchdog, 10);
+
+    return peri->err;
+}
+
+//
+// Functions related to advertising and scanning.
+//
+
+/**
+ * Ongoing task used for any of the start/stop advertising/broadcasting functions.
+ *
+ * Handled by pbdrv_bluetooth_main_thread.
+ */
+static pbio_os_process_func_t advertising_or_scan_func;
+static pbio_error_t advertising_or_scan_err;
+
+pbdrv_bluetooth_advertising_state_t pbdrv_bluetooth_advertising_state;
+
+pbio_error_t pbio_bluetooth_start_advertising(bool start) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    bool is_advertising = pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
+
+    // Already in requested state. This makes it safe to call stop advertising
+    // even if it already stopped on becoming connected;
+    if (start == is_advertising) {
+        advertising_or_scan_err = PBIO_SUCCESS;
+        return PBIO_SUCCESS;
+    }
+
+    if (advertising_or_scan_func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Invalidate broadcast data cache.
+    pbdrv_bluetooth_broadcast_data_size = 0;
+
+    // Initialize newly given task.
+    advertising_or_scan_err = PBIO_ERROR_AGAIN;
+    advertising_or_scan_func = start ?
+        pbdrv_bluetooth_start_advertising_func :
+        pbdrv_bluetooth_stop_advertising_func;
+    pbio_os_request_poll();
+
+    return PBIO_SUCCESS;
+}
+
+uint8_t pbdrv_bluetooth_broadcast_data[PBIO_BLUETOOTH_MAX_ADV_SIZE];
+uint8_t pbdrv_bluetooth_broadcast_data_size;
+
+pbio_error_t pbio_bluetooth_start_broadcasting(const uint8_t *data, size_t size) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (advertising_or_scan_func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    if (size > PBIO_BLUETOOTH_MAX_ADV_SIZE) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    bool is_broadcasting = pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
+
+    // This means stop broadcasting.
+    if (!data || !size) {
+
+        if (!is_broadcasting) {
+            // Already stopped.
+            advertising_or_scan_err = PBIO_SUCCESS;
+            return PBIO_SUCCESS;
+        }
+        advertising_or_scan_err = PBIO_ERROR_AGAIN;
+        advertising_or_scan_func = pbdrv_bluetooth_stop_advertising_func;
+        pbio_os_request_poll();
+        return PBIO_SUCCESS;
+    }
+
+    // Avoid I/O operations if the user tries to broadcast the same data
+    // over and over in a tight loop.
+    if (is_broadcasting && pbdrv_bluetooth_broadcast_data_size == size && !memcmp(pbdrv_bluetooth_broadcast_data, data, size)) {
+        advertising_or_scan_err = PBIO_SUCCESS;
+        return PBIO_SUCCESS;
+    }
+    pbdrv_bluetooth_broadcast_data_size = size;
+    memcpy(pbdrv_bluetooth_broadcast_data, data, size);
+
+    // Initialize newly given task.
+    advertising_or_scan_err = PBIO_ERROR_AGAIN;
+    advertising_or_scan_func = pbdrv_bluetooth_start_broadcasting_func;
+    pbio_os_request_poll();
+
+    return PBIO_SUCCESS;
+}
+
+bool pbdrv_bluetooth_is_observing;
+pbio_bluetooth_start_observing_callback_t pbdrv_bluetooth_observe_callback;
+
+pbio_error_t pbio_bluetooth_start_observing(pbio_bluetooth_start_observing_callback_t callback) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (advertising_or_scan_func) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    pbdrv_bluetooth_observe_callback = callback;
+
+    bool should_observe = callback ? true : false;
+
+    if (should_observe == pbdrv_bluetooth_is_observing) {
+        advertising_or_scan_err = PBIO_SUCCESS;
+        return PBIO_SUCCESS;
+    }
+
+    // Initialize newly given task.
+    advertising_or_scan_err = PBIO_ERROR_AGAIN;
+    advertising_or_scan_func = should_observe ? pbdrv_bluetooth_start_observing_func : pbdrv_bluetooth_stop_observing_func;
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+static bool observe_restart_requested;
+
+void pbio_bluetooth_restart_observing_request(void) {
+
+    static pbio_os_timer_t restart_timer;
+
+    // Don't request restart too often.
+    if (observe_restart_requested || !pbio_os_timer_is_expired(&restart_timer)) {
+        return;
+    }
+
+    // Request restart to be handled on main loop.
+    observe_restart_requested = true;
+    pbio_os_timer_set(&restart_timer, 10000);
+    pbio_os_request_poll();
+}
+
+pbio_error_t pbio_bluetooth_await_advertise_or_scan_command(pbio_os_state_t *state, void *context) {
+    return advertising_or_scan_err;
+}
+
+static bool pbdrv_bluetooth_shutting_down;
+static pbio_os_timer_t pbdrv_bluetooth_shutting_down_watchdog;
+
+/**
+ * This is the main high level pbdrv/bluetooth thread. It is driven forward by
+ * the platform-specific HCI process whenever there is new data to process or
+ * when it is ready to send a new command.
+ *
+ * This somewhat inverted way of running things means that each of the sub
+ * threads here don't need to await all hci operations everywhere. They can
+ * just prepare to a command them whereas the parent process will send it and
+ * have us proceed when it is done.
+ */
+pbio_error_t pbdrv_bluetooth_process_thread(pbio_os_state_t *state, void *context) {
+
+    static pbio_os_state_t sub;
+    static pbio_os_timer_t timer;
+    pbio_error_t err;
+
+    // Shorthand notation accessible throughout.
+    bool can_send = pbdrv_bluetooth_host_is_connected();
+
+    // For looping over peripherals.
+    static uint8_t peri_index;
+    static pbio_bluetooth_peripheral_t *peri;
+
+    // Force shutdown if Bluetooth fails to deinit gracefully.
+    if (pbdrv_bluetooth_shutting_down && pbio_os_timer_is_expired(&pbdrv_bluetooth_shutting_down_watchdog)) {
+        DEBUG_PRINT("Forcing Bluetooth shutdown.\n");
+        goto shutdown;
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+init:
+
+    DEBUG_PRINT("Bluetooth reset.\n");
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+
+    DEBUG_PRINT("Bluetooth enable.\n");
+
+    PBIO_OS_AWAIT(state, &sub, err = pbdrv_bluetooth_controller_initialize(&sub, &timer));
+    if (err != PBIO_SUCCESS) {
+        DEBUG_PRINT("Initialization failed. Reset and retry.\n");
+        goto init;
+    }
+
+    DEBUG_PRINT("Bluetooth is now on and initialized.\n");
+
+    // Service scheduled tasks as long as Bluetooth is enabled.
+    while (!pbdrv_bluetooth_shutting_down) {
+
+        // In principle, this wait is only needed if there is nothing to do.
+        // In practice, leaving it here helps rather than hurts since it
+        // allows short stdout messages to be queued rather than sent separately.
+        PBIO_OS_AWAIT_MS(state, &timer, 1);
+
+        // Send one event notification (status, stdout, ...)
+        static uint32_t *event_size;
+        static uint8_t *event_buf;
+        if (can_send && pbsys_host_get_event_buf(PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH, &event_buf, &event_size)) {
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_send_pybricks_value_notification(&sub, event_buf, *event_size));
+            *event_size = 0;
+        }
+
+        // Handle pending advertising/scan enable/disable task, if any.
+        if (advertising_or_scan_func) {
+            PBIO_OS_AWAIT(state, &sub, advertising_or_scan_err = advertising_or_scan_func(&sub, NULL));
+            advertising_or_scan_func = NULL;
+        }
+
+        // Handle pending peripheral tasks, one at a time.
+        for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
+            peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
+            if (peri->func) {
+
+                // If currently observing, stop if we need to scan for a peripheral.
+                if (pbdrv_bluetooth_is_observing && peri->func == pbdrv_bluetooth_peripheral_scan_and_connect_func) {
+                    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
+                    observe_restart_requested = true;
+                }
+
+                PBIO_OS_AWAIT(state, &sub, peri->err = peri->func(&sub, peri));
+                peri->func = NULL;
+                peri->cancel = false;
+            }
+        }
+
+        // Restart if we stopped it temporarily to scan for a peripheral or
+        // when externaly requested.
+        if (observe_restart_requested) {
+            DEBUG_PRINT("Restart observe.\n");
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_stop_observing_func(&sub, NULL));
+            PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_start_observing_func(&sub, NULL));
+            observe_restart_requested = false;
+        }
+    }
+
+    DEBUG_PRINT("Shutdown requested.\n");
+
+    // Gracefully disconnect from the hosts and peripherals.
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_disconnect_all(&sub));
+
+    DEBUG_PRINT("Hosts and peripherals disconnected. Resetting Bluetooth controller.\n");
+
+shutdown:
+
+    // Invalidate goto shutdown, so we remain past the checkpoint set in this await.
+    pbdrv_bluetooth_shutting_down = false;
+
+    PBIO_OS_AWAIT(state, &sub, pbdrv_bluetooth_controller_reset(&sub, &timer));
+    pbio_busy_count_down();
+
+    #if DEBUG
+    DEBUG_PRINT("Done resetting Bluetooth controller.\n");
+    PBIO_OS_AWAIT_MS(state, &timer, 100);
+    #endif
+
+    // Due to the nested logic of the Bluetooth process, this may be called
+    // again after completion. Re-enter here if that happens for safety, so we
+    // don't run the code since the last checkpoint over and over.
+    PBIO_OS_ASYNC_SET_CHECKPOINT(state);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+pbio_error_t pbio_bluetooth_close_user_tasks(pbio_os_state_t *state, pbio_os_timer_t *timer) {
+
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return PBIO_SUCCESS;
+    }
+
+    static pbio_os_state_t sub;
+
+    // For looping over peripherals.
+    static uint8_t peri_index;
+    static pbio_bluetooth_peripheral_t *peri;
+
+    if (pbio_os_timer_is_expired(timer)) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    for (peri_index = 0; peri_index < PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS; peri_index++) {
+        peri = pbdrv_bluetooth_peripheral_get_by_index(peri_index);
+        // Await ongoing peripheral user task, requesting cancellation to
+        // expedite this if the task supports it. Peripherals remain connected.
+        peri->cancel = true;
+        PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_peripheral_command(&sub, peri));
+
+        // Allow peripheral to be used again next time, even if still connected.
+        peri->user = NULL;
+    }
+
+    // Let ongoing user advertising or scan task finish first.
+    PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // Stop scanning.
+    pbio_bluetooth_start_observing(NULL);
+    PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // Stop advertising.
+    pbio_bluetooth_start_broadcasting(NULL, 0);
+    PBIO_OS_AWAIT(state, &sub, pbio_bluetooth_await_advertise_or_scan_command(&sub, NULL));
+
+    // Cancel Bluetooth Classic pairing and scanning, if ongoing. Established
+    // classic connections are kept.
+    pbdrv_bluetooth_classic_hid_pair_cancel();
+    pbdrv_bluetooth_classic_host_set_discoverable(false);
+    pbdrv_bluetooth_inquiry_stop();
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+void pbio_bluetooth_deinit(void) {
+
+    // If Bluetooth is not even initialized, nothing to do.
+    if (!pbdrv_bluetooth_hci_is_enabled()) {
+        return;
+    }
+
+    DEBUG_PRINT("Bluetooth deinit requested.\n");
+
+    // Ask Bluetooth process to proceed to shutdown.
+    pbio_os_timer_set(&pbdrv_bluetooth_shutting_down_watchdog, 3000);
+    pbdrv_bluetooth_shutting_down = true;
+    pbio_busy_count_up();
+    pbio_os_request_poll();
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_LE
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
+
+// Stack-agnostic Bluetooth Classic link key store, backed by the persisted
+// bonding records in pbsys storage settings. A record is registered (address,
+// name) when the user starts pairing; the stack then fills in the key here
+// when pairing completes, and reads it back on reconnect.
+
+static pbio_bluetooth_classic_link_key_t *link_key_records;
+
+void pbio_bluetooth_classic_apply_loaded_link_keys(pbio_bluetooth_classic_link_key_t *records) {
+    link_key_records = records;
+}
+
+/**
+ * Whether the record is registered to a device. Empty records are all-zero.
+ */
+static bool link_key_is_registered(const pbio_bluetooth_classic_link_key_t *record) {
+    for (size_t i = 0; i < sizeof(record->bdaddr); i++) {
+        if (record->bdaddr[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Whether the record holds a key. The device is registered before pairing
+ * completes, so the key may still be all zeros.
+ */
+static bool link_key_is_set(const pbio_bluetooth_classic_link_key_t *record) {
+    for (size_t i = 0; i < sizeof(record->link_key); i++) {
+        if (record->link_key[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Finds the registered record for a remote device, if any.
+ */
+static pbio_bluetooth_classic_link_key_t *link_key_find(const uint8_t *bdaddr) {
+    if (!link_key_records) {
+        return NULL;
+    }
+    for (uint32_t i = 0; i < PBIO_BLUETOOTH_CLASSIC_NUM_BONDS; i++) {
+        pbio_bluetooth_classic_link_key_t *record = &link_key_records[i];
+        if (link_key_is_registered(record) &&
+            memcmp(record->bdaddr, bdaddr, sizeof(record->bdaddr)) == 0) {
+            return record;
+        }
+    }
+    return NULL;
+}
+
+const char *pbio_bluetooth_classic_link_key_get_name(const uint8_t *bdaddr) {
+    const pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    return record ? record->name : NULL;
+}
+
+void pbio_bluetooth_classic_link_key_register(const uint8_t *bdaddr, const char *name) {
+    if (!link_key_records) {
+        return;
+    }
+
+    // Records are ordered most recently registered first. Shift down from the
+    // device's own record if it has one, else from the first free record, else
+    // from the last one, which forgets the least recently registered device.
+    uint32_t start = PBIO_BLUETOOTH_CLASSIC_NUM_BONDS - 1;
+    pbio_bluetooth_classic_link_key_t *existing = link_key_find(bdaddr);
+    if (existing) {
+        start = (uint32_t)(existing - link_key_records);
+    } else {
+        for (uint32_t i = 0; i < PBIO_BLUETOOTH_CLASSIC_NUM_BONDS; i++) {
+            if (!link_key_is_registered(&link_key_records[i])) {
+                start = i;
+                break;
+            }
+        }
+    }
+    for (uint32_t i = start; i > 0; i--) {
+        link_key_records[i] = link_key_records[i - 1];
+    }
+
+    pbio_bluetooth_classic_link_key_t *record = &link_key_records[0];
+    memset(record, 0, sizeof(*record));
+    memcpy(record->bdaddr, bdaddr, sizeof(record->bdaddr));
+    snprintf(record->name, sizeof(record->name), "%s", name);
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_set_name(const uint8_t *bdaddr, const char *name) {
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record || strncmp(record->name, name, sizeof(record->name)) == 0) {
+        return;
+    }
+    snprintf(record->name, sizeof(record->name), "%s", name);
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_unregister(const uint8_t *bdaddr) {
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record) {
+        return;
+    }
+    memset(record, 0, sizeof(*record));
+    pbsys_storage_request_write();
+}
+
+bool pbio_bluetooth_classic_link_key_get(const uint8_t *bdaddr, uint8_t *link_key, uint16_t *link_key_type) {
+    const pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record || !link_key_is_set(record)) {
+        return false;
+    }
+    memcpy(link_key, record->link_key, sizeof(record->link_key));
+    *link_key_type = record->link_key_type;
+    return true;
+}
+
+void pbio_bluetooth_classic_link_key_put(const uint8_t *bdaddr, const uint8_t *link_key, uint16_t link_key_type) {
+    // Only keys for user-registered devices are persisted.
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record) {
+        return;
+    }
+    // Devices notify the same key again on every reconnect, so skip
+    // unnecessary writes.
+    if (record->link_key_type == link_key_type &&
+        memcmp(record->link_key, link_key, sizeof(record->link_key)) == 0) {
+        return;
+    }
+    memcpy(record->link_key, link_key, sizeof(record->link_key));
+    record->link_key_type = link_key_type;
+    pbsys_storage_request_write();
+}
+
+void pbio_bluetooth_classic_link_key_delete(const uint8_t *bdaddr) {
+    pbio_bluetooth_classic_link_key_t *record = link_key_find(bdaddr);
+    if (!record || !link_key_is_set(record)) {
+        return;
+    }
+    // Clear only the key, keeping the device registration so that a new
+    // pairing can store a fresh key.
+    memset(record->link_key, 0, sizeof(record->link_key));
+    record->link_key_type = 0;
+    pbsys_storage_request_write();
+}
+
+const pbio_bluetooth_classic_link_key_t *pbio_bluetooth_classic_link_key_get_record(uint32_t index) {
+    if (!link_key_records || index >= PBIO_BLUETOOTH_CLASSIC_NUM_BONDS) {
+        return NULL;
+    }
+    const pbio_bluetooth_classic_link_key_t *record = &link_key_records[index];
+    return link_key_is_set(record) ? record : NULL;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS

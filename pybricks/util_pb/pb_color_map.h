@@ -5,15 +5,15 @@
 #define _PBHSV_H_
 
 #include <pbio/color.h>
+#include <pbio/color_map.h>
+#include <pbio/port.h>
 
 #include "py/obj.h"
 
-void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
+pbio_color_map_t *pb_color_map_init(pbio_port_t *port);
 
-void pb_color_map_save_default(mp_obj_t *color_map);
+mp_obj_t pb_color_map_get_color(const pbio_color_map_t *color_map, pbio_color_t color_matched);
 
-mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv);
-
-mp_obj_t pb_color_map_detectable_colors_method(mp_obj_t *self_color_map, mp_obj_t colors_in);
+mp_obj_t pb_color_map_detectable_colors_method(pbio_color_map_t *color_map, mp_obj_t colors_in);
 
 #endif // _PBHSV_H_

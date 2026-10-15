@@ -121,7 +121,7 @@ consider [sponsoring the project][sponsors].
 [pybricks/micropython]: https://github.com/pybricks/micropython
 
 [pybricks-api]: https://github.com/pybricks/pybricks-api
-[pybricks-projects]: https://github.com/pybricks/pybricks-api
+[pybricks-projects]: https://github.com/pybricks/pybricks-projects
 [pybricks-code]: https://github.com/pybricks/pybricks-code
 
 [micropython/micropython]: https://github.com/micropython/micropython

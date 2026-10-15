@@ -126,7 +126,7 @@ static mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
         // Writing data can take a while, so give system some time too.
         MICROPY_VM_HOOK_LOOP
-        mp_handle_pending(true);
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_EXCEPTIONS);
     }
 
     #if PYBRICKS_PY_COMMON_LOGGER_REAL_FILE

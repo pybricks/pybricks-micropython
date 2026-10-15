@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbio/button.h>
 #include <pbio/color.h>
 #include <pbio/debug.h>
@@ -24,7 +25,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-#include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "py/mperrno.h"
@@ -57,19 +57,15 @@ typedef struct _pb_type_xbox_obj_t {
     /**
      * The peripheral instance associated with this MicroPython object.
      */
-    pbdrv_bluetooth_peripheral_t *peripheral;
+    pbio_bluetooth_peripheral_t *peripheral;
     /**
      * Null-terminated name used to filter advertisements and responses.
      */
-    char name[PBDRV_BLUETOOTH_MAX_ADV_SIZE - 2];
+    char name[PBIO_BLUETOOTH_MAX_ADV_SIZE - 2];
     /**
      * The timeout used during scan and connect.
      */
     uint32_t scan_timeout;
-    /**
-     * Whether to disconnect from host before connecting to controller.
-     **/
-    bool disconnect_host;
     /**
      * Timer used to delay between connection attempts.
      */
@@ -121,24 +117,24 @@ static bool pb_type_xbox_advertisement_matches(void *user, const uint8_t *data, 
 
     const uint8_t advertising_data1[] = {
         // Type field for BLE-enabled.
-        0x02, PBDRV_BLUETOOTH_AD_DATA_TYPE_FLAGS, 0x06,
+        0x02, PBIO_BLUETOOTH_AD_DATA_TYPE_FLAGS, 0x06,
         // Type field for appearance (HID Gamepad)
-        0x03, PBDRV_BLUETOOTH_AD_DATA_TYPE_APPEARANCE, _16BIT_AS_LE(964),
+        0x03, PBIO_BLUETOOTH_AD_DATA_TYPE_APPEARANCE, _16BIT_AS_LE(964),
         // Type field for manufacturer data (Microsoft).
-        0x06, PBDRV_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA, 0x06, 0x00, 0x03, 0x00, 0x80,
+        0x06, PBIO_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA, 0x06, 0x00, 0x03, 0x00, 0x80,
     };
 
     const uint8_t advertising_data2[] = {
         // Type field for BLE-enabled.
-        0x02, PBDRV_BLUETOOTH_AD_DATA_TYPE_FLAGS, 0x06,
+        0x02, PBIO_BLUETOOTH_AD_DATA_TYPE_FLAGS, 0x06,
         // Type for TX power level, could be used to estimate distance.
-        0x02, PBDRV_BLUETOOTH_AD_DATA_TYPE_TX_POWER_LEVEL, 0x14,
+        0x02, PBIO_BLUETOOTH_AD_DATA_TYPE_TX_POWER_LEVEL, 0x14,
         // Type field for appearance (HID Gamepad)
-        0x03, PBDRV_BLUETOOTH_AD_DATA_TYPE_APPEARANCE, _16BIT_AS_LE(964),
+        0x03, PBIO_BLUETOOTH_AD_DATA_TYPE_APPEARANCE, _16BIT_AS_LE(964),
         // Type field for manufacturer data (Microsoft).
-        0x04, PBDRV_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA, 06, 00, 00,
+        0x04, PBIO_BLUETOOTH_AD_DATA_TYPE_MANUFACTURER_DATA, 06, 00, 00,
         // List of UUIDs (HID BLE Service)
-        0x03, PBDRV_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST, _16BIT_AS_LE(0x1812),
+        0x03, PBIO_BLUETOOTH_AD_DATA_TYPE_16_BIT_SERV_UUID_COMPLETE_LIST, _16BIT_AS_LE(0x1812),
     };
 
     // As above, but without discovery mode. This is advertised if the
@@ -263,7 +259,7 @@ static mp_obj_t pb_type_xbox_button_pressed(mp_obj_t self_in) {
 static mp_obj_t pb_type_xbox_close(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Disables notification handler from accessing allocated memory.
-    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
+    pbio_bluetooth_peripheral_release(self->peripheral, self);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_close_obj, pb_type_xbox_close);
@@ -279,26 +275,22 @@ static pbio_error_t xbox_connect_thread(pbio_os_state_t *state, mp_obj_t parent_
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Get available peripheral instance.
-    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
+    pb_assert(pbio_bluetooth_peripheral_get_available(&self->peripheral, self));
     pbio_os_timer_set(&self->retry_timer, 0);
 
-    // Connect with bonding enabled. On Technic Hub, the driver will take care
-    // of disconnecting from Pybricks Code if needed.
+    // Connect with bonding enabled.
 retry:
     DEBUG_PRINT("Attempt to find XBOX controller and connect and pair.\n");
-    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+    pbio_bluetooth_peripheral_connect_config_t scan_config = {
         .match_adv = pb_type_xbox_advertisement_matches,
         .match_adv_rsp = pb_type_xbox_advertisement_response_matches,
         .notification_handler = pb_type_xbox_handle_notification,
-        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+        .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
         .timeout = self->scan_timeout,
     };
-    if (self->disconnect_host) {
-        scan_config.options |= PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST;
-    }
 
-    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_scan_and_connect(self->peripheral, &scan_config));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
 
     // On Prime Hub, connecting can fail for a variety of reasons. A second
     // attempt usually succeeds.
@@ -320,27 +312,27 @@ retry:
     // catch the case where user might not have done this at least once.
     // Connecting takes about a second longer this way, but we can provide
     // better error messages.
-    pbdrv_bluetooth_peripheral_char_discovery_t char_hid_map = {
+    pbio_bluetooth_peripheral_char_discovery_t char_hid_map = {
         .uuid16 = 0x2a4b,
         .request_notification = false,
     };
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &char_hid_map));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
-    self->hid_map_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
+    pb_assert(pbio_bluetooth_peripheral_discover_characteristic(self->peripheral, &char_hid_map));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->hid_map_char_handle = pbio_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID map.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_map_char_handle));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_map_char_handle));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     // This is the main characteristic that notifies us of button state.
     DEBUG_PRINT("Discover HID report.\n");
-    pbdrv_bluetooth_peripheral_char_discovery_t pb_type_xbox_char_hid_report = {
+    pbio_bluetooth_peripheral_char_discovery_t pb_type_xbox_char_hid_report = {
         // Even with the property filter, there are still 3 matches for this
         // characteristic on the Elite Series 2 controller. For now limit discovery
         // to find only the first one. It may be possible to find the right one by
@@ -350,16 +342,16 @@ retry:
         .uuid16 = 0x2a4d,
         .request_notification = true,
     };
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
-    self->hid_report_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
+    pb_assert(pbio_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_xbox_char_hid_report));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->hid_report_char_handle = pbio_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
 
     DEBUG_PRINT("Read HID report.\n");
-    pb_assert(pbdrv_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_report_char_handle));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_read_characteristic(self->peripheral, self->hid_report_char_handle));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -369,8 +361,8 @@ retry:
 disconnect:
     pb_type_xbox_close(parent_obj);
     DEBUG_PRINT("Going to disconnect because of a failure with code %d at line %u.\n", err, *state);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_disconnect(self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     DEBUG_PRINT("Disconnect with error code %d.\n", err);
     pb_assert(err);
 
@@ -402,7 +394,7 @@ static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_connect_obj, pb_type_xbox_connect)
 static mp_obj_t pb_type_xbox_await_operation(mp_obj_t self_in) {
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_type_async_t config = {
-        .iter_once = pbdrv_bluetooth_await_peripheral_command,
+        .iter_once = pbio_bluetooth_await_peripheral_command,
         // Using the driver function without a wrapper, so should pass its
         // context parameter (the peripheral) as the parent object.
         .parent_obj = self->peripheral,
@@ -415,7 +407,7 @@ static mp_obj_t pb_type_xbox_disconnect(mp_obj_t self_in) {
     // connection later.
     pb_type_xbox_close(self_in);
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_disconnect(self->peripheral));
     return pb_type_xbox_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_xbox_disconnect_obj, pb_type_xbox_disconnect);
@@ -426,13 +418,7 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         PB_ARG_DEFAULT_INT(joystick_deadzone, 10),
         PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000),
-        PB_ARG_DEFAULT_TRUE(connect)
-        // Debug parameter to stay connected to the host on Technic Hub.
-        // Works only on some hosts for the moment, so False by default.
-        #if PYBRICKS_HUB_TECHNICHUB
-        , PB_ARG_DEFAULT_FALSE(stay_connected)
-        #endif // PYBRICKS_HUB_TECHNICHUB
-        );
+        PB_ARG_DEFAULT_TRUE(connect));
 
     pb_module_tools_assert_blocking();
 
@@ -460,25 +446,15 @@ static mp_obj_t pb_type_xbox_make_new(const mp_obj_type_t *type, size_t n_args, 
         strncpy(self->name, name, sizeof(self->name));
     }
 
-    // By default, disconnect Technic Hub from host, as this is required for
-    // most hosts. Stay connected only if the user explicitly requests it.
-    #if PYBRICKS_HUB_TECHNICHUB
-    self->disconnect_host = !mp_obj_is_true(stay_connected_in);
-    if (self->disconnect_host) {
-        mp_printf(&mp_plat_print, "The hub may disconnect from the computer for better connectivity with the controller.\n");
-        mp_hal_delay_ms(500);
-    }
-    #endif // PYBRICKS_HUB_TECHNICHUB
-
     bool want_connection = mp_obj_is_true(connect_in);
 
     // Attempt to re-use existing connection.
-    pbdrv_bluetooth_peripheral_connect_config_t scan_config = {
+    pbio_bluetooth_peripheral_connect_config_t scan_config = {
         .match_adv = pb_type_xbox_advertisement_matches,
         .match_adv_rsp = pb_type_xbox_advertisement_response_matches,
         .notification_handler = pb_type_xbox_handle_notification,
     };
-    pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &scan_config);
+    pbio_error_t err = pbio_bluetooth_peripheral_get_connected(&self->peripheral, self, &scan_config);
 
     // If we aren't already connected, do so now if requested.
     if (err == PBIO_ERROR_NO_DEV && want_connection) {
@@ -497,7 +473,7 @@ static mp_obj_t pb_type_xbox_name(size_t n_args, const mp_obj_t *args) {
     // Asserts connection.
     pb_type_xbox_get_input(args[0]);
     pb_type_xbox_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    const char *name = pbdrv_bluetooth_peripheral_get_name(self->peripheral);
+    const char *name = pbio_bluetooth_peripheral_get_name(self->peripheral);
     return mp_obj_new_str(name, strlen(name));
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_type_xbox_name_obj, 1, 2, pb_type_xbox_name);
@@ -651,7 +627,7 @@ static mp_obj_t pb_type_xbox_rumble(size_t n_args, const mp_obj_t *pos_args, mp_
     // REVISIT: Discover this handle dynamically.
     const uint16_t handle = 34;
 
-    pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, handle, (const uint8_t *)&command, sizeof(command));
+    pbio_bluetooth_peripheral_write_characteristic(self->peripheral, handle, (const uint8_t *)&command, sizeof(command));
     return pb_type_xbox_await_operation(MP_OBJ_TO_PTR(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_xbox_rumble_obj, 1, pb_type_xbox_rumble);

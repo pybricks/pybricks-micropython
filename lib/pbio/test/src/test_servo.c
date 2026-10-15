@@ -22,7 +22,7 @@
 #include <pbio/int_math.h>
 #include <pbio/motor_process.h>
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 

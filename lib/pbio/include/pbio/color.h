@@ -16,25 +16,22 @@
 /** @cond INTERNAL */
 
 /**
- * Squeezes HSV into 8 bits.
+ * Packs HSV into 32 bits as 0xHHHHSSVV.
  *
- * This gets us 12 hues, 2 saturations and 3 values
- *
- * @param h [in]    The hue, 0..359 degrees in increments of 30
- * @param s [in]    The saturation, 0 or 100 percent
- * @param v [in]    The value, 0, 50, or 100 percent
+ * @param h [in]    The hue, 0..359 degrees
+ * @param s [in]    The saturation, 0..100 percent
+ * @param v [in]    The value, 0..100 percent, or negative (see ::pbio_color_get_v)
  */
-#define PBIO_COLOR_ENCODE(h, s, v) (((h / 30) << 3) | ((s / 51) << 2) | (v / 34))
+#define PBIO_COLOR_ENCODE(h, s, v) (((h) << 16) | ((s) << 8) | ((v) & 0xff))
 
 /** @endcond */
 
 /**
- * Color names.
+ * HSV color, packed as 0xHHHHSSVV. Named values are the standard colors.
  */
 typedef enum {
-    // NONE uses different hue to differentiate if from black
-    PBIO_COLOR_NONE = PBIO_COLOR_ENCODE(180, 0, 0), /**< no color */
-    PBIO_COLOR_BLACK = PBIO_COLOR_ENCODE(0, 0, 0), /**< black */
+    PBIO_COLOR_NONE = PBIO_COLOR_ENCODE(0, 0, 0), /**< no color, i.e. no light at all */
+    PBIO_COLOR_BLACK = PBIO_COLOR_ENCODE(0, 0, 10), /**< black, which still reflects some light */
     PBIO_COLOR_GRAY = PBIO_COLOR_ENCODE(0, 0, 50), /**< gray */
     PBIO_COLOR_WHITE = PBIO_COLOR_ENCODE(0, 0, 100), /**< white */
     PBIO_COLOR_RED = PBIO_COLOR_ENCODE(0, 100, 100), /**< red */
@@ -47,9 +44,27 @@ typedef enum {
     PBIO_COLOR_BLUE = PBIO_COLOR_ENCODE(240, 100, 100), /**< blue */
     PBIO_COLOR_VIOLET = PBIO_COLOR_ENCODE(270, 100, 100), /**< violet */
     PBIO_COLOR_MAGENTA = PBIO_COLOR_ENCODE(300, 100, 100), /**< magenta */
+    // Hues of 360 and up cannot occur in real colors, so they are used for sentinels.
+    /**
+     * Not a color, but a sentinel for showing whatever is underneath, such as
+     * a lower priority indication.
+     */
+    PBIO_COLOR_TRANSPARENT = PBIO_COLOR_ENCODE(360, 0, 0),
+    /** Not a color, but a sentinel that marks the end of an array of colors. */
+    PBIO_COLOR_ARRAY_END = PBIO_COLOR_ENCODE(361, 0, 0),
+    /**
+     * Not a color, but a sentinel for a sensor that does not measure color, or
+     * does not measure it in the way that is currently active.
+     */
+    PBIO_COLOR_NOT_AVAILABLE = PBIO_COLOR_ENCODE(362, 0, 0),
 } pbio_color_t;
 
-#undef PBIO_COLOR_ENCODE
+/**
+ * Light intensity, in permille, that means the sensor does not measure it, or
+ * does not measure it in the way that is currently active. Chosen so that it
+ * is still distinguishable after scaling down to a percentage.
+ */
+#define PBIO_LIGHT_INTENSITY_NOT_AVAILABLE (2550)
 
 /** Color hues for HSV color space. Values are in degrees (0 to 359). */
 typedef enum {
@@ -86,43 +101,41 @@ typedef struct {
     uint8_t b;
 } pbio_color_rgb_t;
 
-/** HSV color. */
-typedef struct {
-    /** The hue component. 0 to 359 degrees. */
-    uint16_t h;
-    /** The saturation component. 0 to 100 percent. */
-    uint8_t s;
-    /** The value component. Normally 0 to 100 percent but allowed to be
-     * negative to provide higher contrast in color scanning applications. */
-    int8_t v;
-} pbio_color_hsv_t;
-
-static inline uint8_t pbio_color_hsv_get_v(const pbio_color_hsv_t *hsv) {
-    return hsv->v < 0 ? 0 : hsv->v;
+/** Gets the hue component, 0 to 359 degrees. */
+static inline uint16_t pbio_color_get_h(pbio_color_t color) {
+    return color >> 16;
 }
 
-/** Compressed HSV color. Stores data in 24 bytes instead of 32. */
-typedef struct __attribute__((__packed__)) {
-    /** The hue component. 0 to 359 degrees. */
-    uint16_t h : 9;
-    /** The saturation component. 0 to 100 percent. */
-    uint8_t s : 7;
-    /** The value component. Normally 0 to 100 percent but allowed to be
-     * negative to provide higher contrast in color scanning applications. */
-    int8_t v;
-} pbio_color_compressed_hsv_t;
+/** Gets the saturation component, 0 to 100 percent. */
+static inline uint8_t pbio_color_get_s(pbio_color_t color) {
+    return (color >> 8) & 0xff;
+}
 
-void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
-void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
-void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
+/**
+ * Gets the value component as stored. Normally 0 to 100 percent but allowed to
+ * be negative to provide higher contrast in color scanning applications.
+ *
+ * Use ::pbio_color_get_v_clamped instead where a negative value makes no sense,
+ * such as when driving a light.
+ */
+static inline int8_t pbio_color_get_v(pbio_color_t color) {
+    return (int8_t)(color & 0xff);
+}
+
+/** Gets the value component like ::pbio_color_get_v, with negative values clamped to zero. */
+static inline uint8_t pbio_color_get_v_clamped(pbio_color_t color) {
+    int8_t v = pbio_color_get_v(color);
+    return v < 0 ? 0 : v;
+}
+
+pbio_color_t pbio_color_from_rgb(const pbio_color_rgb_t *rgb);
+pbio_color_t pbio_color_from_rgb_with_hue_shift(const pbio_color_rgb_t *rgb);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
-void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
-void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);
 
-typedef int32_t (*pbio_color_distance_func_t)(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
+typedef int32_t (*pbio_color_distance_func_t)(pbio_color_t hsv_a, pbio_color_t hsv_b);
 
-int32_t pbio_color_get_distance_bicone_squared(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
-int32_t pbio_color_get_distance_saturation_heuristic(const pbio_color_hsv_t *hsv_a, const pbio_color_hsv_t *hsv_b);
+int32_t pbio_color_get_distance_bicone_squared(pbio_color_t hsv_a, pbio_color_t hsv_b);
+int32_t pbio_color_get_distance_saturation_heuristic(pbio_color_t hsv_a, pbio_color_t hsv_b);
 
 #endif // _PBIO_COLOR_H_
 

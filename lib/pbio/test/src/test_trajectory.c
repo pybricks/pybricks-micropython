@@ -211,9 +211,10 @@ static void get_infinite_command(uint32_t index, pbio_trajectory_command_t *c) {
 
 static void test_infinite_trajectory(void *env) {
 
-    pbio_trajectory_command_t command;
-
+    // The permutations are independent, so run them across all CPU cores.
+    #pragma omp parallel for
     for (uint32_t i = 0; i < num_infinite_trajectories; i++) {
+        pbio_trajectory_command_t command;
         get_infinite_command(i, &command);
 
         // Calculate the trajectory.
@@ -315,9 +316,10 @@ static void get_position_command(uint32_t index, pbio_trajectory_command_t *c) {
 
 static void test_position_trajectory(void *env) {
 
-    pbio_trajectory_command_t command;
-
+    // The permutations are independent, so run them across all CPU cores.
+    #pragma omp parallel for
     for (uint32_t i = 0; i < num_position_trajectories; i++) {
+        pbio_trajectory_command_t command;
         get_position_command(i, &command);
 
         // Calculate the trajectory.

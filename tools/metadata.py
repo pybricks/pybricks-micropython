@@ -7,14 +7,37 @@ Pybricks firmware metadata file generation tool.
 
 Generates a .json file with information about a Pybricks firmware binary blob.
 
-v2.1.0:
-    metadata-version    string  "2.1.0"
+The manifest carries the shared identity of the firmware at the top level and one
+or more architecture variants under the "variants" key. Each variant corresponds to
+a pbio platform (e.g. prime_hub_f4, prime_hub_h5) of the same product. Example::
+
+    {
+        "metadata-version": "3.0.0",
+        "firmware-version": "v3.6.0",
+        "device-id": 129,
+        "variants": [
+            {
+                "platform": "prime_hub_f4",
+                "firmware": "firmware-base.bin",
+                "checksum-type": "crc32",
+                "checksum-size": 1048576,
+                "hub-name-offset": 1296,
+                "hub-name-size": 16
+            }
+        ]
+    }
+
+Fields:
+    metadata-version    string  "3.0.0"
     firmware-version    string  output of `git describe --tags --dirty`
     device-id           number  one of [0x40, 0x41, 0x80, 0x81, 0x83, 0xE0, 0xE1, 0xE2]
-    checksum-type       string  one of ["sum", "crc32", "none"]
-    checksum-size       number  size of flash memory for computing checksum
-    hub-name-offset     number  offset in firmware.bin where hub name is located
-    hub-name-size       number  number of bytes allocated for hub name
+    variants            array   one entry per pbio platform, each with:
+        platform        string  pbio platform name (e.g. "prime_hub_f4")
+        firmware        string  name of the firmware base binary in the zip
+        checksum-type   string  one of ["sum", "crc32", "none"]
+        checksum-size   number  size of flash memory for computing checksum
+        hub-name-offset number  offset in firmware.bin where hub name is located
+        hub-name-size   number  number of bytes allocated for hub name
 
 Device IDs:
     0x40: BOOST Move hub
@@ -32,6 +55,7 @@ import io
 import json
 import os
 import re
+import struct
 import sys
 
 # Path to repo top-level dir.
@@ -41,14 +65,16 @@ sys.path.append(os.path.join(TOP, "tools"))
 
 
 # metadata file format version
-VERSION = "2.1.0"
+VERSION = "3.0.0"
 
-# hub-specific info
-HUB_INFO = {
+# pbio platform -> product info
+PLATFORM_INFO = {
     "move_hub": {"device-id": 0x40, "checksum-type": "sum"},
     "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
     "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
     "prime_hub": {"device-id": 0x81, "checksum-type": "crc32"},
+    "prime_hub_f4": {"device-id": 0x81, "checksum-type": "none"},
+    "prime_hub_h5": {"device-id": 0x81, "checksum-type": "none"},
     "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
     "rcx": {"device-id": 0xE0, "checksum-type": "none"},
     "nxt": {"device-id": 0xE1, "checksum-type": "none"},
@@ -56,28 +82,80 @@ HUB_INFO = {
 }
 
 
+def elf_section_location(elf_file: io.FileIO, section_name: str) -> tuple[int, int]:
+    """Gets the file offset and size of a named section in an ELF32 LSB file."""
+    elf_header = elf_file.read(52)
+    if elf_header[:4] != b"\x7fELF" or elf_header[4] != 1 or elf_header[5] != 1:
+        raise ValueError("not a little-endian ELF32 file")
+
+    (e_shoff,) = struct.unpack_from("<I", elf_header, 32)
+    e_shentsize, e_shnum, e_shstrndx = struct.unpack_from("<3H", elf_header, 46)
+
+    def read_section_header(index):
+        elf_file.seek(e_shoff + index * e_shentsize)
+        # sh_name, sh_type, sh_flags, sh_addr, sh_offset, sh_size, ...
+        return struct.unpack("<10I", elf_file.read(40))
+
+    shstrtab_offset = read_section_header(e_shstrndx)[4]
+    target = section_name.encode() + b"\0"
+
+    for index in range(e_shnum):
+        section_header = read_section_header(index)
+        elf_file.seek(shstrtab_offset + section_header[0])
+        if elf_file.read(len(target)) == target:
+            return section_header[4], section_header[5]
+
+    raise ValueError(f"section '{section_name}' not found")
+
+
 def generate(
     fw_version: str,
-    hub_type: str,
+    platform: str,
     map_file: io.FileIO,
     out_file: io.FileIO,
+    elf_file: io.FileIO = None,
 ):
+    if platform not in PLATFORM_INFO:
+        print("Unknown platform", file=sys.stderr)
+        exit(1)
+
+    platform_info = PLATFORM_INFO[platform]
+    device_id = platform_info["device-id"]
+
     metadata = {
         "metadata-version": VERSION,
         "firmware-version": fw_version,
+        "device-id": device_id,
     }
 
-    if hub_type not in HUB_INFO:
-        print("Unknown hub type", file=sys.stderr)
-        exit(1)
+    # Per-platform info. For now a build produces a single variant.
+    variant = {
+        "platform": platform,
+        "firmware": "firmware-base.bin",
+        "checksum-type": platform_info["checksum-type"],
+    }
 
-    metadata.update(HUB_INFO[hub_type])
+    if device_id == 0xE0:
+        # Not supported. Setting to 0 ignores name on flashing.
+        variant["checksum-size"] = 0
+        variant["hub-name-offset"] = 0
+        variant["hub-name-size"] = 0
+    elif device_id == 0xE2:
+        # EV3 firmware-base.bin is u-boot plus the firmware ELF at a fixed
+        # offset, so the name is patched at the .name file offset within
+        # that ELF. There is no checksum or appended user program.
+        if elf_file is None:
+            print("EV3 requires the firmware ELF file (--elf)", file=sys.stderr)
+            exit(1)
 
-    if (metadata["device-id"] & 0xE0) == 0xE0:
-        # legacy hubs don't support these features
-        metadata["checksum-size"] = 0
-        metadata["hub-name-offset"] = 0
-        metadata["hub-name-size"] = 0
+        # Offset of the embedded firmware ELF in the EV3 firmware image. Must match
+        # UIMAGE_OFFSET in bricks/ev3/make_bootable_image.py.
+        EV3_UIMAGE_OFFSET = 0x50000
+
+        name_offset, name_size = elf_section_location(elf_file, ".name")
+        variant["checksum-size"] = 0
+        variant["hub-name-offset"] = EV3_UIMAGE_OFFSET + name_offset
+        variant["hub-name-size"] = name_size
     else:
         # scrape info from map file
 
@@ -131,13 +209,20 @@ def generate(
             print("Failed to find '.name' start address", file=sys.stderr)
             exit(1)
 
-        if user_start is None:
-            print("Failed to find '.user' start address", file=sys.stderr)
-            exit(1)
+        variant["hub-name-offset"] = name_start - flash_origin
+        variant["hub-name-size"] = name_size
 
-        metadata["checksum-size"] = flash_firmware_size + flash_user_0_size
-        metadata["hub-name-offset"] = name_start - flash_origin
-        metadata["hub-name-size"] = name_size
+        if device_id == 0xE1:
+            # NXT firmware has no checksum or appended user program
+            variant["checksum-size"] = 0
+        else:
+            if user_start is None:
+                print("Failed to find '.user' start address", file=sys.stderr)
+                exit(1)
+
+            variant["checksum-size"] = flash_firmware_size + flash_user_0_size
+
+    metadata["variants"] = [variant]
 
     json.dump(metadata, out_file, indent=4, sort_keys=True)
 
@@ -151,10 +236,10 @@ if __name__ == "__main__":
         help="Pybricks firmware version",
     )
     parser.add_argument(
-        "hub_type",
-        metavar="<hub-type>",
-        choices=HUB_INFO.keys(),
-        help="hub type/device ID",
+        "platform",
+        metavar="<platform>",
+        choices=PLATFORM_INFO.keys(),
+        help="pbio platform",
     )
     parser.add_argument(
         "map_file",
@@ -168,11 +253,18 @@ if __name__ == "__main__":
         type=argparse.FileType("w"),
         help="output file name",
     )
+    parser.add_argument(
+        "--elf",
+        metavar="<elf-file>",
+        type=argparse.FileType("rb"),
+        help="firmware ELF file embedded in the firmware image (EV3 only)",
+    )
 
     args = parser.parse_args()
     generate(
         args.fw_version,
-        args.hub_type,
+        args.platform,
         args.map_file,
         args.out_file,
+        args.elf,
     )

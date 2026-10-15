@@ -9,14 +9,26 @@
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_NXT                    (1)
 
+// The RAM disk holds the saved data plus the MicroPython heap, so its size
+// sets how much memory user programs get. It is the largest single consumer
+// of the 64K of RAM; the supervisor stack takes whatever is left over.
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
-#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (10 * 1024)
-#define PBDRV_CONFIG_BLOCK_DEVICE_TEST              (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (24 * 1024)
+#define PBDRV_CONFIG_BLOCK_DEVICE_NXT               (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_NXT_SIZE          (16 * 1024) // Must match FLASH_USER in linker script
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_NXT                     (1)
 
-#define PBDRV_CONFIG_BLUETOOTH                      (0)
+// The BlueCore 4 does Bluetooth Classic only, and runs the stack itself, so
+// PBDRV_CONFIG_BLUETOOTH_LE is left out. It also keeps its own bonding store,
+// so PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS is left out too.
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_NXT                  (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST         (1)
+
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_NXT
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_NXT                      (1)
@@ -32,6 +44,9 @@
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_NXT                       (1)
+
+#define PBDRV_CONFIG_HARDWARE                       (1)
+#define PBDRV_CONFIG_HARDWARE_NXT                   (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (1)
@@ -68,9 +83,6 @@
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_NXT                        (1)
-#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (64)
-#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS       (2)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_NXT
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
-#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_NXT " + Pybricks"

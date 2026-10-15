@@ -1,0 +1,52 @@
+name: apt install with caching
+description: >
+  Installs apt packages, with retries and with the .deb files cached so that
+  only a cold cache hits the (flaky) apt mirrors.
+
+inputs:
+  packages:
+    description: Space-separated list of packages to install
+    required: true
+  warm-cache-only:
+    description: Only ensure the cache is populated; skip the install
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+  - name: Compute cache key
+    id: key
+    shell: bash
+    env:
+      PACKAGES: ${{ inputs.packages }}
+    run: |
+      echo "packages=${PACKAGES// /_}" >> "$GITHUB_OUTPUT"
+      # runner-set env vars are not visible to ${{ env.* }} expressions
+      echo "image-version=$ImageVersion" >> "$GITHUB_OUTPUT"
+
+  - name: Restore .deb cache
+    id: cache
+    uses: actions/cache@v6
+    with:
+      path: ~/.cache/apt-debs
+      # ImageVersion invalidates the cache when the runner image (and thus
+      # potentially the package versions/pre-installed deps) changes
+      key: apt-debs-${{ steps.key.outputs.packages }}-${{ runner.os }}-${{ steps.key.outputs.image-version }}
+      # when only warming, don't download the cache just to throw it away
+      lookup-only: ${{ inputs.warm-cache-only == 'true' }}
+
+  - name: Download packages
+    if: steps.cache.outputs.cache-hit != 'true'
+    shell: bash
+    run: |
+      sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+      sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install --yes --download-only ${{ inputs.packages }}
+      mkdir -p ~/.cache/apt-debs
+      cp /var/cache/apt/archives/*.deb ~/.cache/apt-debs/
+
+  - name: Install packages
+    if: inputs.warm-cache-only != 'true'
+    shell: bash
+    # dpkg, unlike apt, cannot decide to fetch same-version packages from the
+    # network instead of using the local .deb files
+    run: sudo dpkg -i ~/.cache/apt-debs/*.deb

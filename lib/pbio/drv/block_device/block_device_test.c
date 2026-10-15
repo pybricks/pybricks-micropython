@@ -16,7 +16,7 @@
 #include <pbio/version.h>
 
 /**
-The following script is compiled using pybricksdev compile hello.py in MULTI_MPY_V6.
+The following script is compiled using tools/compile.py hello.py in MULTI_MPY_V6.
 
 from pybricks.tools import StopWatch, wait
 
@@ -55,13 +55,6 @@ static const uint8_t _program_data[] = {
     0x63,
 };
 
-// Information from MicroPython should not be used in the pbdrv drivers but it
-// is permissible for this test. It ensures we can place the expected git
-// version at the right place. FIXME: Move the git version to pybricks build
-// system, since it isn't actually the micropython git version.
-#include "genhdr/mpversion.h"
-
-
 static struct {
     // ensure that data is properly aligned for pbsys_storage_data_map_t
     pbsys_storage_data_map_t data_map;
@@ -82,7 +75,7 @@ pbio_error_t pbdrv_block_device_get_data(pbsys_storage_data_map_t **data) {
 
 void pbdrv_block_device_init(void) {
     ramdisk.data_map.slot_info[0].size = sizeof(_program_data);
-    memcpy(ramdisk.data_map.stored_firmware_hash, MICROPY_GIT_HASH, sizeof(ramdisk.data_map.stored_firmware_hash));
+    ramdisk.data_map.storage_version = PBSYS_STORAGE_VERSION;
     memcpy(ramdisk.data_map.program_data, _program_data, sizeof(_program_data));
 }
 

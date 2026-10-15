@@ -24,6 +24,7 @@
 #include <pbio/util.h>
 
 #include <nxos/drivers/motors.h>
+#include <nxos/drivers/_motors.h>
 
 struct _pbdrv_counter_dev_t {
     uint8_t index;
@@ -65,6 +66,9 @@ pbio_error_t pbdrv_counter_get_abs_angle(pbdrv_counter_dev_t *dev, int32_t *mill
 }
 
 void pbdrv_counter_init(void) {
+
+    nx__motors_init();
+
     for (size_t i = 0; i < PBIO_ARRAY_SIZE(counters); i++) {
         pbdrv_counter_dev_t *dev = &counters[i];
         dev->index = i;

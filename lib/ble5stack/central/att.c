@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -16,6 +17,17 @@ bStatus_t ATT_ErrorRsp(uint16_t connHandle, attErrorRsp_t *pRsp) {
     buf[5] = pRsp->errCode;
 
     return HCI_sendHCICommand(ATT_CMD_ERROR_RSP, buf, 6);
+}
+
+bStatus_t ATT_ExchangeMTUReq(uint16_t connHandle, attExchangeMTUReq_t *pReq) {
+    uint8_t buf[4];
+
+    buf[0] = connHandle & 0xFF;
+    buf[1] = (connHandle >> 8) & 0xFF;
+    buf[2] = pReq->clientRxMTU & 0xFF;
+    buf[3] = (pReq->clientRxMTU >> 8) & 0xFF;
+
+    return HCI_sendHCICommand(ATT_CMD_EXCHANGEMTUREQ, buf, 4);
 }
 
 bStatus_t ATT_ExchangeMTURsp(uint16_t connHandle, attExchangeMTURsp_t *pRsp) {
@@ -91,7 +103,10 @@ bStatus_t ATT_ExecuteWriteRsp(uint16_t connHandle) {
 }
 
 bStatus_t ATT_HandleValueNoti(uint16_t connHandle, attHandleValueNoti_t *pNoti) {
-    uint8_t buf[32];
+    // Payload can be up to negotiated MTU minus 3-byte ATT header.
+    uint8_t buf[5 + ATT_MAX_MTU_SIZE - 3];
+
+    assert(sizeof(buf) >= 5 + pNoti->len);
 
     buf[0] = connHandle & 0xFF;
     buf[1] = (connHandle >> 8) & 0xFF;

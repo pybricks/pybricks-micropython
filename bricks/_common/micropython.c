@@ -21,7 +21,6 @@
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
-#include "genhdr/mpversion.h"
 #include "shared/readline/readline.h"
 #include "shared/runtime/gchelper.h"
 #include "shared/runtime/interrupt_char.h"
@@ -129,7 +128,7 @@ static void run_repl(void) {
         }
 
         // clear any pending exceptions (and run any callbacks).
-        mp_handle_pending(false);
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_CLEAR_EXCEPTIONS);
         // Print which exception triggered this.
         print_final_exception(MP_OBJ_FROM_PTR(nlr.ret_val), ret);
     }
@@ -248,7 +247,7 @@ static void run_user_program(void) {
         mp_hal_set_interrupt_char(-1);
 
         // Handle any pending exceptions (and any callbacks)
-        mp_handle_pending(true);
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_EXCEPTIONS);
 
         nlr_pop();
     } else {
@@ -261,7 +260,7 @@ static void run_user_program(void) {
         }
 
         // Clear any pending exceptions (and run any callbacks).
-        mp_handle_pending(false);
+        mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_CLEAR_EXCEPTIONS);
 
         if (mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t *)nlr.ret_val)->type), MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
             // at the moment, the value of SystemExit is unused
@@ -339,12 +338,6 @@ pbio_error_t pbsys_main_program_validate(pbsys_main_program_t *program) {
     }
 
     return PBIO_SUCCESS;
-}
-
-const char *pbsys_main_get_application_version_hash(void) {
-    // This is (somewhat confusingly) passed in as the MICROPY_GIT_HASH.
-    // REVISIT: Make PYBRICKS_GIT_HASH available in a pbio header via a build step.
-    return MICROPY_GIT_HASH;
 }
 
 // Runs MicroPython with the given program data.

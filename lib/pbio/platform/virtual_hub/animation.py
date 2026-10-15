@@ -25,6 +25,15 @@ PBIO_PYBRICKS_EVENT_WRITE_STDOUT = 1
 PBIO_PYBRICKS_EVENT_WRITE_APP_DATA = 2
 PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY = 3
 
+# REVISIT: Align with firmware once the telemetry protocol is settled.
+MANUF_ID_LEGO = 1
+# 16-bit device id: family in high byte, type in low byte.
+DEVICE_EV3_BUILTIN_DISPLAY = 89
+MOTOR_IDS = (38, 46, 47, 48, 49, 65, 75, 76)
+MSG_HEADER_SIZE = 6
+DISPLAY_CHUNK_SIZE = 356
+DISPLAY_FRAME_SIZE = DISPLAY_WIDTH * DISPLAY_HEIGHT
+
 # Incoming events (stdout, status, app data, port view)
 data_queue = queue.Queue()
 
@@ -43,6 +52,7 @@ def socket_listener_thread():
 
 # Hub state
 angles = [0] * 6
+display_frame = bytearray(DISPLAY_FRAME_SIZE)
 virtual_display = pygame.Surface((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 display_color = [0x90, 0xC5, 0xAD]
 virtual_display.fill(display_color)
@@ -59,24 +69,48 @@ def update_display(data):
                 virtual_display.set_at((x, y), color)
 
 
-def process_telemetry(payload):
-    # Only supports motors for now.
-    if len(payload) == 6:
-        type_id, index, angle = struct.unpack("<bbi", payload[0:6])
-        if type_id == 94:  # REVISIT: Align with firmware
-            angles[index] = angle
+def iter_chunks(data: bytes):
+    i = 0
+    while i < len(data):
+        (size,) = struct.unpack_from("<H", data, i)
+        yield data[i + 2 : i + 2 + size]
+        i += 2 + size
+
+
+def process_telemetry(message):
+    for payload in iter_chunks(message):
+        # Common header: manufacturer, device id, location, mode.
+        if len(payload) < MSG_HEADER_SIZE:
+            continue
+        manufacturer, device, location, mode = struct.unpack_from("<BHHB", payload)
+        if manufacturer != MANUF_ID_LEGO or mode != 0:
+            continue
+        # Display frame chunk: location is the chunk index, then pixels packed
+        # 4 per byte, 2 bits each, LSB first.
+        if device == DEVICE_EV3_BUILTIN_DISPLAY:
+            packed = payload[MSG_HEADER_SIZE:]
+            chunk_offset = location * DISPLAY_CHUNK_SIZE
+            for i, b in enumerate(packed):
+                base = (chunk_offset + i) * 4
+                display_frame[base] = b & 3
+                display_frame[base + 1] = (b >> 2) & 3
+                display_frame[base + 2] = (b >> 4) & 3
+                display_frame[base + 3] = (b >> 6) & 3
+            # Firmware sends chunks in order, so the last one completes a frame.
+            if (chunk_offset + len(packed)) * 4 == DISPLAY_FRAME_SIZE:
+                update_display(display_frame)
+        # Motor angle sample: location is the port index.
+        elif device in MOTOR_IDS:
+            try:
+                (angle, _, _) = struct.unpack_from("<ihB", payload, MSG_HEADER_SIZE)
+            except struct.error:
+                (angle,) = struct.unpack_from("<i", payload, MSG_HEADER_SIZE)
+            angles[location] = angle
 
 
 def update_state():
     while not data_queue.empty():
         data = data_queue.get_nowait()
-
-        # Revisit: we should use the telemetry protocol for the display, but
-        # this is not hooked up yet. For now, just assume that a huge payload
-        # is a display buffer.
-        if len(data) > 6000:
-            update_display(data)
-            continue
 
         # Expecting a notification event code with payload
         if not isinstance(data, bytes) or len(data) < 2:

@@ -24,8 +24,38 @@
  */
 typedef bool (*pbsys_host_stdin_event_callback_t)(uint8_t c);
 
+typedef enum {
+    /** Bluetooth Low Energy (GATT notifications). */
+    PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH,
+    /** USB serial (CDC). */
+    PBSYS_HOST_TRANSPORT_TYPE_USB,
+    /** Bluetooth Classic serial (RFCOMM). */
+    PBSYS_HOST_TRANSPORT_TYPE_RFCOMM,
+    /** The number of transport types. */
+    PBSYS_HOST_TRANSPORT_TYPE_COUNT,
+} pbsys_host_transport_type_t;
+
+/**
+ * Storage size for the hub name, including null terminator.
+ */
+#define PBSYS_HOST_HUB_NAME_SIZE (16)
+
+/**
+ * Buffer size for the hub display name composed by
+ * pbsys_host_get_hub_display_name(), including null terminator. Sized for
+ * the longest form: "<name> (<hub type>)".
+ */
+#define PBSYS_HOST_HUB_DISPLAY_NAME_SIZE (PBSYS_HOST_HUB_NAME_SIZE + sizeof(PBSYS_CONFIG_HUB_TYPE_STR) + 3)
+
 #if PBSYS_CONFIG_HOST
 
+void pbsys_host_debug_print(const char *data, size_t len);
+bool pbsys_host_get_event_buf(pbsys_host_transport_type_t transport, uint8_t **buf, uint32_t **len);
+void pbsys_host_get_hub_capabilities(uint8_t *buf, pbsys_host_transport_type_t transport);
+uint32_t pbsys_host_get_max_message_size(void);
+const char *pbsys_host_get_hub_display_name(void);
+const char *pbsys_host_get_hub_name(void);
+uint32_t pbsys_host_read_characteristic(uint8_t service, uint16_t char_id, pbsys_host_transport_type_t transport, uint8_t *buf, uint32_t buf_size);
 void pbsys_host_init(void);
 bool pbsys_host_is_connected(void);
 void pbsys_host_schedule_status_update(const uint8_t *buf);
@@ -37,24 +67,14 @@ uint32_t pbsys_host_stdin_get_available(void);
 pbio_error_t pbsys_host_stdin_read(uint8_t *data, uint32_t *size);
 pbio_error_t pbsys_host_stdout_write(const uint8_t *data, uint32_t *size);
 bool pbsys_host_tx_is_idle(void);
-pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size);
+pbio_error_t pbsys_host_send_app_data(pbio_os_state_t *state, const uint8_t *data, size_t size);
+void pbsys_host_app_data_clear_pending(void);
+void pbsys_host_connection_changed(void);
 
 #else // PBSYS_CONFIG_HOST
 
-#define pbsys_host_init()
-#define pbsys_host_is_connected() false
-#define pbsys_host_schedule_status_update(buf)
-#define pbsys_host_stdin_get_free() 0
-#define pbsys_host_stdin_write(data, size) { (void)(data); (void)(size); }
-#define pbsys_host_stdin_set_callback(callback) { (void)(callback); }
-#define pbsys_host_stdin_flush()
-#define pbsys_host_stdin_get_available() 0
-#define pbsys_host_stdin_read(data, size) ({ *(data) = 0; *(size) = 0; PBIO_ERROR_NOT_SUPPORTED; })
-#define pbsys_host_stdout_write(data, size) ({ *(size) = 0; PBIO_ERROR_NOT_SUPPORTED; })
-#define pbsys_host_tx_is_idle() false
-
-static inline pbio_error_t pbsys_host_send_event(pbio_os_state_t *state, pbio_pybricks_event_t event_type, const uint8_t *data, size_t size) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline uint32_t pbsys_host_get_max_message_size(void) {
+    return 0;
 }
 
 #endif // PBSYS_CONFIG_HOST

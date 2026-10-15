@@ -30,10 +30,12 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE  (16 * 1024) // Must match FLASH_USER_0 + FLASH_USER_1 in linker script
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         158 // 158 matches LEGO firmware - could go up to ~251 - see ATT_MAX_MTU_SIZE
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
-#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x41"
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_CITY
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
@@ -41,7 +43,7 @@
 #define PBDRV_CONFIG_COUNTER                        (0)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_STM32F0                   (1)
+#define PBDRV_CONFIG_GPIO_STM32                     (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)

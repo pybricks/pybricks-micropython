@@ -18,8 +18,11 @@ SECTIONS
                                      firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
         . = DEFINED(FW_INFO_OFFSET) ? FW_INFO_OFFSET : .;
-        *(.fw_info) /* .fw_info section for info read during SPIKE firmware update */
+        *(.fw_info) /* .fw_info section to make a firmware valid */
         KEEP(*(.fw_info))
+        . = DEFINED(FW_INFO_OFFSET2) ? FW_INFO_OFFSET2 : .;
+        *(.fw_info2) /* .fw_info section to make a firmware valid */
+        KEEP(*(.fw_info2))
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */
@@ -30,7 +33,7 @@ SECTIONS
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH_FIRMWARE
 
-    /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
+    /* This section is for special needs of the Move/Technic/City Hub firmware - must be first section in SRAM! */
     .magic :
     {
         _fw_isr_vector_dst = .;     /* The firmware will copy isr_vector here */
@@ -77,6 +80,17 @@ SECTIONS
     {
         . = ALIGN(4);
         *(.noinit)
+    } >RAM
+
+    /* Used to pass a magic value from firmware across reboots, typically to
+       then boot into a bootloader across a reset. Placed after .noinit with
+       the large RAM disk to be well clear of the RAM the bootloader(s) use,
+       since it passes through them before we see the value again.
+        Empty (0 bytes) on platforms that don't use it. */
+    .bootloader_selector (NOLOAD) :
+    {
+        . = ALIGN(4);
+        *(.bootloader_selector)
     } >RAM
 
     .stack :

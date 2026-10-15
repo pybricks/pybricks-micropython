@@ -26,19 +26,28 @@
 #define PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE_CH     2
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
-#define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS (0)
+#define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
+// Brick-to-brick messaging is the only Bluetooth Classic feature here. The
+// host computer connection stays on BLE, so there is no RFCOMM serial server,
+// and there is no hub menu to pair a Classic HID gamepad from. Peers connect
+// by address without pairing, so inquiry scanning is not needed either.
+#define PBDRV_CONFIG_BLUETOOTH_PEER                 (1)
+// Matches the Prime hubs so a program behaves the same on all of them. The
+// baseband ceiling is 7 regardless.
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS       (3)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (2)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         515
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32        (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C      (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND     LWP3_HUB_KIND_TECHNIC_SMALL
-#undef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_ESSENTIAL
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_BLOCK_DEVICE                   (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_RAM_SIZE          (258 * 1024)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32      (1)
+#define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_SPI  (1)
 #define PBDRV_CONFIG_BLOCK_DEVICE_W25QXX_STM32_W25Q32 (1)
 // Carve out 256K from the reserved 1M area at the start of the flash.
 // This avoids touching the file system, the area read by the LEGO
@@ -61,7 +70,10 @@
 #define PBDRV_CONFIG_COUNTER                        (0)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_STM32F4                   (1)
+#define PBDRV_CONFIG_GPIO_STM32                     (1)
+
+#define PBDRV_CONFIG_HARDWARE                       (1)
+#define PBDRV_CONFIG_HARDWARE_STM32                 (1)
 
 #define PBDRV_CONFIG_IMU                            (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32           (1)
@@ -93,20 +105,21 @@
 
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)
-#define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+// Uses a variant of mboot, but not the second stage
+// bootloader as used on prime hub, so we require that
+// the user enters update mode manually as we also used
+// to do on primehub.
+#define PBDRV_CONFIG_RESET_STM32_HAS_MBOOT_BOOTLOADER (0)
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_DEBUG_FIRST_PORT          (0)
-#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
-#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (2)
+#define PBDRV_CONFIG_UART_STM32_LL_IRQ              (1)
+#define PBDRV_CONFIG_UART_STM32_LL_IRQ_NUM_UART     (2)
 
 #define PBDRV_CONFIG_USB                            (1)
-#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (64)
-#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS       (2)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_SPIKE_ESSENTIAL
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
-#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_TECHNIC_SMALL_HUB " + Pybricks"
 #define PBDRV_CONFIG_USB_STM32F4                    (1)
 #define PBDRV_CONFIG_USB_CHARGE_ONLY                (0)
 

@@ -24,7 +24,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 5
+#define PBIO_PROTOCOL_VERSION_MINOR 7
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -205,6 +205,20 @@ typedef enum {
      * @since Pybricks Profile v1.4.0
      */
     PBIO_PYBRICKS_COMMAND_WRITE_APP_DATA = 7,
+
+    /**
+     * Requests to write telemetry commands to the hub, such as changing a
+     * sensor mode.
+     *
+     * This is the complement of ::PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY. The
+     * full payload details are given in telemetry.h.
+     *
+     * @since Pybricks Profile v1.7.0
+     *
+     * Parameters:
+     * - payload: One or more telemetry commands.
+     */
+    PBIO_PYBRICKS_COMMAND_WRITE_TELEMETRY = 8,
 } pbio_pybricks_command_t;
 /**
  * Application-specific error codes that are used in ATT_ERROR_RSP.
@@ -277,9 +291,8 @@ typedef enum {
     /**
      * Telemetry data sent from the hub to the host.
      *
-     * The payload is a variable number of bytes that was written to app data.
-     *
-     * Pybricks profile version defines exact encoding of this data.
+     * The payload is one or more telemetry messages. The full payload details
+     * are given in telemetry.h.
      *
      * @since Unreleased. Should not be considered final.
      */
@@ -381,6 +394,12 @@ typedef enum {
      * @since Pybricks Profile v1.5.0
      */
     PBIO_PYBRICKS_STATUS_FILE_IO_IN_PROGRESS = 13,
+    /**
+     * Hub is currently transmitting sensor telemetry.
+     *
+     * @since Pybricks Profile v1.7.0
+     */
+    PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE = 14,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_flags_t;
@@ -458,64 +477,183 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
  */
 #define PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE 11
 
+/**
+ * Hub kind identifier.
+ *
+ * This is the canonical Pybricks identifier for a hub or programmable brick.
+ * It is used as the Product ID Field of the Device Information Service PnP ID
+ * characteristic (see ::pbio_pybricks_pnp_id) and as the @c device-id field of
+ * the firmware metadata.
+ *
+ * These values are Pybricks-assigned. Coincides with the LWP3 hub kind, but
+ * that is a historical convenience only: RCX, NXT and EV3 have no LWP3 hub
+ * kind and are assigned values here.
+ *
+ * Keep in sync with HubType on the host side and with @c PLATFORM_INFO in
+ * tools/metadata.py.
+ */
+typedef enum {
+    /** BOOST Move hub. */
+    PBIO_PYBRICKS_HUB_KIND_MOVE      = 0x40,
+    /** City hub. */
+    PBIO_PYBRICKS_HUB_KIND_CITY      = 0x41,
+    /** Technic hub. */
+    PBIO_PYBRICKS_HUB_KIND_TECHNIC   = 0x80,
+    /** SPIKE Prime hub (and its MINDSTORMS Robot Inventor variant). */
+    PBIO_PYBRICKS_HUB_KIND_PRIME     = 0x81,
+    /** SPIKE Essential hub. */
+    PBIO_PYBRICKS_HUB_KIND_ESSENTIAL = 0x83,
+    /** MINDSTORMS RCX brick. */
+    PBIO_PYBRICKS_HUB_KIND_RCX       = 0xE0,
+    /** MINDSTORMS NXT brick. */
+    PBIO_PYBRICKS_HUB_KIND_NXT       = 0xE1,
+    /** MINDSTORMS EV3 brick. */
+    PBIO_PYBRICKS_HUB_KIND_EV3       = 0xE2,
+} pbio_pybricks_hub_kind_t;
+
+/**
+ * Number of bytes in the Device Information Service PnP ID characteristic value.
+ */
+#define PBIO_PYBRICKS_PNP_ID_SIZE 7
+
+/**
+ * Static initializer for the Device Information Service PnP ID characteristic
+ * value, the compile-time equivalent of pbio_pybricks_pnp_id().
+ *
+ * Expands to ::PBIO_PYBRICKS_PNP_ID_SIZE comma-separated array elements, so
+ * it can also be used as part of a larger array initializer.
+ *
+ * @param [in]  product_id       The Product ID Field (::pbio_pybricks_hub_kind_t).
+ * @param [in]  product_version  The Product Version Field (hub variant).
+ */
+#define PBIO_PYBRICKS_PNP_ID_INIT(product_id, product_version) \
+    0x01, /* Vendor ID Source Field - Bluetooth SIG-assigned ID */ \
+    PBIO_UINT16_LE(0x0397), /* Vendor ID Field - LEGO company identifier */ \
+    PBIO_UINT16_LE(product_id), /* Product ID Field */ \
+    PBIO_UINT16_LE(product_version) /* Product Version Field */
+
+void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version);
+
 extern const uint8_t pbio_pybricks_service_uuid[];
 extern const uint8_t pbio_pybricks_command_event_char_uuid[];
 extern const uint8_t pbio_pybricks_hub_capabilities_char_uuid[];
-
-extern const uint16_t pbio_gatt_device_info_service_uuid;
-extern const uint16_t pbio_gatt_device_name_char_uuid;
-extern const uint16_t pbio_gatt_firmware_version_char_uuid;
-extern const uint16_t pbio_gatt_software_version_char_uuid;
-extern const uint16_t pbio_gatt_pnp_id_char_uuid;
-
-extern const uint8_t pbio_nus_service_uuid[];
-extern const uint8_t pbio_nus_rx_char_uuid[];
-extern const uint8_t pbio_nus_tx_char_uuid[];
-
-/** USB bDeviceClass for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_CLASS 0xFF
-/** USB bDeviceSubClass for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_SUBCLASS 0xC5
-/** USB bDeviceProtocol for Pybricks hubs */
-#define PBIO_PYBRICKS_USB_DEVICE_PROTOCOL 0xF5
-
-/** USB bRequest for Pybricks class-specific requests */
-enum {
-    /** Retrieve GATT characteristics */
-    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_GATT = 0x01,
-    /** Retrieve Pybricks characteristics */
-    PBIO_PYBRICKS_USB_INTERFACE_READ_CHARACTERISTIC_PYBRICKS = 0x02,
-};
-
-// NOTE: These enums values are sent over the wire, so cannot be changed. Also,
-// 0 is skipped to avoid a zeroed buffer from being misinterpreted as a message.
-
-/** Hub to host messages via the Pybricks interface IN endpoint. */
-typedef enum {
-    /**
-     * Analog of BLE status response. Emitted in response to every OUT message
-     * received.
-     */
-    PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
-    /**Analog to BLE notification. Only emitted if subscribed. */
-    PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
-} pbio_pybricks_usb_in_ep_msg_t;
-
-/** Host to hub messages via the Pybricks USB interface OUT endpoint. */
-typedef enum {
-    /** Analog of BLE Client Characteristic Configuration Descriptor (CCCD). */
-    PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
-    /** Analog of BLE Client Characteristic Write with response. */
-    PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
-} pbio_pybricks_usb_out_ep_msg_t;
+extern const uint8_t pbio_pybricks_rfcomm_service_class_uuid[];
 
 /**
- * Size of USB messages for Pybricks USB interface.
+ * Standard Bluetooth GATT UUIDs used as part of the Pybricks "protocol".
  *
- * USB has one extra byte header for a message type discriminator
- * compared to BLE messages.
+ * These are 16-bit UUIDs assigned by the Bluetooth SIG. They are also used to
+ * identify the same characteristics over the USB interface.
  */
-#define PBIO_PYBRICKS_USB_MESSAGE_SIZE(n) (1 + n)
+enum {
+    /** Device Information Service UUID. */
+    PBIO_GATT_DEVICE_INFO_SERVICE_UUID = 0x180A,
+    /** Device Name Characteristic UUID. */
+    PBIO_GATT_DEVICE_NAME_CHAR_UUID = 0x2A00,
+    /** Firmware Version Characteristic UUID. */
+    PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID = 0x2A26,
+    /** Software Version Characteristic UUID (Pybricks protocol version). */
+    PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID = 0x2A28,
+    /** PnP ID Characteristic UUID. */
+    PBIO_GATT_PNP_ID_CHAR_UUID = 0x2A50,
+};
+
+/**
+ * Characteristic namespace for characteristic read requests.
+ *
+ * Selects which group the 16-bit characteristic id in a read request belongs
+ * to, mirroring how a BLE host distinguishes standard GATT characteristics
+ * from Pybricks-specific ones.
+ *
+ * @since Pybricks Profile v1.6.0
+ */
+enum {
+    /** Retrieve GATT characteristics */
+    PBIO_PYBRICKS_READ_SERVICE_GATT = 0x01,
+    /** Retrieve Pybricks characteristics */
+    PBIO_PYBRICKS_READ_SERVICE_PYBRICKS = 0x02,
+};
+
+// The Pybricks USB interface uses a CDC ACM data pipe (Web Serial on the
+// host), which is a raw, bidirectional byte stream with no inherent message
+// boundaries. Each direction therefore frames its messages using the SPIKE
+// Prime variant of Consistent Overhead Byte Stuffing (COBS). See pbio/cobs.h.
+//
+// The byte stream is independent of the USB hardware packet size: a single
+// frame may span several USB packets, and several small frames may share one
+// packet. Only after a frame has been reassembled and decoded is its first
+// byte interpreted as the message type below. This is self synchronizing: a
+// corrupt or oversized frame is discarded at the next delimiter without losing
+// frame alignment.
+
+/**
+ * Hub to host message types.
+ *
+ * The hub to host direction is a single byte stream that multiplexes command
+ * responses, events and read replies, so the first byte of each message
+ * discriminates between them.
+ *
+ * @since Pybricks Profile v1.6.0
+ */
+typedef enum {
+    /**
+     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_COMMAND. The payload is
+     * `[tag, status32]`, where `tag` echoes the byte from the command that
+     * produced this response (so the host can correlate a late response with
+     * the command that produced it) and `status32` is the 32-bit little-endian
+     * command error code, analogous to a BLE write response.
+     */
+    PBIO_PYBRICKS_IN_EP_MSG_RESPONSE = 1,
+    /** Analog to BLE notification. Only emitted if subscribed. */
+    PBIO_PYBRICKS_IN_EP_MSG_EVENT = 2,
+    /**
+     * Reply to a ::PBIO_PYBRICKS_OUT_EP_MSG_READ. The payload is
+     * `[service, char_id_lo, char_id_hi, value...]`, echoing the selector from
+     * the request followed by the characteristic value. An empty value
+     * indicates an unknown characteristic.
+     */
+    PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY = 3,
+} pbio_pybricks_usb_in_ep_msg_t;
+
+/**
+ * Host to hub message types.
+ *
+ * The host to hub direction is a single byte stream, so the first byte of each
+ * message discriminates between a command and a characteristic read request.
+ *
+ * @since Pybricks Profile v1.6.0
+ */
+typedef enum {
+    /**
+     * Subscribe to events. The payload is a single byte: 1 to subscribe, 0 to
+     * unsubscribe. The hub will only send events if the host is subscribed.
+     *
+     * Analog of BLE Client Characteristic Configuration Descriptor (CCCD).
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_SUBSCRIBE = 1,
+    /**
+     * A Pybricks command. The payload is `[tag, ...command]`, where `tag` is a
+     * single opaque byte chosen by the host and echoed back in the response,
+     * and `command` is a Pybricks command (see ::pbio_pybricks_command_t) with
+     * the same encoding as a BLE command write. The hub replies with a
+     * ::PBIO_PYBRICKS_IN_EP_MSG_RESPONSE carrying the same tag.
+     *
+     * The tag lets the host correlate each response with its command, since
+     * the bare CDC byte stream has no transaction correlation of its own.
+     *
+     * Analog of BLE Client Characteristic Write with response.
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_COMMAND = 2,
+    /**
+     * A characteristic read request. The payload is
+     * `[service, char_id_lo, char_id_hi]`, where service is one of the
+     * ::PBIO_PYBRICKS_READ_SERVICE_GATT values. The hub
+     * replies with a ::PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY.
+     *
+     * Analog of a BLE host reading a characteristic by UUID.
+     */
+    PBIO_PYBRICKS_OUT_EP_MSG_READ = 3,
+} pbio_pybricks_usb_out_ep_msg_t;
 
 #endif // _PBIO_PROTOCOL_H_
 

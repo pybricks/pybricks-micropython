@@ -7,7 +7,7 @@
 
 #include <pbio/battery.h>
 #include <pbio/dcmotor.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>

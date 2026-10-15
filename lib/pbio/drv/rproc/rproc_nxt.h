@@ -30,4 +30,6 @@ bool pbdrv_rproc_nxt_get_battery_info(uint16_t *voltage);
 
 pbio_error_t pbdrv_rproc_nxt_get_sensor_adc(uint8_t index, uint16_t *value);
 
+bool pbdrv_rproc_nxt_link_is_idle(void);
+
 #endif // _INTERNAL_PBDRV_RPROC_NXT_H_

@@ -14,8 +14,11 @@
 #include <string.h>
 
 #include <pbdrv/cache.h>
+#include <pbdrv/clock.h>
 #include <pbdrv/display.h>
 #include <pbdrv/gpio.h>
+
+#include <lego/device.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/error.h>
@@ -145,6 +148,18 @@ static uint8_t pbdrv_display_user_frame[PBDRV_CONFIG_DISPLAY_NUM_ROWS][ST7586S_N
  * encoded and sent to the display driver.
  */
 static bool pbdrv_display_user_frame_update_requested;
+
+/**
+ * Number of display updates so far. External readers of the frame buffer
+ * compare this to a previously read value to know whether the buffer changed.
+ */
+static uint32_t pbdrv_display_update_count;
+
+/**
+ * Time of the most recent update request, so readers can tell whether the
+ * application is done drawing.
+ */
+static uint32_t pbdrv_display_update_time;
 
 /**
  * Display buffer in the format ready for sending to the st7586s display driver.
@@ -445,6 +460,7 @@ static pbio_error_t pbdrv_display_ev3_process_thread(pbio_os_state_t *state, voi
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, pbdrv_display_user_frame_update_requested);
         pbdrv_display_user_frame_update_requested = false;
+        pbdrv_display_update_count++;
         pbdrv_display_st7586s_encode_user_frame();
         pbdrv_display_st7586s_write_data_begin(st7586s_send_buf, sizeof(st7586s_send_buf));
         PBIO_OS_AWAIT_UNTIL(state, spi_status == SPI_STATUS_COMPLETE);
@@ -482,6 +498,85 @@ pbio_image_t *pbdrv_display_get_image(void) {
     return &display_image;
 }
 
+// chunks of 8 packed rows, so we can send the whole screen in fixed size chunks.
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS (8)
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE (PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS * PBDRV_CONFIG_DISPLAY_NUM_COLS / 4)
+#define PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM (PBDRV_CONFIG_DISPLAY_NUM_ROWS / PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS)
+
+// Time without drawing after which a frame is considered done, and time after
+// which a frame is sent anyway if drawing never settles.
+#define PBDRV_DISPLAY_TELEMETRY_SETTLE_MS (20)
+#define PBDRV_DISPLAY_TELEMETRY_INTERVAL_MAX_MS (200)
+
+pbsys_telemetry_error_t pbdrv_display_iterate_data(pbsys_telemetry_packet_t *tel, bool *done, uint32_t *size) {
+
+    // Display update count when the current frame read-out started. Initialized
+    // to differ from the update count so the first frame is always sent.
+    static uint32_t last_update_count = UINT32_MAX;
+
+    // Time at which that read-out started.
+    static uint32_t last_started_time;
+
+    // Next chunk to send. Zero means between frames.
+    static uint32_t chunk = 0;
+
+    // Doesn't fit now. Caller retries this same chunk with a fresh buffer.
+    if (*size < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE) {
+        return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+    }
+
+    // Between frames, start reading out a new one only if it changed. Changes
+    // during read-out are picked up by the next one, accepting that a read-out
+    // may span parts of two frames.
+    if (chunk == 0) {
+        if (last_update_count == pbdrv_display_update_count) {
+            *done = true;
+            return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+
+        // User applications including the builtin Python programs often clear
+        // the screen before drawing, so wait for drawing to settle instead of
+        // sending those intermediate states, which would show up as flicker.
+        uint32_t now = pbdrv_clock_get_ms();
+        if (now - pbdrv_display_update_time < PBDRV_DISPLAY_TELEMETRY_SETTLE_MS &&
+            now - last_started_time < PBDRV_DISPLAY_TELEMETRY_INTERVAL_MAX_MS) {
+            *done = true;
+            return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+
+        last_update_count = pbdrv_display_update_count;
+        last_started_time = now;
+    }
+
+    // The buffer rows are padded to a whole number of column triplets, so
+    // rows must be visited one by one instead of as one flat array.
+    uint32_t row = chunk * PBDRV_DISPLAY_TELEMETRY_CHUNK_ROWS;
+    uint32_t col = 0;
+    for (uint32_t i = 0; i < PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE; i++) {
+        // Pack 4 consecutive pixels (2 bits each, LSB first) per byte.
+        uint8_t packed = 0;
+        for (uint32_t p = 0; p < 4; p++) {
+            packed |= (pbdrv_display_user_frame[row][col] & 0x03) << (p * 2);
+            if (++col == PBDRV_CONFIG_DISPLAY_NUM_COLS) {
+                col = 0;
+                row++;
+            }
+        }
+        tel->payload[i] = packed;
+    }
+
+    // Header with position indicating chunk progress.
+    tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    tel->id = LEGO_DEVICE_TYPE_ID_EV3_DISPLAY;
+    tel->location = chunk;
+    tel->mode = 0;
+    *size = PBDRV_DISPLAY_TELEMETRY_CHUNK_SIZE;
+
+    chunk = (chunk + 1) % PBDRV_DISPLAY_TELEMETRY_CHUNK_NUM;
+    *done = chunk == 0;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
 uint8_t pbdrv_display_get_max_value(void) {
     return ST7586S_VALUE_MAX;
 }
@@ -516,6 +611,7 @@ uint8_t pbdrv_display_get_value_from_hsv(uint16_t h, uint8_t s, uint8_t v) {
 
 void pbdrv_display_update(void) {
     pbdrv_display_user_frame_update_requested = true;
+    pbdrv_display_update_time = pbdrv_clock_get_ms();
     pbio_os_request_poll();
 }
 

@@ -17,17 +17,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/gpio.h>
-#include <pbdrv/random.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbsys/host.h>
 
 #include <lego/lwp3.h>
 
@@ -40,7 +38,8 @@
 #include <hci.h>
 #include <util.h>
 
-#include "./bluetooth.h"
+#include <pbdrv/bluetooth.h>
+#include "./bluetooth_address.h"
 #include "./bluetooth_stm32_cc2640.h"
 
 #define DEBUG 0
@@ -53,27 +52,19 @@
 #define DBG(...)
 #define DEBUG_PRINT(...)
 #endif
-// hub name goes in special section so that it can be modified when flashing firmware
-__attribute__((section(".name")))
-char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
-
 static char pbdrv_bluetooth_fw_version[16]; // vX.XX.XX
 
-// used to identify which hub - Device Information Service (DIS).
-// 0x2A50 - service UUID - PnP ID characteristic UUID
-// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-// 0x0397 - Vendor ID Field - LEGO company identifier
-// 0x00XX - Product ID Field - hub device ID
-// 0x0000 - Product Version Field - not applicable to most hubs
-#define PNP_ID "\x50\x2a\x01\x97\x03" PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID "\x00\x00\x00"
-
-#ifndef PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID
-#error "Must define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID"
-#endif
 
 // TI Network Processor Interface (NPI)
 #define NPI_SPI_SOF             0xFE    // start of frame
 #define NPI_SPI_HEADER_LEN      3       // zero pad, SOF, length
+
+// Smallest link layer data length: payload octets and air time per packet.
+#define HCI_LE_MIN_DATA_OCTETS  27
+#define HCI_LE_MIN_DATA_TIME_US 328
+
+#define HCI_EVENT_LE_META               0x3E
+#define HCI_LE_META_DATA_LENGTH_CHANGE  0x07
 
 #define NO_CONNECTION           0xFFFF
 #define NO_AUTH                 0xFF
@@ -107,14 +98,25 @@ static uint16_t hci_command_opcode;
 static bool hci_command_status;
 // set to false when hci command is started and true when command is completed
 static bool hci_command_complete;
+// Set while handle_event() runs. Commands sent from there (replies to the
+// central) must not touch the state above, which belongs to the command that
+// the main thread may be awaiting.
+static bool in_event_handler;
+// Copy of the last (small) command sent from the event handler. The chip may
+// reject it, for example while its transmit queue is full of notifications,
+// in which case it is sent again.
+static uint8_t evt_cmd_buf[32];
+static uint8_t evt_cmd_size;
 // used to wait for device discovery done event
 static bool device_discovery_done;
 // used to synchronize advertising data handler
 static bool advertising_data_received;
 // handle to connected Bluetooth device
-static bool busy_disconnecting;
 static uint16_t conn_handle = NO_CONNECTION;
 static uint16_t conn_mtu;
+// Set while waiting for our reply to the central to go out, since only one
+// command can be queued at a time.
+static bool exchange_mtu_rsp_pending;
 
 // Bonding status of the peripheral.
 static uint16_t bond_auth_err = NO_AUTH;
@@ -131,10 +133,6 @@ static uint16_t pybricks_service_handle, pybricks_service_end_handle;
 static uint16_t pybricks_command_event_char_handle, pybricks_capabilities_char_handle;
 // Pybricks tx notifications enabled
 static bool pybricks_notify_en;
-// Nordic UART service handles
-static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handle, uart_tx_char_handle;
-// Nordic UART tx notifications enabled
-static bool uart_tx_notify_en;
 
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
@@ -143,21 +141,21 @@ static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_blueto
 // after a while.
 #define SCAN_RESTART_INTERVAL 3000
 
-static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+static pbio_bluetooth_peripheral_t peripheral_singleton;
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
     // This platform supports only a single peripheral instance. Some of its
     // states are global variables listed above. This single instance is used
     // troughout the event handler.
     return &peripheral_singleton;
 }
 
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
     return peri == &peripheral_singleton && peri->con_handle != NO_CONNECTION;
 }
 
 bool pbdrv_bluetooth_host_is_connected(void) {
-    return pybricks_notify_en && !busy_disconnecting;
+    return pybricks_notify_en;
 }
 
 bool pbdrv_bluetooth_hci_is_enabled(void) {
@@ -245,10 +243,6 @@ static void spi_set_mrdy(bool mrdy) {
     }
 }
 
-const char *pbdrv_bluetooth_get_hub_name(void) {
-    return pbdrv_bluetooth_hub_name;
-}
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
@@ -303,14 +297,17 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     // Set scan response data
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    data[0] = sizeof(PNP_ID);  // same as 1 + strlen(PNP_ID)
+    // Device Information Service (DIS) PnP ID as service data to identify the hub.
+    data[0] = 1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE;
     data[1] = GAP_ADTYPE_SERVICE_DATA;
-    memcpy(&data[2], PNP_ID, sizeof(PNP_ID));
-    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    pbio_set_uint16_le(&data[2], PBIO_GATT_PNP_ID_CHAR_UUID);
+    pbio_pybricks_pnp_id(&data[4], PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+    const char *hub_name = pbsys_host_get_hub_name();
+    uint8_t hub_name_len = strlen(hub_name);
     data[11] = hub_name_len + 1;
     data[12] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
-    memcpy(&data[13], pbdrv_bluetooth_hub_name, hub_name_len);
-    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max\n");
+    memcpy(&data[13], hub_name, hub_name_len);
+    _Static_assert(13 + PBSYS_HOST_HUB_NAME_SIZE - 1 <= 31, "scan response is 31 octet max\n");
 
     GAP_updateAdvertisingData(GAP_AD_TYPE_SCAN_RSP_DATA, 13 + hub_name_len, data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
@@ -351,16 +348,35 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    // conn_mtu is the negotiated ATT MTU (defaults to the 23-byte minimum on
+    // connect). Cap it at the platform maximum for outgoing messages and
+    // subtract the 3-byte ATT notification header.
+    uint16_t mtu = conn_mtu >= ATT_MTU_SIZE ? conn_mtu : ATT_MTU_SIZE;
+    if (mtu > PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE) {
+        mtu = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+    }
+    return mtu - PBIO_BLUETOOTH_ATT_HEADER_SIZE;
+}
+
+// Outgoing messages must be kept to one link layer packet (minimum ATT MTU).
+// Longer ones get split up, which makes the chip run out of memory and hang
+// under load. Senders cap at the host event size, so it must not exceed this.
+#if PBSYS_CONFIG_HOST_EVENT_OUT_SIZE > ATT_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE
+#error "PBSYS_CONFIG_HOST_EVENT_OUT_SIZE too large for cc2640 to send reliably."
+#endif
+
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
 
     static attHandleValueNoti_t notification;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    notification.handle = pybricks_command_event_char_handle,
+    notification.handle = pybricks_command_event_char_handle;
     notification.pValue = data;
     notification.len = size;
 
+    // Pending means the chip can't queue it yet, so try again.
     do {
         PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         ATT_HandleValueNoti(conn_handle, &notification);
@@ -370,7 +386,7 @@ pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *s
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     static pbio_os_timer_t peripheral_scan_restart_timer;
 
@@ -385,19 +401,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     PBIO_OS_ASYNC_BEGIN(state);
 
     peri->con_handle = NO_CONNECTION;
-
-    // Optionally, disconnect from host (usually Pybricks Code).
-    if (conn_handle != NO_CONNECTION &&
-        (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_DISCONNECT_HOST)) {
-        DEBUG_PRINT("Disconnect from Pybricks code (%d).\n", conn_handle);
-        // Guard used in pbdrv_bluetooth_host_is_connected so higher level
-        // processes won't try to send anything while we are disconnecting.
-        busy_disconnecting = true;
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        GAP_TerminateLinkReq(conn_handle, 0x13);
-        PBIO_OS_AWAIT_UNTIL(state, conn_handle == NO_CONNECTION);
-        busy_disconnecting = false;
-    }
 
 restart_scan:
 
@@ -444,7 +447,7 @@ try_again:
         }
 
         // If advertisement doesn't match context-specific filter, keep scanning.
-        if (read_buf[9] > PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, &read_buf[19], read_buf[18])) {
+        if (read_buf[9] > PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, &read_buf[19], read_buf[18])) {
             continue;
         }
 
@@ -491,7 +494,7 @@ try_again:
         }
 
         // We are looking for a scan response from the same device as before, else keep scanning for responses.
-        if (read_buf[9] != PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, &read_buf[11], sizeof(peri->bdaddr))) {
+        if (read_buf[9] != PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, &read_buf[11], sizeof(peri->bdaddr))) {
             continue;
         }
 
@@ -524,7 +527,7 @@ try_again:
     // Pybricks Code or it will try to pair with the PC. We do this just before
     // starting to advertise again, which covers all our use cases.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    bond_auth_mode_last = (peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
+    bond_auth_mode_last = (peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR) ?
         GAPBOND_PAIRING_MODE_INITIATE : GAPBOND_PAIRING_MODE_NO_PAIRING;
     GAP_BondMgrSetParameter(GAPBOND_PAIRING_MODE, sizeof(bond_auth_mode_last), &bond_auth_mode_last);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -546,7 +549,7 @@ try_again:
 
     DEBUG_PRINT("Connected.\n");
 
-    if (!(peri->config.options & PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
+    if (!(peri->config.options & PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR)) {
         // Pairing not required, so we are done here.
         return PBIO_SUCCESS;
     }
@@ -585,7 +588,7 @@ try_again:
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -674,7 +677,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
 
 pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     HCI_StatusCodes_t status;
 
@@ -728,7 +731,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     HCI_StatusCodes_t status;
 
@@ -780,7 +783,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -922,13 +925,21 @@ static void handle_event(uint8_t *packet) {
     uint8_t event = packet[0];
     uint8_t size = packet[1];
     uint8_t *data = &packet[2];
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbio_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
     (void)size;
 
     switch (event) {
         case HCI_EVENT_COMMAND_COMPLETE:
             hci_command_complete = true;
+            break;
+
+        case HCI_EVENT_LE_META:
+            if (data[0] == HCI_LE_META_DATA_LENGTH_CHANGE) {
+                DEBUG_PRINT("LE data length %04X: tx %d octets %d us, rx %d octets %d us\n",
+                    pbio_get_uint16_le(&data[1]), pbio_get_uint16_le(&data[3]), pbio_get_uint16_le(&data[5]),
+                    pbio_get_uint16_le(&data[7]), pbio_get_uint16_le(&data[9]));
+            }
             break;
 
         case HCI_EVENT_VENDOR_SPECIFIC: {
@@ -944,16 +955,25 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_EXCHANGE_MTU_REQ: {
                     uint16_t client_mtu = (data[7] << 8) | data[6];
 
+                    // Reply with what we can receive. The client applies the
+                    // minimum of that and its own size itself.
+                    attExchangeMTURsp_t rsp;
+                    rsp.serverRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                    ATT_ExchangeMTURsp(connection_handle, &rsp);
+
+                    DEBUG_PRINT("MTU req on %04X: client %d, ours %d\n",
+                        connection_handle, client_mtu, rsp.serverRxMTU);
+
                     // REVISIT: Just saving the main connection MTU for now.
                     // If we allow multiple connections, this will need to be
                     // changed.
                     if (connection_handle == conn_handle) {
-                        conn_mtu = MIN(client_mtu, PBDRV_BLUETOOTH_MAX_MTU_SIZE);
+                        conn_mtu = MIN(client_mtu, PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE);
+                        // This exchange only tells the central what we accept.
+                        // The chip applies the size it may send only for an
+                        // exchange that it runs itself, so ask for one too.
+                        exchange_mtu_rsp_pending = true;
                     }
-
-                    attExchangeMTURsp_t rsp;
-                    rsp.serverRxMTU = PBDRV_BLUETOOTH_MAX_MTU_SIZE;
-                    ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;
 
@@ -1014,12 +1034,6 @@ static void handle_event(uint8_t *packet) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 4,
                                     GATT_PROP_READ,
                                     pbio_pybricks_hub_capabilities_char_uuid);
-                            } else if (start_handle <= uart_service_handle + 1) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP, pbio_nus_rx_char_uuid);
-                            } else if (start_handle <= uart_service_handle + 3) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 3,
-                                    GATT_PROP_NOTIFY, pbio_nus_tx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -1033,10 +1047,11 @@ static void handle_event(uint8_t *packet) {
                         case DEVICE_NAME_UUID: {
                             attReadByTypeRsp_t rsp;
                             uint8_t buf[ATT_MTU_SIZE - 2];
-                            uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+                            const char *hub_name = pbsys_host_get_hub_name();
+                            uint8_t hub_name_len = strlen(hub_name);
 
                             pbio_set_uint16_le(&buf[0], gap_service_handle + 2);
-                            memcpy(&buf[2], pbdrv_bluetooth_hub_name, hub_name_len);
+                            memcpy(&buf[2], hub_name, hub_name_len);
                             rsp.pDataList = buf;
                             rsp.dataLen = hub_name_len + 2;
                             ATT_ReadByTypeRsp(connection_handle, &rsp);
@@ -1061,6 +1076,16 @@ static void handle_event(uint8_t *packet) {
                 case ATT_EVENT_READ_BY_TYPE_RSP:
                     break;
 
+                case ATT_EVENT_EXCHANGEMTURSP: {
+                    uint16_t server_mtu = (data[7] << 8) | data[6];
+                    if (connection_handle == conn_handle) {
+                        conn_mtu = MIN(conn_mtu, server_mtu);
+                    }
+                    DEBUG_PRINT("MTU exchange rsp on %04X: status 0x%02X, server %d, using %d\n",
+                        connection_handle, status, server_mtu, conn_mtu);
+                }
+                break;
+
                 case ATT_EVENT_READ_REQ: {
                     uint16_t handle = (data[7] << 8) | data[6];
 
@@ -1068,8 +1093,9 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
-                        memcpy(&buf[0], pbdrv_bluetooth_hub_name, hub_name_len);
+                        const char *hub_name = pbsys_host_get_hub_name();
+                        uint8_t hub_name_len = strlen(hub_name);
+                        memcpy(&buf[0], hub_name, hub_name_len);
                         rsp.len = hub_name_len;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
@@ -1113,11 +1139,8 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        buf[0] = 0x01; // Vendor ID Source Field - Bluetooth SIG-assigned ID
-                        pbio_set_uint16_le(&buf[1], LWP3_LEGO_COMPANY_ID); // Vendor ID Field
-                        pbio_set_uint16_le(&buf[3], PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID[0]); // Product ID Field
-                        pbio_set_uint16_le(&buf[5], 0); // Product Version Field
-                        rsp.len = 7;
+                        pbio_pybricks_pnp_id(buf, PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT);
+                        rsp.len = PBIO_PYBRICKS_PNP_ID_SIZE;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else if (handle == pybricks_command_event_char_handle + 1) {
@@ -1133,18 +1156,9 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
-                        // REVISIT: this assumes connection_handle == conn_handle
-                        pbio_pybricks_hub_capabilities(buf, conn_mtu - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
+                        pbsys_host_get_hub_capabilities(buf, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
+                        DEBUG_PRINT("capabilities read: mtu %d, max char %d\n", conn_mtu, pbio_get_uint16_le(&buf[0]));
                         rsp.len = sizeof(buf);
-                        rsp.pValue = buf;
-                        ATT_ReadRsp(connection_handle, &rsp);
-                    } else if (handle == uart_tx_char_handle + 1) {
-                        attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE - 1];
-
-                        buf[0] = uart_tx_notify_en;
-                        buf[1] = 0;
-                        rsp.len = 2;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else {
@@ -1207,17 +1221,6 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 20;
                                 ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle <= uart_service_handle) {
-                                attReadByGrpTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                pbio_set_uint16_le(&buf[0], uart_service_handle);
-                                pbio_set_uint16_le(&buf[2], uart_service_end_handle);
-                                pbio_uuid128_reverse_copy(&buf[4], pbio_nus_service_uuid);
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 20;
-                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -1247,22 +1250,14 @@ static void handle_event(uint8_t *packet) {
                     uint16_t char_handle = (data[9] << 8) | data[8];
                     pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 
-                    DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
+                    DBG("w: %04X %d", char_handle, pdu_len - 4);
                     if (char_handle == pybricks_command_event_char_handle) {
-                        if (pbdrv_bluetooth_receive_handler) {
-                            err = pbdrv_bluetooth_receive_handler(&data[10], pdu_len - 4);
-                        }
+                        err = pbio_bluetooth_receive_handler(&data[10], pdu_len - 4);
                     } else if (char_handle == pybricks_command_event_char_handle + 1) {
                         pybricks_notify_en = data[10];
                         err = PBIO_PYBRICKS_ERROR_OK;
                         DBG("noti: %d", pybricks_notify_en);
-                        pbdrv_bluetooth_host_connection_changed();
-                    } else if (char_handle == uart_rx_char_handle) {
-                        // Not implemented
-                    } else if (char_handle == uart_tx_char_handle + 1) {
-                        uart_tx_notify_en = data[10];
-                        err = PBIO_PYBRICKS_ERROR_OK;
-                        DBG("noti: %d", uart_tx_notify_en);
+                        pbio_bluetooth_host_connection_changed();
                     } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
@@ -1323,6 +1318,7 @@ static void handle_event(uint8_t *packet) {
                         DBG("link: %04x", conn_handle);
                         // assume minimum MTU until we get an exchange MTU request
                         conn_mtu = ATT_MTU_SIZE;
+                        DEBUG_PRINT("link established %04X, mtu %d\n", conn_handle, conn_mtu);
 
                         // Establishing the link implicitly stops advertising.
                         pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_NONE;
@@ -1357,8 +1353,7 @@ static void handle_event(uint8_t *packet) {
                     if (conn_handle == connection_handle) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
-                        uart_tx_notify_en = false;
-                        pbdrv_bluetooth_host_connection_changed();
+                        pbio_bluetooth_host_connection_changed();
                     } else if (peri->con_handle == connection_handle) {
                         peri->con_handle = NO_CONNECTION;
                     }
@@ -1387,6 +1382,7 @@ static void handle_event(uint8_t *packet) {
                 case GAP_DEVICE_INIT_DONE:
                 case HCI_EXT_SET_TX_POWER_EVENT:
                 case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
+                case HCI_EXT_SET_MAX_DATA_LENGTH_EVENT:
                 case HCI_EXT_SET_BDADDR_EVENT:
                 case GAP_ADVERT_DATA_UPDATE_DONE:
                 case GAP_MAKE_DISCOVERABLE_DONE:
@@ -1416,8 +1412,27 @@ static void handle_event(uint8_t *packet) {
                     if (opcode == hci_command_opcode) {
                         hci_command_status = true;
                     }
+                    // Replies from the event handler were not queued if
+                    // pending or out of memory, so send again. Nothing else
+                    // may be sent from this event, so the MTU request waits
+                    // for the next status.
+                    if ((status == blePending || status == bleMsgBufferNotAvailable ||
+                         status == bleMemAllocError || status == bleNoResources) &&
+                        evt_cmd_size && opcode == pbio_get_uint16_le(&evt_cmd_buf[3])) {
+                        memcpy(write_buf, evt_cmd_buf, evt_cmd_size);
+                        write_xfer_size = evt_cmd_size;
+                        break;
+                    }
+                    if (opcode == ATT_CMD_EXCHANGE_MTU_RSP && exchange_mtu_rsp_pending && conn_handle != NO_CONNECTION) {
+                        exchange_mtu_rsp_pending = false;
+                        attExchangeMTUReq_t req;
+                        req.clientRxMTU = PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE;
+                        ATT_ExchangeMTUReq(conn_handle, &req);
+                        DEBUG_PRINT("MTU rsp status 0x%02X, requesting %d\n", status, req.clientRxMTU);
+                    }
                     if (status != bleSUCCESS) {
                         DBG("status: %02X %04X", status, connection_handle);
+                        DEBUG_PRINT("cmd status: opcode %04X status 0x%02X\n", opcode, status);
                     }
                 }
                 break;
@@ -1546,10 +1561,19 @@ static const struct {
     {TGAP_GEN_DISC_ADV_INT_MAX, 40},
     {TGAP_CONN_ADV_INT_MIN, 40},
     {TGAP_CONN_ADV_INT_MAX, 40},
-    // scan interval general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_INT, 48},
-    // scan window general discovery: 48 * 0.625ms = 30ms
-    {TGAP_GEN_DISC_SCAN_WIND, 48},
+    // Scan interval 112 * 0.625ms = 70ms. Starting and ending a scan costs
+    // radio and scheduler time, so a longer interval leaves more of the radio
+    // for broadcasting. 70ms is not a multiple of any hub's advertising
+    // interval, so reception does not settle into a pattern of missing them.
+    {TGAP_GEN_DISC_SCAN_INT, 112},
+    // Scan window 56 * 0.625ms = 35ms. The 50% duty cycle leaves radio time
+    // for broadcasting while observing.
+    {TGAP_GEN_DISC_SCAN_WIND, 56},
+    // The Bluetooth chip quietly uses these instead of the two above whenever
+    // there is a connection, so they have to match or observing collapses
+    // while connected to Pybricks Code.
+    {TGAP_CONN_SCAN_INT, 112},
+    {TGAP_CONN_SCAN_WIND, 56},
     {TGAP_CONN_EST_INT_MIN, 40},
     {TGAP_CONN_EST_INT_MAX, 40},
     // scan interval connection established: 48 * 0.625ms = 30ms
@@ -1631,19 +1655,13 @@ static pbio_error_t gap_init(pbio_os_state_t *state, void *context) {
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // ignoring response data
 
-    // This sets the device address to a new random value each time we reset
-    // the Bluetooth chip.
+    // Set a static random address derived from the chip address and firmware
+    // version, so it persists across reboots but changes on firmware update.
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
-        // NB: there doesn't seem to be a way to get random bytes from the
-        // Bluetooth chip itself.
-        uint32_t random[2];
-        pbdrv_random_get(random);
-        // REVISIT: should check return value and use second call to get more
-        // randomness
-        random[1] = ~random[0];
-
-        GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE, (uint8_t *)random);
+        uint8_t addr[6];
+        pbdrv_bluetooth_derive_static_address(addr, pdata->bd_addr);
+        GAP_ConfigDeviceAddr(GAP_INITIATOR_ADDR_TYPE_STATIC, addr);
     }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     // ignoring response data
@@ -1688,6 +1706,16 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     // firmware version is TI BLE-Stack SDK version
     snprintf(pbdrv_bluetooth_fw_version, sizeof(pbdrv_bluetooth_fw_version),
         "v%u.%02u.%02u", read_buf[12], read_buf[11] >> 4, read_buf[11] & 0xf);
+
+    // Limit link layer packets to the 27 byte minimum. Otherwise some hosts
+    // raise what we receive to 251 bytes, and the chip runs out of memory when
+    // it pairs with an Xbox controller. Must come before the next command,
+    // after which the chip refuses this but still accepts longer packets.
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    HCI_EXT_setMaxDataLength(HCI_LE_MIN_DATA_OCTETS, HCI_LE_MIN_DATA_TIME_US,
+        HCI_LE_MIN_DATA_OCTETS, HCI_LE_MIN_DATA_TIME_US);
+    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    DEBUG_PRINT("Set max data length: status 0x%02X\n", read_buf[8]);
 
     PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     HCI_EXT_setLocalSupportedFeatures(HCI_EXT_LOCAL_FEATURE_ENCRYTION);
@@ -1795,59 +1823,9 @@ static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context)
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static const gatt_add_attribute_t uart_gatt_attributes[] = {
-    {
-        .uuid16 = GATT_CHARACTER_UUID,
-        .permissions = GATT_PERMIT_READ,
-    },
-    {
-        .uuid128 = pbio_nus_rx_char_uuid,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-    {
-        .uuid16 = GATT_CHARACTER_UUID,
-        .permissions = GATT_PERMIT_READ,
-    },
-    {
-        .uuid128 = pbio_nus_tx_char_uuid,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-    {
-        .uuid16 = GATT_CLIENT_CHAR_CFG_UUID,
-        .permissions = GATT_PERMIT_READ | GATT_PERMIT_WRITE,
-    },
-};
-
-static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
-
-    static pbio_os_state_t sub;
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // add the Nordic UART service (inspired by Add_Sample_Service() from
-    // sample_service.c in BlueNRG vendor sample code and Adafruit config file
-    // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 6, GATT_MIN_ENCRYPT_KEY_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
-    // ignoring response data
-
-    PBIO_OS_AWAIT(state, &sub, gatt_add_attributes(&sub, uart_gatt_attributes, PBIO_ARRAY_SIZE(uart_gatt_attributes)));
-
-    // the response to the last GATT_AddAttribute contains the first and last handles
-    // that were allocated.
-    uart_service_handle = (read_buf[13] << 8) | read_buf[12];
-    uart_service_end_handle = (read_buf[15] << 8) | read_buf[14];
-    uart_rx_char_handle = uart_service_handle + 2;
-    uart_tx_char_handle = uart_service_handle + 4;
-    DBG("uart: %04X", uart_service_handle);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
 void pbdrv_bluetooth_controller_reset_hard(void) {
-    pybricks_notify_en = uart_tx_notify_en = false;
+    pybricks_notify_en = false;
+    exchange_mtu_rsp_pending = false;
     conn_handle = peripheral_singleton.con_handle = NO_CONNECTION;
 
     spi_set_mrdy(false);
@@ -1892,7 +1870,6 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
         gap_init,
         init_device_information_service,
         init_pybricks_service,
-        init_uart_service,
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));
@@ -2011,7 +1988,9 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
         if (read_xfer_size) {
             // handle the received data
             if (read_buf[NPI_SPI_HEADER_LEN] == HCI_EVENT_PACKET) {
+                in_event_handler = true;
                 handle_event(&read_buf[NPI_SPI_HEADER_LEN + 1]);
+                in_event_handler = false;
             }
         }
     }
@@ -2045,6 +2024,14 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *payload_data, uin
 
     write_xfer_size = data_length + 7;
 
+    // Replies sent from the event handler are fire-and-forget. Their status
+    // must not be mistaken for that of the command the main thread awaits.
+    if (in_event_handler) {
+        evt_cmd_size = write_xfer_size <= sizeof(evt_cmd_buf) ? write_xfer_size : 0;
+        memcpy(evt_cmd_buf, write_buf, evt_cmd_size);
+        return bleSUCCESS;
+    }
+
     // NB: some commands only receive CommandStatus, others only receive specific
     // reply, others receive both
     hci_command_opcode = opcode;
@@ -2054,7 +2041,7 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *payload_data, uin
     return bleSUCCESS;
 }
 
-void pbdrv_bluetooth_init_hci(void) {
+void pbdrv_bluetooth_init(void) {
     pbdrv_gpio_set_pull(&pdata->reset_gpio, PBDRV_GPIO_PULL_NONE);
     bluetooth_reset(RESET_STATE_OUT_LOW);
 

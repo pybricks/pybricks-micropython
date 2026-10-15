@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020-2025 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // STM32 HAL UART and GPIO driver for BlueKitchen BTStack.
 
@@ -10,11 +10,13 @@
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32
 
+#include <stdint.h>
+
 #include <btstack.h>
 #undef UNUSED // btstack and stm32 both define UNUSED
-#include <stm32f4xx_hal.h>
-#include <stm32f4xx_ll_rcc.h>
-#include <stm32f4xx_ll_usart.h>
+#include STM32_HAL_H
+#include STM32_LL_RCC_H
+#include STM32_LL_USART_H
 
 #include "bluetooth_btstack.h"
 #include "bluetooth_btstack_stm32_hal.h"
@@ -120,6 +122,21 @@ static int btstack_stm32_hal_init(const btstack_uart_config_t *config) {
     uart_config = config;
 
     btstack_tx_hdma.Instance = pdata->tx_dma;
+    #if defined(STM32H5)
+    btstack_tx_hdma.Init.Request = pdata->tx_dma_req;
+    btstack_tx_hdma.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    btstack_tx_hdma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    btstack_tx_hdma.Init.SrcInc = DMA_SINC_INCREMENTED;
+    btstack_tx_hdma.Init.DestInc = DMA_DINC_FIXED;
+    btstack_tx_hdma.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    btstack_tx_hdma.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    btstack_tx_hdma.Init.Priority = DMA_HIGH_PRIORITY;
+    btstack_tx_hdma.Init.SrcBurstLength = 1;
+    btstack_tx_hdma.Init.DestBurstLength = 1;
+    btstack_tx_hdma.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0 | DMA_DEST_ALLOCATED_PORT0;
+    btstack_tx_hdma.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    btstack_tx_hdma.Init.Mode = DMA_NORMAL;
+    #else
     btstack_tx_hdma.Init.Channel = pdata->tx_dma_ch;
     btstack_tx_hdma.Init.Direction = DMA_MEMORY_TO_PERIPH;
     btstack_tx_hdma.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -132,9 +149,25 @@ static int btstack_stm32_hal_init(const btstack_uart_config_t *config) {
     btstack_tx_hdma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
     btstack_tx_hdma.Init.MemBurst = DMA_MBURST_SINGLE;
     btstack_tx_hdma.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    #endif
     HAL_DMA_Init(&btstack_tx_hdma);
 
     btstack_rx_hdma.Instance = pdata->rx_dma;
+    #if defined(STM32H5)
+    btstack_rx_hdma.Init.Request = pdata->rx_dma_req;
+    btstack_rx_hdma.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+    btstack_rx_hdma.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    btstack_rx_hdma.Init.SrcInc = DMA_SINC_FIXED;
+    btstack_rx_hdma.Init.DestInc = DMA_DINC_INCREMENTED;
+    btstack_rx_hdma.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+    btstack_rx_hdma.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+    btstack_rx_hdma.Init.Priority = DMA_HIGH_PRIORITY;
+    btstack_rx_hdma.Init.SrcBurstLength = 1;
+    btstack_rx_hdma.Init.DestBurstLength = 1;
+    btstack_rx_hdma.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0 | DMA_DEST_ALLOCATED_PORT0;
+    btstack_rx_hdma.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+    btstack_rx_hdma.Init.Mode = DMA_NORMAL;
+    #else
     btstack_rx_hdma.Init.Channel = pdata->rx_dma_ch;
     btstack_rx_hdma.Init.Direction = DMA_PERIPH_TO_MEMORY;
     btstack_rx_hdma.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -147,6 +180,7 @@ static int btstack_stm32_hal_init(const btstack_uart_config_t *config) {
     btstack_rx_hdma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
     btstack_rx_hdma.Init.MemBurst = DMA_MBURST_SINGLE;
     btstack_rx_hdma.Init.PeriphBurst = DMA_PBURST_SINGLE;
+    #endif
     HAL_DMA_Init(&btstack_rx_hdma);
 
     btstack_huart.Instance = pdata->uart;
@@ -193,12 +227,13 @@ static void btstack_stm32_hal_process(btstack_data_source_t *ds, btstack_data_so
     }
 }
 
+// TODO: use pbdrv_uart_set_baud_rate() - it is identical
+#if defined(STM32F4)
 static int btstack_stm32_hal_set_baudrate(uint32_t baud) {
     USART_TypeDef *usart = btstack_huart.Instance;
     uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
     LL_RCC_ClocksTypeDef rcc_clocks;
 
-    // This assumes STM32F4
     LL_RCC_GetSystemClocksFreq(&rcc_clocks);
     if (usart == USART1
         #if defined(USART6)
@@ -220,6 +255,74 @@ static int btstack_stm32_hal_set_baudrate(uint32_t baud) {
 
     return 0;
 }
+#elif defined(STM32H5)
+static int btstack_stm32_hal_set_baudrate(uint32_t baud) {
+    USART_TypeDef *usart = btstack_huart.Instance;
+    uint32_t periphclk = LL_RCC_PERIPH_FREQUENCY_NO;
+
+    if (usart == USART1) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART1_CLKSOURCE);
+    } else if (usart == USART2) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART2_CLKSOURCE);
+    } else if (usart == USART3) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART3_CLKSOURCE);
+    }
+    #if defined(UART4)
+    else if (usart == UART4) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART4_CLKSOURCE);
+    }
+    #endif /* UART4 */
+    #if defined(UART5)
+    else if (usart == UART5) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART5_CLKSOURCE);
+    }
+    #endif /* UART5 */
+    #if defined(USART6)
+    else if (usart == USART6) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART6_CLKSOURCE);
+    }
+    #endif /* USART6 */
+    #if defined(UART7)
+    else if (usart == UART7) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART7_CLKSOURCE);
+    }
+    #endif /* UART7 */
+    #if defined(UART8)
+    else if (usart == UART8) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART8_CLKSOURCE);
+    }
+    #endif /* UART8 */
+    #if defined(UART9)
+    else if (usart == UART9) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_UART9_CLKSOURCE);
+    }
+    #endif /* UART9 */
+    #if defined(USART10)
+    else if (usart == USART10) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART10_CLKSOURCE);
+    }
+    #endif /* USART10 */
+    #if defined(USART11)
+    else if (usart == USART11) {
+        periphclk = LL_RCC_GetUSARTClockFreq(LL_RCC_USART11_CLKSOURCE);
+    }
+    #endif /* USART11 */
+    #if defined(UART12)
+    else if (usart == UART12) {
+        periphclk = LL_RCC_GetUARTClockFreq(LL_RCC_UART12_CLKSOURCE);
+    }
+    #endif /* UART12 */
+
+    // TODO: confirm that we don't need different prescalar.
+    // i.e. assert_param(IS_LL_USART_BRR_MIN(USARTx->BRR))
+    LL_USART_SetBaudRate(usart, periphclk, LL_USART_PRESCALER_DIV1, LL_USART_OVERSAMPLING_16, baud);
+    LL_USART_SetPrescaler(usart, LL_USART_PRESCALER_DIV1);
+
+    return 0;
+}
+#else
+#error "unsupported MCU for btstack_stm32_hal_set_baudrate()"
+#endif
 
 static int btstack_stm32_hal_open(void) {
     btstack_stm32_hal_set_baudrate(uart_config->baudrate);

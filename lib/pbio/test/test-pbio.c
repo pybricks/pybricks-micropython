@@ -94,6 +94,7 @@ extern struct testcase_t pbdrv_bluetooth_btstack_tests[];
 extern struct testcase_t pbdrv_pwm_tests[];
 extern struct testcase_t pbio_angle_tests[];
 extern struct testcase_t pbio_battery_tests[];
+extern struct testcase_t pbio_cobs_tests[];
 extern struct testcase_t pbio_color_tests[];
 extern struct testcase_t pbio_drivebase_tests[];
 extern struct testcase_t pbio_image_tests[];
@@ -112,6 +113,7 @@ static struct testgroup_t test_groups[] = {
     { "drv/pwm/", pbdrv_pwm_tests },
     { "src/angle/", pbio_angle_tests },
     { "src/battery/", pbio_battery_tests },
+    { "src/cobs/", pbio_cobs_tests },
     { "src/color/", pbio_color_tests },
     { "src/drivebase/", pbio_drivebase_tests },
     { "src/image/", pbio_image_tests },

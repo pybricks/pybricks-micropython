@@ -16,7 +16,7 @@ endif
 
 # Pass lists of files so we don't have to maintain them in two places.
 CMAKE_ARGS += -DPYBRICKS_PYBRICKS_SRC_C="$(subst $(eval ) ,;,$(PYBRICKS_PYBRICKS_SRC_C))"
-CMAKE_ARGS += -DPYBRICKS_LIB_SRC_C="$(subst $(eval ) ,;,$(LWRB_SRC_C) $(PBIO_SRC_C) $(LEGO_SPEC_SRC_C))"
+CMAKE_ARGS += -DPYBRICKS_LIB_SRC_C="$(subst $(eval ) ,;,$(LWRB_SRC_C) $(PBIO_SRC_C))"
 
 ifneq ($(FROZEN_MANIFEST),)
 CMAKE_ARGS += -DMICROPY_FROZEN_MANIFEST=${FROZEN_MANIFEST}

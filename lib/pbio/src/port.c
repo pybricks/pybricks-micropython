@@ -16,10 +16,11 @@
 #include <pbio/util.h>
 
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_dcm.h>
 #include <pbio/port_lump.h>
 
+#include <pbsys/telemetry.h>
 
 #define DEBUG 0
 #if DEBUG
@@ -88,6 +89,10 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
+    /**
+     * Colors to detect by sensors on this port, if it supports them.
+     */
+    pbio_color_map_t *color_map;
 };
 
 static pbio_port_t ports[PBIO_CONFIG_PORT_NUM_DEV];
@@ -193,6 +198,25 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle) {
         return pbdrv_counter_get_abs_angle(port->counter, &angle->millidegrees);
     }
     return PBIO_ERROR_NO_DEV;
+}
+
+/**
+ * Gets the colors that sensors on this port should detect.
+ *
+ * The map is not reset when a sensor is disconnected or when the user program
+ * ends, so it can be inspected and reused afterwards.
+ *
+ * @param [in]  port        The port instance.
+ * @param [out] color_map   The color map.
+ * @return                  ::PBIO_SUCCESS on success, otherwise
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if this port cannot have sensors.
+ */
+pbio_error_t pbio_port_get_color_map(pbio_port_t *port, pbio_color_map_t **color_map) {
+    if (!port->color_map) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+    *color_map = port->color_map;
+    return PBIO_SUCCESS;
 }
 
 /**
@@ -404,25 +428,90 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
 }
 
 /**
- * Gets the analog color values of the LEGO device.
+ * Gets the color measured by a color sensor on this port, in a device
+ * independent HSV format that is comparable across sensors.
  *
- * @param [in]  port        The port instance.
- * @param [in]  type_id     The expected type identifier.
- * @param [out] rgba        The analog color values.
- * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
+ * Does not change sensor modes. Whatever the sensor measures in the mode that
+ * is currently active is what gets returned, and @p mode says which
+ * measurement that is.
+ *
+ * @param [in]  port          The port instance.
+ * @param [out] color_hsv     The measured color, or NULL to skip.
+ * @param [out] color_mapped  The closest match from the color map of this
+ *                            port, or NULL to skip. Set to
+ *                            ::PBIO_COLOR_NOT_AVAILABLE if this port has no
+ *                            color map.
+ * @param [out] id            The type of the attached sensor, or NULL to skip.
+ * @param [out] mode          The Pybricks measurement mode, or NULL to skip.
+ *                            See ::pbio_port_lump_get_color.
+ * @return                    ::PBIO_SUCCESS on success, otherwise
+ *                            ::PBIO_ERROR_NO_DEV if no sensor is attached or
+ *                            it does not measure color in the way that is
+ *                            currently active, or ::PBIO_ERROR_INVALID_OP if
+ *                            the port is not in a mode that provides this
+ *                            measurement.
  */
-pbio_error_t pbio_port_get_analog_rgba(pbio_port_t *port, lego_device_type_id_t type_id, pbio_port_dcm_analog_rgba_t *rgba) {
+pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, lego_device_type_id_t *id, uint8_t *mode) {
 
-    if (!port->connection_manager || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &type_id);
+    pbio_color_t hsv;
+    pbio_error_t err = PBIO_ERROR_NO_DEV;
+
+    if (port->lump_dev) {
+        err = pbio_port_lump_get_color(port->lump_dev, &hsv, id, mode);
+    }
+    // Ports can have both, so fall back to analog sensors if no LUMP device.
+    if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
+        err = pbio_port_dcm_get_color(port->connection_manager, &hsv, id, mode);
+    }
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    return pbio_port_dcm_get_analog_rgba(port->connection_manager, rgba);
+    if (color_hsv) {
+        *color_hsv = hsv;
+    }
+    if (color_mapped) {
+        *color_mapped = port->color_map ?
+            pbio_color_map_find(port->color_map, hsv) : PBIO_COLOR_NOT_AVAILABLE;
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the light intensity measured by a sensor on this port.
+ *
+ * Does not change sensor modes. Whatever the sensor measures in the mode that
+ * is currently active is what gets returned. Values that the sensor does not
+ * measure that way are set to ::PBIO_LIGHT_INTENSITY_NOT_AVAILABLE.
+ *
+ * @param [in]  port        The port instance.
+ * @param [out] reflected   The measured reflection, 0--1000, or NULL to skip.
+ * @param [out] ambient     The measured ambient light, 0--1000, or NULL to skip.
+ * @param [out] id          The type of the attached sensor, or NULL to skip.
+ * @param [out] mode        The Pybricks measurement mode, or NULL to skip.
+ *                          See ::pbio_port_lump_get_color.
+ * @return                  ::PBIO_SUCCESS on success, otherwise see
+ *                          ::pbio_port_get_color for the error codes.
+ */
+pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    pbio_error_t err = PBIO_ERROR_NO_DEV;
+
+    if (port->lump_dev) {
+        err = pbio_port_lump_get_light_intensity(port->lump_dev, reflected, ambient, id, mode);
+    }
+    if (err == PBIO_ERROR_NO_DEV && port->connection_manager) {
+        err = pbio_port_dcm_get_light_intensity(port->connection_manager, reflected, ambient, id, mode);
+    }
+    return err;
 }
 
 /**
@@ -470,6 +559,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index);
+        port->color_map = pbio_color_map_init_instance(port->pdata->external_port_index);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
     }
@@ -489,6 +579,12 @@ void pbio_port_init(void) {
         pbio_port_t *port = &ports[i];
         port->pdata = &pbdrv_ioport_platform_data[i];
         pbio_port_init_one_port(port);
+
+        #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
+        if (i == 0) {
+            pbio_port_set_mode(port, PBIO_PORT_MODE_UART);
+        }
+        #endif
     }
 }
 
@@ -510,7 +606,7 @@ pbio_error_t pbio_port_get_port(pbio_port_id_t id, pbio_port_t **port) {
  * @return Port.
  */
 pbio_port_t *pbio_port_by_index(uint8_t index) {
-    if (index > PBIO_CONFIG_PORT_NUM_DEV) {
+    if (index >= PBIO_CONFIG_PORT_NUM_DEV) {
         index = 0;
     }
     return &ports[index];
@@ -619,6 +715,138 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
         default:
             return PBIO_ERROR_NOT_SUPPORTED;
     }
+}
+
+pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    pbio_port_t *port = pbio_port_by_index(index);
+    if (!port) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    // All ports use the index as position.
+    tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_LEGO;
+    tel->location = index;
+
+    // All encoded motor types report the same data.
+    pbio_servo_t *srv;
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
+    if (pbio_port_get_servo(port, &id, &srv) == PBIO_SUCCESS) {
+        if (*size < sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t)) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->id = id;
+        tel->mode = 0;
+
+        int32_t angle, speed;
+        if (pbio_servo_get_state_user(srv, &angle, &speed) != PBIO_SUCCESS) {
+            // Servo may not be configured because no user program has run yet.
+            // We can still get the angle from the tacho directly.
+            pbio_angle_t tacho;
+            if (pbio_tacho_get_angle(&srv->tacho, &tacho) == PBIO_SUCCESS) {
+                pbio_set_uint32_le(&tel->payload[0], tacho.rotations * 360 + tacho.millidegrees / 1000);
+                *size = sizeof(uint32_t);
+                return PBSYS_TELEMETRY_SUCCESS;
+            }
+            return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+        }
+        pbio_set_uint32_le(&tel->payload[0], angle);
+        pbio_set_uint16_le(&tel->payload[4], speed);
+        uint32_t stall_duration;
+        bool stalled;
+        tel->payload[6] = pbio_servo_is_stalled(srv, &stalled, &stall_duration) != PBIO_SUCCESS ? 0 :
+            (stalled << 1) | pbio_control_is_done(&srv->control);
+
+        // Reports 32-bit angle, 16-bit speed, 1 byte status (stalled || done (lsb)).
+        *size = sizeof(uint32_t) + sizeof(uint16_t) + sizeof(uint8_t);
+        return PBSYS_TELEMETRY_SUCCESS;
+    } else if (port->mode == PBIO_PORT_MODE_QUADRATURE) {
+        // If motor detection failed but it is a quadrature port, it is a motor
+        // port with no device.
+        tel->id = LEGO_DEVICE_TYPE_ID_NONE;
+        tel->mode = 0;
+        *size = 0;
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    // Allows visualizer to mark port as custom port mode.
+    if (port->mode == PBIO_PORT_MODE_I2C || port->mode == PBIO_PORT_MODE_UART) {
+        tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_UKNOWN;
+        tel->id = port->mode == PBIO_PORT_MODE_I2C ? PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C : PBSYS_TELEMETRY_DEVICE_UKNOWN_UART;
+        tel->mode = 0;
+        *size = 0;
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    // Only DCM otherwise has telemetry info for us.
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    // Color and light sensors are a generic class much like motors, so they
+    // are assembled here rather than per platform. Both getters write id and
+    // mode only on success, and agree when both succeed.
+    pbio_color_t color_hsv = PBIO_COLOR_NOT_AVAILABLE;
+    pbio_color_t color_mapped = PBIO_COLOR_NOT_AVAILABLE;
+    uint32_t reflected = PBIO_LIGHT_INTENSITY_NOT_AVAILABLE;
+    uint32_t ambient = PBIO_LIGHT_INTENSITY_NOT_AVAILABLE;
+    lego_device_type_id_t sensor_id = LEGO_DEVICE_TYPE_ID_NONE;
+    uint8_t sensor_mode = 0;
+    bool has_color = pbio_port_get_color(port, &color_hsv, &color_mapped, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
+    bool has_light = pbio_port_get_light_intensity(port, &reflected, &ambient, &sensor_id, &sensor_mode) == PBIO_SUCCESS;
+    if (has_color || has_light) {
+
+        // The payload grows in three fixed parts. Light intensity is always
+        // there, with sentinels for what the sensor does not measure. Color
+        // follows only if measured, and the color map after that.
+        const uint32_t light_size = 2 * sizeof(uint8_t);
+        const uint32_t color_size = 2 * sizeof(uint32_t);
+
+        // Light and color together fit in one message on every hub, even at
+        // the smallest MTU, so only the map is optional.
+        pbio_color_map_t *map = has_color ? port->color_map : NULL;
+        uint32_t map_size = map ? map->num_colors * sizeof(uint32_t) : 0;
+        if (light_size + color_size + map_size > pbsys_telemetry_get_max_payload_size()) {
+            map_size = 0;
+        }
+
+        uint32_t payload_size = light_size + (has_color ? color_size : 0) + map_size;
+        if (*size < payload_size) {
+            return PBSYS_TELEMETRY_ERROR_NO_ROOM;
+        }
+        tel->id = sensor_id;
+        tel->mode = sensor_mode;
+        tel->payload[0] = reflected / 10;
+        tel->payload[1] = ambient / 10;
+        if (has_color) {
+            pbio_set_uint32_le(&tel->payload[light_size], color_hsv);
+            pbio_set_uint32_le(&tel->payload[light_size + sizeof(uint32_t)], color_mapped);
+        }
+        for (uint32_t i = 0; i < map_size / sizeof(uint32_t); i++) {
+            pbio_set_uint32_le(&tel->payload[light_size + color_size + i * sizeof(uint32_t)], map->colors[i]);
+        }
+        *size = payload_size;
+        return PBSYS_TELEMETRY_SUCCESS;
+    }
+
+    // Delegate remaining telemetry to LUMP or passive manager.
+    return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
+           pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
+           pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
+}
+
+pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size) {
+
+    pbio_port_t *port = pbio_port_by_index(index);
+    if (!port || port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+    }
+
+    if (port->lump_dev && pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART)) {
+        return pbio_port_lump_set_telemetry_mode(port->lump_dev, tel, size);
+    }
+
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBIO_CONFIG_PORT

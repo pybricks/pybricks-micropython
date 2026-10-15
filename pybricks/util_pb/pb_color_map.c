@@ -24,104 +24,48 @@
 #include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// This expands pbio_color_rgb_to_hsv with additional calibration steps that
-// ultimately must be properly done in pbio_color_rgb_to_hsv, just like
-// pbio_color_hsv_to_rgb, by adjusting RGB instead of hacking at the HSV value.
-void pb_color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
-
-    // Standard conversion
-    pbio_color_rgb_to_hsv(rgb, hsv);
-
-    // Slight shift for lower hues to make yellow somewhat more accurate
-    if (hsv->h >= 350) {
-        hsv->h = (350 + 2 * (hsv->h - 350)) % 360;
-    } else if (hsv->h < 40) {
-        hsv->h += 10;
-    } else if (hsv->h < 60) {
-        hsv->h = 50 + (hsv->h - 40) / 2;
-    }
+// Gets the color map of the given port, with the default colors selected.
+pbio_color_map_t *pb_color_map_init(pbio_port_t *port) {
+    pbio_color_map_t *color_map = NULL;
+    pb_assert(pbio_port_get_color_map(port, &color_map));
+    pbio_color_map_set_default(color_map);
+    return color_map;
 }
 
-static const mp_rom_obj_tuple_t pb_color_map_default = {
-    {&mp_type_tuple},
-    6,
-    {
-        MP_OBJ_FROM_PTR(&pb_Color_RED_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_NONE_obj),
+// Wraps a color matched by @p color_map as a Color object. Returns None
+// instead if the user chose to detect no colors at all.
+mp_obj_t pb_color_map_get_color(const pbio_color_map_t *color_map, pbio_color_t color_matched) {
+    if (color_map->num_colors == 0) {
+        return mp_const_none;
     }
-};
-
-// Set initial default map
-void pb_color_map_save_default(mp_obj_t *color_map) {
-    *color_map = MP_OBJ_FROM_PTR(&pb_color_map_default);
+    return pb_type_Color_from_hsv(color_matched);
 }
 
-// Get a discrete color that matches the given hsv values most closely
-mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
+mp_obj_t pb_color_map_detectable_colors_method(pbio_color_map_t *color_map, mp_obj_t colors_in) {
 
-    // Unpack the main list
-    mp_obj_t *colors;
-    size_t n;
-    mp_obj_get_array(*color_map, &n, &colors);
-
-    // Initialize minimal cost to maximum
-    mp_obj_t match = mp_const_none;
-    int32_t cost_now = INT32_MAX;
-    int32_t cost_min = INT32_MAX;
-
-    pbio_color_distance_func_t distance_func = pbio_color_get_distance_saturation_heuristic;
-
-    // If user only provides fully saturated colors (hue, 100, 100) and/or fully
-    // desaturated colors (0, 0, value), use a simplified heuristic matcher for
-    // better default results that are distance independent. Otherwise use a
-    // bicone color distance measure.
-    for (size_t i = 0; i < n; i++) {
-        const pbio_color_hsv_t *candidate = pb_type_Color_get_hsv(colors[i]);
-
-        // Use bicone mapping if custom (realistic) colors provided.
-        bool idealized_grayscale = candidate->s == 0 && candidate->h == 0;
-        bool idealized_color = candidate->s == 100 && candidate->v == 100;
-        if (!idealized_grayscale && !idealized_color) {
-            distance_func = pbio_color_get_distance_bicone_squared;
-            break;
-        }
-    }
-
-    // Compute cost for each candidate
-    for (size_t i = 0; i < n; i++) {
-
-        // Evaluate the cost function
-        cost_now = distance_func(hsv, pb_type_Color_get_hsv(colors[i]));
-
-        // If cost is less than before, update the minimum and the match
-        if (cost_now < cost_min) {
-            cost_min = cost_now;
-            match = colors[i];
-        }
-    }
-    return match;
-}
-
-mp_obj_t pb_color_map_detectable_colors_method(mp_obj_t *self_color_map, mp_obj_t colors_in) {
     // If no arguments are given, return current map
     if (colors_in == mp_const_none) {
-        return *self_color_map;
+        mp_obj_t colors[PBIO_COLOR_MAP_NUM_COLORS];
+        for (uint8_t i = 0; i < color_map->num_colors; i++) {
+            colors[i] = pb_type_Color_from_hsv(color_map->colors[i]);
+        }
+        return mp_obj_new_tuple(color_map->num_colors, colors);
     }
 
-    // If arguments given, ensure all tuple elements have the right type
+    // If arguments given, ensure all elements have the right type
     mp_obj_t *color_objs;
     size_t n;
     mp_obj_get_array(colors_in, &n, &color_objs);
+    if (n > PBIO_COLOR_MAP_NUM_COLORS) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    pbio_color_t colors[PBIO_COLOR_MAP_NUM_COLORS];
     for (size_t i = 0; i < n; i++) {
-        pb_assert_type(color_objs[i], &pb_type_Color);
+        colors[i] = pb_type_Color_get_hsv(color_objs[i]);
     }
 
     // Save the given map
-    *self_color_map = colors_in;
+    pb_assert(pbio_color_map_set(color_map, colors, n));
     return mp_const_none;
 }
 

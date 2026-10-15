@@ -1072,7 +1072,7 @@ typedef enum
 #define GAP_APPEARE_HID_KEYBOARD                0x03C1 //!< HID Keyboard
 #define GAP_APPEARE_HID_MOUSE                   0x03C2 //!< HID Mouse
 #define GAP_APPEARE_HID_JOYSTIC                 0x03C3 //!< HID Joystick
-#define GAP_APPEARE_HID_GAMEPAD                 0x03C4 //!< HID Gamepad
+#define GAP_APPEARE_BLUETOOTH_CLASSIC_GAMEPAD                 0x03C4 //!< HID Gamepad
 #define GAP_APPEARE_HID_DIGITIZER_TYABLET       0x03C5 //!< HID Digitizer Tablet
 #define GAP_APPEARE_HID_DIGITAL_CARDREADER      0x03C6 //!< HID Card Reader
 #define GAP_APPEARE_HID_DIGITAL_PEN             0x03C7 //!< HID Digital Pen

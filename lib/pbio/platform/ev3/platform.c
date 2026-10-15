@@ -59,11 +59,12 @@
 
 #include <umm_malloc.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/button.h>
 
 #include <pbdrv/cache.h>
 #include <pbdrv/compiler.h>
+#include <pbdrv/hardware.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/reset.h>
 
@@ -302,7 +303,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART1,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 31, 28, 8, 10),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(6, 23, 20, 2, 2),
@@ -330,7 +331,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = UART0,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(18, 23, 20, 8, 12),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(18, 11, 8, 8, 15),
@@ -354,7 +355,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE1,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 3, 0, 8, 9),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(16, 27, 24, 7, 11),
@@ -378,7 +379,7 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PRU0_LINE0,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p1 = PBDRV_GPIO_EV3_PIN(19, 11, 8, 6, 4),
             #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
             .p2 = PBDRV_GPIO_EV3_PIN(17, 7, 4, 7, 8),
@@ -766,7 +767,11 @@ static void mmu_init(void) {
 enum {
     BOOT_EEPROM_I2C_ADDRESS = 0x50,
 };
-uint8_t pbdrv_ev3_bluetooth_mac_address[6];
+/**
+ * Hardware version and its bitwise complement, as stored in the boot EEPROM
+ * at 0x3f00. Consumed by the EV3 hardware version driver.
+ */
+uint8_t pbdrv_ev3_eeprom_hardware_version[2];
 
 const uint8_t UID_BASE[16];
 
@@ -857,13 +862,11 @@ void SystemInit(void) {
 
     // Check for presence of hardware version number according to notes at
     // https://www.ev3dev.org/docs/kernel-hackers-notebook/ev3-eeprom/
+    memcpy(pbdrv_ev3_eeprom_hardware_version, &i2c_buf[0], 2);
     unsigned int b0 = i2c_buf[0];
     unsigned int b1 = i2c_buf[1] ^ 0xff;
-    if (b0 == b1) {
-        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[6], 6);
-    } else {
-        memcpy(pbdrv_ev3_bluetooth_mac_address, &i2c_buf[0], 6);
-    }
+    // The Bluetooth MAC address follows the version field where there is one.
+    pbdrv_hardware_set_mac_address(b0 == b1 ? &i2c_buf[6] : &i2c_buf[0]);
 
     // Separate heap for large allocations - defined in linker script.
     extern char pb_umm_heap_start;

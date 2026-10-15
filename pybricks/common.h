@@ -27,11 +27,6 @@
 
 void pb_package_pybricks_init(bool import_all);
 
-#if PYBRICKS_PY_COMMON_BLE
-mp_obj_t pb_type_BLE_new(mp_obj_t broadcast_channel_in, mp_obj_t observe_channels_in);
-void pb_type_ble_start_cleanup(void);
-#endif
-
 #if PYBRICKS_PY_COMMON_CHARGER
 
 extern const mp_obj_type_t pb_type_Charger;
@@ -45,7 +40,7 @@ mp_obj_t pb_type_Charger_obj_new(void);
  * @param [in]  hsv         The HSV color for the light.
  * @return                  None or awaitable.
  */
-typedef mp_obj_t (*pb_type_ColorLight_on_t)(void *context, const pbio_color_hsv_t *hsv);
+typedef mp_obj_t (*pb_type_ColorLight_on_t)(void *context, pbio_color_t hsv);
 
 // pybricks._common.ColorLight()
 mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on);

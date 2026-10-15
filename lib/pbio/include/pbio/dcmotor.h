@@ -23,7 +23,6 @@
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/parent.h>
-#include <pbio/port.h>
 
 /**
  * Direction a motor turns in when a positive voltage is applied.

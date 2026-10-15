@@ -4,28 +4,17 @@
 #ifndef _PBIO_PORT_DCM_H_
 #define _PBIO_PORT_DCM_H_
 
+#include <lego/device.h>
+
+#include <pbio/color.h>
 #include <pbio/config.h>
-#include <pbio/port.h>
+#include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbdrv/ioport.h>
 
-typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
+#include <pbsys/telemetry.h>
 
-/**
- * Cached analog values when a particular light color is active.
- */
-typedef struct {
-    /** Red analog value. */
-    uint32_t r;
-    /** Green analog value. */
-    uint32_t g;
-    /** Blue analog value. */
-    uint32_t b;
-    /** Ambient analog value. */
-    uint32_t a;
-    /** Time of most recent full update. */
-    uint32_t last_sample_time;
-} pbio_port_dcm_analog_rgba_t;
+typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 
 #if PBIO_CONFIG_PORT_DCM
 
@@ -70,15 +59,45 @@ pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active);
 
 /**
- * Gets the analog color values of the device connected to the port.
+ * Gets the color measured by an analog color sensor on the port, in a device
+ * independent HSV format that is comparable across sensors.
  *
  * @param [in]  dcm         The device connection manager.
- * @param [in]  rgba        Analog values struct to hold the result.
- * @return                  ::PBIO_SUCCESS if values are retrieved
- *                          ::PBIO_ERROR_NO_DEV if there is no device that
- *                          can produce these values.
+ * @param [out] color_hsv   The measured color.
+ * @param [out] id          The type of the sensor that took the measurement,
+ *                          or NULL to skip.
+ * @param [out] mode        The measurement mode of that sensor, or NULL to
+ *                          skip. See ::pbio_port_lump_get_color.
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if no color sensor is attached
+ *                          or it does not measure color in the way that is
+ *                          currently active.
+ *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
  */
-pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba);
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode);
+
+/**
+ * Gets the light intensity measured by an analog light sensor on the port.
+ *
+ * @param [in]  dcm         The device connection manager.
+ * @param [out] reflected   The measured reflection, 0--1000, or
+ *                          ::PBIO_LIGHT_INTENSITY_NOT_AVAILABLE if the sensor
+ *                          does not measure it. May be NULL to skip.
+ * @param [out] ambient     The measured ambient light, same scale and sentinel
+ *                          as @p reflected. May be NULL to skip.
+ * @param [out] id          The type of the sensor that took the measurement,
+ *                          or NULL to skip.
+ * @param [out] mode        The measurement mode of that sensor, or NULL to
+ *                          skip. See ::pbio_port_lump_get_color.
+ * @return                  ::PBIO_SUCCESS on success.
+ *                          ::PBIO_ERROR_NO_DEV if no light sensor is attached
+ *                          or it measures neither value in the way that is
+ *                          currently active.
+ *                          ::PBIO_ERROR_AGAIN if no sample is available yet.
+ */
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode);
+
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 #else // PBIO_CONFIG_PORT_DCM
 
@@ -102,12 +121,20 @@ static inline uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, cons
     return 0;
 }
 
-static inline pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
+}
+
+static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
 }
 
 static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
 }
 
 #endif // PBIO_CONFIG_PORT_DCM

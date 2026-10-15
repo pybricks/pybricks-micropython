@@ -12,7 +12,7 @@
 #include <pbio/error.h>
 
 typedef struct {
-    pbio_error_t (*set_hsv)(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv);
+    pbio_error_t (*set_hsv)(pbdrv_led_dev_t *dev, pbio_color_t hsv);
 } pbdrv_led_funcs_t;
 
 /** LED device instance. */

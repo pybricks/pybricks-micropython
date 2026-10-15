@@ -16,7 +16,7 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include <pbsys/core.h>
 #include <pbsys/main.h>
@@ -28,10 +28,11 @@
 #include <nxos/drivers/_aic.h>
 #include <nxos/drivers/_motors.h>
 #include <nxos/drivers/_sensors.h>
-#include <nxos/drivers/bt.h>
 #include <nxos/drivers/i2c.h>
 #include <nxos/drivers/systick.h>
 #include <nxos/interrupts.h>
+
+#include "../../drv/adc/adc_nxt.h"
 
 const pbdrv_gpio_t pbdrv_ioport_platform_data_vcc_pin = {
     .bank = NULL,
@@ -76,11 +77,11 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 23},
             .p6 = {.pin = 18},
-            .adc_p1 = 0,
-            .adc_p6 = 4,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(0),
+            .adc_p6 = 1,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -91,11 +92,11 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 28},
             .p6 = {.pin = 19},
-            .adc_p1 = 1,
-            .adc_p6 = 5,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(1),
+            .adc_p6 = 2,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -106,11 +107,11 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 29},
             .p6 = {.pin = 20},
-            .adc_p1 = 2,
-            .adc_p6 = 6,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(2),
+            .adc_p6 = 3,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
@@ -121,17 +122,16 @@ const pbdrv_ioport_platform_data_t pbdrv_ioport_platform_data[PBDRV_CONFIG_IOPOR
         .uart_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
-        .pins = &(pbdrv_ioport_pins_t) {
+        .pins = &(const pbdrv_ioport_pins_t) {
             .p5 = {.pin = 30},
             .p6 = {.pin = 2},
-            .adc_p1 = 3,
+            .adc_p1 = PBDRV_ADC_NXT_CH_AVR_SENSOR(3),
+            // Pin 6 of port 4 is also wired to the dedicated AD7 input.
             .adc_p6 = 7,
         },
         .supported_modes = PBIO_PORT_MODE_I2C | PBIO_PORT_MODE_GPIO_ADC | PBIO_PORT_MODE_LEGO_DCM,
     },
 };
-
-char bluetooth_address_string[6 * 3]; // 6 hex bytes separated by ':' and ending in 0.
 
 // Called from assembly code in startup.S
 void SystemInit(void) {
@@ -156,25 +156,13 @@ void SystemInit(void) {
         pbdrv_gpio_input(&pins->p6);
     }
 
-    // TODO: we should be able to convert these to generic pbio drivers and use
-    // pbio_busy_count_busy instead of busy waiting for 100ms.
-    nx__motors_init();
-    // nx__sensors_init();
-    // nx_i2c_init();
-
-    /* Delay a little post-init, to let all the drivers settle down. */
-    nx_systick_wait_ms(100);
-
-    // Get Bluetooth address for use as unique USB serial number.
-    nx_bt_init();
-    nx_bt_set_friendly_name("Pybricks NXT");
-    uint8_t local_addr[7];
-    if (nx_bt_get_local_addr(local_addr)) {
-        snprintf(bluetooth_address_string, sizeof(bluetooth_address_string),
-            "%02X:%02X:%02X:%02X:%02X:%02X",
-            local_addr[0], local_addr[1], local_addr[2],
-            local_addr[3], local_addr[4], local_addr[5]);
-    }
+    // Pins 5 and 6 of port 4 are shared with the RS485 transceiver, whose
+    // driver enable is RTS0. That pin resets to an input with its pull-up on,
+    // which enables the transceiver and lets it drive the port, so disable.
+    static const pbdrv_gpio_t rs485_driver_enable = { .pin = 7 };
+    pbdrv_gpio_alt(&rs485_driver_enable, false);
+    pbdrv_gpio_set_pull(&rs485_driver_enable, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_out_low(&rs485_driver_enable);
 
     // Separate heap for large allocations - defined in linker script.
     extern char pb_umm_heap_start;

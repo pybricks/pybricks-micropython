@@ -15,7 +15,6 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON                      (1)
-#define PYBRICKS_PY_COMMON_BLE                  (0)
 #define PYBRICKS_PY_COMMON_CHARGER              (0)
 #define PYBRICKS_PY_COMMON_COLOR_LIGHT          (1)
 #define PYBRICKS_PY_COMMON_CONTROL              (1)
@@ -36,6 +35,7 @@
 #define PYBRICKS_PY_IODEVICES                   (1)
 #define PYBRICKS_PY_IODEVICES_ANALOG_SENSOR     (1)
 #define PYBRICKS_PY_IODEVICES_DC_MOTOR          (1)
+#define PYBRICKS_PY_IODEVICES_BLUETOOTH_CLASSIC_GAMEPAD       (1)
 #define PYBRICKS_PY_IODEVICES_I2C_DEVICE        (1)
 #define PYBRICKS_PY_IODEVICES_LUMP_DEVICE       (1)
 #define PYBRICKS_PY_IODEVICES_LWP3_DEVICE       (0)
@@ -43,7 +43,9 @@
 #define PYBRICKS_PY_IODEVICES_UART_DEVICE       (1)
 #define PYBRICKS_PY_IODEVICES_XBOX_CONTROLLER   (0)
 #define PYBRICKS_PY_MESSAGING                   (1)
-#define PYBRICKS_PY_MESSAGING_RFCOMM            (1)
+#define PYBRICKS_PY_MESSAGING_APP_DATA          (1)
+#define PYBRICKS_PY_MESSAGING_BLE_RADIO         (0)
+#define PYBRICKS_PY_MESSAGING_HUB_NETWORK       (1)
 #define PYBRICKS_PY_NXTDEVICES                  (1)
 #define PYBRICKS_PY_PARAMETERS                  (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON           (1)
@@ -57,8 +59,8 @@
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_GYRO     (0)
 #define PYBRICKS_PY_ROBOTICS_DRIVEBASE_SPIKE    (0)
 #define PYBRICKS_PY_TOOLS                       (1)
+#define PYBRICKS_PY_TOOLS_COBS                  (1)
 #define PYBRICKS_PY_TOOLS_HUB_MENU              (0)
-#define PYBRICKS_PY_TOOLS_APP_DATA              (1)
 
 // Pybricks options
 #define PYBRICKS_OPT_COMPILER                   (1)

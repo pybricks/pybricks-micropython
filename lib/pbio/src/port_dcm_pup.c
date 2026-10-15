@@ -3,7 +3,7 @@
 
 #include <pbio/config.h>
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_dcm.h>
 #include <pbdrv/ioport.h>
 
@@ -352,8 +352,28 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return dcm->sensor_data;
 }
 
-pbio_error_t pbio_port_dcm_get_analog_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *rgba) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
+    // This platform has no analog color sensors.
+    return PBIO_ERROR_NO_DEV;
 }
+
+pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+    // This platform has no analog light sensors.
+    return PBIO_ERROR_NO_DEV;
+}
+
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    // Only pass through known motors and lights.
+    lego_device_type_id_t id = LEGO_DEVICE_TYPE_ID_ANY_DC_MOTOR;
+    pbio_error_t err = pbio_port_dcm_assert_type_id(dcm, &id);
+
+    // No mode and payload.
+    tel->id = err == PBIO_SUCCESS ? id : LEGO_DEVICE_TYPE_ID_NONE;
+    tel->mode = 0;
+    *size = 0;
+    return PBSYS_TELEMETRY_SUCCESS;
+}
+
 
 #endif // PBIO_CONFIG_PORT_DCM_PUP

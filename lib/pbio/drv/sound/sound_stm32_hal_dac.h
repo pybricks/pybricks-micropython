@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // Sound driver using DAC on STM32 MCU.
 
@@ -29,10 +29,17 @@ typedef struct {
     TIM_TypeDef *tim;
     /** Clock rate supplied to timer (Hz). */
     uint32_t tim_clock_rate;
+    #if defined(STM32H5)
+    /** The DMA channel. */
+    DMA_Channel_TypeDef *dma;
+    /** The DMA request number. */
+    uint32_t dma_req;
+    #else
     /** The DMA peripheral. */
     DMA_Stream_TypeDef *dma;
     /** The DMA channel (one of HAL DMA_Channel_selection). */
     uint32_t dma_ch;
+    #endif
     /** The DMA interrupt. */
     IRQn_Type dma_irq;
 } pbdrv_sound_stm32_hal_dac_platform_data_t;

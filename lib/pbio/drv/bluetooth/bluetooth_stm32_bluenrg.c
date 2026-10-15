@@ -15,16 +15,15 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bluetooth.h"
-
 #include <pbdrv/bluetooth.h>
+
+#include <pbio/bluetooth.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
-#include <pbsys/config.h>
-#include <pbsys/storage.h>
+#include <pbsys/host.h>
 
 
 #include <lego/lwp3.h>
@@ -35,6 +34,8 @@
 #include <hci_le.h>
 #include <hci_tl.h>
 
+#include "./bluetooth_address.h"
+
 #define DEBUG 0
 
 #if DEBUG
@@ -44,19 +45,8 @@
 #define DEBUG_PRINT(...)
 #endif
 
-// hub name goes in special section so that it can be modified when flashing firmware
-__attribute__((section(".name")))
-char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
-
 static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 
-// used to identify which hub - Device Information Service (DIS).
-// 0x2A50 - service UUID - PnP ID characteristic UUID
-// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-// 0x0397 - Vendor ID Field - LEGO company identifier
-// 0x0040 - Product ID Field - Move hub device ID
-// 0x0000 - Product Version Field - not applicable to Move hub
-#define PNP_ID "\x50\x2a\x01\x97\x03\x40\x00\x00\x00"
 
 // bluetooth address is set at factory at this address
 #define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
@@ -65,9 +55,6 @@ static char pbdrv_bluetooth_fw_version[5]; // 0.0a
 #define BLUENRG_HEADER_SIZE 5
 // value returned in READY byte of BlueNRG SPI header when interface is ready
 #define BLUENRG_READY 2
-
-// max data size for Nordic UART characteristics
-#define NUS_CHAR_SIZE (ATT_MTU - 3)
 
 // BlueNRG header data for SPI write xfer
 static const uint8_t write_header_tx[BLUENRG_HEADER_SIZE] = { 0x0a };
@@ -88,6 +75,20 @@ static uint8_t dummy_read_buf[1];
 // size of current SPI xfer Tx data (not including BlueNRG read/write header)
 // value is set to 0 when Tx is complete
 static uint8_t write_xfer_size;
+
+// Write responses to the central are sent from the event handler, possibly
+// while the main thread has a command in write_buf or awaits the completion
+// of one. They get their own buffer so neither overwrites the other, and their
+// completion events are not mistaken for those of the main thread.
+#define WRITE_RESPONSE_OPCODE cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_RESPONSE)
+static uint8_t reply_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + 7 + ATT_MTU - 3];
+// size of pending reply, set to 0 when Tx is complete
+static uint8_t reply_xfer_size;
+
+// The chip takes one command at a time, so nothing else is sent until it has
+// reported the last command as completed (or its status). This applies to
+// replies and the main thread's commands alike.
+static bool hci_command_in_flight;
 
 // reflects state of SPI_IRQ pin
 volatile bool spi_irq;
@@ -111,11 +112,7 @@ static uint16_t pybricks_service_handle;
 static uint16_t pybricks_command_event_char_handle;
 static uint16_t pybricks_hub_capabilities_char_handle;
 
-// Nordic UART GATT service handles
-static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
-
 static bool pybricks_notify_en;
-static bool uart_tx_notify_en;
 
 static const pbdrv_gpio_t reset_gpio = { .bank = GPIOB, .pin = 6 };
 static const pbdrv_gpio_t cs_gpio = { .bank = GPIOB, .pin = 12 };
@@ -124,16 +121,16 @@ static const pbdrv_gpio_t mosi_gpio = { .bank = GPIOC, .pin = 3 };
 static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
 static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
 
-static pbdrv_bluetooth_peripheral_t peripheral_singleton;
+static pbio_bluetooth_peripheral_t peripheral_singleton;
 
-pbdrv_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
+pbio_bluetooth_peripheral_t *pbdrv_bluetooth_peripheral_get_by_index(uint8_t index) {
     // This platform supports only a single peripheral instance. Some of its
     // states are global variables listed above. This single instance is used
     // troughout the event handler.
     return &peripheral_singleton;
 }
 
-bool pbdrv_bluetooth_peripheral_is_connected(pbdrv_bluetooth_peripheral_t *peri) {
+bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_peripheral_t *peri) {
     return peri == &peripheral_singleton && peri->con_handle != 0;
 }
 
@@ -242,37 +239,101 @@ static void spi_init(void) {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-const char *pbdrv_bluetooth_get_hub_name(void) {
-    return pbdrv_bluetooth_hub_name;
-}
-
 const char *pbdrv_bluetooth_get_fw_version(void) {
     return pbdrv_bluetooth_fw_version;
 }
+
+// Many HCI commands in this driver have parameters that are all fixed at
+// compile time. Storing the complete command as const data takes considerably
+// less flash than packing the parameters at runtime with the aci_*_begin
+// functions.
+typedef struct {
+    uint16_t opcode;
+    uint8_t plen;
+    uint8_t params[];
+} hci_const_cmd_t;
+
+static void hci_send_const_cmd(const hci_const_cmd_t *cmd) {
+    struct hci_request rq = {
+        .opcode = cmd->opcode,
+        .cparam = (void *)cmd->params,
+        .clen = cmd->plen,
+    };
+    hci_send_req(&rq);
+}
+
+// State for hci_cmd_thread(). A single shared instance suffices because at
+// most one HCI command exchange is in flight at a time, which is the same
+// assumption the global hci_command_complete flag already makes.
+static pbio_os_state_t hci_cmd_sub;
+
+// Sends a command with constant parameters and waits for the completion flag
+// to be set.
+static pbio_error_t hci_cmd_thread(pbio_os_state_t *state, const hci_const_cmd_t *cmd, bool *flag) {
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    hci_send_const_cmd(cmd);
+    PBIO_OS_AWAIT_UNTIL(state, *flag);
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
+// Sends a command with constant parameters and awaits the command complete
+// (or, for the _STATUS variant, command status) event.
+#define HCI_AWAIT_CONST_CMD(state, cmd) \
+    PBIO_OS_AWAIT(state, &hci_cmd_sub, hci_cmd_thread(&hci_cmd_sub, cmd, &hci_command_complete))
+#define HCI_AWAIT_CONST_CMD_STATUS(state, cmd) \
+    PBIO_OS_AWAIT(state, &hci_cmd_sub, hci_cmd_thread(&hci_cmd_sub, cmd, &hci_command_status))
+
+// Equivalent of aci_gap_set_discoverable_begin(ADV_IND, 0, 0,
+// STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE, 0, NULL, sizeof(service_uuids),
+// service_uuids, 0, 0).
+static const hci_const_cmd_t cmd_gap_set_discoverable = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_DISCOVERABLE),
+    .plen = 30,
+    .params = {
+        ADV_IND,
+        0x00, 0x00, // Adv_Interval_Min
+        0x00, 0x00, // Adv_Interval_Max
+        STATIC_RANDOM_ADDR,
+        NO_WHITE_LIST_USE,
+        0, // Local_Name_Length
+        17, // Service_Uuid_Length
+        // Pybricks service UUID: c5f50001-8280-46da-89f4-6d8051e4aeef
+        AD_TYPE_128_BIT_SERV_UUID,
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5,
+        0x00, 0x00, // Slave_Conn_Interval_Min
+        0x00, 0x00, // Slave_Conn_Interval_Max
+    },
+};
 
 /**
  * Sets advertising data and enables advertisements.
  */
 pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void *context) {
-    // c5f50001-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t service_uuids[] = {
-        AD_TYPE_128_BIT_SERV_UUID,
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5 // Pybricks service UUID
+    tBleStatus status;
+
+    // Scan response data up to the hub name, which is appended at runtime.
+    static const uint8_t response_data_template[] = {
+        // Device Information Service (DIS) PnP ID as service data to identify the hub.
+        1 + 2 + PBIO_PYBRICKS_PNP_ID_SIZE,
+        AD_TYPE_SERVICE_DATA,
+        PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID),
+        PBIO_PYBRICKS_PNP_ID_INIT(PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT),
+        0, // hub name length + 1, filled in at runtime
+        AD_TYPE_COMPLETE_LOCAL_NAME,
     };
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
     uint8_t response_data[25];
-    response_data[0] = sizeof(PNP_ID);
-    response_data[1] = AD_TYPE_SERVICE_DATA;
-    memcpy(&response_data[2], PNP_ID, sizeof(PNP_ID) - 1);
+    memcpy(response_data, response_data_template, sizeof(response_data_template));
+    const char *pbdrv_bluetooth_hub_name = pbsys_host_get_hub_name();
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
-    response_data[12] = AD_TYPE_COMPLETE_LOCAL_NAME;
     memcpy(&response_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
     _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
 
@@ -280,26 +341,46 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // hci_le_set_scan_response_data_end();
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
-        0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gap_set_discoverable_end();
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_set_discoverable);
+    status = aci_gap_set_discoverable_end();
+
+    // Recording this as advertising when it is not means nothing ever tries
+    // again, since starting is skipped when it is already in that state.
+    if (status != BLE_STATUS_SUCCESS) {
+        return ble_error_to_pbio_error(status);
+    }
 
     pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_ADVERTISING_PYBRICKS;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+// Equivalent of aci_gap_set_non_discoverable_begin().
+static const hci_const_cmd_t cmd_gap_set_non_discoverable = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_DISCOVERABLE),
+    .plen = 0,
+};
+
+// Equivalent of hci_le_set_advertise_enable_begin(0).
+static const hci_const_cmd_t cmd_le_set_advertise_disable = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADVERTISE_ENABLE),
+    .plen = 1,
+    .params = { 0 },
+};
+
 pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_BEGIN(state);
 
     // REVISIT: might need to delete advertising data here
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_set_non_discoverable_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gap_set_non_discoverable_end();
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
+        // The GAP layer does not know about advertising that was enabled with
+        // a link layer command, so it has to be stopped the same way.
+        HCI_AWAIT_CONST_CMD(state, &cmd_le_set_advertise_disable);
+    } else {
+        HCI_AWAIT_CONST_CMD(state, &cmd_gap_set_non_discoverable);
+        // aci_gap_set_non_discoverable_end();
+    }
 
     // This protothread is also shared with stop broadcasting. Either way,
     // nothing is advertising or broadcasting after this, so reset that state.
@@ -309,12 +390,16 @@ pbio_error_t pbdrv_bluetooth_stop_advertising_func(pbio_os_state_t *state, void 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+uint16_t pbdrv_bluetooth_get_max_message_size(void) {
+    // Fixed MTU minus the 3-byte ATT notification header.
+    return PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE - PBIO_BLUETOOTH_ATT_HEADER_SIZE;
+}
+
 pbio_error_t pbdrv_bluetooth_send_pybricks_value_notification(pbio_os_state_t *state, const uint8_t *data, uint16_t size) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
 retry:
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_command_event_char_handle, 0, size, data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     tBleStatus ret = aci_gatt_update_char_value_end();
@@ -330,8 +415,41 @@ retry:
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+// Equivalent of aci_gap_start_general_conn_establish_proc_begin(scan_type,
+// scan_interval, scan_window, STATIC_RANDOM_ADDR, 0).
+#define GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(name, scan_type, scan_interval, scan_window) \
+    static const hci_const_cmd_t name = { \
+        .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC), \
+        .plen = 7, \
+        .params = { \
+            scan_type, \
+            PBIO_UINT16_LE(scan_interval), \
+            PBIO_UINT16_LE(scan_window), \
+            STATIC_RANDOM_ADDR, \
+            0, /* filter_duplicates */ \
+        }, \
+    }
+
+GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(cmd_gap_start_active_scan, ACTIVE_SCAN, 0x0030, 0x0030);
+
+// 70ms interval, 35ms window. The 50% duty cycle leaves radio time for
+// broadcasting while observing, and the longer interval spends less of the
+// radio on starting and ending scans.
+GAP_START_GENERAL_CONN_ESTABLISH_PROC_CMD(cmd_gap_start_passive_scan, PASSIVE_SCAN, 0x0070, 0x0038);
+
+// Equivalent of aci_gap_terminate_gap_procedure_begin(procedure_code).
+#define GAP_TERMINATE_GAP_PROCEDURE_CMD(name, procedure_code) \
+    static const hci_const_cmd_t name = { \
+        .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_TERMINATE_GAP_PROCEDURE), \
+        .plen = 1, \
+        .params = { procedure_code }, \
+    }
+
+GAP_TERMINATE_GAP_PROCEDURE_CMD(cmd_gap_terminate_general_proc, GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
+GAP_TERMINATE_GAP_PROCEDURE_CMD(cmd_gap_terminate_direct_proc, GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
+
 pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     // Scan and connect timeout, if applicable.
     bool timed_out = peri->config.timeout && pbio_os_timer_is_expired(&peri->timer);
@@ -344,9 +462,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_scan_and_connect_func(pbio_os_state_t *s
     PBIO_OS_ASYNC_BEGIN(state);
 
     // start scanning
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, STATIC_RANDOM_ADDR, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+    HCI_AWAIT_CONST_CMD_STATUS(state, &cmd_gap_start_active_scan);
     peri->status = aci_gap_start_general_conn_establish_proc_end();
 
 try_again:
@@ -356,18 +472,13 @@ try_again:
         PBIO_OS_AWAIT_UNTIL(state, advertising_data_received || peri->cancel || timed_out);
 
         if (!advertising_data_received) {
-            // Things didn't work out, so stop scanning.
-            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-            aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-            // aci_gap_terminate_gap_procedure_end();
-            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+            goto stop_scanning_failed;
         }
 
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // If advertisement doesn't match context-specific filter, keep scanning.
-        if (subevt->evt_type > PBDRV_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, subevt->data_RSSI, subevt->data_length)) {
+        if (subevt->evt_type > PBIO_BLUETOOTH_AD_TYPE_ADV_DIRECT_IND || !peri->config.match_adv(peri->user, subevt->data_RSSI, subevt->data_length)) {
             continue;
         }
 
@@ -392,18 +503,13 @@ try_again:
         PBIO_OS_AWAIT_UNTIL(state, advertising_data_received || peri->cancel || timed_out);
 
         if (!advertising_data_received) {
-            // Things didn't work out, so stop scanning.
-            PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-            aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-            PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-            // aci_gap_terminate_gap_procedure_end();
-            return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+            goto stop_scanning_failed;
         }
 
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // We are looking for a scan response from the same device as before, else keep scanning for responses.
-        if (subevt->evt_type != PBDRV_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
+        if (subevt->evt_type != PBIO_BLUETOOTH_AD_TYPE_SCAN_RSP || memcmp(peri->bdaddr, subevt->bdaddr, sizeof(peri->bdaddr))) {
             continue;
         }
 
@@ -421,9 +527,7 @@ try_again:
     }
 
     // stop scanning
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
     peri->status = aci_gap_terminate_gap_procedure_end();
 
     // REVISIT: might need to wait for procedure complete event here
@@ -431,9 +535,14 @@ try_again:
     // connect
     assert(!peri->con_handle);
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+    // The connection interval is the anchor period that the chip schedules
+    // everything else around, and the last two parameters are how much of each
+    // period this link reserves. Asking for up to 30ms out of a period that
+    // could itself be 10ms left nothing to allocate an advertising event in,
+    // so the hub could not be connected to while a remote was attached. Both
+    // halves matter: a 30ms period is just as full if 30ms of it is reserved.
     aci_gap_create_connection_begin(0x0060, 0x0030, peri->bdaddr_type, peri->bdaddr,
-        STATIC_RANDOM_ADDR, 0x0010 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0010, 0x0030);
+        STATIC_RANDOM_ADDR, 0x0030 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0004, 0x0010);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gap_create_connection_end();
 
@@ -441,22 +550,27 @@ try_again:
     PBIO_OS_AWAIT_UNTIL(state, peri->cancel || timed_out || peri->con_handle);
 
     if (peri->cancel || timed_out) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_terminate_gap_procedure_begin(GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_direct_proc);
         // aci_gap_terminate_gap_procedure_end();
         return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
     }
 
-    PBIO_OS_ASYNC_END(ble_error_to_pbio_error(peri->status));
+    return ble_error_to_pbio_error(peri->status);
+
+    // Scanning did not turn up a matching device in time, so stop scanning.
+stop_scanning_failed:
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
+    // aci_gap_terminate_gap_procedure_end();
+    return peri->cancel ? PBIO_ERROR_CANCELED : PBIO_ERROR_TIMEDOUT;
+
+    // Unreachable.
+    PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
 
     uint8_t uuid_le[16];
     uint8_t uuid_type;
@@ -502,7 +616,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_discover_characteristic_func(pbio_os_sta
     static const uint16_t enable = 0x0001;
 
 retry:
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_disc.handle + 2, sizeof(enable), (const uint8_t *)&enable);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     peri->status = aci_gatt_write_charac_value_end();
@@ -535,13 +648,11 @@ pbio_error_t pbdrv_bluetooth_peripheral_read_characteristic_func(pbio_os_state_t
 }
 
 pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_t *state, void *context) {
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     evt_gatt_procedure_complete *payload;
 
     PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
 
     aci_gatt_write_charac_value_begin(peri->con_handle, peri->char_handle + 1, peri->char_size, peri->char_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
@@ -567,7 +678,7 @@ pbio_error_t pbdrv_bluetooth_peripheral_write_characteristic_func(pbio_os_state_
 
 pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, void *context) {
 
-    pbdrv_bluetooth_peripheral_t *peri = context;
+    pbio_bluetooth_peripheral_t *peri = context;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -575,7 +686,6 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
         return PBIO_SUCCESS;
     }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gap_terminate_begin(peri->con_handle, HCI_OE_USER_ENDED_CONNECTION);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
     aci_gap_terminate_end();
@@ -586,53 +696,74 @@ pbio_error_t pbdrv_bluetooth_peripheral_disconnect_func(pbio_os_state_t *state, 
 }
 
 
+// Equivalent of hci_le_set_advertising_parameters_begin() with a
+// non-connectable, undirected advertising type on all three channels.
+static const hci_const_cmd_t cmd_le_set_adv_parameters = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_PARAMETERS),
+    .plen = 15,
+    .params = {
+        // 100ms is the fastest this controller allows. The range has to be
+        // wide, because the chip fits a new activity to the anchor period it
+        // is already running for the connection and any scanning, and rejects
+        // an interval that is not a multiple of it.
+        PBIO_UINT16_LE(0x00a0), // Advertising_Interval_Min, 100ms
+        PBIO_UINT16_LE(0x0140), // Advertising_Interval_Max, 200ms
+        ADV_NONCONN_IND,
+        STATIC_RANDOM_ADDR,
+        0, // Peer_Address_Type
+        0, 0, 0, 0, 0, 0, // Peer_Address
+        0x07, // Advertising_Channel_Map
+        NO_WHITE_LIST_USE,
+    },
+};
+
+// Equivalent of hci_le_set_advertise_enable_begin(1).
+static const hci_const_cmd_t cmd_le_set_advertise_enable = {
+    .opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADVERTISE_ENABLE),
+    .plen = 1,
+    .params = { 1 },
+};
+
 pbio_error_t pbdrv_bluetooth_start_broadcasting_func(pbio_os_state_t *state, void *context) {
 
     tBleStatus status;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
+    // The GAP layer refuses to enter any advertising mode while a computer is
+    // connected, so the link layer is driven directly instead.
     if (pbdrv_bluetooth_advertising_state != PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_set_non_connectable_begin(ADV_NONCONN_IND, STATIC_RANDOM_ADDR);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-        status = aci_gap_set_non_connectable_end();
+
+        // Advertising parameters can only be set while advertising is stopped,
+        // which it always is here, since starting a program stops it.
+        HCI_AWAIT_CONST_CMD(state, &cmd_le_set_adv_parameters);
+        status = hci_le_command_end();
 
         if (status != BLE_STATUS_SUCCESS) {
-            pbio_error_t err = ble_error_to_pbio_error(status);
-            // Broadcasting does not work while connected to the computer. But
-            // returning an error means that Move Hub programs with
-            // broadcasting can never run while connected, which makes it very
-            // impractical to test any program. So mark as success.
-            if (err == PBIO_ERROR_INVALID_OP) {
-                return PBIO_SUCCESS;
-            }
-            return err;
+            return ble_error_to_pbio_error(status);
         }
-
-        // These AD types are left over from connectable discovery and need
-        // to be deleted _after_ starting non-connectable advertising.
-
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_delete_ad_type_begin(AD_TYPE_128_BIT_SERV_UUID);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-        aci_gap_delete_ad_type_begin(AD_TYPE_TX_POWER_LEVEL);
-        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-
-        // Errors from deleting are ignored since we should only get an error
-        // if the AD does not exist, which is OK.
-
-        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
     }
 
-    // This has to be done _after_ other data is delete to make sure it fits.
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_update_adv_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
+    // The link layer advertises exactly this payload.
+    hci_le_set_advertising_data_begin(pbdrv_bluetooth_broadcast_data_size, pbdrv_bluetooth_broadcast_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    status = aci_gap_update_adv_data_end();
+    status = hci_le_set_advertising_data_end();
+
+    if (status != BLE_STATUS_SUCCESS) {
+        return ble_error_to_pbio_error(status);
+    }
+
+    if (pbdrv_bluetooth_advertising_state == PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING) {
+        // Already advertising, so updating the data was all that was needed.
+        return PBIO_SUCCESS;
+    }
+
+    HCI_AWAIT_CONST_CMD(state, &cmd_le_set_advertise_enable);
+    status = hci_le_command_end();
+
+    if (status == BLE_STATUS_SUCCESS) {
+        pbdrv_bluetooth_advertising_state = PBDRV_BLUETOOTH_ADVERTISING_STATE_BROADCASTING;
+    }
 
     PBIO_OS_ASYNC_END(ble_error_to_pbio_error(status));
 }
@@ -648,9 +779,7 @@ pbio_error_t pbdrv_bluetooth_start_observing_func(pbio_os_state_t *state, void *
     // elsewhere, so this reduces code size and we would also have to enable
     // the observer role which would use more RAM in the Bluetooth chip
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_start_general_conn_establish_proc_begin(PASSIVE_SCAN, 0x30, 0x30, STATIC_RANDOM_ADDR, 0);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
+    HCI_AWAIT_CONST_CMD_STATUS(state, &cmd_gap_start_passive_scan);
     status = aci_gap_start_general_conn_establish_proc_end();
     if (status == BLE_STATUS_SUCCESS) {
         pbdrv_bluetooth_is_observing = true;
@@ -666,9 +795,7 @@ pbio_error_t pbdrv_bluetooth_stop_observing_func(pbio_os_state_t *state, void *c
         return PBIO_SUCCESS;
     }
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_terminate_general_proc);
     // tBleStatus status = aci_gap_terminate_gap_procedure_end();
 
     // if (status != BLE_STATUS_SUCCESS) {
@@ -760,111 +887,169 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
-static pbio_error_t init_device_information_service(pbio_os_state_t *state, void *context) {
-    static const uint8_t device_information_service_uuid[] = { 0x0A, 0x18 }; // 0x180A
-    static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
-    static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
+// Device information service.
+static const uint8_t device_information_service_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_DEVICE_INFO_SERVICE_UUID) };
+static const uint8_t firmware_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_FIRMWARE_VERSION_CHAR_UUID) };
+static const uint8_t software_version_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_SOFTWARE_VERSION_CHAR_UUID) };
+static const uint8_t pnp_id_char_uuid[] = { PBIO_UINT16_LE(PBIO_GATT_PNP_ID_CHAR_UUID) };
 
-    static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle, pnp_id_char_handle;
+// Pybricks service: c5f50001-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_service_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
+};
 
-    PBIO_OS_ASYNC_BEGIN(state);
+// c5f50002-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_command_event_char_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
+};
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 7);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&service_handle);
+// c5f50003-8280-46da-89f4-6d8051e4aeef
+static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
+    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+    0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
+};
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, firmware_version_char_uuid,
-        sizeof(PBIO_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&fw_ver_char_handle);
+static const uint8_t pnp_id[] = {
+    PBIO_PYBRICKS_PNP_ID_INIT(PBDRV_CONFIG_HUB_KIND, PBDRV_CONFIG_HUB_VARIANT),
+};
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, fw_ver_char_handle,
-        0, sizeof(PBIO_VERSION_STR) - 1, PBIO_VERSION_STR);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_update_char_value_end();
+// Characteristic values that are not known at compile time. Filled in before
+// the table below is walked.
+static uint8_t hub_capabilities[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, software_version_char_uuid,
-        sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&sw_ver_char_handle);
+/**
+ * One service or characteristic to add to the GATT database.
+ *
+ * Attributes are added in table order and each characteristic belongs to the
+ * service that precedes it, mirroring how the controller builds the database.
+ */
+typedef struct {
+    /** Service or characteristic UUID. */
+    const uint8_t *uuid;
+    /** Where to save the handle assigned by the controller, or NULL. */
+    uint16_t *handle;
+    /** Initial characteristic value, or NULL to leave the value unset. */
+    const void *value;
+    /** Either UUID_TYPE_16 or UUID_TYPE_128. */
+    uint8_t uuid_type;
+    /** Attribute records to reserve for a service, or 0 for a characteristic. */
+    uint8_t max_attr_records;
+    /** Characteristic value size, which is also the size of @p value. */
+    uint8_t value_len;
+    /** Characteristic properties (CHAR_PROP_*). */
+    uint8_t properties;
+    /** Which characteristic events to raise (GATT_*). */
+    uint8_t gatt_evt_mask;
+    /** Either CHAR_VALUE_LEN_CONSTANT or CHAR_VALUE_LEN_VARIABLE. */
+    uint8_t is_variable;
+} gatt_attr_t;
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, sw_ver_char_handle,
-        0, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, PBIO_PROTOCOL_VERSION_STR);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_update_char_value_end();
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, (const uint8_t *)PNP_ID,
-        sizeof(PNP_ID) - 3, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pnp_id_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_update_char_value_begin(service_handle, pnp_id_char_handle,
-        0, sizeof(PNP_ID) - 3, &PNP_ID[2]);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gatt_update_char_value_end();
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context) {
-    // c5f50001-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_service_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
-    };
-
-    // c5f50002-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_command_event_char_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
-    };
-
-    // c5f50003-8280-46da-89f4-6d8051e4aeef
-    static const uint8_t pybricks_hub_capabilities_char_uuid[] = {
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x03, 0x00, 0xf5, 0xc5
-    };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 6);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&pybricks_service_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_command_event_char_uuid,
-        ATT_MTU - 3, CHAR_PROP_WRITE | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
-        GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pybricks_command_event_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(pybricks_service_handle, UUID_TYPE_128, pybricks_hub_capabilities_char_uuid,
-        PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&pybricks_hub_capabilities_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
+static const gatt_attr_t gatt_attrs[] = {
     {
-        uint8_t buf[PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE];
-        pbio_pybricks_hub_capabilities(buf, ATT_MTU - 3, PBSYS_CONFIG_APP_FEATURE_FLAGS, pbsys_storage_get_maximum_program_size(), 0);
-        aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_hub_capabilities_char_handle,
-            0, PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE, buf);
+        .uuid_type = UUID_TYPE_16,
+        .uuid = device_information_service_uuid,
+        .max_attr_records = 7,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = firmware_version_char_uuid,
+        .value_len = sizeof(PBIO_VERSION_STR) - 1,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = PBIO_VERSION_STR,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = software_version_char_uuid,
+        .value_len = sizeof(PBIO_PROTOCOL_VERSION_STR) - 1,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = PBIO_PROTOCOL_VERSION_STR,
+    },
+    {
+        .uuid_type = UUID_TYPE_16,
+        .uuid = pnp_id_char_uuid,
+        .value_len = PBIO_PYBRICKS_PNP_ID_SIZE,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .value = pnp_id,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_service_uuid,
+        .max_attr_records = 6,
+        .handle = &pybricks_service_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_command_event_char_uuid,
+        .value_len = ATT_MTU - 3,
+        .properties = CHAR_PROP_WRITE | CHAR_PROP_NOTIFY,
+        .gatt_evt_mask = GATT_NOTIFY_WRITE_REQ_AND_WAIT_FOR_APPL_RESP,
+        .is_variable = CHAR_VALUE_LEN_VARIABLE,
+        .handle = &pybricks_command_event_char_handle,
+    },
+    {
+        .uuid_type = UUID_TYPE_128,
+        .uuid = pybricks_hub_capabilities_char_uuid,
+        .value_len = PBIO_PYBRICKS_HUB_CAPABILITIES_VALUE_SIZE,
+        .properties = CHAR_PROP_READ,
+        .gatt_evt_mask = GATT_DONT_NOTIFY_EVENTS,
+        .is_variable = CHAR_VALUE_LEN_CONSTANT,
+        .handle = &pybricks_hub_capabilities_char_handle,
+        .value = hub_capabilities,
+    },
+};
+
+/**
+ * Adds all services and characteristics in ::gatt_attrs to the GATT database.
+ */
+static pbio_error_t init_gatt_services(pbio_os_state_t *state, void *context) {
+    static const gatt_attr_t *attr;
+    static uint16_t service_handle, char_handle;
+    static uint8_t idx;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    pbsys_host_get_hub_capabilities(hub_capabilities, PBSYS_HOST_TRANSPORT_TYPE_BLUETOOTH);
+
+    for (idx = 0; idx < PBIO_ARRAY_SIZE(gatt_attrs); idx++) {
+
+        attr = &gatt_attrs[idx];
+
+        if (attr->max_attr_records) {
+            aci_gatt_add_serv_begin(attr->uuid_type, attr->uuid, PRIMARY_SERVICE, attr->max_attr_records);
+        } else {
+            aci_gatt_add_char_begin(service_handle, attr->uuid_type, attr->uuid,
+                attr->value_len, attr->properties, ATTR_PERMISSION_NONE,
+                attr->gatt_evt_mask, MIN_ENCRY_KEY_SIZE, attr->is_variable);
+        }
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        if (attr->max_attr_records) {
+            aci_gatt_add_serv_end(&service_handle);
+            if (attr->handle) {
+                *attr->handle = service_handle;
+            }
+        } else {
+            aci_gatt_add_char_end(&char_handle);
+            if (attr->handle) {
+                *attr->handle = char_handle;
+            }
+        }
+
+        if (!attr->value) {
+            continue;
+        }
+
+        aci_gatt_update_char_value_begin(service_handle, char_handle, 0, attr->value_len, attr->value);
+        PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+        // aci_gatt_update_char_value_end();
     }
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    // aci_gatt_update_char_value_end();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -872,7 +1057,7 @@ static pbio_error_t init_pybricks_service(pbio_os_state_t *state, void *context)
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
 
-    pbdrv_bluetooth_peripheral_t *peri = &peripheral_singleton;
+    pbio_bluetooth_peripheral_t *peri = &peripheral_singleton;
 
     switch (event->evt) {
         case EVT_DISCONN_COMPLETE: {
@@ -880,8 +1065,7 @@ static void handle_event(hci_event_pckt *event) {
             if (evt->handle == conn_handle) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
-                uart_tx_notify_en = false;
-                pbdrv_bluetooth_host_connection_changed();
+                pbio_bluetooth_host_connection_changed();
             } else if (evt->handle == peri->con_handle) {
                 peri->con_handle = 0;
             }
@@ -889,10 +1073,18 @@ static void handle_event(hci_event_pckt *event) {
         break;
 
         case EVT_CMD_COMPLETE:
+            DEBUG_PRINT("cc %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[1]), event->data[3], event->data[0]);
+            hci_command_in_flight = false;
+            // Completion of a reply is not that of the main thread's command.
+            if (pbio_get_uint16_le(&event->data[1]) == WRITE_RESPONSE_OPCODE) {
+                break;
+            }
             hci_command_complete = true;
             break;
 
         case EVT_CMD_STATUS:
+            DEBUG_PRINT("cs %04x s=%02x n=%d\n", pbio_get_uint16_le(&event->data[2]), event->data[0], event->data[1]);
+            hci_command_in_flight = false;
             hci_command_status = true;
             break;
 
@@ -937,13 +1129,10 @@ static void handle_event(hci_event_pckt *event) {
 
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
+                    DEBUG_PRINT("mod h=%04x len=%d d0=%02x\n", subevt->attr_handle, subevt->data_length, subevt->att_data[0]);
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
-                        pbdrv_bluetooth_host_connection_changed();
-                    } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
-                        // not implemented
-                    } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
-                        uart_tx_notify_en = subevt->att_data[0];
+                        pbio_bluetooth_host_connection_changed();
                     }
                 }
                 break;
@@ -961,9 +1150,7 @@ static void handle_event(hci_event_pckt *event) {
                     pbio_pybricks_error_t err = PBIO_PYBRICKS_ERROR_INVALID_HANDLE;
 
                     if (subevt->attr_handle == pybricks_command_event_char_handle + 1) {
-                        if (pbdrv_bluetooth_receive_handler) {
-                            err = pbdrv_bluetooth_receive_handler(subevt->data, subevt->data_length);
-                        }
+                        err = pbio_bluetooth_receive_handler(subevt->data, subevt->data_length);
                     }
 
                     aci_gatt_write_response_begin(subevt->conn_handle, subevt->attr_handle, !!err, err, subevt->data_length, subevt->data);
@@ -971,6 +1158,7 @@ static void handle_event(hci_event_pckt *event) {
                 break;
 
                 case EVT_BLUE_GATT_TX_POOL_AVAILABLE: {
+                    DEBUG_PRINT("pool\n");
                     // REVISIT: We might need to look at the event args for
                     // connection handle if we need to handle this in multiple
                     // places, e.g. for notifications and write without response.
@@ -1026,8 +1214,8 @@ retry:
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-// write message to BlueNRG chip
-static pbio_error_t spi_write(pbio_os_state_t *state) {
+// write message to BlueNRG chip, setting *size to 0 when done
+static pbio_error_t spi_write(pbio_os_state_t *state, const uint8_t *buf, uint8_t *size) {
     uint8_t wbuf, rbuf;
 
     PBIO_OS_ASYNC_BEGIN(state);
@@ -1040,34 +1228,46 @@ retry:
     PBIO_OS_AWAIT_UNTIL(state, spi_xfer_complete);
 
     // keep retrying until the chip is ready to write
-    if (!get_bluenrg_buf_size(&wbuf, &rbuf) || wbuf < write_xfer_size) {
+    if (!get_bluenrg_buf_size(&wbuf, &rbuf) || wbuf < *size) {
         // TODO: should probably have a timeout (and reset the chip after that?)
         spi_disable_cs();
         goto retry;
     }
 
     // write the message
-    spi_start_xfer(write_buf, dummy_read_buf, write_xfer_size);
+    spi_start_xfer(buf, dummy_read_buf, *size);
     PBIO_OS_AWAIT_UNTIL(state, spi_xfer_complete);
 
     spi_disable_cs();
 
     // set to 0 to indicate that xfer is complete
-    write_xfer_size = 0;
+    *size = 0;
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 // implements function for BlueNRG library
 void hci_send_req(struct hci_request *r) {
-    hci_uart_pckt *pckt = (hci_uart_pckt *)write_buf;
+    bool is_reply = r->opcode == WRITE_RESPONSE_OPCODE;
+    uint8_t *buf = is_reply ? reply_buf : write_buf;
+    hci_uart_pckt *pckt = (hci_uart_pckt *)buf;
     hci_command_hdr *hdr = (hci_command_hdr *)pckt->data;
-    void *cmd = &write_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE];
+    void *cmd = &buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE];
 
     pckt->type = HCI_COMMAND_PKT;
     hdr->opcode = r->opcode;
     hdr->plen = r->clen;
     memcpy(cmd, r->cparam, r->clen);
+
+    DEBUG_PRINT("tx %04x\n", r->opcode);
+
+    // Replies are fire-and-forget, so they leave the state of the command
+    // that the main thread may be awaiting alone.
+    if (is_reply) {
+        reply_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
+        return;
+    }
+
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = hci_command_status = false;
@@ -1088,6 +1288,44 @@ void hci_recv_resp(struct hci_response *r) {
     memcpy(r->rparam, &read_buf[offset], r->rlen);
 }
 
+// Equivalent of aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET,
+// CONFIG_DATA_MODE_LEN, &mode) with mode 4. Mode 4 supports advertising and
+// scanning at the same time, which is needed to broadcast and observe at
+// once, and has enough RAM for all of the current services/characteristics.
+static const hci_const_cmd_t cmd_hal_write_config_mode = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_WRITE_CONFIG_DATA),
+    .plen = 2 + CONFIG_DATA_MODE_LEN,
+    .params = { CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, 4 },
+};
+
+// Equivalent of aci_hal_set_tx_power_level_begin(1, 5).
+// 1.4 dBm - same as LEGO firmware.
+static const hci_const_cmd_t cmd_hal_set_tx_power = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_SET_TX_POWER_LEVEL),
+    .plen = 2,
+    .params = { 1, 5 },
+};
+
+// Equivalent of hci_le_read_local_version_begin().
+static const hci_const_cmd_t cmd_read_local_version = {
+    .opcode = cmd_opcode_pack(OGF_INFO_PARAM, OCF_READ_LOCAL_VERSION),
+    .plen = 0,
+};
+
+// Equivalent of aci_gatt_init_begin().
+static const hci_const_cmd_t cmd_gatt_init = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT),
+    .plen = 0,
+};
+
+// Equivalent of aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE,
+// PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name)).
+static const hci_const_cmd_t cmd_gap_init = {
+    .opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT),
+    .plen = 3,
+    .params = { GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, PBSYS_HOST_HUB_NAME_SIZE },
+};
+
 // Initializes the Bluetooth chip
 // this function is largely inspired by the LEGO bootloader
 static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
@@ -1097,19 +1335,11 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set the mode
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    {
-        // NB: if we use mode 3, then there is not enough RAM for all of the
-        // curent services/characteristics
-        uint8_t mode = 4;
-        aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
-    }
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_hal_write_config_mode);
     // aci_hal_write_config_data_end();
 
     // set the Bluetooth address
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
         // has to be in little-endian format, but stored in big-endian in flash
         uint8_t bd_addr[6];
@@ -1126,14 +1356,10 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // set Tx power level
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_hal_set_tx_power_level_begin(1, 5); // 1.4 dBm - same as LEGO firmware
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_hal_set_tx_power);
     // aci_hal_set_tx_power_level_end();
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    hci_le_read_local_version_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_read_local_version);
     {
         uint8_t hci_version;
         uint16_t hci_revision;
@@ -1154,41 +1380,30 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
 
     // init GATT layer
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_init_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gatt_init);
     // aci_gatt_init_end();
 
     // init GAP layer
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, sizeof(pbdrv_bluetooth_hub_name));
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    HCI_AWAIT_CONST_CMD(state, &cmd_gap_init);
     aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
 
     // set the device name
 
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
-        0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
+        0, strlen(pbsys_host_get_hub_name()), pbsys_host_get_hub_name());
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // aci_gatt_update_char_value_end();
 
-    // The chip always uses the same random address, so we have to generate
-    // an actually random one to get a new address each time. This must be
-    // called after aci_gap_init to take effect.
-
-    // STM32F0 doesn't have a random number generator, so we use the bluetooth
-    // chip to get some random bytes.
-    hci_le_rand_begin();
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
+    // The chip always uses the same random address, so we set our own,
+    // derived from the chip address and firmware version. It persists across
+    // reboots but changes on firmware update. This must be called after
+    // aci_gap_init to take effect.
+    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
     {
-        uint8_t rand_buf[8];
-        hci_le_rand_end(rand_buf);
-
-        // clear two msb to meet requirements of nonresolvable private address
-        rand_buf[5] &= 0x3F;
-        hci_le_set_random_address_begin(rand_buf);
+        uint8_t addr[6];
+        pbdrv_bluetooth_derive_static_address(addr, FLASH_BD_ADDR);
+        hci_le_set_random_address_begin(addr);
     }
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
     // hci_le_set_random_address_end();
@@ -1196,56 +1411,11 @@ static pbio_error_t hci_init(pbio_os_state_t *state, void *context) {
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static pbio_error_t init_uart_service(pbio_os_state_t *state, void *context) {
-    // using well-known (but not standard) Nordic UART UUIDs
-
-    // 6e400001-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_service_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
-    };
-    // 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_rx_char_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
-    };
-    // 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_tx_char_uuid[] = {
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
-    };
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    // add the Nordic UART service (inspired by Add_Sample_Service() from
-    // sample_service.c in BlueNRG vendor sample code and Adafruit config file
-    // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, nrf_uart_service_uuid, PRIMARY_SERVICE, 7);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_serv_end(&uart_service_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_rx_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_NONE,
-        GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&uart_rx_char_handle);
-
-    PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
-        NUS_CHAR_SIZE, CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
-        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
-    PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
-    aci_gatt_add_char_end(&uart_tx_char_handle);
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
 void pbdrv_bluetooth_controller_reset_hard(void) {
-    pybricks_notify_en = uart_tx_notify_en = false;
+    pybricks_notify_en = false;
     conn_handle = peripheral_singleton.con_handle = 0;
+    // A reset chip won't complete what was in flight.
+    hci_command_in_flight = false;
     spi_disable_cs();
     bluetooth_reset(true);
 }
@@ -1275,9 +1445,7 @@ pbio_error_t pbdrv_bluetooth_controller_initialize(pbio_os_state_t *state, pbio_
     // Init hci, gatt, gap, and services.
     static const pbio_os_process_func_t init_funcs[] = {
         hci_init,
-        init_device_information_service,
-        init_pybricks_service,
-        init_uart_service,
+        init_gatt_services,
     };
     for (idx = 0; idx < PBIO_ARRAY_SIZE(init_funcs); idx++) {
         PBIO_OS_AWAIT(state, &sub, init_funcs[idx](&sub, NULL));
@@ -1296,7 +1464,6 @@ pbio_error_t pbdrv_bluetooth_disconnect_all(pbio_os_state_t *state) {
 
     // Disconnect gracefully if connected to host.
     if (conn_handle) {
-        PBIO_OS_AWAIT_WHILE(state, write_xfer_size);
         aci_gap_terminate_begin(conn_handle, HCI_OE_USER_ENDED_CONNECTION);
         PBIO_OS_AWAIT_UNTIL(state, hci_command_status);
         aci_gap_terminate_end();
@@ -1320,12 +1487,16 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
     for (;;) {
         PBIO_OS_AWAIT_UNTIL(state, {
             // Iterate the main Bluetooth thread once when some data is
-            // available or new data can be sent.
-            pbio_error_t err = pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
+            // available or new data can be sent. It is not iterated while a
+            // write is pending, so the threads it drives never need to await
+            // the transport becoming free before sending a command.
+            if (!write_xfer_size) {
+                pbio_error_t err = pbdrv_bluetooth_process_thread(&main_thread_state, NULL);
 
-            // Exit this spi process once the high level Bluetooth process completes.
-            if (err != PBIO_ERROR_AGAIN) {
-                return err;
+                // Exit this spi process once the high level Bluetooth process completes.
+                if (err != PBIO_ERROR_AGAIN) {
+                    return err;
+                }
             }
 
             // - spi_irq is set by the interrupt handler when there is new
@@ -1334,16 +1505,26 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
             // - write_xfer_size is set when main thread
             //   driven above above wants to send something. This doesn't poll
             //   the process because we are already here.
-            spi_irq || write_xfer_size;
+            // - reply_xfer_size is set when the event handler wants to reply.
+            // - Either is sent only once the previous command is done.
+            spi_irq || (!hci_command_in_flight && (reply_xfer_size || write_xfer_size));
         });
 
         // if there is a pending read message
         if (spi_irq) {
             PBIO_OS_AWAIT(state, &sub, spi_read(&sub));
+            continue;
         }
-        // if there is a pending write message
-        else if (write_xfer_size) {
-            PBIO_OS_AWAIT(state, &sub, spi_write(&sub));
+
+        hci_command_in_flight = true;
+
+        // if there is a pending reply, which the central is waiting for
+        if (reply_xfer_size) {
+            PBIO_OS_AWAIT(state, &sub, spi_write(&sub, reply_buf, &reply_xfer_size));
+        }
+        // otherwise there is a pending write message
+        else {
+            PBIO_OS_AWAIT(state, &sub, spi_write(&sub, write_buf, &write_xfer_size));
         }
     }
 
@@ -1351,7 +1532,7 @@ static pbio_error_t pbdrv_bluetooth_spi_process_thread(pbio_os_state_t *state, v
     PBIO_OS_ASYNC_END(PBIO_ERROR_FAILED);
 }
 
-void pbdrv_bluetooth_init_hci(void) {
+void pbdrv_bluetooth_init(void) {
     bluetooth_reset(true);
     spi_init();
     pbio_os_process_start(&pbdrv_bluetooth_spi_process, pbdrv_bluetooth_spi_process_thread, NULL);

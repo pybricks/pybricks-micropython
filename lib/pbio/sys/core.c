@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/watchdog.h>
-#include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include <pbio/busy_count.h>
 #include <pbio/main.h>
@@ -20,7 +20,7 @@
 #include "light.h"
 #include "storage.h"
 #include "program_stop.h"
-#include "telemetry.h"
+#include <pbsys/telemetry.h>
 
 static pbio_os_process_t pbsys_system_poll_process;
 
@@ -58,7 +58,6 @@ void pbsys_init(void) {
     pbsys_hmi_init();
     pbsys_host_init();
     pbsys_status_light_init();
-    pbsys_telemetry_init();
 
     pbio_os_process_start(&pbsys_system_poll_process, pbsys_system_poll_process_thread, NULL);
 

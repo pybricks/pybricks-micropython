@@ -38,7 +38,7 @@ typedef enum {
 
 /** A single element of a status light indication pattern. */
 typedef struct {
-    /** Color to display or ::PBIO_COLOR_NONE for system/user color. */
+    /** Color to display or ::PBIO_COLOR_TRANSPARENT for system/user color. */
     pbio_color_t color;
     /**
      * Duration to display the color, expressed as the number of poll
@@ -61,37 +61,37 @@ pbsys_status_light_indication_pattern_warning[] = {
     // Transparent, i.e. no warning overlay.
     [PBSYS_STATUS_LIGHT_INDICATION_WARNING_NONE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_TRANSPARENT),
     },
     // Two red blinks, pause, then repeat. Overlays on lower priority signal.
     [PBSYS_STATUS_LIGHT_INDICATION_WARNING_HIGH_CURRENT] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_RED, .duration = 2 },
-        { .color = PBIO_COLOR_NONE, .duration = 2 },
+        { .color = PBIO_COLOR_TRANSPARENT, .duration = 2 },
         { .color = PBIO_COLOR_RED, .duration = 2 },
-        { .color = PBIO_COLOR_NONE, .duration = 22 },
+        { .color = PBIO_COLOR_TRANSPARENT, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Two orange blinks, pause, then repeat. Overlays on lower priority signal.
     [PBSYS_STATUS_LIGHT_INDICATION_WARNING_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_ORANGE, .duration = 2 },
-        { .color = PBIO_COLOR_NONE, .duration = 2 },
+        { .color = PBIO_COLOR_TRANSPARENT, .duration = 2 },
         { .color = PBIO_COLOR_ORANGE, .duration = 2 },
-        { .color = PBIO_COLOR_NONE, .duration = 22 },
+        { .color = PBIO_COLOR_TRANSPARENT, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Rapidly repeating blue blink. Overrides lower priority signal.
     [PBSYS_STATUS_LIGHT_INDICATION_WARNING_SHUTDOWN_REQUESTED] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 1 },
+        { .color = PBIO_COLOR_NONE, .duration = 1 },
         { .color = PBIO_COLOR_BLUE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
-    // Black, so override to be off. Overrides lower priority signal.
+    // Off, overriding lower priority signals.
     [PBSYS_STATUS_LIGHT_INDICATION_WARNING_SHUTDOWN] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_BLACK),
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
     },
 };
 
@@ -99,15 +99,15 @@ static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern_ble[] = {
     [PBSYS_STATUS_LIGHT_INDICATION_NONE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_NONE),
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_FOREVER(PBIO_COLOR_TRANSPARENT),
     },
     // Two blue blinks, pause, then repeat.
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 2 },
+        { .color = PBIO_COLOR_NONE, .duration = 2 },
         { .color = PBIO_COLOR_BLUE, .duration = 2 },
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
+        { .color = PBIO_COLOR_NONE, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     // Blue, always on.
@@ -142,7 +142,7 @@ typedef struct {
     /** The color LED device */
     pbdrv_led_dev_t *led;
     /** The most recent user color value. */
-    pbio_color_hsv_t user_color;
+    pbio_color_t user_color;
     /** The user program is currently allowed to control the status light. */
     bool allow_user_update;
     /** The current pattern state. */
@@ -167,9 +167,9 @@ static pbsys_status_light_pattern_state_t *warning_pattern_state = &pbsys_status
 #endif
 
 
-static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
+static pbio_error_t pbsys_status_light_set_hsv(pbio_color_light_t *light, pbio_color_t hsv) {
     pbsys_status_light_t *instance = PBIO_CONTAINER_OF(light, pbsys_status_light_t, color_light);
-    instance->user_color = *hsv;
+    instance->user_color = hsv;
 
     if (!instance->led) {
         return PBIO_ERROR_NO_DEV;
@@ -266,7 +266,7 @@ static pbio_color_t pbsys_status_light_pattern_next(pbsys_status_light_pattern_s
 
     const pbsys_status_light_indication_pattern_element_t *pattern =
         patterns[state->indication];
-    pbio_color_t new_color = PBIO_COLOR_NONE;
+    pbio_color_t new_color = PBIO_COLOR_TRANSPARENT;
 
     if (pattern != NULL) {
         // if we are at the end of a pattern, wrap around to the beginning
@@ -322,13 +322,13 @@ pbsys_battery_light_patterns[] = {
     [PBSYS_BATTERY_LIGHT_OVERCHARGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_GREEN, .duration = 56 },
-        { .color = PBIO_COLOR_BLACK, .duration = 4 },
+        { .color = PBIO_COLOR_NONE, .duration = 4 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
     [PBSYS_BATTERY_LIGHT_FAULT] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
         { .color = PBIO_COLOR_YELLOW, .duration = 10 },
-        { .color = PBIO_COLOR_BLACK, .duration = 10 },
+        { .color = PBIO_COLOR_NONE, .duration = 10 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_REPEAT
     },
 };
@@ -352,16 +352,19 @@ pbsys_battery_light_state_t pbsys_battery_light_get_state(void) {
 
 #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY
 
+// With nothing left underneath to show, transparent means the light is off.
+static pbio_color_t pbsys_status_light_color_or_off(pbio_color_t color) {
+    return color == PBIO_COLOR_TRANSPARENT ? PBIO_COLOR_NONE : color;
+}
+
 static void pbsys_status_light_set_pattern_or_user_color(pbsys_status_light_t *instance, pbio_color_t pattern_color) {
     if (!instance->led) {
         return;
     }
     if (instance->allow_user_update) {
-        pbdrv_led_set_hsv(instance->led, &instance->user_color);
+        pbdrv_led_set_hsv(instance->led, instance->user_color);
     } else {
-        pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(pattern_color, &hsv);
-        pbdrv_led_set_hsv(instance->led, &hsv);
+        pbdrv_led_set_hsv(instance->led, pbsys_status_light_color_or_off(pattern_color));
     }
 }
 
@@ -377,7 +380,7 @@ void pbsys_status_light_poll(void) {
     pbio_color_t new_main_color = new_warning_color;
     #if !PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
     // Overlay warnings on ble state on hubs with just one light.
-    if (new_warning_color == PBIO_COLOR_NONE) {
+    if (new_warning_color == PBIO_COLOR_TRANSPARENT) {
         new_main_color = new_ble_color;
     }
     #endif
@@ -386,7 +389,7 @@ void pbsys_status_light_poll(void) {
     // program is running, then we can allow the user program to directly change
     // the status light.
     pbsys_status_light_instance_main.allow_user_update =
-        new_main_color == PBIO_COLOR_NONE && pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
+        new_main_color == PBIO_COLOR_TRANSPARENT && pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
 
     pbsys_status_light_set_pattern_or_user_color(&pbsys_status_light_instance_main, new_main_color);
     #if PBSYS_CONFIG_STATUS_LIGHT_BLUETOOTH
@@ -409,9 +412,7 @@ void pbsys_status_light_poll(void) {
     // FIXME: Use sys light instance like the other lights.
     pbdrv_led_dev_t *led;
     if (pbdrv_led_get_dev(1, &led) == PBIO_SUCCESS) {
-        pbio_color_hsv_t hsv;
-        pbio_color_to_hsv(new_battery_color, &hsv);
-        pbdrv_led_set_hsv(led, &hsv);
+        pbdrv_led_set_hsv(led, pbsys_status_light_color_or_off(new_battery_color));
     }
 
     #endif // PBSYS_CONFIG_STATUS_LIGHT_BATTERY

@@ -43,7 +43,7 @@
 
 
 #ifndef _EMIFA_H_
-#define _EMIFA_H__
+#define _EMIFA_H_
 
 #include "hw_emifa2.h"
 #ifdef __cplusplus

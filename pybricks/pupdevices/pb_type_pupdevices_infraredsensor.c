@@ -21,11 +21,8 @@ typedef struct _pupdevices_InfraredSensor_obj_t {
 
 // pybricks.pupdevices.InfraredSensor.__init__
 static mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port));
-
-    pupdevices_InfraredSensor_obj_t *self = mp_obj_malloc(pupdevices_InfraredSensor_obj_t, type);
-    pb_type_device_init_class(&self->device_base, port_in, LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR);
+    pupdevices_InfraredSensor_obj_t *self = pb_type_device_make_new(type, n_args, n_kw, args,
+        sizeof(pupdevices_InfraredSensor_obj_t), LEGO_DEVICE_TYPE_ID_WEDO2_MOTION_SENSOR);
 
     // Reset sensor counter and get sensor back in sensing mode
     self->count_offset = *(int32_t *)pb_type_device_get_data_blocking(MP_OBJ_FROM_PTR(self), LEGO_DEVICE_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT);

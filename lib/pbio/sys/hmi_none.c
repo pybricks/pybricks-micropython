@@ -26,6 +26,9 @@ void pbsys_hmi_deinit(void) {
 void pbsys_hmi_stop_animation(void) {
 }
 
+void pbsys_hmi_connection_changed_handler(void) {
+}
+
 pbio_error_t pbsys_hmi_await_program_selection(void) {
 
     do {

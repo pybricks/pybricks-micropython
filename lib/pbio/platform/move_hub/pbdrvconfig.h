@@ -24,8 +24,12 @@
 #define PBDRV_CONFIG_BLOCK_DEVICE_FLASH_STM32_SIZE  (4 * 1024) // Must match FLASH_USER_0 + FLASH_USER_1 in linker script
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG        (1)
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         (23)
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_MOVE
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
@@ -40,7 +44,7 @@
 #define PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV (2)
 
 #define PBDRV_CONFIG_GPIO                           (1)
-#define PBDRV_CONFIG_GPIO_STM32F0                   (1)
+#define PBDRV_CONFIG_GPIO_STM32                     (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_HAS_ADC                 (0)

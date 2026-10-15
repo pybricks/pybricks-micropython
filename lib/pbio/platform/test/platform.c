@@ -2,7 +2,7 @@
 // Copyright (c) 2023 The Pybricks Authors
 
 #include <pbdrv/ioport.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 
 #include "../../drv/motor_driver/motor_driver_virtual_simulation.h"
 #include "../../drv/led/led_array_pwm.h"

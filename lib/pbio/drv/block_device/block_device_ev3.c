@@ -768,7 +768,7 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint32_t future_us) {
+pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
     PBIO_OS_ASYNC_BEGIN(state);
     *start_time_us = pbdrv_clock_get_us();
     PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(last_spi_dma_complete_time_us, *start_time_us + future_us));

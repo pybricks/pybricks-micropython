@@ -14,7 +14,7 @@ void pbdrv_watchdog_init(void) {
     IWDG->PR = IWDG_PR_PR_2; // divide by 64
     #if defined(STM32F0)
     IWDG->RLR = 1875; // 40 kHz / 64 / 1875 = 0.33... Hz => 3 second timeout
-    #elif defined(STM32F4) || defined(STM32L4)
+    #elif defined(STM32F4) || defined(STM32L4) || defined(STM32H5)
     IWDG->RLR = 1500; // 32 kHz / 64 / 1500 = 0.33... Hz => 3 second timeout
     #else
     #error "Unsupported MCU"

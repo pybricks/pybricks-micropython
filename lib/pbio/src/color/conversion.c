@@ -39,20 +39,20 @@ static uint8_t min_rgb(const pbio_color_rgb_t *rgb) {
 }
 
 /**
- * Converts RGB to HSV color value.
+ * Converts RGB to an HSV color value.
  *
  * Using basic method given by Wikipedia. https://en.wikipedia.org/wiki/HSL_and_HSV#From_RGB
  *
  * @param [in]  rgb         The source RGB color value.
- * @param [out] hsv         The destination HSV color value.
+ * @return                  The color.
  */
-void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
+pbio_color_t pbio_color_from_rgb(const pbio_color_rgb_t *rgb) {
     uint8_t max = max_rgb(rgb);
     uint8_t min = min_rgb(rgb);
     uint8_t chroma = max - min;
 
-    hsv->h = 0;
-    hsv->s = 0;
+    uint16_t hue = 0;
+    uint8_t saturation = 0;
 
     if (chroma > 0) {
         uint8_t a, b, c;
@@ -73,40 +73,66 @@ void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
         if (h < 0) {
             h += 360;
         }
-        hsv->h = h;
-        hsv->s = 100 * chroma / max;
+        hue = h;
+        saturation = 100 * chroma / max;
     }
 
     // Multiplying by 101 and dividing by 256 is nearly the same as multiplying
     // by 100 and dividing by 255 but results in smaller binary code size.
-    hsv->v = 101 * max / 256;
+    return PBIO_COLOR_ENCODE(hue, saturation, 101 * max / 256);
+}
+
+/**
+ * Converts RGB to HSV, then nudges the hue of reddish and yellowish colors.
+ *
+ * The hues that LEGO sensors report for the colors they are meant to detect
+ * lie very close together at the low end of the hue circle, so this spreads
+ * them out a bit and pushes yellow closer to its expected value.
+ *
+ * @param [in]  rgb         The source RGB color value.
+ * @return                  The color.
+ */
+pbio_color_t pbio_color_from_rgb_with_hue_shift(const pbio_color_rgb_t *rgb) {
+
+    pbio_color_t color = pbio_color_from_rgb(rgb);
+
+    uint16_t h = pbio_color_get_h(color);
+    if (h >= 350) {
+        h = (350 + 2 * (h - 350)) % 360;
+    } else if (h < 40) {
+        h += 10;
+    } else if (h < 60) {
+        h = 50 + (h - 40) / 2;
+    }
+
+    return PBIO_COLOR_ENCODE(h, pbio_color_get_s(color), pbio_color_get_v(color));
 }
 
 // The following code derived from hsv2rgb_raw_C() and hsv2rgb_spectrum() in the FastLED project
 // https://github.com/FastLED/FastLED/blob/master/hsv2rgb.cpp
 
 /**
- * Converts HSV to RGB color value.
+ * Converts an HSV color value to RGB.
  *
  * This method takes into account apparent brightness which works nicely with
  * things that emit light, like LEDs.
  *
- * This is not the direct inverse of pbio_color_rgb_to_hsv().
+ * This is not the direct inverse of pbio_color_from_rgb().
  *
- * @param [in]  hsv         The source HSV color value.
+ * @param [in]  color       The source color value.
  * @param [out] rgb         The destination RGB color value.
  */
-void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb) {
+void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb) {
     // scale hue to a max value of 191
-    uint8_t hue = 273 * hsv->h / 512;
+    uint8_t hue = 273 * pbio_color_get_h(color) / 512;
 
     // Convert hue, saturation and brightness (HSV/HSB) to RGB
     // "Dimming" is used on saturation and brightness to make
     // the output more visually linear.
 
     // Scale 0..100 percent to 0..255
-    uint8_t value = 327 * pbio_color_hsv_get_v(hsv) / 128;
-    uint8_t saturation = 327 * hsv->s / 128;
+    uint8_t value = 327 * pbio_color_get_v_clamped(color) / 128;
+    uint8_t saturation = 327 * pbio_color_get_s(color) / 128;
 
     // The brightness floor is minimum number that all of
     // R, G, and B will be set to.
@@ -181,55 +207,4 @@ void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb) {
         rgb->g = rampup_adj_with_floor;
         rgb->b = brightness_floor;
     }
-}
-
-/**
- * Converts color name to HSV color value.
- *
- * @param [in]  color       The the source color.
- * @param [out] hsv         The destination HSV color value.
- */
-void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv) {
-    // See PBIO_COLOR_ENCODE in color.h for encoding scheme
-    hsv->h = (color >> 3) * 30;
-    hsv->s = (color & (0x1 << 2)) ? 100 : 0;
-    hsv->v = (color & 0x2) ? 100 : ((color & 0x1) ? 50 : 0);
-}
-
-/**
- * Converts color name to RGB color value.
- *
- * See pbio_color_hsv_to_rgb() for more information.
- *
- * @param [in]  color       The the source color.
- * @param [out] rgb         The destination RGB color value.
- */
-void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb) {
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(color, &hsv);
-    pbio_color_hsv_to_rgb(&hsv, rgb);
-}
-
-/**
- * Compresses an HSV value.
- *
- * @param [in]  hsv         The HSV value to compress.
- * @param [out] compressed  Location to store the compressed value.
- */
-void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed) {
-    compressed->h = hsv->h;
-    compressed->s = hsv->s;
-    compressed->v = hsv->v;
-}
-
-/**
- * Expands a compressed HSV value.
- *
- * @param [in]  compressed  The compressed HSV value.
- * @param [out] hsv         Location to store the expanded value.
- */
-void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv) {
-    hsv->h = compressed->h;
-    hsv->s = compressed->s;
-    hsv->v = compressed->v;
 }

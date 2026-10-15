@@ -5,6 +5,7 @@
 #define _PBIO_PORT_LUMP_H_
 
 #include <pbio/angle.h>
+#include <pbio/color.h>
 #include <pbio/port.h>
 #include <pbio/os.h>
 
@@ -12,6 +13,8 @@
 #include <pbdrv/uart.h>
 
 #include <lego/lump.h>
+
+#include <pbsys/telemetry.h>
 
 typedef struct _pbio_port_lump_dev_t pbio_port_lump_dev_t;
 
@@ -28,6 +31,33 @@ typedef struct {
     /**< Zero-terminated name of the mode. */
     char name[LUMP_MAX_NAME_SIZE + 1];
 } pbio_port_lump_mode_info_t;
+
+/**
+ * White balance gains for the raw RGB channels of one EV3 color sensor.
+ *
+ * The sensor does not apply its factory calibration to the raw RGB mode and
+ * does not expose the gains it uses elsewhere, so they are measured on the hub
+ * instead and stored here, per port.
+ */
+typedef struct {
+    /** Gains for the red, green and blue channel. Neutral is 1. */
+    float gain[3];
+} pbio_port_lump_ev3_color_calibration_t;
+
+#if PBIO_CONFIG_PORT_LUMP_EV3
+
+void pbio_port_lump_ev3_color_set_default_calibration(pbio_port_lump_ev3_color_calibration_t *calibration);
+
+void pbio_port_lump_ev3_color_apply_loaded_calibration(pbio_port_lump_ev3_color_calibration_t *calibration);
+
+#else // PBIO_CONFIG_PORT_LUMP_EV3
+
+static inline void pbio_port_lump_ev3_color_set_default_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+}
+static inline void pbio_port_lump_ev3_color_apply_loaded_calibration(pbio_port_lump_ev3_color_calibration_t *calibration) {
+}
+
+#endif // PBIO_CONFIG_PORT_LUMP_EV3
 
 #if PBIO_CONFIG_PORT_LUMP
 
@@ -55,7 +85,17 @@ pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lump_dev);
 
 pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle);
 
+pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance);
+
+pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode);
+
+pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode);
+
 pbio_port_power_requirements_t pbio_port_lump_get_power_requirements(pbio_port_lump_dev_t *lump_dev);
+
+pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size);
+
+pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size);
 
 #else // PBIO_CONFIG_PORT_LUMP
 
@@ -94,6 +134,18 @@ static inline pbio_error_t pbio_port_lump_request_reset(pbio_port_lump_dev_t *lu
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
+static inline pbio_error_t pbio_port_lump_get_force(pbio_port_lump_dev_t *lump_dev, int32_t *force, int32_t *distance) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_lump_get_color(pbio_port_lump_dev_t *lump_dev, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
+}
+
+static inline pbio_error_t pbio_port_lump_get_light_intensity(pbio_port_lump_dev_t *lump_dev, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
+    return PBIO_ERROR_NO_DEV;
+}
+
 static inline pbio_error_t pbio_port_lump_get_angle(pbio_port_lump_dev_t *lump_dev, pbio_angle_t *angle, bool get_abs_angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -112,6 +164,14 @@ static inline pbio_error_t pbio_port_lump_data_send_thread(pbio_os_state_t *stat
 
 static inline pbio_error_t pbio_port_lump_data_recv_thread(pbio_os_state_t *state, pbio_port_lump_dev_t *lump_dev, pbdrv_uart_dev_t *uart_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_lump_get_telemetry(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+    return PBSYS_TELEMETRY_ERROR_NO_REPORT;
+}
+
+static inline pbsys_telemetry_error_t pbio_port_lump_set_telemetry_mode(pbio_port_lump_dev_t *lump_dev, pbsys_telemetry_packet_t *tel, uint32_t size) {
+    return PBSYS_TELEMETRY_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_PORT_LUMP

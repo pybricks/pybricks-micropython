@@ -11,13 +11,12 @@ jobs:
       pull-requests: write
     steps:
       - name: Download pull request number
-        uses: dawidd6/action-download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          workflow: build.yml
-          run_id: ${{ github.event.workflow_run.id }}
           name: pr_number
-      - uses: actions/github-script@v6
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - uses: actions/github-script@v9
         with:
           # This snippet is public-domain, taken from
           # https://github.com/oprypin/nightly.link/blob/master/.github/workflows/pr-comment.yml

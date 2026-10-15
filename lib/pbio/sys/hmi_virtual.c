@@ -9,6 +9,7 @@
 
 #if PBSYS_CONFIG_HMI_VIRTUAL
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/display.h>
 
 #include <pbio/busy_count.h>
@@ -47,12 +48,12 @@
 static uint32_t pbsys_hmi_num_programs;
 
 static void load_program(const char *path) {
-    // Pybricksdev helper script, pipes multi-mpy to us.
+    // Helper script, pipes multi-mpy to us.
     char command[512];
-    snprintf(command, sizeof(command), "pybricksdev compile --bin %s", path);
+    snprintf(command, sizeof(command), "%s %s", PBSYS_HMI_VIRTUAL_COMPILER, path);
     FILE *pipe = popen(command, "r");
     if (!pipe) {
-        printf("Failed to compile program with Pybricksdev\n");
+        printf("Failed to compile program\n");
         exit(0);
     }
 
@@ -143,6 +144,9 @@ void pbsys_hmi_init(void) {
     pbsys_hmi_virtual_reload_programs();
 }
 
+void pbsys_hmi_connection_changed_handler(void) {
+}
+
 void pbsys_hmi_deinit(void) {
     // For most virtual hub tests, we don't want to wait on the closing
     // credits, so we leave this empty. The EV3 variant of this function can be
@@ -155,6 +159,8 @@ void pbsys_hmi_stop_animation(void) {
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
+    static pbio_os_timer_t refresh_timer;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     pbsys_hmi_ev3_ui_initialize();
@@ -164,6 +170,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         DEBUG_PRINT("Start HMI loop\n");
 
         pbsys_hmi_ev3_ui_draw();
+        pbio_os_timer_reset(timer);
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -193,7 +200,9 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             }
 
             // Wait for button press, external program start, or connection change.
-            pbdrv_button_get_pressed() || pbsys_main_program_start_is_requested();
+            pbdrv_button_get_pressed() ||
+            pbsys_main_program_start_is_requested() ||
+            pbio_os_timer_is_expired(&refresh_timer);
         }));
 
         // External progran request takes precedence over buttons.
@@ -205,6 +214,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         // Update UI state for buttons.
         uint8_t payload;
         pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
 
         if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
             pbsys_status_set_selected_slot(payload);
@@ -231,6 +241,12 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
             break;
         }
     }
+
+    // A program is about to start, so stop scanning and pairing if we were
+    // doing that. Established connections are kept.
+    pbdrv_bluetooth_inquiry_stop();
+    pbdrv_bluetooth_classic_hid_pair_cancel();
+    pbdrv_bluetooth_classic_host_set_discoverable(false);
 
     // Wait for all buttons to be released so the user doesn't accidentally
     // push their robot off course.

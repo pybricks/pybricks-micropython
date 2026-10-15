@@ -1,90 +1,221 @@
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2024 The Pybricks Authors
+// Copyright (C) 2026 The Pybricks Authors - All rights reserved
+// To build the firmware without this non-free component, set
+// PBSYS_CONFIG_TELEMETRY to 0 in pbsysconfig.h.
 
 #include <pbsys/config.h>
 
 #if PBSYS_CONFIG_TELEMETRY
 
+#include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <pbdrv/display.h>
 
 #include <pbio/os.h>
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/util.h>
 
 #include <pbsys/host.h>
 
-typedef struct {
-    lego_device_type_id_t type_id;
-    int32_t value;
-} pbsys_telemetry_port_data_t;
+#include <pbsys/status.h>
+#include <pbsys/storage_settings.h>
+#include <pbsys/telemetry.h>
 
-static pbsys_telemetry_port_data_t last_data[PBIO_CONFIG_PORT_NUM_DEV];
+// Telemetry output level, controlled by the host via the set level command.
+static pbsys_telemetry_level_t pbsys_telemetry_level = PBSYS_TELEMETRY_LEVEL_MINIMAL;
 
-// Revisit: Come up with a data encoding protocol. Right now it just sends
-// six motor positions to drive the existing motor animation.
-static uint8_t update_port_data(uint8_t index, uint8_t *buf) {
+// Maximum mode-specific payload size accepted for incoming set mode commands.
+// None of the current commands need a payload, so keep it small.
+#define PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX (4)
 
-    // Get type and angle.
-    int32_t degrees = 0;
-    pbio_angle_t angle;
-    lego_device_type_id_t type_id = LEGO_DEVICE_TYPE_ID_NONE;
-    pbio_port_t *port = pbio_port_by_index(index);
-    pbio_error_t err = pbio_port_get_angle(port, &angle);
-    if (err == PBIO_SUCCESS) {
-        type_id = LEGO_DEVICE_TYPE_ID_ANY_ENCODED_MOTOR;
-        degrees = pbio_angle_to_low_res(&angle, 1000);
+// Pending mode change per port, requested by the host and to be applied by
+// the data generator. Latest request wins.
+static struct {
+    // Message size including header. 0 means no pending request.
+    uint8_t size;
+    union {
+        pbsys_telemetry_packet_t tel;
+        // Reserves room for the flexible payload of tel.
+        uint8_t buf[PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX];
+    };
+} pending_modes[PBIO_CONFIG_PORT_NUM_DEV];
+
+// Yields one report if the getter produced one, skips to the next stage if it
+// had nothing, or sends what we have and retries the same getter when out of
+// room.
+#define PBSYS_TELEMETRY_STAGE(state, call)             \
+    do {                                               \
+        pbsys_telemetry_error_t terr;                  \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);           \
+        terr = (call);                                 \
+        if (terr == PBSYS_TELEMETRY_ERROR_NO_ROOM) {   \
+            return false;                              \
+        }                                              \
+        if (terr == PBSYS_TELEMETRY_SUCCESS) {         \
+            do_yield_now = 1;                          \
+            PBIO_OS_ASYNC_SET_CHECKPOINT(state);       \
+            if (do_yield_now) {                        \
+                return true;                           \
+            }                                          \
+        }                                              \
+    } while (0)
+
+// Idle the generator.
+#define PBSYS_TELEMETRY_IDLE(state, timer, duration)  \
+    do {                                              \
+        pbio_os_timer_set(timer, duration);           \
+        PBIO_OS_ASYNC_SET_CHECKPOINT(state);          \
+        if (!pbio_os_timer_is_expired(timer)) {       \
+            return false;                             \
+        }                                             \
+    } while (0)
+
+
+static bool pbsys_telemetry_iterate_data(pbsys_telemetry_packet_t *tel, uint32_t *size) {
+
+    static uint8_t i = 0;
+    static pbio_os_timer_t timer;
+    static pbio_os_state_t state;
+
+    PBIO_OS_ASYNC_BEGIN(&state);
+
+    for (;;) {
+
+        // Send any new display data, one chunk at a time. The driver says when
+        // to stop, so other stages get their turn on a busy display.
+        if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_ALL) {
+            // Static to survive yields between chunks.
+            static bool display_done;
+            for (display_done = false; !display_done;) {
+                PBSYS_TELEMETRY_STAGE(&state, pbdrv_display_iterate_data(tel, &display_done, size));
+            }
+        }
+
+        // Poll ports in order.
+        for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
+
+            PBSYS_TELEMETRY_STAGE(&state, pbio_port_get_telemetry(i, tel, size));
+
+            // Apply pending mode change. Ignore failure; confirmation is
+            // implicit via the mode byte of subsequent telemetry data.
+            if (pending_modes[i].size) {
+                pbio_port_set_telemetry_mode(i, &pending_modes[i].tel, pending_modes[i].size - PBSYS_TELEMETRY_MSG_HEADER_SIZE);
+                pending_modes[i].size = 0;
+            }
+        }
+
+        // Idle between sequences of samples.
+        PBSYS_TELEMETRY_IDLE(&state, &timer, 100);
     }
 
-    pbsys_telemetry_port_data_t *data = &last_data[index];
+    // Unreachable
+    PBIO_OS_ASYNC_END(false);
+}
 
-    if (data->type_id == type_id && data->value == degrees) {
+/**
+ * Gets the largest mode-specific payload that one telemetry message can ever
+ * carry on the currently active connections.
+ *
+ * Generators can use this to decide whether optional data is worth assembling
+ * at all. It says nothing about the room left in the message being filled
+ * right now, which is what the size argument of a generator is for. Payloads
+ * bigger than this never fit, so reporting them as not having room would stall
+ * the generator instead of deferring it.
+ *
+ * @return              The size in bytes, which may be 0.
+ */
+uint32_t pbsys_telemetry_get_max_payload_size(void) {
+    // Each payload is preceded by the event byte, the message size prefix,
+    // and the message header.
+    const uint32_t overhead = sizeof(uint8_t) + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+    uint32_t max_size = pbsys_host_get_max_message_size();
+    return max_size > overhead ? max_size - overhead : 0;
+}
+
+uint32_t pbsys_telemetry_get_data(uint8_t *data, uint32_t max_size) {
+
+    uint32_t next_index = 1;
+
+    if (pbsys_telemetry_level == PBSYS_TELEMETRY_LEVEL_OFF || !pbsys_status_test(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE)) {
         return 0;
     }
 
-    data->type_id = type_id;
-    data->value = degrees;
+    data[0] = PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY;
 
-    buf[0] = type_id;
-    buf[1] = index;
-    pbio_set_uint32_le(&buf[2], degrees);
-    return 6;
-}
+    while (next_index + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE <= max_size) {
 
-/**
- * Hub, motor, and sensor telemetry to host.
- */
-static pbio_error_t pbsys_telemetry_process_thread(pbio_os_state_t *state, void *context) {
+        // Fetch one sensor sample and attempt to append.
+        uint32_t room = max_size - next_index - sizeof(uint16_t) - PBSYS_TELEMETRY_MSG_HEADER_SIZE;
+        uint32_t size = room;
 
-    static pbio_os_timer_t timer;
-    static pbio_os_state_t sub;
-    static uint8_t buf[20];
-    static uint8_t size;
-    static uint32_t i = 0;
+        pbsys_telemetry_packet_t *tel = (pbsys_telemetry_packet_t *)&data[next_index + sizeof(uint16_t)];
 
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    for (;;) {
-        PBIO_OS_AWAIT_MS(state, &timer, 40);
-
-        // Revisit, could concatenate packages for more efficient BLE sending.
-        for (i = 0; i < PBIO_CONFIG_PORT_NUM_DEV; i++) {
-            size = update_port_data(i, buf);
-            if (size) {
-                PBIO_OS_AWAIT(state, &sub, pbsys_host_send_event(&sub, PBIO_PYBRICKS_EVENT_WRITE_TELEMETRY, buf, size));
-            }
+        // Attempt to get next data point.
+        if (!pbsys_telemetry_iterate_data(tel, &size)) {
+            // Data full or idle, time to send.
+            break;
         }
+
+        // A generator that reports more than it was given has already written
+        // out of bounds, so stop rather than compound it by advancing past
+        // the end of the buffer.
+        if (size > room) {
+            break;
+        }
+
+        // Got a data point. Advance to the next.
+        pbio_set_uint16_le(&data[next_index], size + PBSYS_TELEMETRY_MSG_HEADER_SIZE);
+        next_index += size + sizeof(uint16_t) + PBSYS_TELEMETRY_MSG_HEADER_SIZE;
     }
 
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+    return next_index > 1 ? next_index : 0;
 }
 
-/**
- *
- * Starts telemetry process.
- */
-void pbsys_telemetry_init(void) {
-    static pbio_os_process_t pbsys_telemetry_process;
-    pbio_os_process_start(&pbsys_telemetry_process, pbsys_telemetry_process_thread, NULL);
+pbio_pybricks_error_t pbsys_telemetry_write_data(const uint8_t *data, uint32_t size) {
+
+    // Payload is a single command: id followed by command-specific payload.
+    if (size < 1) {
+        return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+    }
+
+    switch (data[0]) {
+        case PBSYS_TELEMETRY_COMMAND_SET_LEVEL:
+            if (size != 2 || data[1] > PBSYS_TELEMETRY_LEVEL_ALL) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            pbsys_telemetry_level = data[1];
+            // Host uses status to know activity state, even if never toggled.
+            if (pbsys_telemetry_level) {
+                pbsys_status_set(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE);
+            } else {
+                pbsys_status_clear(PBIO_PYBRICKS_STATUS_TELEMETRY_ACTIVE);
+            }
+            pbsys_storage_settings_set_flag(PBSYS_STORAGE_SETTINGS_FLAGS_TELEMETRY_STARTS_AT_BOOT, !!pbsys_telemetry_level);
+            return PBIO_PYBRICKS_ERROR_OK;
+        case PBSYS_TELEMETRY_COMMAND_SET_MODE: {
+            // Command id followed by one telemetry message: the outgoing
+            // message format without the size prefix, so header + payload.
+            if (size < 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE ||
+                size > 1 + PBSYS_TELEMETRY_MSG_HEADER_SIZE + PBSYS_TELEMETRY_SET_MODE_PAYLOAD_MAX) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            const pbsys_telemetry_packet_t *tel = (const pbsys_telemetry_packet_t *)&data[1];
+            if (tel->manufacturer != PBSYS_TELEMETRY_MANUFACTURER_LEGO) {
+                // Unknown manufacturer, ignore.
+                return PBIO_PYBRICKS_ERROR_OK;
+            }
+            if (tel->location >= PBIO_CONFIG_PORT_NUM_DEV) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            // Latest request wins. Applied by the data generator.
+            memcpy(&pending_modes[tel->location].tel, tel, size - 1);
+            pending_modes[tel->location].size = size - 1;
+            return PBIO_PYBRICKS_ERROR_OK;
+        }
+        default:
+            return PBIO_PYBRICKS_ERROR_INVALID_COMMAND;
+    }
 }
 
 #endif // PBSYS_CONFIG_TELEMETRY

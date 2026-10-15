@@ -66,6 +66,7 @@
 #define MICROPY_ENABLE_SOURCE_LINE              (1)
 #define MICROPY_ERROR_REPORTING                 (MICROPY_ERROR_REPORTING_DETAILED)
 #endif
+#define MICROPY_FULL_CHECKS                     (PYBRICKS_OPT_EXTRA_LEVEL1)
 #define MICROPY_BUILTIN_METHOD_CHECK_SELF_ARG   (1)
 #define MICROPY_PY_ASYNC_AWAIT                  (1)
 #define MICROPY_MULTIPLE_INHERITANCE            (0)
@@ -84,7 +85,7 @@
 #define MICROPY_PY_BUILTINS_PROPERTY            (0)
 #define MICROPY_PY_BUILTINS_MIN_MAX             (1)
 #define MICROPY_PY_BUILTINS_STR_UNICODE         (PYBRICKS_OPT_EXTRA_LEVEL2)
-#define MICROPY_PY___FILE__                     (0)
+#define MICROPY_MODULE___FILE__                 (0)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO         (1)
 #define MICROPY_PY_GC                           (PYBRICKS_OPT_EXTRA_LEVEL1)
 #define MICROPY_PY_ATTRTUPLE                    (0)

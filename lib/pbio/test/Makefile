@@ -40,23 +40,8 @@ TINY_TEST_INC = -I$(TINY_TEST_DIR)
 TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 
 # pbio dependency
-CONTIKI_DIR = ../../contiki-core
-CONTIKI_INC = -I$(CONTIKI_DIR)
-CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
-	lib/list.c \
-	lib/memb.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
-# pbio dependency
 LEGO_DIR = ../../lego
 LEGO_INC = -I$(LEGO_DIR)
-LEGO_SRC = $(addprefix $(LEGO_DIR)/, \
-	device.c \
-	)
 
 # pbio dependency
 LWRB_DIR = ../../lwrb/src
@@ -118,7 +103,7 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
 
 # pbio library
 PBIO_DIR = ..
-PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
+PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR) -I$(PBIO_DIR)/drv/bluetooth
 PBIO_SRC = $(PBIO_DIR)/platform/test/platform.c \
 	$(shell find $(PBIO_DIR)/drv ! -wholename "*/uart_ev3_pru_lib/*" -and ! -wholename "*/stm32_usbd/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
@@ -162,17 +147,35 @@ $(BUILD_PREFIX)/font_mono_8x5_8.c: $(PBIO_DIR)/src/image/fonts/mono_8x5.png $(FO
 	$(Q)python3 $(FONT_CONVERT) --image $< 8 > $@
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
-CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
+CFLAGS += $(TINY_TEST_INC) $(LEGO_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
-CFLAGS += -DPBIO_TEST_BUILD=1
+
+# Parallelize permutation-heavy tests (e.g. the trajectory tests) across all
+# available CPU cores. Coverage may be inaccurate for that one test, but that's
+# fine.
+CFLAGS += -fopenmp
 
 ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
+
+# Short git hash of this repository, made available to pbio code via a
+# generated header, same as in bricks/_common/common.mk.
+PYBRICKS_GIT_HASH ?= $(shell git rev-parse --short HEAD)
+
+$(BUILD_DIR)/pbio_version_hash.h: FORCE
+	$(Q)mkdir -p $(dir $@)
+	$(Q)echo '#define PBIO_VERSION_HASH "$(PYBRICKS_GIT_HASH)"' > $@.tmp
+	$(Q)if cmp -s $@.tmp $@ 2>/dev/null; then rm $@.tmp; else echo "GEN $@"; mv $@.tmp $@; fi
+
+.PHONY: FORCE
+FORCE:
+
+$(DEP) $(OBJ): | $(BUILD_DIR)/pbio_version_hash.h
 
 clean:
 	$(Q)rm -rf $(BUILD_DIR)

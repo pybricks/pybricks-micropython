@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include <pbio/dcmotor.h>
+#include <pbio/port.h>
 
 #include <pbdrv/motor_driver.h>
 

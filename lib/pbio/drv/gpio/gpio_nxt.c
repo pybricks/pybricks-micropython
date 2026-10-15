@@ -13,8 +13,6 @@
 
 // Bank field is ignored for AT91SAM7S256. It is always PIOA.
 
-#include <pbdrv/usb.h>
-
 void pbdrv_gpio_out_low(const pbdrv_gpio_t *gpio) {
     if (!gpio) {
         return;

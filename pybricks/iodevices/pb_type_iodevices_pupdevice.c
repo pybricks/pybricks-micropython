@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include <pbio/port.h>
-#include <pbio/port_interface.h>
 #include <pbio/port_lump.h>
 #include <pbio/int_math.h>
 

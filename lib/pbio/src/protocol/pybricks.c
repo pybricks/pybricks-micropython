@@ -63,6 +63,24 @@ void pbio_pybricks_hub_capabilities(uint8_t *buf,
 }
 
 /**
+ * Encodes the value of the Device Information Service PnP ID characteristic.
+ *
+ * This is used to identify the hub, both in the Device Information Service and
+ * in the advertising scan response service data.
+ *
+ * @param [in]  buf              A buffer where the result will be written.
+ *                               Must be at least ::PBIO_PYBRICKS_PNP_ID_SIZE bytes.
+ * @param [in]  product_id       The Product ID Field (::pbio_pybricks_hub_kind_t).
+ * @param [in]  product_version  The Product Version Field (hub variant).
+ */
+void pbio_pybricks_pnp_id(uint8_t *buf, uint16_t product_id, uint16_t product_version) {
+    buf[0] = 0x01; // Vendor ID Source Field - Bluetooth SIG-assigned ID
+    pbio_set_uint16_le(&buf[1], 0x0397); // Vendor ID Field - LEGO company identifier
+    pbio_set_uint16_le(&buf[3], product_id); // Product ID Field
+    pbio_set_uint16_le(&buf[5], product_version); // Product Version Field
+}
+
+/**
  * Pybricks Service UUID.
  *
  * C5F50001-8280-46DA-89F4-6D8051E4AEEF
@@ -98,22 +116,20 @@ const uint8_t pbio_pybricks_hub_capabilities_char_uuid[] = {
     0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
 };
 
-// Standard BLE UUIDs used as part of Pybricks "protocol".
+/**
+ * Pybricks Bluetooth Classic RFCOMM serial service class UUID, as registered
+ * in the hub's SDP record.
+ *
+ * C5F50101-8280-46DA-89F4-6D8051E4AEEF
+ *
+ * Allocated from the 0x01xx block, which is reserved for identifiers that are
+ * not GATT attributes.
+ */
+const uint8_t pbio_pybricks_rfcomm_service_class_uuid[] = {
+    0xC5, 0xF5, 0x01, 0x01, 0x82, 0x80, 0x46, 0xDA,
+    0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF,
+};
 
-/** Bluetooth Device Information Service UUID. */
-const uint16_t pbio_gatt_device_info_service_uuid = 0x180A;
-
-/** Bluetooth Device Name Characteristic UUID. */
-const uint16_t pbio_gatt_device_name_char_uuid = 0x2A00;
-
-/** Bluetooth Firmware Version Characteristic UUID. */
-const uint16_t pbio_gatt_firmware_version_char_uuid = 0x2A26;
-
-/** Bluetooth Software Version Characteristic UUID (Pybricks protocol version). */
-const uint16_t pbio_gatt_software_version_char_uuid = 0x2A28;
-
-/** Bluetooth PnP ID Characteristic UUID. */
-const uint16_t pbio_gatt_pnp_id_char_uuid = 0x2A50;
 
 /**
  * Converts a ::pbio_error_t to a ::pbio_pybricks_error_t for commands.

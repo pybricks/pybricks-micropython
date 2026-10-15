@@ -60,3 +60,27 @@ HCI_StatusCodes_t HCI_EXT_setLocalSupportedFeatures(const uint32_t localFeatures
 
     return HCI_sendHCICommand(HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES, buf, 8);
 }
+
+/**
+ * This command is used to set the maximum Link Layer data length that the
+ * Controller supports for transmission and reception, which it would otherwise
+ * set to 251 octets and 2120 us. Values out of range leave the respective
+ * setting unchanged.
+ *
+ * Note: This command can only be used when there are no active BLE connections.
+ */
+HCI_StatusCodes_t HCI_EXT_setMaxDataLength(uint16_t txOctets, uint16_t txTime, uint16_t rxOctets, uint16_t rxTime)
+{
+    uint8_t buf[8];
+
+    buf[0] = txOctets & 0xFF;
+    buf[1] = (txOctets >> 8) & 0xFF;
+    buf[2] = txTime & 0xFF;
+    buf[3] = (txTime >> 8) & 0xFF;
+    buf[4] = rxOctets & 0xFF;
+    buf[5] = (rxOctets >> 8) & 0xFF;
+    buf[6] = rxTime & 0xFF;
+    buf[7] = (rxTime >> 8) & 0xFF;
+
+    return HCI_sendHCICommand(HCI_EXT_SET_MAX_DATA_LENGTH, buf, 8);
+}

@@ -32,7 +32,7 @@ static struct {
 /**
  * Let other processes and external hosts know that the status changed.
  */
-static void pbsys_status_update_emit(void) {
+void pbsys_status_update_emit(void) {
 
     uint8_t buf[PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE];
     pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
@@ -58,20 +58,6 @@ static void pbsys_status_update_flag(pbio_pybricks_status_flags_t status, bool s
 
     // Status light may need updating if flags have changed.
     pbsys_status_light_handle_status_change();
-}
-
-/**
- * Gets the Pybricks status report and writes it to @p buf.
- *
- * The buffer must be at least ::PBIO_PYBRICKS_EVENT_STATUS_REPORT_SIZE bytes.
- *
- * REVISIT: This can be dropped once ::pbsys_host_schedule_status_update is implemented.
- *
- * @param [in]  buf        The buffer to hold the binary data.
- * @return                 The number of bytes written to @p buf.
- */
-uint32_t pbsys_status_get_status_report(uint8_t *buf) {
-    return pbio_pybricks_event_status_report(buf, pbsys_status.flags, pbsys_status.program_id, pbsys_status.slot);
 }
 
 /**

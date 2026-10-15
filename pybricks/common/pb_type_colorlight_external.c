@@ -39,7 +39,7 @@ static MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_external_on_obj, 1, common_C
 // pybricks._common.ColorLight.off
 static mp_obj_t common_ColorLight_external_off(mp_obj_t self_in) {
     common_ColorLight_external_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return self->on(self->parent_obj, &pb_Color_NONE_obj.hsv);
+    return self->on(self->parent_obj, pb_Color_NONE_obj.hsv);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_external_off_obj, common_ColorLight_external_off);
 

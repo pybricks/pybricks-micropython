@@ -46,16 +46,27 @@
 #define PBDRV_CONFIG_I2C_EV3                        (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
-#define PBDRV_CONFIG_BLUETOOTH_NUM_CLASSIC_CONNECTIONS (2)
+// REVISIT: The CC2560 is Bluetooth Classic only, so this hub has no BLE at
+// all. The flag stays set anyway because it currently also selects the shared
+// driver framework in pbdrv/bluetooth.h (the process thread, controller
+// bring-up, HCI state) that this driver needs regardless of BLE.
+#define PBDRV_CONFIG_BLUETOOTH_LE                   (1)
+#define PBDRV_CONFIG_BLUETOOTH_INQUIRY              (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID          (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST         (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS        (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER                 (1)
+// Baseband ceiling: the 3-bit LT_ADDR allows 7 peers per piconet. Whether
+// the CC2560 firmware sustains that many is still to be measured.
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS       (7)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS      (2)
 #define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE         515
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS (0)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CLASSIC      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_EV3          (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2560X      (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND     LWP3_HUB_KIND_TECHNIC_LARGE
-#undef PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
+#define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_EV3
+#define PBDRV_CONFIG_HUB_VARIANT                    0x0000
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
@@ -69,6 +80,9 @@
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_EV3                       (1)
+
+#define PBDRV_CONFIG_HARDWARE                       (1)
+#define PBDRV_CONFIG_HARDWARE_EV3                   (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A                     (1)
 #define PBDRV_CONFIG_HAS_PORT_B                     (1)
@@ -111,13 +125,10 @@
 #define PBDRV_CONFIG_UART_EV3_NUM_UART              (4)
 
 #define PBDRV_CONFIG_USB                            (1)
-#define PBDRV_CONFIG_USB_MAX_PACKET_SIZE            (512)
-#define PBDRV_CONFIG_USB_NUM_BUFFERED_PACKETS       (2)
 #define PBDRV_CONFIG_USB_EV3                        (1)
 #define PBDRV_CONFIG_USB_VID                        LEGO_USB_VID
 #define PBDRV_CONFIG_USB_PID                        LEGO_USB_PID_EV3
 #define PBDRV_CONFIG_USB_MFG_STR                    LEGO_USB_MFG_STR
-#define PBDRV_CONFIG_USB_PROD_STR                   LEGO_USB_PROD_STR_EV3 " + Pybricks"
 
 #define PBDRV_CONFIG_STACK                          (1)
 #define PBDRV_CONFIG_STACK_EMBEDDED                 (1)

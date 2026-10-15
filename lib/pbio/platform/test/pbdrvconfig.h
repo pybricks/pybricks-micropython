@@ -8,11 +8,14 @@
 #define PBDRV_CONFIG_BUTTON_TEST                            (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                              (1)
+#define PBDRV_CONFIG_BLUETOOTH_LE                           (1)
+#define PBDRV_CONFIG_BLUETOOTH_MAX_MTU_SIZE                 (515)
 #define PBDRV_CONFIG_BLUETOOTH_NUM_PERIPHERALS              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS         (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_CC2564C              (1)
-#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_KIND             0xff
+#define PBDRV_CONFIG_HUB_KIND                               (0xff)
+#define PBDRV_CONFIG_HUB_VARIANT                            (0x0000)
 
 #define PBDRV_CONFIG_CLOCK                                  (1)
 #define PBDRV_CONFIG_CLOCK_TEST                             (1)

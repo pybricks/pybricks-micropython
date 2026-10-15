@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2026 The Pybricks Authors
 
 // PWM driver using TI TLC5955 LED driver connected to STM32 MCU via SPI.
 
@@ -165,15 +165,28 @@ static const pbdrv_pwm_driver_funcs_t pbdrv_pwm_tlc5955_stm32_funcs = {
 };
 
 // toggles LAT signal on and off to latch data in shift register
-static void pbdrv_pwm_tlc5955_toggle_latch(pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
+static pbio_error_t pbdrv_pwm_tlc5955_toggle_wait_and_latch(pbio_os_state_t *state, pbdrv_pwm_tlc5955_stm32_priv_t *priv) {
+
     const pbdrv_pwm_tlc5955_stm32_platform_data_t *pdata = priv->pwm->pdata;
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // Wait for SPI to finish transmitting data before toggling LAT.
+    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
+
+    // Need to await between toggles or else LTO will inline the two GPIO
+    // writes into back-to-back BSRR accesses (~ns apart), below the TLC5955
+    // minimum latch pulse width.
     HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_SET);
+    PBIO_OS_AWAIT_ONCE(state);
     HAL_GPIO_WritePin(pdata->lat_gpio, pdata->lat_gpio_pin, GPIO_PIN_RESET);
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
 static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *state, void *context) {
 
     pbdrv_pwm_tlc5955_stm32_priv_t *priv = context;
+    static pbio_os_state_t sub;
 
     PBIO_OS_ASYNC_BEGIN(state);
 
@@ -181,13 +194,11 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *stat
     PBIO_OS_AWAIT_ONCE(state);
 
     HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
 
     // have to send twice for max current to take effect
     HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, TLC5955_DATA_SIZE);
-    PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-    pbdrv_pwm_tlc5955_toggle_latch(priv);
+    PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
@@ -197,8 +208,7 @@ static pbio_error_t pbdrv_pwm_tlc5955_stm32_process_thread(pbio_os_state_t *stat
         PBIO_OS_AWAIT_UNTIL(state, priv->changed);
         HAL_SPI_Transmit_DMA(&priv->hspi, priv->grayscale_latch, TLC5955_DATA_SIZE);
         priv->changed = false;
-        PBIO_OS_AWAIT_UNTIL(state, priv->hspi.State == HAL_SPI_STATE_READY);
-        pbdrv_pwm_tlc5955_toggle_latch(priv);
+        PBIO_OS_AWAIT(state, &sub, pbdrv_pwm_tlc5955_toggle_wait_and_latch(&sub, priv));
     }
 
     // Unreachable
@@ -216,10 +226,25 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         gpio_init.Pin = pdata->lat_gpio_pin;
         gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
         gpio_init.Pull = GPIO_NOPULL;
-        gpio_init.Speed = GPIO_SPEED_LOW;
+        gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
         HAL_GPIO_Init(pdata->lat_gpio, &gpio_init);
 
         priv->hdma_rx.Instance = pdata->rx_dma;
+        #if defined(STM32H5)
+        priv->hdma_rx.Init.Request = pdata->rx_dma_req;
+        priv->hdma_rx.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+        priv->hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+        priv->hdma_rx.Init.SrcInc = DMA_SINC_FIXED;
+        priv->hdma_rx.Init.DestInc = DMA_DINC_INCREMENTED;
+        priv->hdma_rx.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+        priv->hdma_rx.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+        priv->hdma_rx.Init.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+        priv->hdma_rx.Init.SrcBurstLength = 1;
+        priv->hdma_rx.Init.DestBurstLength = 1;
+        priv->hdma_rx.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0 | DMA_DEST_ALLOCATED_PORT0;
+        priv->hdma_rx.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+        priv->hdma_rx.Init.Mode = DMA_NORMAL;
+        #else
         priv->hdma_rx.Init.Channel = pdata->rx_dma_ch;
         priv->hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
         priv->hdma_rx.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -231,12 +256,28 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->hdma_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
         priv->hdma_rx.Init.MemBurst = DMA_MBURST_SINGLE;
         priv->hdma_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+        #endif
         HAL_DMA_Init(&priv->hdma_rx);
 
         HAL_NVIC_SetPriority(pdata->rx_dma_irq, 7, 0);
         HAL_NVIC_EnableIRQ(pdata->rx_dma_irq);
 
         priv->hdma_tx.Instance = pdata->tx_dma;
+        #if defined(STM32H5)
+        priv->hdma_tx.Init.Request = pdata->tx_dma_req;
+        priv->hdma_tx.Init.BlkHWRequest = DMA_BREQ_SINGLE_BURST;
+        priv->hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+        priv->hdma_tx.Init.SrcInc = DMA_SINC_INCREMENTED;
+        priv->hdma_tx.Init.DestInc = DMA_DINC_FIXED;
+        priv->hdma_tx.Init.SrcDataWidth = DMA_SRC_DATAWIDTH_BYTE;
+        priv->hdma_tx.Init.DestDataWidth = DMA_DEST_DATAWIDTH_BYTE;
+        priv->hdma_tx.Init.Priority = DMA_LOW_PRIORITY_LOW_WEIGHT;
+        priv->hdma_tx.Init.SrcBurstLength = 1;
+        priv->hdma_tx.Init.DestBurstLength = 1;
+        priv->hdma_tx.Init.TransferAllocatedPort = DMA_SRC_ALLOCATED_PORT0 | DMA_DEST_ALLOCATED_PORT0;
+        priv->hdma_tx.Init.TransferEventMode = DMA_TCEM_BLOCK_TRANSFER;
+        priv->hdma_tx.Init.Mode = DMA_NORMAL;
+        #else
         priv->hdma_tx.Init.Channel = pdata->tx_dma_ch;
         priv->hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
         priv->hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
@@ -248,6 +289,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
         priv->hdma_tx.Init.MemBurst = DMA_MBURST_SINGLE;
         priv->hdma_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+        #endif
         HAL_DMA_Init(&priv->hdma_tx);
 
         HAL_NVIC_SetPriority(pdata->tx_dma_irq, 7, 1);

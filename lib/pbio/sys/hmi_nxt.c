@@ -14,7 +14,7 @@
 #include <string.h>
 
 #include <pbdrv/display.h>
-#include <pbdrv/usb.h>
+#include <pbio/serial.h>
 
 #include <pbio/button.h>
 #include <pbio/image.h>
@@ -99,7 +99,7 @@ static void draw_status_text(const char *status) {
 }
 
 static void pbsys_hmi_host_update_indications(void) {
-    if (pbdrv_usb_connection_is_active()) {
+    if (pbio_serial_connection_is_active(PBSYS_HOST_TRANSPORT_TYPE_USB)) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
@@ -111,7 +111,7 @@ static bool pbsys_hmi_handle_connection_change;
 /**
  * Called from the USB and Bluetooth driver if a host connection state changes.
  */
-static void pbsys_hmi_connection_changed_callback(void) {
+void pbsys_hmi_connection_changed_handler(void) {
     DEBUG_PRINT("A host connected or disconnected.\n");
     pbsys_hmi_handle_connection_change = true;
     pbsys_hmi_host_update_indications();
@@ -119,12 +119,10 @@ static void pbsys_hmi_connection_changed_callback(void) {
 
 
 void pbsys_hmi_init(void) {
-    pbdrv_usb_set_host_connection_changed_callback(pbsys_hmi_connection_changed_callback);
 }
 
 void pbsys_hmi_deinit(void) {
 
-    pbdrv_usb_set_host_connection_changed_callback(NULL);
     pbsys_status_clear(PBIO_PYBRICKS_STATUS_USB_HOST_CONNECTED);
 
     pbio_image_t *display = pbdrv_display_get_image();
@@ -152,6 +150,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         draw_status_text("     Ready.");
 
         pbsys_hmi_host_update_indications();
+        pbio_os_timer_reset(timer);
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.

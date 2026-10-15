@@ -3,12 +3,16 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_PUPDEVICES
+// The file name matches pybricks.iodevices.LWP3Device, but this file also
+// implements Remote and the other LWP3 hub classes, which are in
+// pybricks.pupdevices. So it is needed by either module.
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE || PYBRICKS_PY_PUPDEVICES
 
 #include <stdint.h>
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 
 #include <pbio/button.h>
 #include <pbio/color.h>
@@ -87,7 +91,7 @@ typedef struct {
     /**
      * The peripheral instance associated with this MicroPython object.
      */
-    pbdrv_bluetooth_peripheral_t *peripheral;
+    pbio_bluetooth_peripheral_t *peripheral;
     /**
      * The discovered LWP3 characteristic handle.
      */
@@ -104,6 +108,11 @@ typedef struct {
      * Buttons object (property of Remote class).
      */
     mp_obj_t buttons;
+    /**
+     * Colors to detect (property of Mario class). Not a port instance like
+     * other sensors, since this device is not attached to a port.
+     */
+    pbio_color_map_t color_map;
     /**
      * Light object (property of Remote class).
      */
@@ -123,7 +132,7 @@ typedef struct {
     /**
      * Scan and connect configuration.
      */
-    pbdrv_bluetooth_peripheral_connect_config_t scan_config;
+    pbio_bluetooth_peripheral_connect_config_t scan_config;
     /**
      * The hub kind to filter advertisements for.
      */
@@ -164,8 +173,8 @@ static bool pb_type_lwp3device_advertisement_matches(void *user, const uint8_t *
     // Whether this looks like a LWP3 advertisement of the correct hub kind.
     return
         data[3] == 17 /* length */
-        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
-            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
+        && (data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
         && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
         && data[26] == self->hub_kind;
 }
@@ -186,7 +195,7 @@ static mp_obj_t wait_or_await_operation(mp_obj_t self_in) {
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_async_t config = {
-        .iter_once = pbdrv_bluetooth_await_peripheral_command,
+        .iter_once = pbio_bluetooth_await_peripheral_command,
         // Using the driver function without a wrapper, so should pass its
         // context parameter (the peripheral) as the parent object.
         .parent_obj = self->peripheral,
@@ -197,7 +206,7 @@ static mp_obj_t wait_or_await_operation(mp_obj_t self_in) {
 static mp_obj_t pb_type_lwp3device_close(mp_obj_t self_in) {
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Disables notification handler from accessing allocated memory.
-    pbdrv_bluetooth_peripheral_release(self->peripheral, self);
+    pbio_bluetooth_peripheral_release(self->peripheral, self);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pb_type_lwp3device_close_obj, pb_type_lwp3device_close);
@@ -213,11 +222,11 @@ static pbio_error_t pb_type_lwp3device_connect_thread(pbio_os_state_t *state, mp
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Get available peripheral instance.
-    pb_assert(pbdrv_bluetooth_peripheral_get_available(&self->peripheral, self));
+    pb_assert(pbio_bluetooth_peripheral_get_available(&self->peripheral, self));
 
     // Initiate scan and connect with timeout.
-    pb_assert(pbdrv_bluetooth_peripheral_scan_and_connect(self->peripheral, &self->scan_config));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_scan_and_connect(self->peripheral, &self->scan_config));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         // Not successful, release peripheral.
         pb_type_lwp3device_close(parent_obj);
@@ -225,17 +234,17 @@ static pbio_error_t pb_type_lwp3device_connect_thread(pbio_os_state_t *state, mp
     }
 
     // Copy the name so we can read it back later, and override locally.
-    memcpy(self->name, pbdrv_bluetooth_peripheral_get_name(self->peripheral), sizeof(self->name));
+    memcpy(self->name, pbio_bluetooth_peripheral_get_name(self->peripheral), sizeof(self->name));
 
     // Discover common lwp3 characteristic.
-    pbdrv_bluetooth_peripheral_char_discovery_t pb_type_lwp3device_char = {
+    pbio_bluetooth_peripheral_char_discovery_t pb_type_lwp3device_char = {
         .properties = 0x001c, // Notify, Write Without Response, Write
         .uuid128 = lwp3_uuid128,
         .request_notification = true,
     };
-    pb_assert(pbdrv_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_lwp3device_char));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
-    self->lwp3_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
+    pb_assert(pbio_bluetooth_peripheral_discover_characteristic(self->peripheral, &pb_type_lwp3device_char));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    self->lwp3_char_handle = pbio_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     if (err != PBIO_SUCCESS) {
         goto disconnect;
     }
@@ -252,8 +261,8 @@ static pbio_error_t pb_type_lwp3device_connect_thread(pbio_os_state_t *state, mp
 
 disconnect:
     pb_type_lwp3device_close(parent_obj);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_disconnect(self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     pb_assert(err);
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
@@ -293,7 +302,7 @@ static mp_obj_t pb_type_lwp3device_disconnect(mp_obj_t self_in) {
     // connection later.
     pb_type_lwp3device_close(self_in);
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbdrv_bluetooth_peripheral_disconnect(self->peripheral));
+    pb_assert(pbio_bluetooth_peripheral_disconnect(self->peripheral));
     return wait_or_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_lwp3device_disconnect_obj, pb_type_lwp3device_disconnect);
@@ -314,7 +323,7 @@ static void pb_type_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t c
 
     // Attempt to re-use existing connection.
     self->peripheral = NULL;
-    pbio_error_t err = pbdrv_bluetooth_peripheral_get_connected(&self->peripheral, self, &self->scan_config);
+    pbio_error_t err = pbio_bluetooth_peripheral_get_connected(&self->peripheral, self, &self->scan_config);
 
     // If we aren't already connected, do so now if requested.
     if (err == PBIO_ERROR_NO_DEV && want_connection) {
@@ -328,7 +337,7 @@ static void pb_type_lwp3device_intialize_connection(mp_obj_t self_in, mp_obj_t c
     // If we have reconnected virtually, we're skipping the discovery phase,
     // so use the result from last time.
     if (pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
-        self->lwp3_char_handle = pbdrv_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
+        self->lwp3_char_handle = pbio_bluetooth_peripheral_discover_characteristic_get_result(self->peripheral);
     }
 }
 
@@ -354,6 +363,7 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
             char payload[LWP3_MAX_HUB_PROPERTY_NAME_SIZE];
         } __attribute__((packed)) msg;
 
+        msg.length = sizeof(msg) - sizeof(msg.payload) + len;
         msg.hub = 0;
         msg.type = LWP3_MSG_TYPE_HUB_PROPERTIES;
         msg.property = LWP3_HUB_PROPERTY_NAME;
@@ -364,9 +374,9 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
         memcpy(self->name, name, len);
         self->name[len] = 0;
 
-        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(
+        pb_assert(pbio_bluetooth_peripheral_write_characteristic(
             self->peripheral, self->lwp3_char_handle,
-            (const uint8_t *)&msg, sizeof(msg) - sizeof(msg.payload) + len));
+            (const uint8_t *)&msg, msg.length));
         return wait_or_await_operation(self_in);
     }
 
@@ -377,6 +387,8 @@ static mp_obj_t pb_type_lwp3device_name(size_t n_args, const mp_obj_t *args) {
     return mp_obj_new_str(self->name, strlen(self->name));
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_type_lwp3device_name_obj, 1, 2, pb_type_lwp3device_name);
+
+#if PYBRICKS_PY_PUPDEVICES_REMOTE
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.Remote (special case of LWP3).
@@ -439,7 +451,7 @@ mp_obj_t pb_type_remote_button_pressed(mp_obj_t self_in) {
     #endif
 }
 
-static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
+static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, pbio_color_t hsv) {
 
     struct {
         uint8_t length;
@@ -462,7 +474,7 @@ static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_
     };
 
     pbio_color_rgb_t rgb;
-    pbio_color_hsv_to_rgb(hsv, &rgb);
+    pbio_color_to_rgb(hsv, &rgb);
 
     // The red LED on the handset is weak, so we have to reduce green and blue
     // to get the colors right.
@@ -472,10 +484,10 @@ static pbio_error_t pb_type_remote_write_light_msg(mp_obj_t self_in, const pbio_
 
     pb_type_lwp3device_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
+    return pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
 }
 
-static mp_obj_t pb_type_remote_light_on(mp_obj_t self_in, const pbio_color_hsv_t *hsv) {
+static mp_obj_t pb_type_remote_light_on(mp_obj_t self_in, pbio_color_t hsv) {
     pb_assert(pb_type_remote_write_light_msg(self_in, hsv));
     return wait_or_await_operation(self_in);
 }
@@ -510,11 +522,11 @@ static pbio_error_t pb_type_remote_post_connect(pbio_os_state_t *state, mp_obj_t
     msg.mode = REMOTE_BUTTONS_MODE_KEYSD;
     msg.enable_notifications = 1;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -522,11 +534,11 @@ static pbio_error_t pb_type_remote_post_connect(pbio_os_state_t *state, mp_obj_t
     // set mode for right buttons
     msg.port = REMOTE_PORT_RIGHT_BUTTONS;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -536,23 +548,21 @@ static pbio_error_t pb_type_remote_post_connect(pbio_os_state_t *state, mp_obj_t
     msg.mode = STATUS_LIGHT_MODE_RGB_0;
     msg.enable_notifications = 0;
 
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)&msg, sizeof(msg));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // set status light to blue.
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(PBIO_COLOR_BLUE, &hsv);
-    err = pb_type_remote_write_light_msg(parent_obj, &hsv);
+    err = pb_type_remote_write_light_msg(parent_obj, PBIO_COLOR_BLUE);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -576,11 +586,11 @@ static mp_obj_t pb_type_remote_make_new(const mp_obj_type_t *type, size_t n_args
 
     self->post_connect_setup_func = pb_type_remote_post_connect;
 
-    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+    self->scan_config = (pbio_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
         .notification_handler = pb_type_remote_handle_notification,
-        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+        .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
     };
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
 
@@ -613,6 +623,9 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_remote,
     protocol, pb_type_remote_attr_dict,
     locals_dict, &pb_type_remote_locals_dict);
 
+#endif // PYBRICKS_PY_PUPDEVICES_REMOTE
+
+#if PYBRICKS_PY_PUPDEVICES_TECHNIC_MOVE_HUB
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.TechnicMoveHub (special case of LWP3).
@@ -641,23 +654,23 @@ static pbio_error_t pb_type_technic_move_hub_post_connect(pbio_os_state_t *state
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Send first setup command.
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral,
         self->lwp3_char_handle, pb_type_technic_move_hub_setup1, sizeof(pb_type_technic_move_hub_setup1));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Send second setup command.
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral,
         self->lwp3_char_handle, pb_type_technic_move_hub_setup2, sizeof(pb_type_technic_move_hub_setup2));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -705,7 +718,7 @@ static mp_obj_t pb_type_technic_move_hub_drive(size_t n_args, const mp_obj_t *po
     const uint8_t cmd[] = {
         0x0d, 0x00, 0x81, 0x36, 0x11, 0x51, 0x00, 0x03, 0x00, speed_byte, steering_byte, light_mode, 0,
     };
-    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd)));
+    pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, cmd, sizeof(cmd)));
     return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_technic_move_hub_drive_obj, 1, pb_type_technic_move_hub_drive);
@@ -723,11 +736,11 @@ static mp_obj_t pb_type_technic_move_hub_make_new(const mp_obj_type_t *type, siz
     self->noti_num = 0;
     self->hub_kind = LWP3_HUB_KIND_TECHNIC_MOVE;
     self->post_connect_setup_func = pb_type_technic_move_hub_post_connect;
-    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+    self->scan_config = (pbio_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
         .notification_handler = pb_type_technic_move_hub_handle_notification,
-        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+        .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
     };
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
     pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
@@ -747,6 +760,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_technic_move_hub,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_technic_move_hub_make_new,
     locals_dict, &pb_type_technic_move_hub_locals_dict);
+
+#endif // PYBRICKS_PY_PUPDEVICES_TECHNIC_MOVE_HUB
+
+#if PYBRICKS_PY_PUPDEVICES_MARIO
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.MarioHub (special case of LWP3).
@@ -768,8 +785,8 @@ static bool pb_type_mario_hub_advertisement_matches(void *user, const uint8_t *d
     // Same test as LWP3 advertisement, but allow 3 hub types
     return
         data[3] == 17 /* length */
-        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
-            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
+        && (data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
         && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
         && (data[26] == LWP3_HUB_KIND_MARIO || data[26] == LWP3_HUB_KIND_LUIGI || data[26] == LWP3_HUB_KIND_PEACH);
 }
@@ -798,25 +815,25 @@ static pbio_error_t pb_type_mario_hub_post_connect(pbio_os_state_t *state, mp_ob
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Subscribe to RGB color info.
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral,
         self->lwp3_char_handle, pb_type_mario_hub_setup1, sizeof(pb_type_mario_hub_setup1));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
-static void pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_t *self, pbio_color_hsv_t *hsv) {
+static pbio_color_t pb_type_mario_hub_color_get_hsv_data(pb_type_lwp3device_obj_t *self) {
     pbio_color_rgb_t rgb = {
         .r = self->data[0],
         .g = self->data[1],
         .b = self->data[2],
     };
-    pb_color_map_rgb_to_hsv(&rgb, hsv);
+    return pbio_color_from_rgb_with_hue_shift(&rgb);
 }
 
 static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
@@ -824,9 +841,8 @@ static mp_obj_t pb_type_mario_hub_color(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    pbio_color_hsv_t hsv;
-    pb_type_mario_hub_color_get_hsv_data(self, &hsv);
-    return pb_color_map_get_color(&self->buttons, &hsv);
+    pbio_color_t matched = pbio_color_map_find(&self->color_map, pb_type_mario_hub_color_get_hsv_data(self));
+    return pb_color_map_get_color(&self->color_map, matched);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_color_obj, pb_type_mario_hub_color);
 
@@ -835,9 +851,7 @@ static mp_obj_t pb_type_mario_hub_hsv(mp_obj_t self_in) {
     if (!pbdrv_bluetooth_peripheral_is_connected(self->peripheral)) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
-    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
-    pb_type_mario_hub_color_get_hsv_data(self, &color->hsv);
-    return MP_OBJ_FROM_PTR(color);
+    return pb_type_Color_new(pb_type_mario_hub_color_get_hsv_data(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(pb_type_mario_hub_hsv_obj, pb_type_mario_hub_hsv);
 
@@ -845,7 +859,7 @@ static mp_obj_t pb_type_mario_hub_detectable_colors(size_t n_args, const mp_obj_
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_type_lwp3device_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));
-    return pb_color_map_detectable_colors_method(&self->buttons, colors_in);
+    return pb_color_map_detectable_colors_method(&self->color_map, colors_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_mario_hub_detectable_colors_obj, 1, pb_type_mario_hub_detectable_colors);
 
@@ -862,21 +876,19 @@ static mp_obj_t pb_type_mario_hub_make_new(const mp_obj_type_t *type, size_t n_a
     self->noti_num = 0;
     self->hub_kind = 0; // Not used, checks for 3 mario types instead.
     self->post_connect_setup_func = pb_type_mario_hub_post_connect;
-    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+    self->scan_config = (pbio_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_mario_hub_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
         .notification_handler = pb_type_mario_hub_handle_notification,
         // Newer Mario firmware versions require pairing. Older firmware
         // versions seem to accept it even if it wasn't required, so always
         // attempt it just in case.
-        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
+        .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR,
     };
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
     pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
 
-    // Reusing the buttons object which is not used on Mario to hold the
-    // detectable color mapping.
-    pb_color_map_save_default(&self->buttons);
+    pbio_color_map_set_default(&self->color_map);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -896,6 +908,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_mario_hub,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_mario_hub_make_new,
     locals_dict, &pb_type_mario_hub_locals_dict);
+
+#endif // PYBRICKS_PY_PUPDEVICES_MARIO
+
+#if PYBRICKS_PY_PUPDEVICES_DUPLO_TRAIN
 
 // -----------------------------------------------------------------------------
 // pybricks.pupdevices.DuploTrain (special case of LWP3).
@@ -919,7 +935,7 @@ static pbio_error_t pb_type_duplo_train_subscribe_values(pb_type_lwp3device_obj_
     const uint8_t subscribe[] = {
         0x0a, 0x00, 0x41, port, mode, 0x01, 0x00, 0x00, 0x00, 0x01,
     };
-    return pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, subscribe, sizeof(subscribe));
+    return pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, subscribe, sizeof(subscribe));
 }
 
 static void pb_type_duplo_train_handle_notification(void *user, const uint8_t *value, uint32_t size) {
@@ -960,12 +976,12 @@ static pbio_error_t pb_type_duplo_train_post_connect(pbio_os_state_t *state, mp_
     PBIO_OS_ASYNC_BEGIN(state);
 
     // Activate speaker.
-    err = pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral,
+    err = pbio_bluetooth_peripheral_write_characteristic(self->peripheral,
         self->lwp3_char_handle, pb_type_duplo_train_old_activate_speaker, sizeof(pb_type_duplo_train_old_activate_speaker));
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -979,7 +995,7 @@ static pbio_error_t pb_type_duplo_train_post_connect(pbio_os_state_t *state, mp_
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -993,7 +1009,7 @@ static pbio_error_t pb_type_duplo_train_post_connect(pbio_os_state_t *state, mp_
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    PBIO_OS_AWAIT(state, &unused, err = pbdrv_bluetooth_await_peripheral_command(&unused, self->peripheral));
+    PBIO_OS_AWAIT(state, &unused, err = pbio_bluetooth_await_peripheral_command(&unused, self->peripheral));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -1012,7 +1028,7 @@ static mp_obj_t pb_type_duplo_train_drive(size_t n_args, const mp_obj_t *pos_arg
     const uint8_t message[] = {
         0x08, 0x00, 0x81, port_byte, 0x01, 0x51, mode_byte, power_byte
     };
-    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message, sizeof(message)));
+    pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message, sizeof(message)));
     return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_type_duplo_train_drive_obj, 1, pb_type_duplo_train_drive);
@@ -1022,28 +1038,31 @@ static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *po
         pb_type_lwp3device_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    const pbio_color_hsv_t *hsv = pb_type_Color_get_hsv(color_in);
+    pbio_color_t hsv = pb_type_Color_get_hsv(color_in);
+    uint16_t h = pbio_color_get_h(hsv);
+    uint8_t s = pbio_color_get_s(hsv);
+    int8_t v = pbio_color_get_v(hsv);
 
     if (self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK) {
         uint8_t id;
-        if (hsv->s < 10) {
+        if (s < 10) {
             // Desaturated, so pick white or black.
-            id = hsv->v > 50 ? 10 : 0;
-        } else if (hsv->h < 15) {
+            id = v > 50 ? 10 : 0;
+        } else if (h < 15) {
             id = 9; // red
-        } else if (hsv->h < 45) {
+        } else if (h < 45) {
             id = 8; // orange
-        } else if (hsv->h < 90) {
+        } else if (h < 90) {
             id = 7; // yellow
-        } else if (hsv->h < 150) {
+        } else if (h < 150) {
             id = 6; // green
-        } else if (hsv->h < 170) {
+        } else if (h < 170) {
             id = 5; // torquoise
-        } else if (hsv->h < 210) {
+        } else if (h < 210) {
             id = 4; // light blue
-        } else if (hsv->h < 270) {
+        } else if (h < 270) {
             id = 3; // blue
-        } else if (hsv->h < 305) {
+        } else if (h < 305) {
             id = 2; // magenta
         } else {
             id = 1; // violet red
@@ -1051,21 +1070,21 @@ static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *po
         const uint8_t message_old[] = {
             0x08, 0x00, 0x81, 0x11, 0x11, 0x51, 0x00, id
         };
-        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
+        pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
     } else {
         uint8_t id;
-        if (hsv->s < 10) {
+        if (s < 10) {
             // Desaturated, so pick white or black.
-            id = hsv->v > 50 ? 1 : 0;
-        } else if (hsv->h < 15) {
+            id = v > 50 ? 1 : 0;
+        } else if (h < 15) {
             id = 2; // red
-        } else if (hsv->h < 90) {
+        } else if (h < 90) {
             id = 4; // yellow/orange
-        } else if (hsv->h < 150) {
+        } else if (h < 150) {
             id = 5; // green
-        } else if (hsv->h < 210) {
+        } else if (h < 210) {
             id = 3; // light blue
-        } else if (hsv->h < 270) {
+        } else if (h < 270) {
             id = 15; // blue
         } else {
             id = 14; // violet red
@@ -1073,7 +1092,7 @@ static mp_obj_t pb_type_duplo_train_headlights(size_t n_args, const mp_obj_t *po
         const uint8_t message_new[] = {
             10, 0, 129, 52, 17, 0x51, 0x01, 0x04, 0x01, id
         };
-        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
+        pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
     }
     return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
 }
@@ -1113,14 +1132,14 @@ static mp_obj_t pb_type_duplo_train_sound(size_t n_args, const mp_obj_t *pos_arg
             0x08, 0x00, 0x81, 0x01, 0x11, 0x51, 0x01, sound_byte
         };
         if (sound_byte) {
-            pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
+            pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_old, sizeof(message_old)));
         }
     } else {
         // Revisit: Figure out other sounds for second generation Duplo Hub.
         const uint8_t message_new[] = {
             9, 0, 129, 52, 17, 0x51, 1, 7, 1
         };
-        pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
+        pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, message_new, sizeof(message_new)));
     }
 
     return wait_or_await_operation(MP_OBJ_FROM_PTR(self));
@@ -1157,34 +1176,36 @@ static mp_obj_t pb_type_duplo_train_color(mp_obj_t self_in) {
             .g = rgb_to_byte(&self->data[4]),
             .b = rgb_to_byte(&self->data[6]),
         };
-        pbio_color_hsv_t hsv;
-        pbio_color_rgb_to_hsv(&rgb, &hsv);
-        if (hsv.v > 30 && hsv.h > 235 && hsv.h < 270 && hsv.s < 50) {
+        pbio_color_t hsv = pbio_color_from_rgb(&rgb);
+        uint16_t h = pbio_color_get_h(hsv);
+        uint8_t s = pbio_color_get_s(hsv);
+        int8_t v = pbio_color_get_v(hsv);
+        if (v > 30 && h > 235 && h < 270 && s < 50) {
             // purple star tag
             return MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj);
         }
-        if (hsv.v > 60 && hsv.h > 190 && hsv.h < 230 && hsv.s < 40) {
+        if (v > 60 && h > 190 && h < 230 && s < 40) {
             // pink home tag
             return MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj);
         }
-        if (hsv.h > 70 && hsv.h < 110 && hsv.s > 50) {
+        if (h > 70 && h < 110 && s > 50) {
             // green leaf tag
             return MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj);
         }
         // Deal with unsaturated colors.
-        if (hsv.s < 50) {
-            return hsv.v > 75 ?
+        if (s < 50) {
+            return v > 75 ?
                    MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj):
                    MP_OBJ_FROM_PTR(&pb_Color_NONE_obj);
         }
         // What remains are pure saturated colors, so go by hue.
-        if (hsv.h > 300 || hsv.h < 20) {
+        if (h > 300 || h < 20) {
             return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
         }
-        if (hsv.h < 85) {
+        if (h < 85) {
             return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
         }
-        if (hsv.h < 180) {
+        if (h < 180) {
             return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
         }
         return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);
@@ -1230,8 +1251,8 @@ static bool pb_type_lwp3device_duplo_train_advertisement_matches(void *user, con
 
     // Match both duplo train IDs.
     bool match = data[3] == 17 /* length */
-        && (data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
-            || data[4] == PBDRV_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
+        && (data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_COMPLETE_LIST
+            || data[4] == PBIO_BLUETOOTH_AD_DATA_TYPE_128_BIT_SERV_UUID_INCOMPLETE_LIST)
         && pbio_uuid128_reverse_compare(&data[5], lwp3_hub_service_uuid)
         && (data[26] == LWP3_HUB_KIND_DUPLO_TRAIN_BLACK || data[26] == LWP3_HUB_KIND_DUPLO_TRAIN_BLUE);
 
@@ -1242,8 +1263,8 @@ static bool pb_type_lwp3device_duplo_train_advertisement_matches(void *user, con
         // during discovery, so we can apply it when we connect later.
         if (self->peripheral) {
             self->peripheral->config.options = self->hub_kind == LWP3_HUB_KIND_DUPLO_TRAIN_BLUE ?
-                PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR :
-                PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE;
+                PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR :
+                PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE;
         }
     }
 
@@ -1263,11 +1284,11 @@ static mp_obj_t pb_type_duplo_train_make_new(const mp_obj_type_t *type, size_t n
     self->noti_num = 0;
     self->hub_kind = 0; // Populated during advertising to allow two types.
     self->post_connect_setup_func = pb_type_duplo_train_post_connect;
-    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+    self->scan_config = (pbio_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_duplo_train_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
         .notification_handler = pb_type_duplo_train_handle_notification,
-        .options = PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+        .options = PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
     };
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
     pb_type_lwp3device_intialize_connection(MP_OBJ_FROM_PTR(self), connect_in);
@@ -1291,6 +1312,10 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_duplo_train,
     MP_TYPE_FLAG_NONE,
     make_new, pb_type_duplo_train_make_new,
     locals_dict, &pb_type_duplo_train_locals_dict);
+
+#endif // PYBRICKS_PY_PUPDEVICES_DUPLO_TRAIN
+
+#if PYBRICKS_PY_IODEVICES_LWP3_DEVICE
 
 // -----------------------------------------------------------------------------
 // pybricks.iodevices.LWP3Device (most generic LWP3).
@@ -1333,16 +1358,16 @@ static mp_obj_t pb_type_lwp3device_make_new(const mp_obj_type_t *type, size_t n_
         noti_num = 1;
     }
 
-    pb_type_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_type_lwp3device_obj_t, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
+    pb_type_lwp3device_obj_t *self = mp_obj_malloc_var_with_finaliser(pb_type_lwp3device_obj_t, notification_buffer, uint8_t, LWP3_MAX_MESSAGE_SIZE * noti_num, type);
     self->iter = NULL;
     self->noti_num = noti_num;
 
     self->hub_kind = mp_obj_get_int(hub_kind_in);
-    self->scan_config = (pbdrv_bluetooth_peripheral_connect_config_t) {
+    self->scan_config = (pbio_bluetooth_peripheral_connect_config_t) {
         .match_adv = pb_type_lwp3device_advertisement_matches,
         .match_adv_rsp = pb_type_lwp3device_advertisement_response_matches,
         .notification_handler = pb_type_lwp3device_handle_notification_generic,
-        .options = mp_obj_is_true(pair_in) ? PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBDRV_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
+        .options = mp_obj_is_true(pair_in) ? PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_PAIR : PBIO_BLUETOOTH_PERIPHERAL_OPTIONS_NONE,
     };
     self->post_connect_setup_func = NULL;
     pb_type_lwp3device_set_name_filter_and_timeout(self, name_in, timeout_in);
@@ -1367,7 +1392,7 @@ static mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
         mp_raise_ValueError(MP_ERROR_TEXT("length in header wrong"));
     }
 
-    pb_assert(pbdrv_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)bufinfo.buf, bufinfo.len));
+    pb_assert(pbio_bluetooth_peripheral_write_characteristic(self->peripheral, self->lwp3_char_handle, (const uint8_t *)bufinfo.buf, bufinfo.len));
     return wait_or_await_operation(self_in);
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
@@ -1424,4 +1449,6 @@ MP_DEFINE_CONST_OBJ_TYPE(pb_type_lwp3device,
     make_new, pb_type_lwp3device_make_new,
     locals_dict, &pb_type_lwp3device_locals_dict);
 
-#endif // PYBRICKS_PY_PUPDEVICES
+#endif // PYBRICKS_PY_IODEVICES_LWP3_DEVICE
+
+#endif // PYBRICKS_PY_IODEVICES_LWP3_DEVICE || PYBRICKS_PY_PUPDEVICES

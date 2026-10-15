@@ -1,19 +1,39 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2020 The Pybricks Authors
+# Copyright (c) 2026 The Pybricks Authors
 
-PBIO_PLATFORM = prime_hub
-PB_MCU_FAMILY = STM32
-PB_MCU_SERIES = F4
-PB_CMSIS_MCU = STM32F413xx
-PB_MCU_EXT_OSC_HZ = 16000000
-PB_LIB_STM32_HAL = 1
-PB_LIB_LSM6DS3TR_C = 1
-PB_LIB_BLUENRG = 0
-PB_LIB_BTSTACK = 1
-PB_LIB_STM32_USB_DEVICE = 1
-TEXT0_ADDR = 0x8008000
-DFU_VID = 0x0694
-DFU_PID = 0x0008
-PB_FROZEN_MODULES = 1
+# Wrapper makefile that builds all primehub variants and combines them into a
+# single multi-variant firmware.zip.
 
-include ../_common/common.mk
+VARIANTS = primehub_f4 primehub_h5
+
+BUILD = build
+PYTHON = python3
+COMBINE = ../../tools/combine_firmware.py
+FLASH = $(PYTHON) ../../tools/flash
+NAME ?= primehub
+VARIANT_ZIPS = $(foreach v,$(VARIANTS),../$(v)/build/firmware.zip)
+
+all: $(BUILD)/firmware.zip
+
+# Check out git submodules serially first, using one variant, so that the
+# parallel variant sub-makes below don't race each other trying to clone the
+# same submodules at the same time (which fails).
+submodules:
+	$(MAKE) -C ../$(firstword $(VARIANTS)) submodules
+
+$(VARIANTS): submodules
+	$(MAKE) -C ../$@
+
+# Always rebuild: the variant sub-makes decide what is up to date.
+$(BUILD)/firmware.zip: $(VARIANTS)
+	mkdir -p $(BUILD)
+	$(PYTHON) $(COMBINE) $@ $(VARIANT_ZIPS)
+
+deploy: $(BUILD)/firmware.zip
+	$(FLASH) $< --name $(NAME)
+
+clean:
+	for variant in $(VARIANTS); do $(MAKE) -C ../$$variant clean; done
+	rm -rf $(BUILD)
+
+.PHONY: all clean deploy submodules $(VARIANTS)

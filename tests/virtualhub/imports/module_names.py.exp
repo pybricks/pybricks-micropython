@@ -1,0 +1,9 @@
+data loaded
+wrapper loaded
+main is __main__
+imported data and wrapper
+value is 123 or 123
+wrapper sees 123
+same module: True
+no __file__
+no data.__file__

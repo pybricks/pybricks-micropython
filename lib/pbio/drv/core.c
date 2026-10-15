@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2020-2023 The Pybricks Authors
 
-#include <pbdrv/bluetooth.h>
+#include <pbio/bluetooth.h>
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
 
@@ -11,7 +11,6 @@
 #include "adc/adc.h"
 #include "battery/battery.h"
 #include "block_device/block_device.h"
-#include "bluetooth/bluetooth.h"
 #include "button/button.h"
 #include "charger/charger.h"
 #include "clock/clock.h"
@@ -29,8 +28,10 @@
 #include "sound/sound.h"
 #include "uart/uart.h"
 #include "uart/uart_debug_first_port.h"
-#include "usb/usb.h"
 #include "watchdog/watchdog.h"
+
+#include <pbdrv/bluetooth.h>
+#include <pbdrv/usb.h>
 
 /** Initializes all enabled drivers. */
 void pbdrv_init(void) {
@@ -85,8 +86,9 @@ void pbdrv_deinit(void) {
 
     pbdrv_imu_deinit();
     pbdrv_display_deinit();
-    pbdrv_bluetooth_deinit();
-    pbdrv_usb_deinit();
+
+    // REVSIT: Belongs in pbio deinit, but needs careful analysis.
+    pbio_bluetooth_deinit();
 
     while (pbio_busy_count_busy()) {
         pbio_os_run_processes_and_wait_for_event();

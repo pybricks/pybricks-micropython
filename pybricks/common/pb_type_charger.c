@@ -7,6 +7,7 @@
 
 #include <pbdrv/charger.h>
 #include <pbdrv/usb.h>
+#include <pbio/usb.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"

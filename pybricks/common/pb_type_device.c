@@ -6,13 +6,14 @@
 #if PYBRICKS_PY_DEVICES
 
 
-#include <pbio/port_interface.h>
+#include <pbio/port.h>
 #include <pbio/port_lump.h>
 
 #include <pybricks/common.h>
 #include <pybricks/pupdevices.h>
 #include <pybricks/common/pb_type_device.h>
 
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
 #include <py/runtime.h>
@@ -142,6 +143,29 @@ void pb_device_set_lego_mode(pbio_port_t *port) {
     pb_assert(err);
 }
 
+/**
+ * Common constructor for Powered Up devices that take only a port argument.
+ *
+ * The object is allocated as @p size bytes, so the first member of its type
+ * must be a ::pb_type_device_obj_base_t.
+ *
+ * @param [in]  type      The type of object to create.
+ * @param [in]  n_args    Number of positional arguments.
+ * @param [in]  n_kw      Number of keyword arguments.
+ * @param [in]  args      The positional and keyword arguments.
+ * @param [in]  size      Size of the object to allocate.
+ * @param [in]  valid_id  The device type that is expected on the port.
+ * @return                The new object.
+ */
+void *pb_type_device_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args, size_t size, lego_device_type_id_t valid_id) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
+
+    pb_type_device_obj_base_t *self = mp_obj_malloc_helper(size, type);
+    pb_type_device_init_class(self, port_in, valid_id);
+    return self;
+}
+
 lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self, mp_obj_t port_in, lego_device_type_id_t valid_id) {
 
     pb_module_tools_assert_blocking();
@@ -149,8 +173,9 @@ lego_device_type_id_t pb_type_device_init_class(pb_type_device_obj_base_t *self,
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get the port instance.
-    pbio_port_t *port;
+    pbio_port_t *port = NULL;
     pb_assert(pbio_port_get_port(port_id, &port));
+    self->port = port;
 
     // Set the port mode to LEGO if it is not already set.
     pb_device_set_lego_mode(port);
