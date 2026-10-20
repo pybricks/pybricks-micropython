@@ -832,7 +832,7 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     // Delegate remaining telemetry to LUMP or passive manager.
     return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
            pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
-           pbio_port_dcm_get_telemetry(port->connection_manager, tel, size);
+           pbio_port_dcm_get_telemetry(port->connection_manager, port->pdata->pins, tel, size);
 }
 
 pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size) {

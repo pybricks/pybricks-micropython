@@ -6,10 +6,14 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0...HEAD
 
+### Added
+- Added telemetry for EV3 Touch Sensor ([support#2849]).
+
 ### Fixed
 - Fixed serial (USB/RFCOMM) race condition that could lead to lost replies to
   host commands ([support#2855]).
 
+[support#2849]: https://github.com/pybricks/support/issues/2849
 [support#2855]: https://github.com/pybricks/support/issues/2855
 
 ## [4.1.0] - 2026-10-12

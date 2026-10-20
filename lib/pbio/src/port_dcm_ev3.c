@@ -754,7 +754,7 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *r
     return PBIO_SUCCESS;
 }
 
-pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_telemetry_packet_t *tel, uint32_t *size) {
+pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
         if (*size < sizeof(uint8_t)) {
@@ -762,9 +762,9 @@ pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, pbsys_
         }
         tel->id = LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR;
 
-        // Todo, use mode 0 and read analog.
-        tel->mode = 1;
-        tel->payload[0] = 1;
+        // Pressed state. TODO: Generalize press with debounce.
+        tel->mode = 0;
+        tel->payload[0] = pbio_port_dcm_get_mv(pins, 6) > 2120;
         *size = sizeof(uint8_t);
         return PBSYS_TELEMETRY_SUCCESS;
     }
