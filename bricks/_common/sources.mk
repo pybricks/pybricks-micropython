@@ -237,8 +237,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/observer.c \
 	src/os.c \
 	src/parent.c \
-	src/port_dcm_ev3.c \
-	src/port_dcm_pup.c \
+	src/port_dcm/port_dcm_ev3.c \
+	src/port_dcm/port_dcm_pup.c \
 	src/port_lump/ev3_color.c \
 	src/port_lump/protocol.c \
 	src/port_lump/sensors.c \
