@@ -322,6 +322,18 @@ typedef struct {
     uint32_t last_sample_time;
 } pbio_port_dcm_analog_rgba_t;
 
+/**
+ * Debounced state of an analog touch sensor.
+ */
+typedef struct {
+    /** Last reported pressed state. */
+    bool pressed;
+    /** Whether readings are past the release threshold while still pressed. */
+    bool releasing;
+    /** Time (ms) at which releasing started. */
+    uint32_t release_start;
+} pbio_port_dcm_touch_t;
+
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
     pbio_os_state_t child;
@@ -330,10 +342,10 @@ struct _pbio_port_dcm_t {
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_rgba_t nxt_rgba;
     pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
-    /** Last pressed state of an analog touch sensor on pin 1 (NXT). */
-    bool p1_pressed;
-    /** Last pressed state of an analog touch sensor on pin 6 (EV3). */
-    bool p6_pressed;
+    /** State of an analog touch sensor on pin 1 (NXT). */
+    pbio_port_dcm_touch_t p1_touch;
+    /** State of an analog touch sensor on pin 6 (EV3). */
+    pbio_port_dcm_touch_t p6_touch;
 };
 
 static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -358,8 +370,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     debug_pr("Start device scan\n");
     dcm->category = DCM_CATEGORY_NONE;
     dcm->connected = false;
-    dcm->p1_pressed = false;
-    dcm->p6_pressed = false;
+    dcm->p1_touch = (pbio_port_dcm_touch_t) {0};
+    dcm->p6_touch = (pbio_port_dcm_touch_t) {0};
 
     // Wait for any device to be connected.
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
@@ -615,6 +627,45 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
 #define DCM_TOUCH_NXT_PRESS_MV (3000)
 #define DCM_TOUCH_NXT_RELEASE_MV (4700)
 
+// Contacts can briefly open while pressed, so release is only reported once
+// readings have been past the release threshold for this long.
+#define DCM_TOUCH_RELEASE_DEBOUNCE_MS (20)
+
+/**
+ * Updates the debounced touch sensor state. Press is reported immediately,
+ * release only after it has been stable for ::DCM_TOUCH_RELEASE_DEBOUNCE_MS.
+ *
+ * @param [in]  touch         The touch sensor state.
+ * @param [in]  past_press    Whether the reading is past the press threshold.
+ * @param [in]  past_release  Whether the reading is past the release threshold.
+ * @return                    The updated pressed state.
+ */
+static bool pbio_port_dcm_update_touch(pbio_port_dcm_touch_t *touch, bool past_press, bool past_release) {
+
+    if (!touch->pressed) {
+        touch->pressed = past_press;
+        touch->releasing = false;
+        return touch->pressed;
+    }
+
+    // Still pressed, so cancel any pending release.
+    if (!past_release) {
+        touch->releasing = false;
+        return true;
+    }
+
+    uint32_t now = pbdrv_clock_get_ms();
+    if (!touch->releasing) {
+        touch->releasing = true;
+        touch->release_start = now;
+    }
+    if (now - touch->release_start >= DCM_TOUCH_RELEASE_DEBOUNCE_MS) {
+        touch->pressed = false;
+        touch->releasing = false;
+    }
+    return touch->pressed;
+}
+
 bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
     uint32_t mv = pbio_port_dcm_get_analog_value(dcm, pins, false);
@@ -622,18 +673,14 @@ bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // EV3 touch sensor on pin 6 is high when pressed.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
-        dcm->p6_pressed = dcm->p6_pressed ?
-            mv > DCM_TOUCH_EV3_RELEASE_MV :
-            mv > DCM_TOUCH_EV3_PRESS_MV;
-        return dcm->p6_pressed;
+        return pbio_port_dcm_update_touch(&dcm->p6_touch,
+            mv > DCM_TOUCH_EV3_PRESS_MV, mv < DCM_TOUCH_EV3_RELEASE_MV);
     }
     #endif
 
     // NXT touch sensor on pin 1 is low when pressed.
-    dcm->p1_pressed = dcm->p1_pressed ?
-        mv < DCM_TOUCH_NXT_RELEASE_MV :
-        mv < DCM_TOUCH_NXT_PRESS_MV;
-    return dcm->p1_pressed;
+    return pbio_port_dcm_update_touch(&dcm->p1_touch,
+        mv < DCM_TOUCH_NXT_PRESS_MV, mv > DCM_TOUCH_NXT_RELEASE_MV);
 }
 
 /**
