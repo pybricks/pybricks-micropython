@@ -853,11 +853,20 @@ pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *r
 
 pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {
 
-    if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
+    // Best-effort display for useful info despite device limitations:
+    // - The only EV3 analog sensor ever known is a touch sensor.
+    // - The old style NXT Touch Sensor only shows when pressed.
+    // - The sound sensor shows up as a Touch Sensor as a side effect
+    //   but will still report correct analog values for volume.
+    if (dcm->category == DCM_CATEGORY_EV3_ANALOG ||
+        dcm->category == DCM_CATEGORY_NXT_TOUCH1_PRESSED ||
+        dcm->category == DCM_CATEGORY_NXT_ANALOG_OTHER) {
         if (*size < sizeof(uint8_t)) {
             return PBSYS_TELEMETRY_ERROR_NO_ROOM;
         }
-        tel->id = LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR;
+        tel->id = dcm->category == DCM_CATEGORY_EV3_ANALOG ?
+            LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR :
+            LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR;
 
         // Pressed state.
         tel->mode = 0;
@@ -866,7 +875,7 @@ pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const 
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    // TODO
+    // Uknown device.
     tel->id = LEGO_DEVICE_TYPE_ID_NONE;
     tel->mode = 0;
     *size = 0;
