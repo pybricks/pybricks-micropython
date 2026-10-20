@@ -384,12 +384,15 @@ static pbio_error_t pbio_serial_process_thread(pbio_os_state_t *state, void *con
             // stdout, then other events. Unlike events, replies do not require
             // an active connection, since they answer a request that was just
             // received.
+            //
+            // Pending flags are cleared before awaiting the transmission, since
+            // the next request may arrive and set them again while it awaits.
             if (con->command_response_pending) {
                 con->tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_RESPONSE,
                     con->command_response_buf, sizeof(con->command_response_buf), con->tx_frame);
+                con->command_response_pending = false;
 
                 PBIO_OS_AWAIT(state, &con->sub, err = con->tx_message(&con->sub, con->tx_frame, con->tx_frame_len));
-                con->command_response_pending = false;
                 if (err != PBIO_SUCCESS) {
                     pbio_serial_reset_state(con);
                     if (con->tx_reset) {
@@ -400,9 +403,9 @@ static pbio_error_t pbio_serial_process_thread(pbio_os_state_t *state, void *con
                 // Reply to a characteristic read request.
                 con->tx_frame_len = pbio_cobs_encode_prefixed(PBIO_PYBRICKS_IN_EP_MSG_READ_REPLY,
                     con->read_reply_buf, con->read_reply_len, con->tx_frame);
+                con->read_reply_pending = false;
 
                 PBIO_OS_AWAIT(state, &con->sub, err = con->tx_message(&con->sub, con->tx_frame, con->tx_frame_len));
-                con->read_reply_pending = false;
                 if (err != PBIO_SUCCESS) {
                     pbio_serial_reset_state(con);
                     if (con->tx_reset) {
