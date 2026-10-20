@@ -553,7 +553,13 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
     // NXT Touch sensors can't be detected definitively, so allow passing none
     // state also. Raise only if something *else* is definitively connected.
     if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
+        // Still scanning, so category may be a transient state.
+        if (!dcm->connected) {
+            return PBIO_SUCCESS;
+        }
         switch (dcm->category) {
+            // This one is technically covered by the early exit above, but
+            // left in for clarity.
             case DCM_CATEGORY_NONE:
             case DCM_CATEGORY_NXT_TOUCH1_PRESSED:
             case DCM_CATEGORY_NXT_ANALOG_OTHER:

@@ -12,6 +12,7 @@
 ### Fixed
 - Fixed serial (USB/RFCOMM) race condition that could lead to lost replies to
   host commands ([support#2855]).
+- Fixed some use cases of old-style NXT Touch Sensors.
 
 [support#2849]: https://github.com/pybricks/support/issues/2849
 [support#2855]: https://github.com/pybricks/support/issues/2855
