@@ -775,6 +775,10 @@ pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+void pbdrv_adc_ch_enable(uint8_t ch, bool enable) {
+    // The ADC chip inputs have no pins shared with GPIOs, so always enabled.
+}
+
 /**
  * Initiates an SPI transfer via DMA, specifically designed for the ADC.
  *

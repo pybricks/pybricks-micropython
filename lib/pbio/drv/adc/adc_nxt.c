@@ -39,6 +39,11 @@
 /**
  * AD1, AD2, AD3 and AD7 are pin 6 of sensor ports 1--4 respectively. AD0 and
  * AD5 have no known use, so they are left disconnected from their pins.
+ *
+ * These are enabled at init, but the sensor port channels may be disabled
+ * later. AD1--AD3 share a pin with PA18--PA20, which is assigned to the ADC
+ * for as long as the channel is enabled, so the GPIO works only while it is
+ * disabled. AD7 is a dedicated input, but treated the same for consistency.
  */
 #define PBDRV_ADC_NXT_CH_MASK ( \
     AT91C_ADC_CH1 | AT91C_ADC_CH2 | AT91C_ADC_CH3 | AT91C_ADC_CH7 | \
@@ -130,11 +135,33 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
+    // A disabled channel is not converted, so its data register is stale.
+    if (!(*AT91C_ADC_CHSR & (1 << ch))) {
+        *value = 0;
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     // Conversions are triggered by hardware, so the channel data register
     // always holds the newest sample without having to wait for anything.
     *value = AT91C_ADC_CDR0[ch];
 
     return PBIO_SUCCESS;
+}
+
+void pbdrv_adc_ch_enable(uint8_t ch, bool enable) {
+
+    // Channels sampled by the AVR and unused channels are not affected.
+    if (ch >= PBDRV_ADC_NXT_NUM_CH_AT91 || !(PBDRV_ADC_NXT_CH_MASK & (1 << ch))) {
+        return;
+    }
+
+    // The conversion in progress while enabling may be corrupted, so callers
+    // should await new samples before reading.
+    if (enable) {
+        *AT91C_ADC_CHER = 1 << ch;
+    } else {
+        *AT91C_ADC_CHDR = 1 << ch;
+    }
 }
 
 #endif // PBDRV_CONFIG_ADC_NXT

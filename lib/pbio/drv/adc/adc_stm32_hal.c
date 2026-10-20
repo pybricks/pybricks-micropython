@@ -66,6 +66,10 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
+void pbdrv_adc_ch_enable(uint8_t ch, bool enable) {
+    // All channels are always converted. None share a pin with a used GPIO.
+}
+
 void pbdrv_adc_stm32_hal_handle_irq(void) {
     HAL_DMA_IRQHandler(&pbdrv_adc_hdma);
 }

@@ -9,6 +9,7 @@
 #ifndef _PBDRV_ADC_H_
 #define _PBDRV_ADC_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbdrv/config.h>
@@ -41,6 +42,20 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
  */
 pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us);
 
+/**
+ * Enables or disables sampling of the specified channel.
+ *
+ * Some platforms have analog inputs that share a pin with a GPIO, which only
+ * works while the channel is disabled. While disabled, reading the channel
+ * fails. On platforms without such pins, this does nothing.
+ *
+ * Not implemented on all platforms.
+ *
+ * @param [in]  ch      The A/DC channel.
+ * @param [in]  enable  Whether to enable or disable the channel.
+ */
+void pbdrv_adc_ch_enable(uint8_t ch, bool enable);
+
 #else
 
 static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
@@ -50,6 +65,9 @@ static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 
 static inline pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbdrv_adc_ch_enable(uint8_t ch, bool enable) {
 }
 
 #endif

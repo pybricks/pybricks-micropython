@@ -403,6 +403,11 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->p1_touch = (pbio_port_dcm_touch_t) {0};
     dcm->p6_touch = (pbio_port_dcm_touch_t) {0};
 
+    // On some platforms, pin 6 works as GPIO only while its ADC channel is
+    // disabled. Detection and device setup need the GPIO, so disable it until
+    // a device needs analog values.
+    pbdrv_adc_ch_enable(pins->adc_p6, false);
+
     // Wait for any device to be connected.
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
@@ -491,6 +496,10 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
             return PBIO_ERROR_IO;
         }
         debug_pr("Finished initializing NXT Color Sensor.\n");
+
+        // Pin 6 is analog from here on. The first sample may be corrupted,
+        // but each reading below awaits new samples anyway.
+        pbdrv_adc_ch_enable(pins->adc_p6, true);
 
         // While plugged in, toggle through available colors and measure intensity.
         #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2

@@ -86,4 +86,8 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
+void pbdrv_adc_ch_enable(uint8_t ch, bool enable) {
+    // Channels are converted on demand, so there is nothing to enable.
+}
+
 #endif // PBDRV_CONFIG_ADC_STM32F0
