@@ -307,6 +307,36 @@ static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_
 }
 
 /**
+ * Computes the checksum of the received color sensor calibration data.
+ *
+ * Uses CRC-16 with reflected polynomial 0xA001 and initial value 0x5AA5,
+ * computed over all bytes except the checksum itself.
+ *
+ * Based on calcCRC() and readCalibration() in leJOS NXJ, lejos.nxt.SensorPort.
+ *
+ * @param [in]  data          The received calibration data.
+ * @return                    The computed checksum, in received byte order.
+ */
+static uint16_t pbio_port_dcm_nxt_color_crc(const pbio_port_dcm_nxt_color_sensor_data_t *data) {
+    const uint8_t *bytes = (const uint8_t *)data;
+    const size_t len = offsetof(pbio_port_dcm_nxt_color_sensor_data_t, crc);
+    uint16_t crc = 0x5AA5;
+    for (size_t i = 0; i < len; i++) {
+        uint8_t byte = bytes[i];
+        for (uint8_t bit = 0; bit < 8; bit++) {
+            if ((crc ^ byte) & 1) {
+                crc = (crc >> 1) ^ 0xA001;
+            } else {
+                crc >>= 1;
+            }
+            byte >>= 1;
+        }
+    }
+    // Sensor sends high byte first.
+    return (crc << 8) | (crc >> 8);
+}
+
+/**
  * Cached analog values when a particular light color is active.
  */
 typedef struct {
@@ -452,7 +482,14 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
                 pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
         }
 
-        // REVISIT: Test checksum and exit on failure.
+        // Test checksum, which the sensor sends high byte first. On failure,
+        // exit so that detection starts over and we try again.
+        uint16_t crc = pbio_port_dcm_nxt_color_crc(&dcm->nxt_color_state.data);
+        if (crc != dcm->nxt_color_state.data.crc) {
+            debug_pr("NXT Color Sensor calibration checksum failed. Received: 0x%04x, computed: 0x%04x\n", dcm->nxt_color_state.data.crc, crc);
+            pbdrv_gpio_out_low(&pins->p5);
+            return PBIO_ERROR_IO;
+        }
         debug_pr("Finished initializing NXT Color Sensor.\n");
 
         // While plugged in, toggle through available colors and measure intensity.
