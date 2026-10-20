@@ -347,8 +347,11 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
 }
 
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
-    // This platform does not have any analog sensors, but we can use this to
-    // return the state of a passive touch sensor.
+    // This platform does not have any analog sensors.
+    return 0;
+}
+
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
     return dcm->sensor_data;
 }
 

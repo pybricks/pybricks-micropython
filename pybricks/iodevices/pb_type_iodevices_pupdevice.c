@@ -45,8 +45,8 @@ static bool init_passive_pup_device(iodevices_PUPDevice_obj_t *self) {
 
     // Check for custom devices that follow the Powered Up spec for simple
     // switches as touch sensors.
-    uint32_t value;
-    pbio_error_t err = pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, false, &value);
+    bool pressed;
+    pbio_error_t err = pbio_port_get_pressed(self->port, LEGO_DEVICE_TYPE_ID_LPF2_TOUCH, &pressed);
     if (err == PBIO_SUCCESS) {
         self->passive_id = LEGO_DEVICE_TYPE_ID_LPF2_TOUCH;
         return true;
@@ -174,9 +174,9 @@ static mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args
     // These do not have modes. For this special case, alwyas return a bool,
     // even in async mode when other reads would return awaitables.
     if (self->passive_id == LEGO_DEVICE_TYPE_ID_LPF2_TOUCH) {
-        uint32_t value;
-        pb_assert(pbio_port_get_analog_value(self->port, self->passive_id, false, &value));
-        return pb_type_async_return_result(mp_obj_new_bool(value), &self->device_base.last_awaitable);
+        bool pressed;
+        pb_assert(pbio_port_get_pressed(self->port, self->passive_id, &pressed));
+        return pb_type_async_return_result(mp_obj_new_bool(pressed), &self->device_base.last_awaitable);
     }
 
     // Other passive devices don't support reading.

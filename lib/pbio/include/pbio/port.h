@@ -151,6 +151,8 @@ pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle_t *angle);
 
 pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, bool active, uint32_t *value);
 
+pbio_error_t pbio_port_get_pressed(pbio_port_t *port, lego_device_type_id_t type_id, bool *pressed);
+
 pbio_error_t pbio_port_get_color(pbio_port_t *port, pbio_color_t *color_hsv, pbio_color_t *color_mapped, lego_device_type_id_t *id, uint8_t *mode);
 
 pbio_error_t pbio_port_get_light_intensity(pbio_port_t *port, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode);
@@ -215,6 +217,10 @@ static inline pbio_error_t pbio_port_get_abs_angle(pbio_port_t *port, pbio_angle
 }
 
 static inline pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t type_id, bool active, uint32_t *value) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_get_pressed(pbio_port_t *port, lego_device_type_id_t type_id, bool *pressed) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

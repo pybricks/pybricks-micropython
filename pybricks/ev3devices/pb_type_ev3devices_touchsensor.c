@@ -26,9 +26,9 @@ typedef struct _ev3devices_TouchSensor_obj_t {
 // pybricks.ev3devices.TouchSensor.pressed
 static mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint32_t analog;
-    pb_assert(pbio_port_get_analog_value(self->port, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR, false, &analog));
-    return mp_obj_new_bool(analog > 2120);
+    bool pressed;
+    pb_assert(pbio_port_get_pressed(self->port, LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR, &pressed));
+    return mp_obj_new_bool(pressed);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
 

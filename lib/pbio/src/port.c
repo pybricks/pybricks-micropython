@@ -428,6 +428,33 @@ pbio_error_t pbio_port_get_analog_value(pbio_port_t *port, lego_device_type_id_t
 }
 
 /**
+ * Gets the pressed state of a LEGO touch sensor.
+ *
+ * @param [in]  port        The port instance.
+ * @param [in]  type_id     The expected type identifier.
+ * @param [out] pressed     The pressed state.
+ * @return                  ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV expected device is not connected.
+ */
+pbio_error_t pbio_port_get_pressed(pbio_port_t *port, lego_device_type_id_t type_id, bool *pressed) {
+    // Only allow LEGO DCM mode and raw ADC mode.
+    if (!port->connection_manager || !(port->mode == PBIO_PORT_MODE_LEGO_DCM || port->mode == PBIO_PORT_MODE_GPIO_ADC)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // In LEGO mode, assert attached device, else pass anything.
+    if (port->mode == PBIO_PORT_MODE_LEGO_DCM) {
+        lego_device_type_id_t expected_type_id = type_id;
+        pbio_error_t err = pbio_port_dcm_assert_type_id(port->connection_manager, &expected_type_id);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+
+    *pressed = pbio_port_dcm_get_pressed(port->connection_manager, port->pdata->pins);
+    return PBIO_SUCCESS;
+}
+
+/**
  * Gets the color measured by a color sensor on this port, in a device
  * independent HSV format that is comparable across sensors.
  *

@@ -330,6 +330,10 @@ struct _pbio_port_dcm_t {
     pbio_port_dcm_category_t category;
     pbio_port_dcm_analog_rgba_t nxt_rgba;
     pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
+    /** Last pressed state of an analog touch sensor on pin 1 (NXT). */
+    bool p1_pressed;
+    /** Last pressed state of an analog touch sensor on pin 6 (EV3). */
+    bool p6_pressed;
 };
 
 static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
@@ -354,6 +358,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     debug_pr("Start device scan\n");
     dcm->category = DCM_CATEGORY_NONE;
     dcm->connected = false;
+    dcm->p1_pressed = false;
+    dcm->p6_pressed = false;
 
     // Wait for any device to be connected.
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
@@ -601,6 +607,35 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return pbio_port_dcm_get_mv(pins, 1);
 }
 
+// Touch sensor thresholds (mV). Released is a clean signal near the supply
+// rail, while pressed is noisy with occasional single-sample spikes towards
+// released, so the release threshold is close to the released level.
+#define DCM_TOUCH_EV3_PRESS_MV (3000)
+#define DCM_TOUCH_EV3_RELEASE_MV (1000)
+#define DCM_TOUCH_NXT_PRESS_MV (3000)
+#define DCM_TOUCH_NXT_RELEASE_MV (4700)
+
+bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
+
+    uint32_t mv = pbio_port_dcm_get_analog_value(dcm, pins, false);
+
+    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+    // EV3 touch sensor on pin 6 is high when pressed.
+    if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
+        dcm->p6_pressed = dcm->p6_pressed ?
+            mv > DCM_TOUCH_EV3_RELEASE_MV :
+            mv > DCM_TOUCH_EV3_PRESS_MV;
+        return dcm->p6_pressed;
+    }
+    #endif
+
+    // NXT touch sensor on pin 1 is low when pressed.
+    dcm->p1_pressed = dcm->p1_pressed ?
+        mv < DCM_TOUCH_NXT_RELEASE_MV :
+        mv < DCM_TOUCH_NXT_PRESS_MV;
+    return dcm->p1_pressed;
+}
+
 /**
  * Scales an RGB value based on ambient light and calibration data.
  *
@@ -762,9 +797,9 @@ pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const 
         }
         tel->id = LEGO_DEVICE_TYPE_ID_EV3_TOUCH_SENSOR;
 
-        // Pressed state. TODO: Generalize press with debounce.
+        // Pressed state.
         tel->mode = 0;
-        tel->payload[0] = pbio_port_dcm_get_mv(pins, 6) > 2120;
+        tel->payload[0] = pbio_port_dcm_get_pressed(dcm, pins);
         *size = sizeof(uint8_t);
         return PBSYS_TELEMETRY_SUCCESS;
     }
