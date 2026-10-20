@@ -486,6 +486,15 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     }
 
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
+    if (dcm->category == DCM_CATEGORY_NXT_TOUCH1_PRESSED) {
+        // The first NXT touch sensor has no ID pin, so it is only seen while
+        // pressed. Released looks the same as disconnected, so just wait for
+        // release, which is debounced by the pressed state checker.
+        PBIO_OS_AWAIT_WHILE(state, pbio_port_dcm_get_pressed(dcm, pins));
+        debug_pr("NXT Touch Sensor released or disconnected\n");
+        return PBIO_SUCCESS;
+    }
+
     // For everything else, disconnection is detected by just one pin going
     // high rather than all pins going back to the none state. This is
     // because other pins are used for data transfer and may vary between
