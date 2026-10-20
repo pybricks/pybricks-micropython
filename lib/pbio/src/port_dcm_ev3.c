@@ -668,17 +668,17 @@ static bool pbio_port_dcm_update_touch(pbio_port_dcm_touch_t *touch, bool past_p
 
 bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    uint32_t mv = pbio_port_dcm_get_analog_value(dcm, pins, false);
-
     #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // EV3 touch sensor on pin 6 is high when pressed.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
+        uint32_t mv = pbio_port_dcm_get_mv(pins, 6);
         return pbio_port_dcm_update_touch(&dcm->p6_touch,
             mv > DCM_TOUCH_EV3_PRESS_MV, mv < DCM_TOUCH_EV3_RELEASE_MV);
     }
     #endif
 
     // NXT touch sensor on pin 1 is low when pressed.
+    uint32_t mv = pbio_port_dcm_get_mv(pins, 1);
     return pbio_port_dcm_update_touch(&dcm->p1_touch,
         mv < DCM_TOUCH_NXT_PRESS_MV, mv > DCM_TOUCH_NXT_RELEASE_MV);
 }
