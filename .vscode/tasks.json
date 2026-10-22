@@ -14,17 +14,17 @@
             },
             "label": "build virtualhub (debug)",
             "type": "shell",
-            "command": "make -C ../../micropython/mpy-cross -j && poetry run make DEBUG=1 BUILD=build-debug -j",
+            "command": "make -C ../../micropython/mpy-cross -j && uv run make DEBUG=1 BUILD=build-debug -j",
         },
         {
             "label": "build test-pbio",
             "type": "shell",
-            "command": "poetry run make -C lib/pbio/test DEBUG=1 -j"
+            "command": "uv run make -C lib/pbio/test DEBUG=1 -j"
         },
         {
             "label": "build debug",
             "type": "shell",
-            "command": "poetry run make -C bricks/debug DEBUG=1 build/firmware-base.bin -j"
+            "command": "uv run make -C bricks/debug DEBUG=1 build/firmware-base.bin -j"
         },
         {
             "label": "Send SIGUSR1 to pybricks-virtualhub",

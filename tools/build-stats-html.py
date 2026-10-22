@@ -460,7 +460,7 @@ def create_plot(variants, commits, hub):
         # naming each build is only useful when there is more than one
         showlegend=len(variants) > 1,
         title_text=f"Pybricks {hub} firmware size",
-        titlefont=dict(size=36),
+        title_font=dict(size=36),
         dragmode="zoom",
     )
     fig.update_xaxes(showticklabels=False, range=[x_start, x_end])

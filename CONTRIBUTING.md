@@ -9,8 +9,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - Ubuntu 24.04
 - [Git SCM][git] any recent-ish version
 - [VS Code][vscode] latest version
-- [Python][python] v3.12.x
-- [Poetry][poetry] v2.x
+- [uv][uv] v0.12.24 or newer (installs the right Python version for you)
 - [GNU ARM Embedded Toolchain][arm-gcc] v13.x
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
@@ -22,8 +21,7 @@ Optional:
 
 [git]: https://git-scm.com/downloads
 [vscode]: https://code.visualstudio.com/Download
-[python]: https://www.python.org/downloads/
-[poetry]: https://python-poetry.org/docs/
+[uv]: https://docs.astral.sh/uv/getting-started/installation/
 [arm-gcc]: https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads
 [gcc]: https://gcc.gnu.org/
 [make]: https://www.gnu.org/software/make/
@@ -34,29 +32,10 @@ Optional:
 
 ### Installation tips
 
-#### Pipx
+#### uv
 
-We recommend using [pipx][pipx] to install and manage python command line tools
-like Poetry.
-
-[pipx]: https://pipxproject.github.io/pipx/
-
-Linux (Ubuntu):
-
-    sudo apt update && sudo apt install pipx
-
-macOS:
-
-    brew install pipx
-
-Windows:
-
-    py -3 -m pip install pipx
-
-
-Then install tools like this:
-
-    pipx install poetry
+We use [uv][uv] to manage the Python version and the Python packages needed by
+the build system and other tools.
 
 
 #### Ubuntu
@@ -66,7 +45,7 @@ Some of the prerequisites are available as Debian packages.
     sudo apt update
     sudo apt install git python3 build-essential gcc-arm-none-eabi
 
-Other tools (VS Code, Poetry, Docker) can be installed
+Other tools (VS Code, uv, Docker) can be installed
 via the recommended install methods found in the links above.
 
 #### Windows
@@ -130,32 +109,40 @@ checkout out on-demand when running `make`.
 ### Set up the Python environment
 
 There are a few special Python packages needed by the build system and other
-tools, so we are using Poetry to manage these requirements and set up a
+tools, so we are using uv to manage these requirements and set up a
 virtual environment to isolate the installation so you don't break your main
 Python runtime.
 
 Open a terminal in the `pybricks-micropython` directory where you cloned the
-source code, then run:
+source code, then run the following to set up the Python environment:
 
-    poetry env info
+    uv sync
 
-Verify that the Python version listed is 3.10.x. If it is not, run:
+This installs the exact package versions from `uv.lock` into `.venv`. It uses
+the Python version from `.python-version`. If that version is not installed on
+your system, uv downloads it for you. You can run any command inside the
+environment with `uv run <command>`, or activate it:
 
-    poetry env use <path-to-python3.10>
+    source .venv/bin/activate
 
-where `<path-to-python3.10>` is the full path to the Python 3.10 installation.
-
-Then run the following to set up the Python environment:
-
-    poetry install
-
-To activate the environment, run:
-
-    eval $(poetry env activate)
-
-The command prompt will now start with `(.venv)` to remind you that you are
-working in the virtual environment. You should run `eval $(poetry env activate)` any time you
+The command prompt will now start with `(pybricks-micropython)` to remind you that you are
+working in the virtual environment. You should run `source .venv/bin/activate` any time you
 open a new terminal window while working on `pybricks-micropython`.
+
+#### Updating dependencies
+
+To guard against compromised package releases, `pyproject.toml` configures uv
+to only consider releases that are at least 7 days old (`exclude-newer`) and to
+only install pre-built wheels (`no-build`), so no third-party build code runs.
+`uv.lock` pins every package with its hash.
+
+To update dependencies, first review what would change, then check the result
+for known vulnerabilities before installing anything:
+
+    uv lock --upgrade --dry-run  # show what would change
+    uv lock --upgrade            # update uv.lock (does not install)
+    uv audit                     # check uv.lock against known vulnerabilities
+    uv sync                      # install
 
 
 Building the code
@@ -212,7 +199,7 @@ style should match the rest of the code in the file that is being changed.
 
 Before committing your changes, be sure to run:
 
-    poetry run ./tools/codeformat.py
+    uv run ./tools/codeformat.py
 
 This will automatically fix common problems in files that follow the MicroPython
 style.
@@ -220,7 +207,7 @@ style.
 This can be run automatically before making a commit using [pre-commit][]. To
 enable it, run:
 
-    poetry run pre-commit install
+    uv run pre-commit install
 
 It will install a pre-commit git hook for this repository. On every commit,
 the coding style will be checked and fixed before the commit is done.
@@ -302,7 +289,7 @@ Build and deploy firmware
 
 Pick your Hub from the `bricks` sub-directory you want to compile.
 
-    eval $(poetry env activate)
+    source .venv/bin/activate
     make mpy-cross -j8
     make -C bricks/primehub -j8
 

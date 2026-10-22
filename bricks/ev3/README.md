@@ -50,7 +50,7 @@ make -C bricks/ev3 -j deploy
 Instead, you can download the [latest nightly build](https://nightly.link/pybricks/pybricks-micropython/workflows/build/master). Install it as follows:
 
 ```bash
-poetry run python tools/flash ~/Downloads/ev3-firmware-build-3782-git1bcea603.zip
+uv run python tools/flash ~/Downloads/ev3-firmware-build-3782-git1bcea603.zip
 ```
 
 ## Operating the brick

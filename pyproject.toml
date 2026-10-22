@@ -1,51 +1,48 @@
-[tool.poetry]
+[project]
 name = "pybricks-micropython"
 version = "0.1.0"
 description = "Development dependencies for pybricks-micropython"
-authors = ["The Pybricks Authors <dev@pybricks.com>"]
+authors = [{ name = "The Pybricks Authors", email = "dev@pybricks.com" }]
 license = "MIT"
-package-mode = false
+requires-python = ">=3.12"
+dependencies = []
 
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
+[dependency-groups]
+dev = [
+    "argcomplete>=3.7.2",
+    "bleak>=3.0.2",
+    "hidapi>=0.15.0",
+    "matplotlib>=3.11.2",
+    "plotly>=7.1.0",
+    "pre-commit>=4.7.0",
+    "pybricks>=4.1.0",
+    "pygame>=2.6.1",
+    "pyserial>=3.5",
+    "pyusb>=1.3.1",
+    "scipy>=1.18.1",
+    "semver>=3.1.0",
+    "sympy>=1.14.0",
+    "tqdm>=4.70.1",
+]
+build = [
+    "cairosvg>=2.9.1",
+    "freetype-py>=2.5.1",
+    "gitpython>=3.2.1",
+    "pillow>=12.3.0",
+]
+lint = [
+    "micropython-uncrustify>=1.0.0.post1",
+    "ruff>=0.17.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-eventlet = "^0.40.3"
-flake8 = "^3.8.3"
-matplotlib = "^3.4.3"
-pybricks = {version = "^3.0.0a5", allow-prereleases = true}
-pycryptodomex = "^3.9.9"
-python-dotenv = "^0.15.0"
-python-socketio = "^5.7.2"
-scipy = "^1.8.1"
-sympy = "^1.10.1"
-pre-commit = ">=3.6.2"
-pygame = "^2.6.1"
-argcomplete = "^3.6.3"
-bleak = "^3.0.2"
-hidapi = "^0.15.0"
-tqdm = "^4.68.3"
-pyusb = "^1.3.1"
-questionary = "^2.1.1"
-semver = "^3.0.4"
-pyserial = "^3.5"
-plotly = "^5.14.1"
-
-[tool.poetry.group.build.dependencies]
-gitpython = "^3.1.31"
-pygithub = "^1.58.1"
-freetype-py = "^2.5.1"
-cairosvg = "^2.9.0"
-pillow = "^12.1.1"
-
-
-[tool.poetry.group.lint.dependencies]
-micropython-uncrustify = "^1.0.0.post1"
-ruff = "^0.12.1"
+[tool.uv]
+package = false
+default-groups = "all"
+required-version = ">=0.12.24"
+# Supply chain hardening: only consider releases that are at least 7 days old
+# and never execute third-party build scripts (wheels only).
+exclude-newer = "7 days"
+no-build = true
 
 [tool.ruff]
 extend-exclude = ["lib/btstack/", "micropython/"]
-
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"

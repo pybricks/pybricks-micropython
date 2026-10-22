@@ -4,10 +4,10 @@ repos:
     -   id: codeformat_c
         name: codeformat-c
         language: system
-        entry: poetry run ./tools/codeformat.py -cf
+        entry: uv run ./tools/codeformat.py -cf
         types: [c]
     -   id: codeformat_py
         name: codeformat-py
         language: system
-        entry: poetry run ruff format --force-exclude
+        entry: uv run ruff format --force-exclude
         types: [python]

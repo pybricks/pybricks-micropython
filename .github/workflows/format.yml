@@ -37,11 +37,14 @@ jobs:
       uses: actions/checkout@v7
       with:
         submodules: true
-    - run: pipx install poetry
-    - run: poetry install --only=lint
+    - name: Install uv
+      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      with:
+        version: "0.12.24"
+    - run: uv sync --locked --only-group lint
     - name: Format C code
-      run: poetry run ./tools/codeformat.py -c
+      run: uv run --no-sync ./tools/codeformat.py -c
     - name: Format Python code
-      run: poetry run ruff format .
+      run: uv run --no-sync ruff format .
     - name: Check for changes
       run: git diff --exit-code

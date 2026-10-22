@@ -28,8 +28,13 @@ jobs:
         uses: ./.github/actions/apt-install
         with:
           packages: gcc-arm-none-eabi
-      - run: pipx install poetry
-      - run: poetry install --only=build
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          version: "0.12.24"
+          # don't restore caches into a job that has access to release secrets
+          enable-cache: false
+      - run: uv sync --locked --only-group build
       - name: Create credits file
         run: |
           echo "$PYBRICKS_EV3_CREDITS" > bricks/ev3/ci_credits.txt
@@ -39,14 +44,14 @@ jobs:
         run: |
           export MICROPY_GIT_TAG=ci-release-${{ github.run_number }}-$(git describe --tags --dirty --always --exclude "@pybricks/*")
           export MICROPY_GIT_HASH=$(echo ${{ github.sha }} | cut -c1-8)
-          poetry run make $MAKEOPTS -C micropython/mpy-cross
-          poetry run make $MAKEOPTS -C bricks/movehub
-          poetry run make $MAKEOPTS -C bricks/cityhub
-          poetry run make $MAKEOPTS -C bricks/technichub
-          poetry run make $MAKEOPTS -C bricks/primehub
-          poetry run make $MAKEOPTS -C bricks/essentialhub
-          poetry run make $MAKEOPTS -C bricks/nxt
-          poetry run make $MAKEOPTS -C bricks/ev3
+          uv run --no-sync make $MAKEOPTS -C micropython/mpy-cross
+          uv run --no-sync make $MAKEOPTS -C bricks/movehub
+          uv run --no-sync make $MAKEOPTS -C bricks/cityhub
+          uv run --no-sync make $MAKEOPTS -C bricks/technichub
+          uv run --no-sync make $MAKEOPTS -C bricks/primehub
+          uv run --no-sync make $MAKEOPTS -C bricks/essentialhub
+          uv run --no-sync make $MAKEOPTS -C bricks/nxt
+          uv run --no-sync make $MAKEOPTS -C bricks/ev3
       - name: Get tag
         run: |
           TAG="${GITHUB_REF#*refs/tags/}"
