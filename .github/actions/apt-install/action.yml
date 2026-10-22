@@ -22,16 +22,18 @@ runs:
     run: |
       echo "packages=${PACKAGES// /_}" >> "$GITHUB_OUTPUT"
       # runner-set env vars are not visible to ${{ env.* }} expressions
-      echo "image-version=$ImageVersion" >> "$GITHUB_OUTPUT"
+      echo "image-os=$ImageOS" >> "$GITHUB_OUTPUT"
 
   - name: Restore .deb cache
     id: cache
     uses: actions/cache@v6
     with:
       path: ~/.cache/apt-debs
-      # ImageVersion invalidates the cache when the runner image (and thus
-      # potentially the package versions/pre-installed deps) changes
-      key: apt-debs-${{ steps.key.outputs.packages }}-${{ runner.os }}-${{ steps.key.outputs.image-version }}
+      # Key on the OS release (e.g. ubuntu24), not ImageVersion: new images
+      # roll out gradually, so jobs in one workflow run can get different
+      # image versions and would miss the cache warmed by another job.
+      # Bump the trailing number to force a refresh.
+      key: apt-debs-${{ steps.key.outputs.packages }}-${{ steps.key.outputs.image-os }}-1
       # when only warming, don't download the cache just to throw it away
       lookup-only: ${{ inputs.warm-cache-only == 'true' }}
 
@@ -48,5 +50,11 @@ runs:
     if: inputs.warm-cache-only != 'true'
     shell: bash
     # dpkg, unlike apt, cannot decide to fetch same-version packages from the
-    # network instead of using the local .deb files
-    run: sudo dpkg -i ~/.cache/apt-debs/*.deb
+    # network instead of using the local .deb files. If a newer runner image
+    # lacks a dependency, let apt fetch just that (the large cached packages
+    # are already unpacked by dpkg at that point).
+    run: |
+      if ! sudo dpkg -i ~/.cache/apt-debs/*.deb; then
+        sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+        sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install --yes --fix-broken
+      fi
