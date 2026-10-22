@@ -4,7 +4,9 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...HEAD
+
+## [4.1.1] - 2026-10-22
 
 ### Added
 - Added telemetry for EV3 Touch Sensor and de-bouncing ([support#2849]).
@@ -19,6 +21,7 @@
 [support#2607]: https://github.com/pybricks/support/issues/2607
 [support#2849]: https://github.com/pybricks/support/issues/2849
 [support#2855]: https://github.com/pybricks/support/issues/2855
+[4.1.1]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.0...v4.1.1
 
 ## [4.1.0] - 2026-10-12
 
