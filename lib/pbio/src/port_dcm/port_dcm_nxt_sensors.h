@@ -50,7 +50,8 @@ typedef struct {
 typedef struct {
     /** Protothread state of the routine that is currently running. */
     pbio_os_state_t child;
-    /** Byte counter while receiving color sensor calibration data. */
+    /** Byte counter while receiving color sensor calibration data, or NXT
+     * Light Sensor disconnect counter. */
     uint32_t count;
     /** Bit counter while sending or receiving a color sensor byte. */
     uint8_t bit;
@@ -58,6 +59,8 @@ typedef struct {
     pbio_port_dcm_nxt_color_sensor_data_t data;
     /** Most recent raw samples. */
     pbio_port_dcm_analog_rgba_t rgba;
+    /** Time (ms) of the most recent NXT Light Sensor ambient sample, on NXT. */
+    uint32_t ambient_time;
 } pbio_port_dcm_nxt_optical_t;
 
 /**
@@ -80,7 +83,7 @@ pbio_error_t pbio_port_dcm_nxt_color_init(pbio_os_state_t *state, pbio_port_dcm_
 
 pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
 
-pbio_error_t pbio_port_dcm_nxt_light_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
+pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer);
 
 pbio_error_t pbio_port_dcm_nxt_get_color(pbio_port_dcm_nxt_optical_t *optical, lego_device_type_id_t type_id, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode);
 

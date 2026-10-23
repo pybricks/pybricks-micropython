@@ -11,6 +11,7 @@
 #include <stddef.h>
 
 #include <pbio/int_math.h>
+#include <pbio/util.h>
 
 #include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
@@ -234,29 +235,38 @@ pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dc
 }
 
 /**
- * Thread that takes one reflected and one ambient sample with the NXT Light
- * Sensor.
+ * Thread that samples the NXT Light Sensor until it is disconnected.
  *
  * @param [in]  state         The thread state.
  * @param [in]  optical       The sensor state.
  * @param [in]  pins          The ioport pins.
  * @param [in]  timer         The timer to use for timing.
  */
-pbio_error_t pbio_port_dcm_nxt_light_sample(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer) {
+pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_nxt_optical_t *optical, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    // Reflected intensity.
-    pbdrv_gpio_out_high(&pins->p5);
-    PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 200));
-    optical->rgba.r = pbio_port_dcm_get_mv(pins, 1);
+    optical->rgba.last_sample_time = 0;
 
-    // Ambient intensity.
-    pbdrv_gpio_out_low(&pins->p5);
-    PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 200));
-    optical->rgba.a = pbio_port_dcm_get_mv(pins, 1);
+    #if PBIO_CONFIG_PORT_DCM_EV3
+    // Take a reflected and ambient sample each time
+    // until pin 2 shows that the sensor is disconnected.
+    while (!pbdrv_gpio_input(&pins->p2)) {
+        pbdrv_gpio_out_high(&pins->p5);
+        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 200));
+        optical->rgba.r = pbio_port_dcm_get_mv(pins, 1);
 
-    optical->rgba.last_sample_time = pbdrv_clock_get_ms();
+        pbdrv_gpio_out_low(&pins->p5);
+        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 200));
+        optical->rgba.a = pbio_port_dcm_get_mv(pins, 1);
+        optical->rgba.last_sample_time = pbdrv_clock_get_ms();
+    }
+
+    #else // PBIO_CONFIG_PORT_DCM_EV3
+
+    // TODO, NXT version
+
+    #endif // PBIO_CONFIG_PORT_DCM_EV3
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }

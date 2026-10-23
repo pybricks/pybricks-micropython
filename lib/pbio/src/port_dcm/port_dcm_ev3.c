@@ -268,11 +268,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
 
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         debug_pr("Reading NXT Light Sensor until disconnected.\n");
-        dcm->optical.rgba.last_sample_time = 0;
-        // While plugged in, get reflected and ambient light intensity.
-        while (!pbdrv_gpio_input(&pins->p2)) {
-            PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_light_sample(&dcm->child, &dcm->optical, pins, timer));
-        }
+        PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_light_run(&dcm->child, &dcm->optical, pins, timer));
         return PBIO_SUCCESS;
     }
 
