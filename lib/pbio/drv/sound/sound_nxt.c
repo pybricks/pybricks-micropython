@@ -18,7 +18,9 @@
  * Serial Controller (SSC). This is capable of outputting a series of bits to
  * port at fixed intervals and is used to output the pdm audio.
  *
- * Pybricks: tone mode is removed and PCM uses 16-bit data.
+ * Pybricks: PCM uses 16-bit data. Tone mode is reimplemented in a way similar
+ * to the official LEGO firmware: a single PDM encoded square wave cycle is
+ * replayed by the PDC without any per-sample encoding.
  */
 
 #include <pbdrv/config.h>
@@ -33,6 +35,8 @@
 #include <nxos/drivers/_aic.h>
 #include <nxos/interrupts.h>
 #include <nxos/nxt.h>
+
+#include <pbdrv/sound.h>
 
 // We have two possible types of PDM encoding for use when playing PCM
 // data. The first is based on the LEGO firmware and encodes each 8 bit
@@ -66,11 +70,28 @@
 #define MAX_RATE 48000  // Pybricks: was 22050 in lejos - may want to change back to limit CPU usage
 #define MIN_RATE 2000
 
+// Tone generation limits. A tone cycle is between TONE_MIN_WORDS and
+// PDM_BUFFER_LENGTH 32-bit words long. The cycle length is chosen per
+// frequency so that the SSC clock divisor gives an accurate pitch.
+#define TONE_MIN_FREQ 64
+#define TONE_MAX_FREQ 24000
+#define TONE_MIN_WORDS 4
+#define TONE_MAX_CLOCK_DIV 4095
+// Pitch error (parts per million) that is good enough to stop searching for
+// a longer cycle. 2000 ppm is about 3.5 cents.
+#define TONE_PITCH_TOLERANCE_PPM 2000
+
 enum {
     SOUND_MODE_NONE,
     SOUND_MODE_TONE,
     SOUND_MODE_PCM
 };
+
+static volatile uint8_t sound_mode = SOUND_MODE_NONE;
+
+// Number of words of the tone buffer that are replayed. This holds one or
+// more whole cycles of the tone.
+static uint8_t tone_len;
 
 static struct {
     // pointer to the sample data
@@ -239,6 +260,13 @@ static void sound_fill_sample_buffer(void) {
 #endif // (PDM_ENCODE == PDM_LOOKUP)
 
 static void sound_isr(void) {
+    if (sound_mode == SOUND_MODE_TONE) {
+        // Queue the same tone cycle(s) again. Tone buffer is reused from PCM.
+        *AT91C_SSC_TNPR = (unsigned int)sample.buf[0];
+        *AT91C_SSC_TNCR = tone_len;
+        return;
+    }
+
     // Pybricks: for now, driver expects sound to always repeat
     if (sample.count <= 0) {
         sample.count = sample.out_index;
@@ -311,6 +339,7 @@ void pbdrv_sound_start(const uint16_t *data, uint32_t length, uint32_t sample_ra
 
     // Turn off ints while we update shared values
     sound_interrupt_disable();
+    sound_mode = SOUND_MODE_PCM;
     sample.count = (length + SAMPLE_PER_BUF - 1) / SAMPLE_PER_BUF;
     sample.out_index = 0;
     sample.in_index = length;
@@ -329,6 +358,111 @@ void pbdrv_sound_start(const uint16_t *data, uint32_t length, uint32_t sample_ra
 void pbdrv_sound_stop(void) {
     sound_disable();
     sound_interrupt_disable();
+    *AT91C_SSC_PTCR = AT91C_PDC_TXTDIS;
+    sound_mode = SOUND_MODE_NONE;
+}
+
+// Finds the tone cycle length (in words) and SSC clock divisor that best
+// reproduce the given frequency. Longer cycles are preferred, since they give
+// a finer volume resolution.
+static void sound_get_tone_timing(uint32_t frequency, uint32_t *words, uint32_t *clock_div) {
+    uint64_t best_err = UINT32_MAX;
+    uint64_t best_bits = 1;
+
+    *words = PDM_BUFFER_LENGTH;
+    *clock_div = TONE_MAX_CLOCK_DIV;
+
+    for (uint32_t len = PDM_BUFFER_LENGTH; len >= TONE_MIN_WORDS; len--) {
+        // Tone frequency is OSC / (2 * div * 32 * len).
+        uint32_t den = 64 * len * frequency;
+        uint32_t div = (OSC + den / 2) / den;
+        if (div < 1 || div > TONE_MAX_CLOCK_DIV) {
+            continue;
+        }
+
+        // Relative error is err / (bits * frequency), with bits = OSC / f_actual.
+        uint64_t bits = (uint64_t)64 * len * div;
+        uint64_t exact = bits * frequency;
+        uint64_t err = exact > OSC ? exact - OSC : OSC - exact;
+
+        if (err * 1000000 <= (uint64_t)TONE_PITCH_TOLERANCE_PPM * exact) {
+            *words = len;
+            *clock_div = div;
+            return;
+        }
+
+        if (err * best_bits < best_err * bits) {
+            best_err = err;
+            best_bits = bits;
+            *words = len;
+            *clock_div = div;
+        }
+    }
+}
+
+void pbdrv_beep_start(uint32_t frequency, uint16_t sample_attenuator) {
+    // A frequency of 0 is equivalent to turning the sound off.
+    if (frequency == 0) {
+        pbdrv_sound_stop();
+        return;
+    }
+
+    if (frequency < TONE_MIN_FREQ) {
+        frequency = TONE_MIN_FREQ;
+    }
+    if (frequency > TONE_MAX_FREQ) {
+        frequency = TONE_MAX_FREQ;
+    }
+    int32_t amplitude = sample_attenuator > INT16_MAX ? INT16_MAX : sample_attenuator;
+
+    uint32_t words;
+    uint32_t clock_div;
+    sound_get_tone_timing(frequency, &words, &clock_div);
+
+    // Stop any ongoing output so the buffer can be safely rewritten.
+    sound_interrupt_disable();
+    *AT91C_SSC_PTCR = AT91C_PDC_TXTDIS;
+    sound_mode = SOUND_MODE_TONE;
+
+    // Encode one cycle of a square wave (low half, then high half) using a
+    // first order sigma-delta modulator. At full volume, this is a full swing
+    // square wave, which the NXT speaker reproduces loudest. Since the buffer
+    // is replayed periodically, the quantization error only ends up in
+    // harmonics of the tone.
+    uint32_t *buf = sample.buf[0];
+    uint32_t half_bits = words * 16;
+    int32_t acc = 0;
+    for (uint32_t w = 0; w < words; w++) {
+        uint32_t bits = 0;
+        for (uint32_t b = 0; b < 32; b++) {
+            acc += (w * 32 + b) < half_bits ? -amplitude : amplitude;
+            bits <<= 1;
+            if (acc >= 0) {
+                bits |= 1;
+                acc -= INT16_MAX;
+            } else {
+                acc += INT16_MAX;
+            }
+        }
+        buf[w] = bits;
+    }
+
+    // Repeat the cycle to fill the buffer, to reduce the interrupt rate.
+    uint32_t cycles = PDM_BUFFER_LENGTH / words;
+    for (uint32_t c = 1; c < cycles; c++) {
+        memcpy(&buf[c * words], buf, words * sizeof(uint32_t));
+    }
+    tone_len = cycles * words;
+
+    *AT91C_SSC_CMR = clock_div;
+    *AT91C_SSC_TPR = (unsigned int)buf;
+    *AT91C_SSC_TCR = tone_len;
+    *AT91C_SSC_TNPR = (unsigned int)buf;
+    *AT91C_SSC_TNCR = tone_len;
+
+    sound_enable();
+    sound_interrupt_enable(AT91C_SSC_ENDTX);
+    *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
 }
 
 #endif // PBDRV_CONFIG_SOUND_NXT

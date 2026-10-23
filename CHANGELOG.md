@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed NXT beeps above about 370 Hz all playing at the same low pitch, which
+  also made them sound much quieter than intended.
+- Fixed NXT USB and Bluetooth stability issues
+
+### Added
+- Added automatic sensor detection on NXT sensor ports.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...HEAD
 
 ## [4.1.1] - 2026-10-22
