@@ -237,26 +237,32 @@ pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dc
 /**
  * The light sensor is considered disconnected when pin 1 is at least this
  * voltage with the LED on for ::NXT_LIGHT_DISCONNECT_COUNT samples, which
- * takes about 100 ms. Empty ports read 5000 mV, while the light sensor reads
+ * takes about 120 ms. Empty ports read 5000 mV, while the light sensor reads
  * about 4300 mV or less, even when fully covered.
  */
 #define NXT_LIGHT_DISCONNECT_MV (4950)
-#define NXT_LIGHT_DISCONNECT_COUNT (15)
+#define NXT_LIGHT_DISCONNECT_COUNT (3)
 
 /**
  * Settling time of pin 1 after switching the LED, on top of the delay of the
  * AVR. A step settles exponentially with a time constant of about 3.6 ms, so
- * this gets within about 5 mV.
+ * this gets within about 5 mV. Shorter times mix up reflected and ambient.
+ *
+ * REVISIT: Toggling the LED this slowly makes it flicker visibly.
  */
 #define NXT_LIGHT_SETTLE_US (13000)
 
 /**
- * Pin 1 settles slowly on the NXT, so switching the LED for every sample
- * would make it flicker visibly. Instead, the LED stays on for fast reflected
- * samples. It is switched off only to measure ambient light, which doesn't
- * change as fast, at this interval.
+ * NXT Light Sensor scaling on NXT, from rough measurements. Pin 1 reads
+ * ::NXT_LIGHT_DARK_MV in the dark, falling by ::NXT_LIGHT_AMBIENT_SPAN_MV in
+ * bright light. Reflection is the drop caused by the LED, which is about
+ * ::NXT_LIGHT_LED_MIN_MV in open air and ::NXT_LIGHT_LED_SPAN_MV more for
+ * white paper.
  */
-#define NXT_LIGHT_AMBIENT_INTERVAL_MS (500)
+#define NXT_LIGHT_DARK_MV (4300)
+#define NXT_LIGHT_AMBIENT_SPAN_MV (3500)
+#define NXT_LIGHT_LED_MIN_MV (250)
+#define NXT_LIGHT_LED_SPAN_MV (1800)
 
 /**
  * Thread that samples the NXT Light Sensor until it is disconnected.
@@ -288,39 +294,27 @@ pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_n
 
     #else // PBIO_CONFIG_PORT_DCM_EV3
 
+    // Take a reflected and ambient sample each time, like on EV3 but with
+    // more settling time, until pin 1 shows that the sensor is disconnected.
     optical->count = 0;
     while (optical->count < NXT_LIGHT_DISCONNECT_COUNT) {
+        pbdrv_gpio_out_high(&pins->p5);
+        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, NXT_LIGHT_SETTLE_US));
+        optical->rgba.r = pbio_port_dcm_get_mv(pins, 1);
 
-        // Ambient intensity.
         pbdrv_gpio_out_low(&pins->p5);
         PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, NXT_LIGHT_SETTLE_US));
         optical->rgba.a = pbio_port_dcm_get_mv(pins, 1);
+        optical->rgba.last_sample_time = pbdrv_clock_get_ms();
 
-        pbdrv_gpio_out_high(&pins->p5);
-        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, NXT_LIGHT_SETTLE_US));
-        optical->ambient_time = pbdrv_clock_get_ms();
-
-        // Reflected intensity, at the AVR sample rate, until the next ambient
-        // sample is due.
-        for (;;) {
-            optical->rgba.r = pbio_port_dcm_get_mv(pins, 1);
-            optical->rgba.last_sample_time = pbdrv_clock_get_ms();
-
-            // An empty port reads the supply rail on pin 1, which the light
-            // sensor does not reach even in the dark.
-            if (optical->rgba.r < NXT_LIGHT_DISCONNECT_MV) {
-                optical->count = 0;
-            } else if (++optical->count >= NXT_LIGHT_DISCONNECT_COUNT) {
-                break;
-            }
-
-            if (pbio_util_time_has_passed(pbdrv_clock_get_ms(), optical->ambient_time + NXT_LIGHT_AMBIENT_INTERVAL_MS)) {
-                break;
-            }
-            PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 0));
+        // An empty port reads the supply rail on pin 1, which the light
+        // sensor does not reach even in the dark.
+        if (optical->rgba.r < NXT_LIGHT_DISCONNECT_MV) {
+            optical->count = 0;
+        } else {
+            optical->count++;
         }
     }
-    pbdrv_gpio_out_low(&pins->p5);
 
     #endif // PBIO_CONFIG_PORT_DCM_EV3
 
@@ -371,6 +365,17 @@ static pbio_error_t pbio_port_dcm_nxt_get_calibrated_rgba(pbio_port_dcm_nxt_opti
 
     if (type_id == LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR) {
 
+        #if PBIO_CONFIG_PORT_DCM_NXT
+        // Ambient light lowers pin 1, and the LED lowers it further.
+        int32_t ambient = NXT_LIGHT_DARK_MV - (int32_t)rgba->a;
+        int32_t difference = (int32_t)rgba->a - (int32_t)rgba->r - NXT_LIGHT_LED_MIN_MV;
+        calibrated->r = pbio_int_math_bind(difference * 1000 / NXT_LIGHT_LED_SPAN_MV, 0, 1000);
+        calibrated->a = pbio_int_math_bind(ambient * 1000 / NXT_LIGHT_AMBIENT_SPAN_MV, 0, 1000);
+        calibrated->g = 0;
+        calibrated->b = 0;
+        calibrated->last_sample_time = rgba->last_sample_time;
+        debug_pr("NXT Light Sensor: a: %d r: %d -> %d %d\n", rgba->a, rgba->r, calibrated->r, calibrated->a);
+        #else
         // Intensity is inverted.
         uint32_t ambient = 5000 - rgba->a;
         uint32_t reflection = 5000 - rgba->r;
@@ -386,6 +391,7 @@ static pbio_error_t pbio_port_dcm_nxt_get_calibrated_rgba(pbio_port_dcm_nxt_opti
         calibrated->b = 0;
         calibrated->a = ambient <= 1000 ? 0 : pbio_int_math_bind((ambient - 1000) / 4, 0, 1000);
         calibrated->last_sample_time = rgba->last_sample_time;
+        #endif
         return PBIO_SUCCESS;
     }
 

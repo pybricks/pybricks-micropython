@@ -59,8 +59,6 @@ typedef struct {
     pbio_port_dcm_nxt_color_sensor_data_t data;
     /** Most recent raw samples. */
     pbio_port_dcm_analog_rgba_t rgba;
-    /** Time (ms) of the most recent NXT Light Sensor ambient sample, on NXT. */
-    uint32_t ambient_time;
 } pbio_port_dcm_nxt_optical_t;
 
 /**
