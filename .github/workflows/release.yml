@@ -27,7 +27,8 @@ jobs:
         timeout-minutes: 5
         uses: ./.github/actions/apt-install
         with:
-          packages: gcc-arm-none-eabi
+          packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
+          no-install-recommends: 'true'
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:

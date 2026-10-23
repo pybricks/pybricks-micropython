@@ -7,6 +7,9 @@ inputs:
   packages:
     description: Space-separated list of packages to install
     required: true
+  no-install-recommends:
+    description: Skip recommended packages, keeping the cache small
+    default: 'false'
   warm-cache-only:
     description: Only ensure the cache is populated; skip the install
     default: 'false'
@@ -20,7 +23,11 @@ runs:
     env:
       PACKAGES: ${{ inputs.packages }}
     run: |
-      echo "packages=${PACKAGES// /_}" >> "$GITHUB_OUTPUT"
+      # normalize whitespace so callers building the list with expressions
+      # still get the same key
+      read -ra pkgs <<< "$PACKAGES"
+      packages="${pkgs[*]}"
+      echo "packages=${packages// /_}" >> "$GITHUB_OUTPUT"
       # runner-set env vars are not visible to ${{ env.* }} expressions
       echo "image-os=$ImageOS" >> "$GITHUB_OUTPUT"
 
@@ -33,7 +40,7 @@ runs:
       # roll out gradually, so jobs in one workflow run can get different
       # image versions and would miss the cache warmed by another job.
       # Bump the trailing number to force a refresh.
-      key: apt-debs-${{ steps.key.outputs.packages }}-${{ steps.key.outputs.image-os }}-1
+      key: apt-debs-${{ steps.key.outputs.packages }}-${{ steps.key.outputs.image-os }}-${{ inputs.no-install-recommends == 'true' && 'norec' || 'rec' }}-1
       # when only warming, don't download the cache just to throw it away
       lookup-only: ${{ inputs.warm-cache-only == 'true' }}
 
@@ -42,7 +49,9 @@ runs:
     shell: bash
     run: |
       sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
-      sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install --yes --download-only ${{ inputs.packages }}
+      sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install --yes --download-only \
+        ${{ inputs.no-install-recommends == 'true' && '--no-install-recommends' || '' }} \
+        ${{ inputs.packages }}
       mkdir -p ~/.cache/apt-debs
       cp /var/cache/apt/archives/*.deb ~/.cache/apt-debs/
 

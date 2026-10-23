@@ -84,6 +84,12 @@ jobs:
 
   arm_toolchain_cache:
     name: warm ARM toolchain cache
+    strategy:
+      matrix:
+        packages:
+        - gcc-arm-none-eabi libnewlib-arm-none-eabi
+        # buildhat (Pico SDK) has a C++ source, so it needs the large libstdc++
+        - gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout repo
@@ -92,7 +98,8 @@ jobs:
       timeout-minutes: 10
       uses: ./.github/actions/apt-install
       with:
-        packages: gcc-arm-none-eabi
+        packages: ${{ matrix.packages }}
+        no-install-recommends: 'true'
         warm-cache-only: 'true'
 
   firmware:
@@ -119,7 +126,12 @@ jobs:
       timeout-minutes: 10
       uses: ./.github/actions/apt-install
       with:
-        packages: gcc-arm-none-eabi
+        # only buildhat needs the large libstdc++, so the other hubs restore a
+        # much smaller cache
+        packages: >-
+          gcc-arm-none-eabi libnewlib-arm-none-eabi
+          ${{ matrix.hub == 'buildhat' && 'libstdc++-arm-none-eabi-newlib' || '' }}
+        no-install-recommends: 'true'
     - name: Download mpy-cross
       uses: actions/download-artifact@v8
       with:
