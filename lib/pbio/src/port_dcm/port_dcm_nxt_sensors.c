@@ -235,6 +235,30 @@ pbio_error_t pbio_port_dcm_nxt_color_sample(pbio_os_state_t *state, pbio_port_dc
 }
 
 /**
+ * The light sensor is considered disconnected when pin 1 is at least this
+ * voltage with the LED on for ::NXT_LIGHT_DISCONNECT_COUNT samples, which
+ * takes about 100 ms. Empty ports read 5000 mV, while the light sensor reads
+ * about 4300 mV or less, even when fully covered.
+ */
+#define NXT_LIGHT_DISCONNECT_MV (4950)
+#define NXT_LIGHT_DISCONNECT_COUNT (15)
+
+/**
+ * Settling time of pin 1 after switching the LED, on top of the delay of the
+ * AVR. A step settles exponentially with a time constant of about 3.6 ms, so
+ * this gets within about 5 mV.
+ */
+#define NXT_LIGHT_SETTLE_US (13000)
+
+/**
+ * Pin 1 settles slowly on the NXT, so switching the LED for every sample
+ * would make it flicker visibly. Instead, the LED stays on for fast reflected
+ * samples. It is switched off only to measure ambient light, which doesn't
+ * change as fast, at this interval.
+ */
+#define NXT_LIGHT_AMBIENT_INTERVAL_MS (500)
+
+/**
  * Thread that samples the NXT Light Sensor until it is disconnected.
  *
  * @param [in]  state         The thread state.
@@ -264,7 +288,39 @@ pbio_error_t pbio_port_dcm_nxt_light_run(pbio_os_state_t *state, pbio_port_dcm_n
 
     #else // PBIO_CONFIG_PORT_DCM_EV3
 
-    // TODO, NXT version
+    optical->count = 0;
+    while (optical->count < NXT_LIGHT_DISCONNECT_COUNT) {
+
+        // Ambient intensity.
+        pbdrv_gpio_out_low(&pins->p5);
+        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, NXT_LIGHT_SETTLE_US));
+        optical->rgba.a = pbio_port_dcm_get_mv(pins, 1);
+
+        pbdrv_gpio_out_high(&pins->p5);
+        PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, NXT_LIGHT_SETTLE_US));
+        optical->ambient_time = pbdrv_clock_get_ms();
+
+        // Reflected intensity, at the AVR sample rate, until the next ambient
+        // sample is due.
+        for (;;) {
+            optical->rgba.r = pbio_port_dcm_get_mv(pins, 1);
+            optical->rgba.last_sample_time = pbdrv_clock_get_ms();
+
+            // An empty port reads the supply rail on pin 1, which the light
+            // sensor does not reach even in the dark.
+            if (optical->rgba.r < NXT_LIGHT_DISCONNECT_MV) {
+                optical->count = 0;
+            } else if (++optical->count >= NXT_LIGHT_DISCONNECT_COUNT) {
+                break;
+            }
+
+            if (pbio_util_time_has_passed(pbdrv_clock_get_ms(), optical->ambient_time + NXT_LIGHT_AMBIENT_INTERVAL_MS)) {
+                break;
+            }
+            PBIO_OS_AWAIT(state, &optical->child, pbdrv_adc_await_new_samples(&optical->child, &timer->start, pins->adc_p1, 0));
+        }
+    }
+    pbdrv_gpio_out_low(&pins->p5);
 
     #endif // PBIO_CONFIG_PORT_DCM_EV3
 

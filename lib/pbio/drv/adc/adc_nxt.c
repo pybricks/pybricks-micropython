@@ -108,19 +108,19 @@ void pbdrv_adc_init(void) {
 
 pbio_error_t pbdrv_adc_await_new_samples(pbio_os_state_t *state, uint32_t *start_time_us, uint8_t ch, uint32_t future_us) {
 
+    // A sweep of the ARM ADC completes every 100 µs, so only the settling
+    // time of the measured signal matters. The AVR samples at 333 Hz and then
+    // still has to ship the value over the TWI link, which updates it every
+    // 4 ms, so a new sample is only available after both. This is done before
+    // the thread starts, so that it applies on every call.
+    if (ch >= PBDRV_ADC_NXT_NUM_CH_AT91) {
+        future_us += 7000;
+    }
+
     PBIO_OS_ASYNC_BEGIN(state);
 
-    if (ch < PBDRV_ADC_NXT_NUM_CH_AT91) {
-        // A sweep completes every 100 µs, so only the settling time of the
-        // measured signal matters.
-        *start_time_us = pbdrv_clock_get_us();
-        PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_us(), *start_time_us + future_us));
-    } else {
-        // The AVR samples at 333 Hz and then still has to ship the value over
-        // the TWI link, which dwarfs any settling time.
-        *start_time_us = pbdrv_clock_get_ms();
-        PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_ms(), *start_time_us + 7));
-    }
+    *start_time_us = pbdrv_clock_get_us();
+    PBIO_OS_AWAIT_UNTIL(state, pbio_util_time_has_passed(pbdrv_clock_get_us(), *start_time_us + future_us));
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
