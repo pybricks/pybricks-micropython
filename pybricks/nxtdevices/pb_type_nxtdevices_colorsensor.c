@@ -45,12 +45,7 @@ static mp_obj_t pb_type_nxtdevices_colorsensor_make_new(const mp_obj_type_t *typ
 
     pb_module_tools_assert_blocking();
 
-    // On NXT, this activates the background process to drive this sensor.
-    pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR));
-
-    // Assert that the device is there and wait for its first sample. On EV3
-    // with autodetection this never waits in practice. On NXT we activate this
-    // sensor process manually the first time, so we need to wait a little while.
+    // Assert that the device is there and wait for its first sample.
     pbio_error_t err;
     pbio_color_t hsv;
     while ((err = pbio_port_get_color(self->port, &hsv, NULL, NULL, NULL)) == PBIO_ERROR_AGAIN) {

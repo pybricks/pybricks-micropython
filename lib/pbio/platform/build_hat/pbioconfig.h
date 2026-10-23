@@ -13,7 +13,6 @@
 #define PBIO_CONFIG_PORT_NUM_DEV            (0)
 #define PBIO_CONFIG_PORT_DCM                (1)
 #define PBIO_CONFIG_PORT_DCM_PUP            (1)
-#define PBIO_CONFIG_PORT_DCM_EV3            (0)
 #define PBIO_CONFIG_PORT_DCM_NUM_DEV        (PBIO_CONFIG_PORT_NUM_DEV)
 #define PBIO_CONFIG_PORT_LUMP               (0)
 #define PBIO_CONFIG_PORT_LUMP_EV3           (0)

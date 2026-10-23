@@ -5,13 +5,14 @@
 
 #include <pbio/port.h>
 #include <pbio/port_dcm.h>
-#include <pbio/int_math.h>
 
 #include <pbdrv/adc.h>
 #include <pbdrv/clock.h>
 #include <pbdrv/ioport.h>
 
 #if PBIO_CONFIG_PORT_DCM_EV3
+
+#include "port_dcm_nxt_sensors.h"
 
 #define DEBUG 0
 #if DEBUG
@@ -112,31 +113,6 @@ typedef enum {
 } pbio_port_dcm_category_t;
 
 /**
- * Converts a 10-bit ADC value to millivolts.
- *
- * @param [in]  adc_10bit   The 10-bit ADC value.
- * @return                  The voltage in mV.
- */
-static uint32_t pbio_port_dcm_adc_to_mv(uint32_t adc_10bit) {
-    return adc_10bit * 4888 / 1000;
-}
-
-/**
- * Gets the voltage on a pin.
- *
- * @param [in]  pins        The ioport pins.
- * @param [in]  pin         The pin number (1 or 6). Everything else is invalid.
- * @return                  The voltage in mV.
- */
-static uint32_t pbio_port_dcm_get_mv(const pbdrv_ioport_pins_t *pins, uint8_t pin) {
-    uint16_t adc;
-    pbdrv_adc_get_ch(pin == 1 ? pins->adc_p1 : pins->adc_p6, &adc);
-    // ADC returns a 10-bit value. Convert to 0--5000mV.
-    return pbio_port_dcm_adc_to_mv(adc);
-}
-
-#if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
-/**
  * Maps the passive port state to device category.
  *
  * Most states are exact matches, while some combinations allow some pins to
@@ -194,11 +170,9 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
     }
 
     // Get the GPIO state for pins 2, 5, and 6.
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     if (pbdrv_gpio_input(&pins->p2)) {
         state |= PIN_STATE_P2_HIGH;
     }
-    #endif
     if (pbdrv_gpio_input(&pins->p5)) {
         state |= PIN_STATE_P5_HIGH;
     }
@@ -218,151 +192,6 @@ static pbio_port_dcm_pin_state_t pbio_port_dcm_get_state(const pbdrv_ioport_pins
 
     return state;
 }
-#endif
-
-typedef struct __attribute__((__packed__)) {
-    uint32_t calibration[3][4];
-    uint16_t threshold_high;
-    uint16_t threshold_low;
-    uint16_t crc;
-} pbio_port_dcm_nxt_color_sensor_data_t;
-
-typedef struct {
-    uint8_t bit;
-    pbio_port_dcm_nxt_color_sensor_data_t data;
-} pbio_port_dcm_nxt_color_sensor_state_t;
-
-/**
- * Thread that reads one color sensor calibration data byte.
- *
- * This is slower than it needs to be since 1ms is the lowest timer resolution.
- * In total we read 54 bytes * 8 bits * 2 cycles = 864 cycles = 864ms.
- * Since this is only used during the initial sensor setup, this is not worth
- * optimizing with a dedicated timer.
- *
- * @param [in]  state         The thread state.
- * @param [in]  sensor_state  The sensor state.
- * @param [in]  pins          The ioport pins.
- * @param [in]  timer        The timer to use for timing.
- * @param [out] msg           The message byte.
- */
-static pbio_error_t pbio_port_dcm_nxt_color_rx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t *msg) {
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    *msg = 0;
-    pbdrv_gpio_input(&pins->p6);
-
-    // Read 8 bits while toggling the "clock".
-    for (sensor_state->bit = 0; sensor_state->bit < 8; sensor_state->bit++) {
-
-        // Clock high and wait for the data bit to settle.
-        pbdrv_gpio_out_high(&pins->p5);
-        PBIO_OS_AWAIT_MS(state, timer, 1);
-
-        *msg |= pbdrv_gpio_input(&pins->p6) << sensor_state->bit;
-
-        // Clock low and wait for sensor to prepare next bit.
-        pbdrv_gpio_out_low(&pins->p5);
-        PBIO_OS_AWAIT_MS(state, timer, 1);
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-/**
- * Thread that writes one color sensor data byte.
- *
- * @param [in]  state         The thread state.
- * @param [in]  sensor_state  The sensor state.
- * @param [in]  pins          The ioport pins.
- * @param [in]  timer        The timer to use for timing.
- * @param [in]  msg           The message byte.
- */
-static pbio_error_t pbio_port_dcm_nxt_color_tx_msg(pbio_os_state_t *state, pbio_port_dcm_nxt_color_sensor_state_t *sensor_state, const pbdrv_ioport_pins_t *pins, pbio_os_timer_t *timer, uint8_t msg) {
-
-    PBIO_OS_ASYNC_BEGIN(state);
-
-    pbdrv_gpio_out_low(&pins->p5);
-    pbdrv_gpio_out_low(&pins->p6);
-
-    // Send 8 bits while toggling the "clock".
-    for (sensor_state->bit = 0; sensor_state->bit < 8; sensor_state->bit++) {
-
-        // Set the data bit.
-        if (msg & (1 << sensor_state->bit)) {
-            pbdrv_gpio_out_high(&pins->p6);
-        } else {
-            pbdrv_gpio_out_low(&pins->p6);
-        }
-
-        // Toggle the clock high and low, giving sensor time to register bit.
-        pbdrv_gpio_out_high(&pins->p5);
-        PBIO_OS_AWAIT_MS(state, timer, 1);
-        pbdrv_gpio_out_low(&pins->p5);
-        PBIO_OS_AWAIT_MS(state, timer, 1);
-    }
-
-    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
-}
-
-/**
- * Computes the checksum of the received color sensor calibration data.
- *
- * Uses CRC-16 with reflected polynomial 0xA001 and initial value 0x5AA5,
- * computed over all bytes except the checksum itself.
- *
- * Based on calcCRC() and readCalibration() in leJOS NXJ, lejos.nxt.SensorPort.
- *
- * @param [in]  data          The received calibration data.
- * @return                    The computed checksum, in received byte order.
- */
-static uint16_t pbio_port_dcm_nxt_color_crc(const pbio_port_dcm_nxt_color_sensor_data_t *data) {
-    const uint8_t *bytes = (const uint8_t *)data;
-    const size_t len = offsetof(pbio_port_dcm_nxt_color_sensor_data_t, crc);
-    uint16_t crc = 0x5AA5;
-    for (size_t i = 0; i < len; i++) {
-        uint8_t byte = bytes[i];
-        for (uint8_t bit = 0; bit < 8; bit++) {
-            if ((crc ^ byte) & 1) {
-                crc = (crc >> 1) ^ 0xA001;
-            } else {
-                crc >>= 1;
-            }
-            byte >>= 1;
-        }
-    }
-    // Sensor sends high byte first.
-    return (crc << 8) | (crc >> 8);
-}
-
-/**
- * Cached analog values when a particular light color is active.
- */
-typedef struct {
-    /** Red analog value. */
-    uint32_t r;
-    /** Green analog value. */
-    uint32_t g;
-    /** Blue analog value. */
-    uint32_t b;
-    /** Ambient analog value. */
-    uint32_t a;
-    /** Time of most recent full update, or 0 if there is no sample yet. */
-    uint32_t last_sample_time;
-} pbio_port_dcm_analog_rgba_t;
-
-/**
- * Debounced state of an analog touch sensor.
- */
-typedef struct {
-    /** Last reported pressed state. */
-    bool pressed;
-    /** Whether readings are past the release threshold while still pressed. */
-    bool releasing;
-    /** Time (ms) at which releasing started. */
-    uint32_t release_start;
-} pbio_port_dcm_touch_t;
 
 // Device connection manager state for each port
 struct _pbio_port_dcm_t {
@@ -370,8 +199,8 @@ struct _pbio_port_dcm_t {
     uint32_t count;
     bool connected;
     pbio_port_dcm_category_t category;
-    pbio_port_dcm_analog_rgba_t nxt_rgba;
-    pbio_port_dcm_nxt_color_sensor_state_t nxt_color_state;
+    /** State of an NXT Light Sensor or NXT Color Sensor. */
+    pbio_port_dcm_nxt_optical_t optical;
     /** State of an analog touch sensor on pin 1 (NXT). */
     pbio_port_dcm_touch_t p1_touch;
     /** State of an analog touch sensor on pin 6 (EV3). */
@@ -395,6 +224,8 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
  */
 pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
+    pbio_error_t err;
+
     PBIO_OS_ASYNC_BEGIN(state);
 
     debug_pr("Start device scan\n");
@@ -403,13 +234,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->p1_touch = (pbio_port_dcm_touch_t) {0};
     dcm->p6_touch = (pbio_port_dcm_touch_t) {0};
 
-    // On some platforms, pin 6 works as GPIO only while its ADC channel is
-    // disabled. Detection and device setup need the GPIO, so disable it until
-    // a device needs analog values.
-    pbdrv_adc_ch_enable(pins->adc_p6, false);
-
     // Wait for any device to be connected.
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
         pbio_port_dcm_pin_state_t pin_state = pbio_port_dcm_get_state(pins);
         pbio_port_dcm_category_t category = pbio_port_dcm_get_category(pin_state);
@@ -420,9 +245,6 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
     }
     dcm->connected = true;
-    #else
-    PBIO_OS_AWAIT_UNTIL(state, dcm->category != DCM_CATEGORY_NONE);
-    #endif
     debug_pr("Device kind detected: %d\n", dcm->category);
 
     // Now run processes for devices that require a process, and otherwise
@@ -446,92 +268,30 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
 
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         debug_pr("Reading NXT Light Sensor until disconnected.\n");
-        dcm->nxt_rgba.last_sample_time = 0;
+        dcm->optical.rgba.last_sample_time = 0;
         // While plugged in, get reflected and ambient light intensity.
-        #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
         while (!pbdrv_gpio_input(&pins->p2)) {
-        #else
-        while (pbio_port_dcm_get_mv(pins, 1) < 5000 && dcm->category == DCM_CATEGORY_NXT_LIGHT) {
-            #endif
-            // Reflected intensity.
-            pbdrv_gpio_out_high(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p1, 200));
-            dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 1);
-
-            // Ambient intensity.
-            pbdrv_gpio_out_low(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p1, 200));
-            dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 1);
-
-            dcm->nxt_rgba.last_sample_time = pbdrv_clock_get_ms();
+            PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_light_sample(&dcm->child, &dcm->optical, pins, timer));
         }
         return PBIO_SUCCESS;
     }
 
     if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
-        debug_pr("Initializing NXT Color Sensor.\n");
-        dcm->nxt_rgba.last_sample_time = 0;
-
-        // The original firmware has a reset sequence where p6 is high and
-        // then p5 is toggled twice. It also works with 8 toggles, we can
-        // just use the send function with 0xff to achieve the same effect.
-        PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 0xff));
-        PBIO_OS_AWAIT_MS(state, timer, 100);
-
-        // Set to full color mode.
-        PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_tx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, 13));
-
-        // Receive all calibration info.
-        for (dcm->count = 0; dcm->count < sizeof(pbio_port_dcm_nxt_color_sensor_data_t); dcm->count++) {
-            PBIO_OS_AWAIT(state, &dcm->child,
-                pbio_port_dcm_nxt_color_rx_msg(&dcm->child, &dcm->nxt_color_state, pins, timer, (uint8_t *)&dcm->nxt_color_state.data + dcm->count));
+        // On failure, exit so that detection starts over and we try again.
+        PBIO_OS_AWAIT(state, &dcm->child, err = pbio_port_dcm_nxt_color_init(&dcm->child, &dcm->optical, pins, timer));
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
-
-        // Test checksum, which the sensor sends high byte first. On failure,
-        // exit so that detection starts over and we try again.
-        uint16_t crc = pbio_port_dcm_nxt_color_crc(&dcm->nxt_color_state.data);
-        if (crc != dcm->nxt_color_state.data.crc) {
-            debug_pr("NXT Color Sensor calibration checksum failed. Received: 0x%04x, computed: 0x%04x\n", dcm->nxt_color_state.data.crc, crc);
-            pbdrv_gpio_out_low(&pins->p5);
-            return PBIO_ERROR_IO;
-        }
-        debug_pr("Finished initializing NXT Color Sensor.\n");
-
-        // Pin 6 is analog from here on. The first sample may be corrupted,
-        // but each reading below awaits new samples anyway.
-        pbdrv_adc_ch_enable(pins->adc_p6, true);
 
         // While plugged in, toggle through available colors and measure intensity.
-        #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
         while (!pbdrv_gpio_input(&pins->p2)) {
-        #else
-        while (pbio_port_dcm_get_mv(pins, 1) < 100 && dcm->category == DCM_CATEGORY_NXT_COLOR) {
-            #endif
-
-            pbdrv_gpio_out_low(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p6, 200));
-            dcm->nxt_rgba.a = pbio_port_dcm_get_mv(pins, 6);
-
-            pbdrv_gpio_out_high(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p6, 200));
-            dcm->nxt_rgba.r = pbio_port_dcm_get_mv(pins, 6);
-
-            pbdrv_gpio_out_low(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p6, 200));
-            dcm->nxt_rgba.g = pbio_port_dcm_get_mv(pins, 6);
-
-            pbdrv_gpio_out_high(&pins->p5);
-            PBIO_OS_AWAIT(state, &dcm->child, pbdrv_adc_await_new_samples(&dcm->child, &timer->start, pins->adc_p6, 200));
-            dcm->nxt_rgba.b = pbio_port_dcm_get_mv(pins, 6);
-
-            dcm->nxt_rgba.last_sample_time = pbdrv_clock_get_ms();
+            PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_color_sample(&dcm->child, &dcm->optical, pins, timer));
         }
         pbdrv_gpio_out_low(&pins->p5);
         debug_pr("Color Sensor disconnected.\n");
         return PBIO_SUCCESS;
     }
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     if (dcm->category == DCM_CATEGORY_NXT_TOUCH1_PRESSED) {
         // The first NXT touch sensor has no ID pin, so it is only seen while
         // pressed. Released looks the same as disconnected, so just wait for
@@ -554,7 +314,6 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
     }
     debug_pr("Device disconnected\n");
-    #endif // PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -571,31 +330,8 @@ static pbio_error_t matches_category(pbio_port_dcm_t *dcm, pbio_port_dcm_categor
     return dcm->category == expected ? PBIO_SUCCESS : PBIO_ERROR_NO_DEV;
 }
 
-pbio_error_t pbio_port_dcm_set_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t type_id) {
-
-    // Without autodetection, we manually set the category to get the background
-    // processes going.
-    if (type_id == LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR) {
-        #if !PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
-        dcm->category = DCM_CATEGORY_NXT_COLOR;
-        pbio_os_request_poll();
-        #endif
-        return PBIO_SUCCESS;
-    }
-    if (type_id == LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR) {
-        #if !PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
-        dcm->category = DCM_CATEGORY_NXT_LIGHT;
-        pbio_os_request_poll();
-        #endif
-        return PBIO_SUCCESS;
-    }
-
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
 pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type_id_t *expected_type_id) {
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // NXT Touch sensors can't be detected definitively, so allow passing none
     // state also. Raise only if something *else* is definitively connected.
     if (*expected_type_id == LEGO_DEVICE_TYPE_ID_NXT_TOUCH_SENSOR) {
@@ -645,29 +381,14 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
         default:
             return PBIO_ERROR_NO_DEV;
     }
-    #else
-    // NXT without GPIO2 can't detect devices, so pass all. For the NXT Light
-    // and NXT Color sensor we do require that the sensor process is still
-    // running.
-    switch (*expected_type_id) {
-        case LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR:
-            return matches_category(dcm, DCM_CATEGORY_NXT_COLOR);
-        case LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR:
-            return matches_category(dcm, DCM_CATEGORY_NXT_LIGHT);
-        default:
-            return PBIO_SUCCESS;
-    }
-    #endif
 }
 
 uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, bool active) {
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // This category measures analog on pin 6.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
         return pbio_port_dcm_get_mv(pins, 6);
     }
-    #endif
 
     // Some NXT sensors have an active mode by setting P5 high.
     if (active) {
@@ -680,221 +401,44 @@ uint32_t pbio_port_dcm_get_analog_value(pbio_port_dcm_t *dcm, const pbdrv_ioport
     return pbio_port_dcm_get_mv(pins, 1);
 }
 
-// Touch sensor thresholds (mV). Released is a clean signal near the supply
-// rail, while pressed is noisy with occasional single-sample spikes towards
-// released, so the release threshold is close to the released level.
+// EV3 touch sensor thresholds (mV).
 #define DCM_TOUCH_EV3_PRESS_MV (3000)
 #define DCM_TOUCH_EV3_RELEASE_MV (1000)
-#define DCM_TOUCH_NXT_PRESS_MV (3000)
-#define DCM_TOUCH_NXT_RELEASE_MV (4700)
-
-// Contacts can briefly open while pressed, so release is only reported once
-// readings have been past the release threshold for this long.
-#define DCM_TOUCH_RELEASE_DEBOUNCE_MS (20)
-
-/**
- * Updates the debounced touch sensor state. Press is reported immediately,
- * release only after it has been stable for ::DCM_TOUCH_RELEASE_DEBOUNCE_MS.
- *
- * @param [in]  touch         The touch sensor state.
- * @param [in]  past_press    Whether the reading is past the press threshold.
- * @param [in]  past_release  Whether the reading is past the release threshold.
- * @return                    The updated pressed state.
- */
-static bool pbio_port_dcm_update_touch(pbio_port_dcm_touch_t *touch, bool past_press, bool past_release) {
-
-    if (!touch->pressed) {
-        touch->pressed = past_press;
-        touch->releasing = false;
-        return touch->pressed;
-    }
-
-    // Still pressed, so cancel any pending release.
-    if (!past_release) {
-        touch->releasing = false;
-        return true;
-    }
-
-    uint32_t now = pbdrv_clock_get_ms();
-    if (!touch->releasing) {
-        touch->releasing = true;
-        touch->release_start = now;
-    }
-    if (now - touch->release_start >= DCM_TOUCH_RELEASE_DEBOUNCE_MS) {
-        touch->pressed = false;
-        touch->releasing = false;
-    }
-    return touch->pressed;
-}
 
 bool pbio_port_dcm_get_pressed(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins) {
 
-    #if PBDRV_CONFIG_IOPORT_HAS_GPIO_P2
     // EV3 touch sensor on pin 6 is high when pressed.
     if (dcm->category == DCM_CATEGORY_EV3_ANALOG) {
         uint32_t mv = pbio_port_dcm_get_mv(pins, 6);
         return pbio_port_dcm_update_touch(&dcm->p6_touch,
             mv > DCM_TOUCH_EV3_PRESS_MV, mv < DCM_TOUCH_EV3_RELEASE_MV);
     }
-    #endif
 
-    // NXT touch sensor on pin 1 is low when pressed.
-    uint32_t mv = pbio_port_dcm_get_mv(pins, 1);
-    return pbio_port_dcm_update_touch(&dcm->p1_touch,
-        mv < DCM_TOUCH_NXT_PRESS_MV, mv > DCM_TOUCH_NXT_RELEASE_MV);
+    return pbio_port_dcm_nxt_touch_get_pressed(&dcm->p1_touch, pins);
 }
 
 /**
- * Scales an RGB value based on ambient light and calibration data.
+ * Gets the NXT Light Sensor or NXT Color Sensor that is running, if any.
  *
- * Clamps the output to 0--1000.
- *
- * @param [in]  value       The raw value.
- * @param [in]  ambient     The ambient light value.
- * @param [in]  scale       The calibration scale.
+ * @param [in]  dcm         The device connection manager.
+ * @return                  The sensor type, or ::LEGO_DEVICE_TYPE_ID_NONE.
  */
-static uint32_t scale_rgb(uint32_t value, uint32_t ambient, uint32_t scale) {
-    return value <= ambient ? 0 : pbio_int_math_clamp((value - ambient) * scale / 57000, 1000);
-}
-
-enum {
-    NXT_COLOR_CALIBRATION_HIGH_AMBIENT = 0,
-    NXT_COLOR_CALIBRATION_MEDIUM_AMBIENT = 1,
-    NXT_COLOR_CALIBRATION_LOW_AMBIENT = 2,
-};
-
-static pbio_error_t pbio_port_dcm_get_calibrated_rgba(pbio_port_dcm_t *dcm, pbio_port_dcm_analog_rgba_t *calibrated) {
-
-    pbio_port_dcm_analog_rgba_t *rgba = &dcm->nxt_rgba;
-
-    if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
-
-        // No sample ready yet.
-        if (!rgba->last_sample_time) {
-            return PBIO_ERROR_AGAIN;
-        }
-
-        // Intensity is inverted.
-        uint32_t ambient = 5000 - rgba->a;
-        uint32_t reflection = 5000 - rgba->r;
-        uint32_t difference = reflection <= ambient ? 0 : reflection - ambient;
-
-        // With higher ambient light, contrast is less pronounced due to the
-        // nonlinearity of the sensor. Scale up the difference to compensate.
-        // Also normalize to approximately 0--1000.
-        uint32_t scale = ambient <= 1000 ? 0: (ambient - 1000) * 2;
-        debug_pr("NXT Light Sensor: Ambient: %d Reflection: %d Diff: %d Scale: %d\n", ambient, reflection, difference, scale);
-        calibrated->r = pbio_int_math_clamp(difference * scale / 1200, 1000);
-        calibrated->g = 0;
-        calibrated->b = 0;
-        calibrated->a = ambient <= 1000 ? 0 : pbio_int_math_bind((ambient - 1000) / 4, 0, 1000);
-        calibrated->last_sample_time = rgba->last_sample_time;
-        return PBIO_SUCCESS;
-    }
-
+static lego_device_type_id_t pbio_port_dcm_get_optical_type(pbio_port_dcm_t *dcm) {
     if (dcm->category == DCM_CATEGORY_NXT_COLOR) {
-        pbio_port_dcm_nxt_color_sensor_data_t *data = &dcm->nxt_color_state.data;
-
-        // No sample ready yet.
-        if (!rgba->last_sample_time) {
-            return PBIO_ERROR_AGAIN;
-        }
-
-        // Select calibration row based on ambient light, similar to NXT firmware.
-        uint8_t row = NXT_COLOR_CALIBRATION_HIGH_AMBIENT;
-        if (rgba->a < pbio_port_dcm_adc_to_mv(data->threshold_low)) {
-            row = NXT_COLOR_CALIBRATION_LOW_AMBIENT;
-        } else if (rgba->a < pbio_port_dcm_adc_to_mv(data->threshold_high)) {
-            row = NXT_COLOR_CALIBRATION_MEDIUM_AMBIENT;
-        }
-
-        // Take difference between reflection and ambient, then scale by
-        // calibration value, similar to NXT firmware.
-        calibrated->r = scale_rgb(rgba->r, rgba->a, data->calibration[row][0]);
-        calibrated->g = scale_rgb(rgba->g, rgba->a, data->calibration[row][1]);
-        calibrated->b = scale_rgb(rgba->b, rgba->a, data->calibration[row][2]);
-        calibrated->a = scale_rgb(rgba->a, 220, data->calibration[row][3] / 4);
-        calibrated->last_sample_time = rgba->last_sample_time;
-
-        debug_pr("Calibration row: %d because tr0: %d tr1: %d a: %d\n", row,
-            pbio_port_dcm_adc_to_mv(data->threshold_high),
-            pbio_port_dcm_adc_to_mv(data->threshold_low),
-            rgba->a);
-        debug_pr("Calibration: %d %d %d %d\n",
-            data->calibration[row][0],
-            data->calibration[row][1],
-            data->calibration[row][2],
-            data->calibration[row][3]);
-        debug_pr("old: r: %d, g: %d, b: %d, a: %d\n", rgba->r, rgba->g, rgba->b, rgba->a);
-        debug_pr("new: r: %d, g: %d, b: %d, a: %d\n", calibrated->r, calibrated->g, calibrated->b, calibrated->a);
-
-        return PBIO_SUCCESS;
+        return LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR;
     }
-
-    return PBIO_ERROR_NO_DEV;
+    if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
+        return LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR;
+    }
+    return LEGO_DEVICE_TYPE_ID_NONE;
 }
 
 pbio_error_t pbio_port_dcm_get_color(pbio_port_dcm_t *dcm, pbio_color_t *color_hsv, lego_device_type_id_t *id, uint8_t *mode) {
-
-    if (dcm->category != DCM_CATEGORY_NXT_COLOR) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    pbio_port_dcm_analog_rgba_t rgba;
-    pbio_error_t err = pbio_port_dcm_get_calibrated_rgba(dcm, &rgba);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Values are capped between 0--1000, so scale to get a range of 0..255.
-    const pbio_color_rgb_t rgb = {
-        .r = rgba.r >> 2,
-        .g = rgba.g >> 2,
-        .b = rgba.b >> 2,
-    };
-    *color_hsv = pbio_color_from_rgb_with_hue_shift(&rgb);
-    if (id) {
-        *id = LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR;
-    }
-    if (mode) {
-        // This sensor measures everything at once, so it has only one mode.
-        // The ambient measurement is taken with all sensor lights off, so it
-        // does not provide color information.
-        *mode = 0;
-    }
-    return PBIO_SUCCESS;
+    return pbio_port_dcm_nxt_get_color(&dcm->optical, pbio_port_dcm_get_optical_type(dcm), color_hsv, id, mode);
 }
 
 pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dcm, uint32_t *reflected, uint32_t *ambient, lego_device_type_id_t *id, uint8_t *mode) {
-
-    if (dcm->category != DCM_CATEGORY_NXT_COLOR && dcm->category != DCM_CATEGORY_NXT_LIGHT) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    pbio_port_dcm_analog_rgba_t rgba;
-    pbio_error_t err = pbio_port_dcm_get_calibrated_rgba(dcm, &rgba);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (reflected) {
-        // With the sensor light on, all three color channels contribute.
-        *reflected = dcm->category == DCM_CATEGORY_NXT_COLOR ?
-            (rgba.r + rgba.g + rgba.b) / 3 : rgba.r;
-    }
-    if (ambient) {
-        *ambient = rgba.a;
-    }
-    if (id) {
-        *id = dcm->category == DCM_CATEGORY_NXT_COLOR ?
-            LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR : LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR;
-    }
-    if (mode) {
-        // These sensors measure reflection and ambient light at once, so they
-        // have only one mode.
-        *mode = 0;
-    }
-    return PBIO_SUCCESS;
+    return pbio_port_dcm_nxt_get_light_intensity(&dcm->optical, pbio_port_dcm_get_optical_type(dcm), reflected, ambient, id, mode);
 }
 
 pbsys_telemetry_error_t pbio_port_dcm_get_telemetry(pbio_port_dcm_t *dcm, const pbdrv_ioport_pins_t *pins, pbsys_telemetry_packet_t *tel, uint32_t *size) {

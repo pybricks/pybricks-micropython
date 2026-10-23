@@ -51,12 +51,7 @@ static mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
 
     pb_module_tools_assert_blocking();
 
-    // On NXT, this activates the background process to drive this sensor.
-    pb_assert(pbio_port_set_type(self->port, LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR));
-
-    // Assert that the device is there and wait for its first sample. On EV3
-    // with autodetection this never waits in practice. On NXT we activate this
-    // sensor process manually the first time, so we need to wait a little while.
+    // Assert that the device is there and wait for its first sample.
     pbio_error_t err;
     uint32_t intensity;
     while ((err = pbio_port_get_light_intensity(self->port, &intensity, NULL, NULL, NULL)) == PBIO_ERROR_AGAIN) {
