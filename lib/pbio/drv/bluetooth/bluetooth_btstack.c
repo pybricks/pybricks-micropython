@@ -3160,6 +3160,10 @@ void pbdrv_bluetooth_init(void) {
     }
     #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_NUM_LE_HOSTS
 
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
+    lwrb_init(&host_connection.rx_ring, host_connection.rx_buf, sizeof(host_connection.rx_buf));
+    #endif
+
     // Proceed to start Bluetooth process only if platform init passes.
     pbio_error_t err = pbdrv_bluetooth_btstack_platform_init();
     if (err != PBIO_SUCCESS) {
@@ -3300,7 +3304,6 @@ void pbdrv_bluetooth_init(void) {
     // initiates the connection.
     rfcomm_init();
     rfcomm_register_service(host_packet_handler, RFCOMM_SERVER_CHANNEL, RFCOMM_SERVER_MTU);
-    lwrb_init(&host_connection.rx_ring, host_connection.rx_buf, sizeof(host_connection.rx_buf));
     static uint8_t spp_sdp_record[150];
     // Advertise a dedicated Pybricks UUID as the service class (the profile
     // descriptor list still declares SPP). Host apps filter serial ports on
