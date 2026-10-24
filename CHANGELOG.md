@@ -4,15 +4,15 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...HEAD
+
 ### Fixed
 - Fixed NXT beeps above about 370 Hz all playing at the same low pitch, which
   also made them sound much quieter than intended.
-- Fixed NXT USB and Bluetooth stability issues
+- Fixed NXT USB and Bluetooth stability issues.
+- Fixed Force Sensor methods returning incorrect awaitable types ([support#2867]).
 
-### Added
-- Added automatic sensor detection on NXT sensor ports.
-
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...HEAD
+[support#2867]: https://github.com/pybricks/support/issues/2867
 
 ## [4.1.1] - 2026-10-22
 

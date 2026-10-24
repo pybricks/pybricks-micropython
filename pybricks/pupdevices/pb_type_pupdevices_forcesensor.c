@@ -40,7 +40,7 @@ static mp_obj_t get_touched(mp_obj_t self_in) {
     mp_obj_t result = mp_obj_new_bool(distance > 100);
     return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_touched_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_touched);
+static MP_DEFINE_CONST_FUN_OBJ_1(get_touched_obj, get_touched);
 
 // pybricks.pupdevices.ForceSensor.force
 static mp_obj_t get_force(mp_obj_t self_in) {
@@ -51,7 +51,7 @@ static mp_obj_t get_force(mp_obj_t self_in) {
     mp_obj_t result = pb_obj_new_fraction(force, 1000);
     return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_force_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_force);
+static MP_DEFINE_CONST_FUN_OBJ_1(get_force_obj, get_force);
 
 // pybricks.pupdevices.ForceSensor.distance
 static mp_obj_t get_distance(mp_obj_t self_in) {
@@ -62,7 +62,7 @@ static mp_obj_t get_distance(mp_obj_t self_in) {
     mp_obj_t result = pb_obj_new_fraction(distance, 1000);
     return pb_type_async_return_result(result, &self->device_base.last_awaitable);
 }
-static PB_DEFINE_CONST_TYPE_DEVICE_METHOD_OBJ(get_distance_obj, LEGO_DEVICE_MODE_PUP_FORCE_SENSOR__FRAW, get_distance);
+static MP_DEFINE_CONST_FUN_OBJ_1(get_distance_obj, get_distance);
 
 // pybricks.pupdevices.ForceSensor.pressed
 static mp_obj_t get_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
