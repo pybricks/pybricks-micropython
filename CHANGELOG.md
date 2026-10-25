@@ -4,7 +4,9 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.2...HEAD
+
+## [4.1.2] - 2026-10-25
 
 ### Fixed
 - Fixed NXT beeps above about 370 Hz all playing at the same low pitch, which
@@ -13,6 +15,7 @@
 - Fixed Force Sensor methods returning incorrect awaitable types ([support#2867]).
 
 [support#2867]: https://github.com/pybricks/support/issues/2867
+[4.1.2]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.1...v4.1.2
 
 ## [4.1.1] - 2026-10-22
 
