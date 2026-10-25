@@ -104,7 +104,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         );
 
     pbio_port_mode_t mode = mp_obj_get_int(mode_in);
-    if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT) {
+    if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -303,6 +303,7 @@ static const mp_rom_map_elem_t locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&write_obj) },
     { MP_ROM_QSTR(MP_QSTR_AUTOMATIC), MP_ROM_INT(PBIO_PORT_MODE_LEGO_DCM)},
     { MP_ROM_QSTR(MP_QSTR_CUSTOM_NXT), MP_ROM_INT(PBIO_PORT_MODE_I2C_NXT)},
+    { MP_ROM_QSTR(MP_QSTR_CUSTOM_QWIIC), MP_ROM_INT(PBIO_PORT_MODE_I2C_QWIIC)},
 };
 static MP_DEFINE_CONST_DICT(locals_dict, locals_dict_table);
 

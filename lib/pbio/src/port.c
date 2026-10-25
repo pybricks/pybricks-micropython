@@ -180,15 +180,15 @@ static pbio_error_t pbio_port_p5p6_set_mode(pbio_port_t *port, pbio_port_mode_t 
         #else // PBIO_CONFIG_PORT_HAS_UART
         return PBIO_ERROR_NOT_SUPPORTED;
         #endif // PBIO_CONFIG_PORT_HAS_UART
-    } else if (mode == PBIO_PORT_MODE_I2C_NXT) {
+    } else if (mode == PBIO_PORT_MODE_I2C_NXT || mode == PBIO_PORT_MODE_I2C_QWIIC) {
         err = pbio_port_p5p6_pin_reset(pins);
         if (err != PBIO_SUCCESS) {
             return err;
         }
         // Remaining pin setup is specific to the I2C driver implementation.
         pbdrv_i2c_configure_port(port->i2c_dev,
-            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p5 : NULL, // scl
-            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p6 : NULL  // sda
+            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p5 : &pins->p6, // scl
+            mode == PBIO_PORT_MODE_I2C_NXT ? &pins->p6 : &pins->p5  // sda
             );
         return PBIO_SUCCESS;
     } else if (mode == PBIO_PORT_MODE_QUADRATURE) {
@@ -360,7 +360,7 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
     }
 
     // In case of direct access without device type checks, start right away.
-    if (port->mode == PBIO_PORT_MODE_I2C_NXT) {
+    if (port->mode == PBIO_PORT_MODE_I2C_NXT || port->mode == PBIO_PORT_MODE_I2C_QWIIC) {
         *i2c_dev = port->i2c_dev;
         return PBIO_SUCCESS;
     }
@@ -818,6 +818,7 @@ pbio_error_t pbio_port_set_mode(pbio_port_t *port, pbio_port_mode_t mode) {
             // access UART from their own event loop.
             return pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_UART);
         case PBIO_PORT_MODE_I2C_NXT:
+        case PBIO_PORT_MODE_I2C_QWIIC:
             // Enable I2C on the port. User controlled; no process needed here.
             return pbio_port_p5p6_set_mode(port, mode);
         case PBIO_PORT_MODE_QUADRATURE:
@@ -880,9 +881,9 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
     }
 
     // Allows visualizer to mark port as custom port mode.
-    if (port->mode == PBIO_PORT_MODE_I2C_NXT || port->mode == PBIO_PORT_MODE_UART) {
+    if (port->mode == PBIO_PORT_MODE_I2C_NXT || port->mode == PBIO_PORT_MODE_I2C_QWIIC || port->mode == PBIO_PORT_MODE_UART) {
         tel->manufacturer = PBSYS_TELEMETRY_MANUFACTURER_UKNOWN;
-        tel->id = port->mode == PBIO_PORT_MODE_I2C_NXT ? PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C : PBSYS_TELEMETRY_DEVICE_UKNOWN_UART;
+        tel->id = port->mode == PBIO_PORT_MODE_UART ? PBSYS_TELEMETRY_DEVICE_UKNOWN_UART : PBSYS_TELEMETRY_DEVICE_UKNOWN_I2C;
         tel->mode = 0;
         *size = 0;
         return PBSYS_TELEMETRY_SUCCESS;
