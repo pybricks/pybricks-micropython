@@ -75,6 +75,14 @@ pbio_error_t pbdrv_i2c_write_then_read(
     size_t rlen,
     bool nxt_quirk);
 
+/**
+ * Tests whether an I2C transaction is in progress.
+ *
+ * @param [in]  i2c_dev     The I2C device, or NULL.
+ * @return                  True if busy, false if idle or @p i2c_dev is NULL.
+ */
+bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev);
+
 #else // PBDRV_CONFIG_I2C
 
 static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
@@ -95,6 +103,10 @@ static inline pbio_error_t pbdrv_i2c_write_then_read(
     size_t rlen,
     bool nxt_quirk) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev) {
+    return false;
 }
 
 #endif // PBDRV_CONFIG_I2C

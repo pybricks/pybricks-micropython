@@ -199,6 +199,10 @@ pbio_error_t pbdrv_i2c_write_then_read(
     PBIO_OS_ASYNC_END(PBIO_ERROR_IO);
 }
 
+bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev) {
+    return i2c_dev && i2c_dev->is_busy;
+}
+
 static pbio_os_process_t ev3_i2c_init_process;
 
 pbio_error_t ev3_i2c_init_process_thread(pbio_os_state_t *state, void *context) {
