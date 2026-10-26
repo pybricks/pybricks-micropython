@@ -202,6 +202,10 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->connected = false;
     dcm->touch = (pbio_port_dcm_touch_t) {0};
 
+    // Clear old optical samples, so that getters say to try again instead of
+    // returning stale data while a light or color sensor is still debounced.
+    dcm->optical.rgba.last_sample_time = 0;
+
     // Pin 6 of ports 1--3 works as GPIO only while its ADC channel is
     // disabled. Detection and device setup need the GPIO, so disable it until
     // a device needs analog values.

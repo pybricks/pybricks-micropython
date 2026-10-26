@@ -233,6 +233,10 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     dcm->p1_touch = (pbio_port_dcm_touch_t) {0};
     dcm->p6_touch = (pbio_port_dcm_touch_t) {0};
 
+    // Clear old optical samples, so that getters say to try again instead of
+    // returning stale data while a light or color sensor is still debounced.
+    dcm->optical.rgba.last_sample_time = 0;
+
     // Wait for any device to be connected.
     for (dcm->count = 0; dcm->count < DCM_LOOP_STEADY_STATE_COUNT; dcm->count++) {
         pbio_port_dcm_pin_state_t pin_state = pbio_port_dcm_get_state(pins);
