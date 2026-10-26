@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -7,11 +7,10 @@
 
 #include "py/mphal.h"
 
-#include <pbdrv/i2c.h>
 #include <pbio/port.h>
+#include <pbio/port_i2c_known.h>
 
 #include <pybricks/common.h>
-#include <pybricks/iodevices/iodevices.h>
 #include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
@@ -21,7 +20,7 @@
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-    mp_obj_t i2c_device_obj;
+    pbio_port_t *port;
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -30,26 +29,31 @@ static mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         PB_ARG_REQUIRED(port));
 
     nxtdevices_UltrasonicSensor_obj_t *self = mp_obj_malloc(nxtdevices_UltrasonicSensor_obj_t, type);
-    self->i2c_device_obj = pb_type_i2c_device_make_new(MP_OBJ_FROM_PTR(self), port_in, PBIO_PORT_MODE_I2C_NXT, 0x01, PBIO_PORT_POWER_REQUIREMENTS_BATTERY_VOLTAGE_P1_POS, true);
+    pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pb_assert(pbio_port_get_port(port_id, &self->port));
 
-    // NXT Ultrasonic Sensor appears to need some time after initializing I2C pins before it can receive data.
-    mp_hal_delay_ms(100);
+    pb_module_tools_assert_blocking();
 
-    pb_type_i2c_device_assert_string_at_register(self->i2c_device_obj, 0x08, "LEGO");
-    pb_type_i2c_device_assert_string_at_register(self->i2c_device_obj, 0x10, "Sonar");
+    pb_device_set_lego_mode(self->port);
+
+    // Assert that the device is there and wait for its first sample.
+    pbio_error_t err;
+    const uint8_t *data;
+    while ((err = pbio_port_get_i2c_known_data(self->port, LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR, &data)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
 
     return MP_OBJ_FROM_PTR(self);
-}
-
-static mp_obj_t map_distance(mp_obj_t self_in, const uint8_t *data, size_t len) {
-    return mp_obj_new_int(data[0] * 10);
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 static mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    const uint8_t write_data[] = { 0x42 };
-    return pb_type_i2c_device_start_operation(self->i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), 1, map_distance);
+    const uint8_t *data;
+    pb_assert(pbio_port_get_i2c_known_data(self->port, LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR, &data));
+    // Distance register is in cm.
+    return mp_obj_new_int(data[0] * 10);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);
 

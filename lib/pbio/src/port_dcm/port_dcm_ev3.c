@@ -256,12 +256,9 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         return PBIO_SUCCESS;
     }
 
-    if (dcm->category == DCM_CATEGORY_NXT_TEMPERATURE) {
-        // This device has no way to passively detect disconnection, so
-        // we need to monitor I2C transactions to see if it is still there.
-        debug_pr("Starting NXT temperature sensor process.\n");
-        // TODO.
-        debug_pr("Stopped NXT temperature sensor process.\n");
+    if (dcm->category == DCM_CATEGORY_NXT_I2C || dcm->category == DCM_CATEGORY_NXT_TEMPERATURE) {
+        debug_pr("Continue as I2C process\n");
+        // Exit EV3 device manager, letting the I2C process take over.
         return PBIO_SUCCESS;
     }
 
@@ -312,6 +309,24 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+pbio_error_t pbio_port_dcm_i2c_exited(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbdrv_i2c_dev_t *i2c_dev) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // NXT I2C devices hold P2 low, so wait for it to go high. The NXT
+    // Temperature Sensor and Energy Meter don't, so this exits right away and
+    // detection starts over.
+    for (dcm->count = 0; dcm->count < DCM_LOOP_DISCONNECT_COUNT; dcm->count++) {
+        if (!pbdrv_gpio_input(&pins->p2)) {
+            dcm->count = 0;
+        }
+        PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
+    }
+    debug_pr("I2C device disconnected\n");
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     if (index >= PBIO_CONFIG_PORT_DCM_NUM_DEV) {
         return NULL;
@@ -357,8 +372,6 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
             return matches_category(dcm, DCM_CATEGORY_EV3_ANALOG);
         case LEGO_DEVICE_TYPE_ID_NXT_COLOR_SENSOR:
             return matches_category(dcm, DCM_CATEGORY_NXT_COLOR);
-        case LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR:
-            return matches_category(dcm, DCM_CATEGORY_NXT_TEMPERATURE);
         case LEGO_DEVICE_TYPE_ID_NXT_LIGHT_SENSOR:
             return matches_category(dcm, DCM_CATEGORY_NXT_LIGHT);
         case LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR:

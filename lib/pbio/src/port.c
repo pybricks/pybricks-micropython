@@ -17,6 +17,7 @@
 #include <pbio/os.h>
 #include <pbio/port.h>
 #include <pbio/port_dcm.h>
+#include <pbio/port_i2c_known.h>
 #include <pbio/port_lump.h>
 
 #include <pbsys/telemetry.h>
@@ -88,6 +89,10 @@ struct _pbio_port_t {
      * LEGO UART Messaging Protocol device instance.
      */
     pbio_port_lump_dev_t *lump_dev;
+    /**
+     * Known I2C device instance.
+     */
+    pbio_port_i2c_known_dev_t *i2c_known;
     /**
      * Colors to detect by sensors on this port, if it supports them.
      */
@@ -236,6 +241,7 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
         // Run passive device connection manager until smart device is detected.
         pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_GPIO_ADC);
         pbio_port_p1p2_set_power(port, PBIO_PORT_POWER_REQUIREMENTS_NONE);
+        pbio_port_i2c_known_reset(port->i2c_known);
         PBIO_OS_AWAIT(state, &port->child1, err = pbio_port_dcm_thread(&port->child1, &port->timer, port->connection_manager, port->pdata->pins));
 
         // Active device detected. Check type to decide next steps.
@@ -257,6 +263,23 @@ static pbio_error_t pbio_port_process_lego_dcm_thread(pbio_os_state_t *state, vo
                 pbio_port_lump_data_send_thread(&port->child2, port->lump_dev, port->uart_dev, &port->timer)
                 );
         }
+        #if PBIO_CONFIG_PORT_I2C_KNOWN
+        else if (pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_NXT_I2C)) {
+
+            // Scan for known I2C devices.
+            pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_I2C_NXT);
+            PBIO_OS_AWAIT(state, &port->child1, pbio_port_i2c_known_scan_thread(&port->child1, port->i2c_known, port->i2c_dev, &port->timer));
+
+            if (pbio_port_i2c_known_is_found(port->i2c_known)) {
+                // Poll the known device until it stops responding.
+                pbio_port_p1p2_set_power(port, pbio_port_i2c_known_get_power_requirements(port->i2c_known));
+                PBIO_OS_AWAIT(state, &port->child1, pbio_port_i2c_known_poll_thread(&port->child1, port->i2c_known, port->i2c_dev, &port->timer));
+            } else {
+                // Leave the bus to user code until the device is unplugged.
+                PBIO_OS_AWAIT(state, &port->child1, pbio_port_dcm_i2c_exited(&port->child1, &port->timer, port->connection_manager, port->pdata->pins, port->i2c_dev));
+            }
+        }
+        #endif // PBIO_CONFIG_PORT_I2C_KNOWN
     }
 
     // Unreachable.
@@ -351,7 +374,9 @@ pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_d
  * @return                  ::PBIO_SUCCESS on success, otherwise
  *                          ::PBIO_ERROR_NOT_SUPPORTED if this port does not support I2C.
  *                          ::PBIO_ERROR_INVALID_OP if this port is not in a compatible mode.
- *                          ::PBIO_ERROR_NO_DEV if it is in LEGO mode but no I2C device is detected.
+ *                          ::PBIO_ERROR_NO_DEV if it is in LEGO mode but no I2C device is detected,
+ *                          or if it is a known I2C device that is polled by the port.
+ *                          ::PBIO_ERROR_AGAIN if still scanning for known I2C devices.
  */
 pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev) {
 
@@ -376,8 +401,33 @@ pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev)
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Known devices are polled by the port process, so user access would
+    // conflict. The pins are already in I2C mode otherwise.
+    err = pbio_port_i2c_known_assert_unknown(port->i2c_known);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     *i2c_dev = port->i2c_dev;
-    return pbio_port_p5p6_set_mode(port, PBIO_PORT_MODE_I2C_NXT);
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Gets the latest data of a known I2C device connected to this port.
+ *
+ * @param [in]  port        The port instance.
+ * @param [in]  type_id     The expected type identifier.
+ * @param [out] data        The raw register data last polled from the device.
+ * @return                  ::PBIO_SUCCESS on success, otherwise
+ *                          ::PBIO_ERROR_INVALID_OP if the port is not in LEGO mode.
+ *                          ::PBIO_ERROR_AGAIN if still scanning or no data is available yet.
+ *                          ::PBIO_ERROR_NO_DEV if the expected device is not connected.
+ */
+pbio_error_t pbio_port_get_i2c_known_data(pbio_port_t *port, lego_device_type_id_t type_id, const uint8_t **data) {
+    if (port->mode != PBIO_PORT_MODE_LEGO_DCM) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    return pbio_port_i2c_known_get_data(port->i2c_known, type_id, data);
 }
 
 /**
@@ -669,6 +719,7 @@ static void pbio_port_init_one_port(pbio_port_t *port) {
         // Initialize passive device connection manager and LEGO UART device.
         port->connection_manager = pbio_port_dcm_init_instance(port->pdata->external_port_index);
         port->lump_dev = pbio_port_lump_init_instance(port->pdata->external_port_index);
+        port->i2c_known = pbio_port_i2c_known_init_instance(port->pdata->external_port_index);
         port->color_map = pbio_color_map_init_instance(port->pdata->external_port_index);
         pbio_port_set_mode(port, PBIO_PORT_MODE_LEGO_DCM);
         return;
@@ -737,6 +788,9 @@ void pbio_port_stop_user_actions(bool reset) {
 
         // Don't reset devices that always need power like powered sensors.
         if (port->lump_dev && pbio_port_lump_get_power_requirements(port->lump_dev) != PBIO_PORT_POWER_REQUIREMENTS_NONE) {
+            continue;
+        }
+        if (pbio_port_i2c_known_get_power_requirements(port->i2c_known) != PBIO_PORT_POWER_REQUIREMENTS_NONE) {
             continue;
         }
 
@@ -940,7 +994,10 @@ pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_p
         return PBSYS_TELEMETRY_SUCCESS;
     }
 
-    // Delegate remaining telemetry to LUMP or passive manager.
+    // Delegate remaining telemetry to I2C, LUMP or passive manager.
+    if (port->i2c_known && pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_NXT_I2C)) {
+        return pbio_port_i2c_known_get_telemetry(port->i2c_known, tel, size);
+    }
     return pbio_port_dcm_test_type_id(port, LEGO_DEVICE_TYPE_ID_ANY_LUMP_UART) ?
            pbio_port_lump_get_telemetry(port->lump_dev, tel, size) :
            pbio_port_dcm_get_telemetry(port->connection_manager, port->pdata->pins, tel, size);

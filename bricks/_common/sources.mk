@@ -240,6 +240,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/port_dcm/port_dcm_nxt_sensors.c \
 	src/port_dcm/port_dcm_nxt.c \
 	src/port_dcm/port_dcm_pup.c \
+	src/port_i2c_known.c \
 	src/port_lump/ev3_color.c \
 	src/port_lump/protocol.c \
 	src/port_lump/sensors.c \

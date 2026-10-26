@@ -80,8 +80,12 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio
     }
     pb_assert(err);
 
+    // In LEGO mode, wait for the port to finish scanning for known devices.
     pbdrv_i2c_dev_t *i2c_dev;
-    pb_assert(pbio_port_get_i2c_dev(port, &i2c_dev));
+    while ((err = pbio_port_get_i2c_dev(port, &i2c_dev)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
 
     device_obj_t *device = mp_obj_malloc(device_obj_t, &pb_type_i2c_device);
     device->i2c_dev = i2c_dev;
@@ -191,26 +195,6 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
     };
     // New operation always wins; ongoing sound awaitable is cancelled.
     return pb_type_async_wait_or_await(&config, &device->iter, true);
-}
-
-/**
- * Helper utility to verify that expected device is attached by asserting an
- * expected manufacturer or id string. Raises ::PBIO_ERROR_NO_DEV if expected
- * string is not found.
- */
-void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8_t reg, const char *string) {
-
-    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
-
-    pb_module_tools_assert_blocking();
-
-    size_t read_len = strlen(string);
-    const uint8_t write_data[] = { reg };
-    pb_type_i2c_device_start_operation(i2c_device_obj, write_data, MP_ARRAY_SIZE(write_data), read_len, NULL);
-
-    if (memcmp(string, device->read_buf, read_len)) {
-        pb_assert(PBIO_ERROR_NO_DEV);
-    }
 }
 
 /**

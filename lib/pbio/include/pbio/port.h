@@ -258,6 +258,8 @@ pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_dev_t **uart_d
 
 pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev);
 
+pbio_error_t pbio_port_get_i2c_known_data(pbio_port_t *port, lego_device_type_id_t type_id, const uint8_t **data);
+
 pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size);
 
 pbsys_telemetry_error_t pbio_port_set_telemetry_mode(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t size);
@@ -340,6 +342,10 @@ static inline pbio_error_t pbio_port_get_uart_dev(pbio_port_t *port, pbdrv_uart_
 
 static inline pbio_error_t pbio_port_get_i2c_dev(pbio_port_t *port, pbdrv_i2c_dev_t **i2c_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_get_i2c_known_data(pbio_port_t *port, lego_device_type_id_t type_id, const uint8_t **data) {
+    return PBIO_ERROR_NO_DEV;
 }
 
 static inline pbsys_telemetry_error_t pbio_port_get_telemetry(uint8_t index, pbsys_telemetry_packet_t *tel, uint32_t *size) {

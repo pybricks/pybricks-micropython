@@ -57,8 +57,6 @@ typedef mp_obj_t (*pb_type_i2c_device_return_map_t)(mp_obj_t sensor_obj, const u
 
 mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio_port_mode_t mode, uint8_t address, pbio_port_power_requirements_t power_pin, bool nxt_quirk);
 mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map);
-void pb_type_i2c_device_assert_string_at_register(mp_obj_t i2c_device_obj, uint8_t reg, const char *string);
-
 #endif
 
 pbio_port_power_requirements_t pb_module_iodevices_get_requested_power_pin(mp_obj_t power_pin_in);

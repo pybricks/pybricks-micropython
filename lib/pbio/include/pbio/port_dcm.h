@@ -6,6 +6,8 @@
 
 #include <lego/device.h>
 
+#include <pbdrv/i2c.h>
+
 #include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
@@ -18,6 +20,22 @@ typedef struct _pbio_port_dcm_t pbio_port_dcm_t;
 #if PBIO_CONFIG_PORT_DCM
 
 pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins);
+
+/**
+ * Waits for an I2C device to be disconnected, as detected by the pins. Used
+ * for I2C devices that are not polled by the port.
+ *
+ * Disconnection detection does not need to work for every type of I2C device.
+ * Devices that are polled are detected by no longer responding.
+ *
+ * @param [in]  state       The protothread state.
+ * @param [in]  timer       The timer to use for timing.
+ * @param [in]  dcm         The device connection manager.
+ * @param [in]  pins        The ioport pins.
+ * @param [in]  i2c_dev     The I2C driver of this port, or NULL.
+ * @return                  ::PBIO_SUCCESS when the device is disconnected.
+ */
+pbio_error_t pbio_port_dcm_i2c_exited(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbdrv_i2c_dev_t *i2c_dev);
 
 /**
  * Gets device connection manager state.
@@ -130,6 +148,10 @@ static inline pbio_error_t pbio_port_dcm_get_light_intensity(pbio_port_dcm_t *dc
 }
 
 static inline pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline pbio_error_t pbio_port_dcm_i2c_exited(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbdrv_i2c_dev_t *i2c_dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

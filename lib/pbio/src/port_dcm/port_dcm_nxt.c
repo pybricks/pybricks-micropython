@@ -237,19 +237,8 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     debug_pr("Device kind detected: %d\n", dcm->category);
 
     if (dcm->category == DCM_CATEGORY_NXT_I2C) {
-        // The DCM does not do any I2C transactions, which is up to the sensor
-        // class. While the bus is idle, the device keeps the clock line high,
-        // which goes low on an empty port.
-        // REVISIT: Reading the pin makes it an input, so this must not run
-        // while an I2C driver uses the pins. This can share an exit with EV3
-        // where the process can check for a few known I2C devices.
-        for (dcm->count = 0; dcm->count < DCM_LOOP_DISCONNECT_COUNT; dcm->count++) {
-            if (pbdrv_gpio_input(&pins->p5)) {
-                dcm->count = 0;
-            }
-            PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
-        }
-        debug_pr("I2C device disconnected\n");
+        debug_pr("Continue as I2C process\n");
+        // Exit NXT device manager, letting the I2C process take over.
         return PBIO_SUCCESS;
     }
 
@@ -312,6 +301,26 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
 
+pbio_error_t pbio_port_dcm_i2c_exited(pbio_os_state_t *state, pbio_os_timer_t *timer, pbio_port_dcm_t *dcm, const pbio_port_pins_t *pins, pbdrv_i2c_dev_t *i2c_dev) {
+
+    PBIO_OS_ASYNC_BEGIN(state);
+
+    // While the bus is idle, the device keeps the clock line high, which goes
+    // low on an empty port. Reading the pin makes it an input, which releases
+    // the line just like the open drain driver does when idle. So skip samples
+    // while user code runs a transaction on this bus.
+    for (dcm->count = 0; dcm->count < DCM_LOOP_DISCONNECT_COUNT;) {
+        PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
+        if (pbdrv_i2c_is_busy(i2c_dev)) {
+            continue;
+        }
+        dcm->count = pbdrv_gpio_input(&pins->p5) ? 0 : dcm->count + 1;
+    }
+    debug_pr("I2C device disconnected\n");
+
+    PBIO_OS_ASYNC_END(PBIO_SUCCESS);
+}
+
 pbio_port_dcm_t *pbio_port_dcm_init_instance(uint8_t index) {
     if (index >= PBIO_CONFIG_PORT_DCM_NUM_DEV) {
         return NULL;
@@ -357,9 +366,7 @@ pbio_error_t pbio_port_dcm_assert_type_id(pbio_port_dcm_t *dcm, lego_device_type
         case LEGO_DEVICE_TYPE_ID_NXT_SOUND_SENSOR:
             return matches_category(dcm, DCM_CATEGORY_NXT_SOUND);
         case LEGO_DEVICE_TYPE_ID_NXT_I2C:
-        case LEGO_DEVICE_TYPE_ID_NXT_ULTRASONIC_SENSOR:
-        case LEGO_DEVICE_TYPE_ID_NXT_TEMPERATURE_SENSOR:
-            // I2C devices are not told apart. That is up to the sensor class.
+            // Known I2C devices are told apart by the I2C process.
             return matches_category(dcm, DCM_CATEGORY_NXT_I2C);
         default:
             return PBIO_ERROR_NO_DEV;
