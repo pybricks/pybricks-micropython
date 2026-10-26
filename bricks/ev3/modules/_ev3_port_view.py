@@ -4,7 +4,7 @@ from pybricks.ev3devices import (
     ColorSensor as EV3ColorSensor,
     TouchSensor as EV3TouchSensor,
     GyroSensor,
-    UltrasonicSensor as EV3UltrasonicSensor,
+    UltrasonicSensor,
     InfraredSensor,
 )
 from pybricks.nxtdevices import (
@@ -12,7 +12,10 @@ from pybricks.nxtdevices import (
     LightSensor,
     SoundSensor,
     UltrasonicSensor as NXTUltrasonicSensor,
+    TemperatureSensor,
+    EnergyMeter,
 )
+from pybricks.iodevices import I2CDevice
 from pybricks.parameters import Button, Port, ImageFile
 from pybricks.tools import wait
 
@@ -36,6 +39,9 @@ IMG_NXT_LIGHT_AMBIENT = ImageFile._PORT_VIEW_NXT_LIGHT_AMBIENT
 IMG_NXT_LIGHT_REFLECTION = ImageFile._PORT_VIEW_NXT_LIGHT_REFLECTION
 IMG_NXT_SOUND = ImageFile._PORT_VIEW_NXT_SOUND
 IMG_NXT_ULTRASONIC = ImageFile._PORT_VIEW_NXT_ULTRASONIC
+IMG_NXT_TEMPERATURE = ImageFile._PORT_VIEW_NXT_TEMPERATURE
+IMG_NXT_ENERGY_METER = ImageFile._PORT_VIEW_NXT_ENERGY_METER
+IMG_NXT_I2C = ImageFile._PORT_VIEW_NXT_I2C
 PORT_NONE_TOP = ImageFile._PORT_VIEW_P0_TOP
 PORT_NONE_BOTTOM = ImageFile._PORT_VIEW_P0_BOTTOM
 PORT_IMG = [
@@ -100,7 +106,7 @@ def port_process(index):
 
         # EV3 Ultrasonic Sensor
         try:
-            sensor = EV3UltrasonicSensor(PORTS[index])
+            sensor = UltrasonicSensor(PORTS[index])
             while True:
                 try:
                     distance = sensor.distance()
@@ -243,6 +249,47 @@ def port_process(index):
                     yield IMG_NXT_ULTRASONIC, distance, detail
                 except OSError:
                     break
+        except OSError:
+            pass
+
+        # NXT Temperature Sensor
+        try:
+            sensor = TemperatureSensor(PORTS[index])
+            while True:
+                try:
+                    value = sensor.temperature()
+                    detail = f"{value:>5.1f} C"
+                    yield IMG_NXT_TEMPERATURE, round(value), detail
+                except OSError:
+                    break
+        except OSError:
+            pass
+
+        # NXT Energy Meter
+        try:
+            meter = EnergyMeter(PORTS[index])
+            while True:
+                try:
+                    mode = modes[index] % 3
+                    if mode == 2:
+                        short = meter.storage()
+                        detail = f"Stored\n{short:>4} J"
+                    else:
+                        voltage, short, _ = meter.output() if mode else meter.input()
+                        label = "Out" if mode else "In"
+                        detail = f"{label} {voltage / 1000:.2f} V\n{short:>5} mA"
+                    yield IMG_NXT_ENERGY_METER, short, detail
+                except OSError:
+                    break
+        except OSError:
+            pass
+
+        # Other NXT I2C device. There is no data to show, but constructing it
+        # raises once the device is unplugged.
+        try:
+            while True:
+                I2CDevice(PORTS[index], 0x01)
+                yield IMG_NXT_I2C, "I2C", "NXT I2C"
         except OSError:
             pass
 

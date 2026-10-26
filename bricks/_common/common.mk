@@ -645,6 +645,8 @@ MEDIA_SRC = $(sort $(addprefix lib/pbio/src/image/media/,\
 	lms2012/_port_view_ev3_motor_medium.bmp \
 	lms2012/_port_view_ev3_touch.bmp \
 	lms2012/_port_view_ev3_ultrasonic.bmp \
+	lms2012/_port_view_nxt_i2c.bmp \
+	lms2012/_port_view_nxt_temperature.bmp \
 	lms2012/_port_view_p0_bottom.bmp \
 	lms2012/_port_view_p0_top.bmp \
 	lms2012/_port_view_p1.bmp \
@@ -663,9 +665,11 @@ MEDIA_SRC = $(sort $(addprefix lib/pbio/src/image/media/,\
 	ui/_port_view_nxt_color_ambient.svg \
 	ui/_port_view_nxt_color_color.svg \
 	ui/_port_view_nxt_color_reflection.svg \
+	ui/_port_view_nxt_energy_meter.svg \
 	ui/_port_view_nxt_light_ambient.svg \
 	ui/_port_view_nxt_light_reflection.svg \
 	ui/_port_view_nxt_sound.svg \
+	ui/_port_view_nxt_ultrasonic.svg \
 	ui/_pybricks_join.png \
 	ui/_reject24.svg \
 	ui/_reject24_fill.svg \
