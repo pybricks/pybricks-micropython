@@ -171,6 +171,11 @@ static pbio_error_t pbio_port_p5p6_set_mode(pbio_port_t *port, pbio_port_mode_t 
 
     const pbio_port_pins_t *pins = port->pdata->pins;
 
+    // Undo I2C pin setup if leaving I2C mode.
+    if (mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
+        pbdrv_i2c_release_port(port->i2c_dev);
+    }
+
     if (mode == PBIO_PORT_MODE_UART) {
         #if PBIO_CONFIG_PORT_HAS_UART
         err = pbio_port_p5p6_pin_reset(pins);

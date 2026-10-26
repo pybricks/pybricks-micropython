@@ -42,6 +42,15 @@ pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev);
 void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl, const pbdrv_gpio_t *sda);
 
 /**
+ * Undoes platform specific I2C pin setup, so the pins can be used as GPIO.
+ *
+ * Called when the port switches to any mode other than I2C.
+ *
+ * @param [in]  i2c_dev     The I2C device, or NULL.
+ */
+void pbdrv_i2c_release_port(pbdrv_i2c_dev_t *i2c_dev);
+
+/**
  * Does an I2C operation. To be integrated with higher-level code.
  *
  * @param [in]  state       Protothread state for async operation.
@@ -91,6 +100,9 @@ static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **
 }
 
 static inline void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl, const pbdrv_gpio_t *sda) {
+}
+
+static inline void pbdrv_i2c_release_port(pbdrv_i2c_dev_t *i2c_dev) {
 }
 
 static inline pbio_error_t pbdrv_i2c_write_then_read(

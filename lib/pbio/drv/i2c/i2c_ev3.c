@@ -89,6 +89,10 @@ void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl,
     pbdrv_gpio_input(sda);
 }
 
+void pbdrv_i2c_release_port(pbdrv_i2c_dev_t *i2c_dev) {
+    // Nothing to undo. The port resets the pins to inputs, which is enough.
+}
+
 static void pbdrv_i2c_irq_0(void) {
     IntSystemStatusClear(SYS_INT_EVTOUT4);
     HWREG(INTC_PHYS_BASE + PRU_INTC_SICR_REG) = PRU_I2C_PORT1_EVT;
