@@ -115,10 +115,18 @@ static pbio_port_dcm_t dcm_state[PBIO_CONFIG_PORT_DCM_NUM_DEV];
 /**
  * Pin 5 is considered pulled low by the device if it reads low within this
  * many reads after releasing it from high. With the NXT Light Sensor, it is
- * low by the second read. An empty port takes 4 reads on port 4 and about 13
- * reads on ports 1--3.
+ * low by the second read. An empty port takes about 13 reads on ports 1--3,
+ * but only 3 reads on port 4, occasionally fewer. See ::DCM_LIGHT_MAX_MV.
  */
 #define DCM_P5_PULLED_LOW_READS (3)
+
+/**
+ * The NXT Light Sensor keeps pin 1 below this voltage, even in the dark, while
+ * empty ports read 5000 mV. This is also required for detection, because an
+ * empty port 4 sometimes passes the pin 5 test. Matches the disconnect
+ * threshold of the light sensor.
+ */
+#define DCM_LIGHT_MAX_MV (4950)
 
 /**
  * Releases pin 5 after it was driven high and tests whether the device pulls
@@ -189,7 +197,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    debug_pr("Start device scan\n");
+    debug_pr("P5 pin %d: Start device scan\n", pins->p5.pin);
     dcm->category = DCM_CATEGORY_NONE;
     dcm->connected = false;
     dcm->touch = (pbio_port_dcm_touch_t) {0};
@@ -222,7 +230,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         if (dcm->candidate == DCM_CATEGORY_NONE || dcm->candidate == DCM_CATEGORY_NXT_TOUCH_PRESSED) {
             pbdrv_gpio_out_high(&pins->p5);
             PBIO_OS_AWAIT_ONCE(state);
-            if (pbio_port_dcm_p5_release_is_pulled_low(pins)) {
+            if (pbio_port_dcm_p5_release_is_pulled_low(pins) && pbio_port_dcm_get_mv(pins, 1) < DCM_LIGHT_MAX_MV) {
                 dcm->candidate = DCM_CATEGORY_NXT_LIGHT;
             }
         }
@@ -234,7 +242,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
         PBIO_OS_AWAIT_MS(state, timer, DCM_LOOP_TIME_MS);
     }
     dcm->connected = true;
-    debug_pr("Device kind detected: %d\n", dcm->category);
+    debug_pr("P5 pin %d: Device kind detected: %d\n", pins->p5.pin, dcm->category);
 
     if (dcm->category == DCM_CATEGORY_NXT_I2C) {
         debug_pr("Continue as I2C process\n");
@@ -245,7 +253,7 @@ pbio_error_t pbio_port_dcm_thread(pbio_os_state_t *state, pbio_os_timer_t *timer
     if (dcm->category == DCM_CATEGORY_NXT_LIGHT) {
         debug_pr("Reading NXT Light Sensor until disconnected.\n");
         PBIO_OS_AWAIT(state, &dcm->child, pbio_port_dcm_nxt_light_run(&dcm->child, &dcm->optical, pins, timer));
-        debug_pr("Light Sensor disconnected.\n");
+        debug_pr("P5 pin %d: Light Sensor disconnected.\n", pins->p5.pin);
         return PBIO_SUCCESS;
     }
 
