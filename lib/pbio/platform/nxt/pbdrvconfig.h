@@ -24,6 +24,8 @@
 #define PBDRV_CONFIG_BLUETOOTH_NXT                  (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST         (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS        (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER                 (1)
+#define PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS       (3)
 
 #define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_NXT
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000
