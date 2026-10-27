@@ -20,12 +20,10 @@
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_NXT                     (1)
 
-// The BlueCore 4 does Bluetooth Classic only, and runs the stack itself, so
-// PBDRV_CONFIG_BLUETOOTH_LE is left out. It also keeps its own bonding store,
-// so PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS is left out too.
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_NXT                  (1)
 #define PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST         (1)
+#define PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS        (1)
 
 #define PBDRV_CONFIG_HUB_KIND                       PBIO_PYBRICKS_HUB_KIND_NXT
 #define PBDRV_CONFIG_HUB_VARIANT                    0x0000

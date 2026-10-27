@@ -57,8 +57,6 @@ void pbsys_storage_settings_apply_loaded_settings(pbsys_storage_settings_t *sett
     pbio_imu_apply_loaded_settings(&settings->imu_settings);
     #endif // PBIO_CONFIG_IMU
 
-    // Chips that keep their own bonding store, like the NXT BlueCore, do not
-    // use the pbio link key store.
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_BONDS
     pbio_bluetooth_classic_apply_loaded_link_keys(settings->bluetooth_bonds);
     #endif
