@@ -2846,9 +2846,16 @@ pbio_error_t pbdrv_bluetooth_peer_connect(const uint8_t *address) {
 
     DEBUG_PRINT("Connecting to peer %s.\n", bd_addr_to_str(ch->address));
 
-    // No pairing: connecting is just paging a known address.
-    if (l2cap_create_channel(peer_packet_handler, ch->address, PEER_PSM,
-        PBDRV_BLUETOOTH_PEER_MTU, &ch->cid) != ERROR_CODE_SUCCESS) {
+    // No pairing: connecting is just paging a known address. Outgoing
+    // channels take the GAP security level at creation, LEVEL_2 by default,
+    // which would pair with the peer. An NXT has legacy pairing only, which
+    // asks both ends for a PIN.
+    gap_security_level_t security_level = gap_get_security_level();
+    gap_set_security_level(LEVEL_0);
+    uint8_t btstack_error = l2cap_create_channel(peer_packet_handler, ch->address, PEER_PSM,
+        PBDRV_BLUETOOTH_PEER_MTU, &ch->cid);
+    gap_set_security_level(security_level);
+    if (btstack_error != ERROR_CODE_SUCCESS) {
         DEBUG_PRINT("Peer connection failed to start.\n");
         ch->err = PBIO_ERROR_FAILED;
         return PBIO_ERROR_FAILED;
