@@ -7,5 +7,6 @@ PB_MCU_FAMILY = AT91SAM7
 PB_LIB_UMM_MALLOC = 1
 PB_MEDIA = 1
 PB_FONTS = 1
+PB_FROZEN_MODULES = 1
 
 include ../_common/common.mk
