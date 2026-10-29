@@ -14,8 +14,8 @@
 #define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 7) // top left, back button
-#define PBSYS_CONFIG_HMI_EV3                        (1)
-#define PBSYS_CONFIG_HMI_EV3_UI                     (1)
+#define PBSYS_CONFIG_HMI_LCD                        (1)
+#define PBSYS_CONFIG_HMI_LCD_UI_EV3                 (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (4)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)

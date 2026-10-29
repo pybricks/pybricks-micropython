@@ -232,7 +232,7 @@ void pbsys_status_light_handle_status_change(void) {
 
     // REVISIT: Generalize setting of non-pattern colors. This workaround
     // is currently needed because simply turning a light on is impossible.
-    #if PBSYS_CONFIG_HMI_EV3
+    #if PBSYS_CONFIG_HMI_LCD
     usb_ble_indication = PBSYS_STATUS_LIGHT_INDICATION_USB_CONNECTED;
     #endif
 

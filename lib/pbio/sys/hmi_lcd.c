@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 // Provides Human Machine Interface (HMI) between hub and user for systems
-// with directional buttons and an EV3 display.
+// with directional buttons and a display.
 
 #include <pbsys/config.h>
 
-#if PBSYS_CONFIG_HMI_EV3
+#if PBSYS_CONFIG_HMI_LCD
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -30,7 +30,7 @@
 #include <pbsys/storage.h>
 
 #include "storage.h"
-#include "hmi_ev3_ui.h"
+#include "hmi_lcd_ui.h"
 
 
 #define DEBUG 0
@@ -72,11 +72,11 @@ void pbsys_hmi_deinit(void) {
     // Start shutdown animation and wait for completion.
     static pbio_os_process_t shutdown_animation_process;
     pbio_busy_count_up();
-    pbio_os_process_start(&shutdown_animation_process, pbsys_hmi_ev3_ui_closing_credits, NULL);
+    pbio_os_process_start(&shutdown_animation_process, pbsys_hmi_lcd_ui_closing_credits, NULL);
 }
 
 void pbsys_hmi_stop_animation(void) {
-    pbsys_hmi_ev3_ui_run_animation_stop();
+    pbsys_hmi_lcd_ui_run_animation_stop();
 }
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
@@ -85,7 +85,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbsys_hmi_ev3_ui_initialize();
+    pbsys_hmi_lcd_ui_initialize();
 
     for (;;) {
 
@@ -94,7 +94,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         pbio_os_timer_reset(timer);
         pbsys_hmi_host_update_indications();
 
-        pbsys_hmi_ev3_ui_draw();
+        pbsys_hmi_lcd_ui_draw();
 
         // Buttons could be pressed at the end of the user program, so wait for
         // a release and then a new press, or until we have to exit early.
@@ -144,23 +144,23 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         // Update UI state for buttons.
         uint8_t payload;
-        pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
-        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
+        pbsys_hmi_lcd_ui_action_t action = pbsys_hmi_lcd_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_LCD_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_SET_SLOT) {
             pbsys_status_set_selected_slot(payload);
             continue;
         }
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_SHUTDOWN) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_SHUTDOWN) {
             return PBIO_ERROR_CANCELED;
         }
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_RUN_PROGRAM) {
             pbio_error_t err = pbsys_main_program_request_start(payload, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
             if (err != PBIO_SUCCESS) {
                 DEBUG_PRINT("Requested program not available.\n");
-                pbsys_hmi_ev3_ui_handle_error(err);
+                pbsys_hmi_lcd_ui_handle_error(err);
                 continue;
             }
 
@@ -191,7 +191,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
     pbio_color_light_start_breathe_animation(pbsys_status_light_main, PBSYS_CONFIG_STATUS_LIGHT_STATE_ANIMATIONS_HUE);
     #endif
 
-    pbsys_hmi_ev3_ui_run_animation_start();
+    pbsys_hmi_lcd_ui_run_animation_start();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -221,4 +221,4 @@ pbio_error_t pbsys_hmi_await_program_selection(void) {
     return err;
 }
 
-#endif // PBSYS_CONFIG_HMI_EV3
+#endif // PBSYS_CONFIG_HMI_LCD

@@ -24,7 +24,7 @@
 #include <pbsys/status.h>
 
 #include "storage.h"
-#include "hmi_ev3_ui.h"
+#include "hmi_lcd_ui.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -92,7 +92,7 @@ static pbio_error_t pbsys_hmi_await_program_selection_one_off(void) {
         PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT :
         PBIO_PYBRICKS_USER_PROGRAM_ID_REPL;
 
-    pbsys_hmi_ev3_ui_run_animation_start();
+    pbsys_hmi_lcd_ui_run_animation_start();
 
     return pbsys_main_program_request_start(id, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_BOOT);
 }
@@ -149,12 +149,12 @@ void pbsys_hmi_connection_changed_handler(void) {
 
 void pbsys_hmi_deinit(void) {
     // For most virtual hub tests, we don't want to wait on the closing
-    // credits, so we leave this empty. The EV3 variant of this function can be
-    // called here if the animation needs debugging.
+    // credits, so we leave this empty. The display variant of this function
+    // can be called here if the animation needs debugging.
 }
 
 void pbsys_hmi_stop_animation(void) {
-    pbsys_hmi_ev3_ui_run_animation_stop();
+    pbsys_hmi_lcd_ui_run_animation_stop();
 }
 
 static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
@@ -163,13 +163,13 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
     PBIO_OS_ASYNC_BEGIN(state);
 
-    pbsys_hmi_ev3_ui_initialize();
+    pbsys_hmi_lcd_ui_initialize();
 
     for (;;) {
 
         DEBUG_PRINT("Start HMI loop\n");
 
-        pbsys_hmi_ev3_ui_draw();
+        pbsys_hmi_lcd_ui_draw();
         pbio_os_timer_reset(timer);
 
         // Buttons could be pressed at the end of the user program, so wait for
@@ -213,26 +213,26 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
 
         // Update UI state for buttons.
         uint8_t payload;
-        pbsys_hmi_ev3_ui_action_t action = pbsys_hmi_ev3_ui_handle_button(pbdrv_button_get_pressed(), &payload);
-        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_EV3_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
+        pbsys_hmi_lcd_ui_action_t action = pbsys_hmi_lcd_ui_handle_button(pbdrv_button_get_pressed(), &payload);
+        pbio_os_timer_set(&refresh_timer, action == PBSYS_HMI_LCD_UI_ACTION_REFRESH_SOON ? 40 : INT32_MAX);
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_SET_SLOT) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_SET_SLOT) {
             pbsys_status_set_selected_slot(payload);
             continue;
         }
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_SHUTDOWN) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_SHUTDOWN) {
             return PBIO_ERROR_CANCELED;
         }
 
-        if (action == PBSYS_HMI_EV3_UI_ACTION_RUN_PROGRAM) {
+        if (action == PBSYS_HMI_LCD_UI_ACTION_RUN_PROGRAM) {
 
             pbsys_hmi_virtual_reload_programs();
 
             pbio_error_t err = pbsys_main_program_request_start(payload, PBSYS_MAIN_PROGRAM_START_REQUEST_TYPE_HUB_UI);
             if (err != PBIO_SUCCESS) {
                 DEBUG_PRINT("Requested program not available.\n");
-                pbsys_hmi_ev3_ui_handle_error(err);
+                pbsys_hmi_lcd_ui_handle_error(err);
                 continue;
             }
 
@@ -258,7 +258,7 @@ static pbio_error_t run_ui(pbio_os_state_t *state, pbio_os_timer_t *timer) {
         pbdrv_button_get_pressed();
     }));
 
-    pbsys_hmi_ev3_ui_run_animation_start();
+    pbsys_hmi_lcd_ui_run_animation_start();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }

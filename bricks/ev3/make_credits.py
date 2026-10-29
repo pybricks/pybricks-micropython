@@ -18,18 +18,18 @@ source_path = (
 names = open(source_path, "r").read().splitlines()
 
 # Write the result as a list of C strings.
-destination = open(build_dir / "hmi_ev3_ui_credits.c", "w")
+destination = open(build_dir / "hmi_lcd_ui_credits.c", "w")
 destination.write("""// SPDX-License-Identifier: MIT
 //Copyright (c) 2026 The Pybricks Authors
 
 #include <stddef.h>
 
-const char * const hmi_ev3_ui_credits_names[] = {
+const char * const hmi_lcd_ui_credits_names[] = {
 """)
 
 for name in names:
     destination.write(f'    "{name}",\n')
 
 destination.write(
-    "};\n\nconst size_t hmi_ev3_ui_credits_size = sizeof(hmi_ev3_ui_credits_names) / sizeof(hmi_ev3_ui_credits_names[0]);"
+    "};\n\nconst size_t hmi_lcd_ui_credits_size = sizeof(hmi_lcd_ui_credits_names) / sizeof(hmi_lcd_ui_credits_names[0]);"
 )

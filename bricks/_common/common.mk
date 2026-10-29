@@ -683,7 +683,7 @@ MEDIA_GEN_C = $(patsubst lib/pbio/src/image/media/%, $(BUILD)/media/%.c, $(basen
 ifeq ($(PB_MEDIA),1)
 PYBRICKS_PYBRICKS_SRC_C += $(BUILD)/pb_type_image_attributes.c
 PBIO_SRC_C += $(MEDIA_GEN_C)
-PBIO_SRC_C += $(BUILD)/hmi_ev3_ui_credits.c
+PBIO_SRC_C += $(BUILD)/hmi_lcd_ui_credits.c
 endif
 
 ifeq ($(PB_FONTS),1)
@@ -862,8 +862,8 @@ $(BUILD)/font_mono_8x5_8.c: $(PBTOP)/lib/pbio/src/image/fonts/mono_8x5.png $(FON
 	$(ECHO) "GEN $@"
 	$(Q)$(PYTHON) $(FONT_CONVERT) --image $< 8 > $@
 
-$(BUILD)/hmi_ev3_ui_credits.c: $(CREDITS_CONVERT)
-	$(ECHO) "Generating EV3 credits file"
+$(BUILD)/hmi_lcd_ui_credits.c: $(CREDITS_CONVERT)
+	$(ECHO) "Generating credits file"
 	$(Q)$(PYTHON) $(CREDITS_CONVERT) $(BUILD)
 
 $(BUILD)/firmware.elf $(BUILD)/pybricks-virtualhub: $(LD_FILES) $(OBJ)
