@@ -10,7 +10,8 @@
 #define PBSYS_CONFIG_BATTERY_CHARGER                (0)
 #define PBSYS_CONFIG_HMI                            (1)
 #define PBSYS_CONFIG_HMI_STOP_BUTTON                (1 << 2) // down
-#define PBSYS_CONFIG_HMI_NXT                        (1)
+#define PBSYS_CONFIG_HMI_LCD                        (1)
+#define PBSYS_CONFIG_HMI_LCD_UI_NXT                 (1)
 #define PBSYS_CONFIG_HMI_NUM_SLOTS                  (0)
 #define PBSYS_CONFIG_HOST                           (1)
 #define PBSYS_CONFIG_HOST_EVENT_OUT_SIZE            (512)

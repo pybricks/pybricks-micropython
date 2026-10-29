@@ -10,7 +10,7 @@
 
 #include <pbsys/config.h>
 
-#if PBSYS_CONFIG_HMI_LCD_UI_EV3
+#if PBSYS_CONFIG_HMI_LCD_UI_EV3 || PBSYS_CONFIG_HMI_LCD_UI_NXT
 
 #include <pbsys/host.h>
 #include <pbsys/main.h>
@@ -42,6 +42,13 @@
 static pbsys_hmi_lcd_ui_t state;
 
 /**
+ * Program id for apps that have no program yet, so selecting them says they
+ * are coming soon. Apps never run a program slot, so this can't clash with a
+ * real app.
+ */
+#define PBSYS_HMI_LCD_UI_APP_NONE (PBIO_PYBRICKS_USER_PROGRAM_ID_FIRST_SLOT)
+
+/**
  * Available apps on app tab.
  */
 static const struct {
@@ -52,6 +59,10 @@ static const struct {
     { "Port View", PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_PORT_VIEW },
     { "Motor Button Control", PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_BUTTON_CONTROL },
     { "Motor IR Control", PBIO_PYBRICKS_USER_PROGRAM_ID_EV3_MOTOR_IR_CONTROL },
+    #elif PBSYS_CONFIG_HMI_LCD_UI_NXT
+    // REVISIT: Add the programs for these apps once they exist.
+    { "Port View", PBSYS_HMI_LCD_UI_APP_NONE },
+    { "Motor Control", PBSYS_HMI_LCD_UI_APP_NONE },
     #endif
 };
 
@@ -97,7 +108,7 @@ const pbsys_hmi_lcd_ui_t *pbsys_hmi_lcd_ui_get_state(void) {
 uint8_t pbsys_hmi_lcd_ui_get_tab_num_entries(pbsys_hmi_lcd_ui_tab_t tab) {
     switch (tab) {
         case PBSYS_HMI_LCD_UI_TAB_PROGRAMS:
-            return PBSYS_CONFIG_HMI_NUM_SLOTS;
+            return PBSYS_CONFIG_STORAGE_NUM_SLOTS;
         case PBSYS_HMI_LCD_UI_TAB_APPS:
             return PBIO_ARRAY_SIZE(apps);
         case PBSYS_HMI_LCD_UI_TAB_SETTINGS:
@@ -393,6 +404,10 @@ static pbsys_hmi_lcd_ui_action_t pbsys_hmi_lcd_ui_activate_selection(uint8_t *pa
             *payload = selection;
             return PBSYS_HMI_LCD_UI_ACTION_RUN_PROGRAM;
         case PBSYS_HMI_LCD_UI_TAB_APPS:
+            if (apps[selection].id == PBSYS_HMI_LCD_UI_APP_NONE) {
+                state.overlay = PBSYS_HMI_LCD_UI_OVERLAY_COMING_SOON;
+                return PBSYS_HMI_LCD_UI_ACTION_NONE;
+            }
             *payload = apps[selection].id;
             return PBSYS_HMI_LCD_UI_ACTION_RUN_PROGRAM;
         case PBSYS_HMI_LCD_UI_TAB_SETTINGS:
@@ -413,6 +428,8 @@ static pbsys_hmi_lcd_ui_action_t pbsys_hmi_lcd_ui_activate_selection(uint8_t *pa
             return PBSYS_HMI_LCD_UI_ACTION_NONE;
     }
 }
+
+#if PBSYS_CONFIG_HMI_LCD_UI_EV3
 
 /**
  * Handles one button press on the menu, when no overlay is open.
@@ -456,6 +473,63 @@ static pbsys_hmi_lcd_ui_action_t pbsys_hmi_lcd_ui_handle_menu_button(pbio_button
     }
     return PBSYS_HMI_LCD_UI_ACTION_NONE;
 }
+
+#else // PBSYS_CONFIG_HMI_LCD_UI_EV3
+
+/**
+ * Handles one button press on the menu, when no overlay is open.
+ *
+ * Without up and down buttons, left and right first select the tab. Center
+ * enters it, after which left and right select the entry on it, until exit
+ * returns to the tabs. There is only one program slot, so center on the
+ * program tab runs it right away instead of entering the tab.
+ *
+ * @param  [in]  button    Button that was pressed.
+ * @param  [out] payload   Payload of the return action.
+ * @return                 Action to perform based on user interaction.
+ */
+static pbsys_hmi_lcd_ui_action_t pbsys_hmi_lcd_ui_handle_menu_button(pbio_button_flags_t button, uint8_t *payload) {
+
+    // Close tab or open shutdown menu on exit button.
+    if (button == PBSYS_HMI_LCD_UI_BUTTON_EXIT) {
+        if (state.in_tab) {
+            state.in_tab = false;
+        } else {
+            state.overlay = PBSYS_HMI_LCD_UI_OVERLAY_SHUTDOWN_NO;
+        }
+        return PBSYS_HMI_LCD_UI_ACTION_NONE;
+    }
+
+    // Not in a tab, so left/right selects tab and center enters it.
+    if (!state.in_tab) {
+        if (button == PBIO_BUTTON_LEFT && state.tab > 0) {
+            state.tab--;
+        }
+        if (button == PBIO_BUTTON_RIGHT && state.tab < PBSYS_HMI_LCD_UI_TAB_NUM - 1) {
+            state.tab++;
+        }
+        if (button == PBIO_BUTTON_CENTER) {
+            if (state.tab == PBSYS_HMI_LCD_UI_TAB_PROGRAMS) {
+                return pbsys_hmi_lcd_ui_activate_selection(payload);
+            }
+            state.in_tab = true;
+        }
+        return PBSYS_HMI_LCD_UI_ACTION_NONE;
+    }
+
+    // In a tab, so left/right selects entry.
+    if (button == PBIO_BUTTON_LEFT || button == PBIO_BUTTON_RIGHT) {
+        pbsys_hmi_lcd_ui_increment_entry_on_current_tab(button == PBIO_BUTTON_RIGHT);
+    }
+
+    // Make selection.
+    if (button == PBIO_BUTTON_CENTER) {
+        return pbsys_hmi_lcd_ui_activate_selection(payload);
+    }
+    return PBSYS_HMI_LCD_UI_ACTION_NONE;
+}
+
+#endif // PBSYS_CONFIG_HMI_LCD_UI_EV3
 
 /**
  * Handles one button press to updates the state.
@@ -556,7 +630,7 @@ void pbsys_hmi_lcd_ui_draw_centered_text(const pbio_font_t *font, const char *te
  * @param [in] y          Y coordinate of the baseline.
  * @param [in] max_width  Width available for the text.
  */
-void pbsys_hmi_lcd_ui_draw_truncated_text(const pbio_font_t *font, const char *text, int x, int y, int max_width) {
+static void pbsys_hmi_lcd_ui_draw_truncated_text(const pbio_font_t *font, const char *text, int x, int y, int max_width) {
     pbio_image_t *display = pbdrv_display_get_image();
     pbio_image_rect_t rect;
     size_t len = strlen(text);
@@ -591,9 +665,11 @@ static void pbsys_hmi_lcd_ui_draw_device_name_line(const pbio_font_t *font, cons
 }
 
 /**
- * Draws a device name centered, split across two lines if needed.
+ * Draws a name centered, split across two lines if needed.
  *
- * Prefers to split on a space. Text that still does not fit is cut off.
+ * Prefers to split on a space, which is dropped, or after a dash or
+ * underscore, which stays on the first line. Text that still does not fit is
+ * cut off.
  */
 void pbsys_hmi_lcd_ui_draw_device_name(const pbio_font_t *font, const char *name, int y1, int y2, int max_width, bool selected) {
     pbio_image_rect_t rect;
@@ -612,13 +688,20 @@ void pbsys_hmi_lcd_ui_draw_device_name(const pbio_font_t *font, const char *name
         pbio_image_bbox_text(font, name, --fit, &rect);
     } while (fit > 1 && rect.width > max_width);
 
-    // Prefer to split on a space, if there is one.
+    // Prefer to split at the last word boundary that fits, if there is one.
     size_t split = fit;
-    while (split > 1 && name[split] != ' ') {
-        split--;
-    }
-    if (name[split] != ' ') {
-        split = fit;
+    size_t rest_start = fit;
+    for (size_t i = fit; i > 0; i--) {
+        if (name[i] == ' ') {
+            split = i;
+            rest_start = i + 1;
+            break;
+        }
+        if (name[i - 1] == '-' || name[i - 1] == '_') {
+            split = i;
+            rest_start = i;
+            break;
+        }
     }
 
     char line[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE];
@@ -626,7 +709,7 @@ void pbsys_hmi_lcd_ui_draw_device_name(const pbio_font_t *font, const char *name
     pbsys_hmi_lcd_ui_draw_device_name_line(font, line, y1, selected);
 
     // Second line is cut off at whatever fits.
-    const char *rest = name + split + (name[split] == ' ' ? 1 : 0);
+    const char *rest = name + rest_start;
     size_t rest_fit = strlen(rest);
     pbio_image_bbox_text(font, rest, rest_fit, &rect);
     while (rest_fit > 1 && rect.width > max_width) {
@@ -763,4 +846,4 @@ const char *pbsys_hmi_lcd_ui_get_credits_name(size_t position) {
     return hmi_lcd_ui_credits_names[(random + position) % hmi_lcd_ui_credits_size];
 }
 
-#endif // PBSYS_CONFIG_HMI_LCD_UI_EV3
+#endif // PBSYS_CONFIG_HMI_LCD_UI_EV3 || PBSYS_CONFIG_HMI_LCD_UI_NXT

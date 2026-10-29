@@ -260,8 +260,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/hmi_lcd.c \
 	sys/hmi_lcd_ui.c \
 	sys/hmi_lcd_ui_ev3.c \
+	sys/hmi_lcd_ui_nxt.c \
 	sys/hmi_none.c \
-	sys/hmi_nxt.c \
 	sys/hmi_pup.c \
 	sys/hmi_virtual.c \
 	sys/host.c \

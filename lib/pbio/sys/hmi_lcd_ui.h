@@ -45,7 +45,7 @@ typedef enum {
     PBSYS_HMI_LCD_UI_ACTION_SHUTDOWN,
 } pbsys_hmi_lcd_ui_action_t;
 
-#if PBSYS_CONFIG_HMI_LCD_UI_EV3
+#if PBSYS_CONFIG_HMI_LCD_UI_EV3 || PBSYS_CONFIG_HMI_LCD_UI_NXT
 
 /**
  * Button that closes overlays and opens the shutdown menu. This is the same
@@ -117,6 +117,11 @@ typedef struct {
      */
     pbsys_hmi_lcd_ui_tab_t tab;
     /**
+     * Whether the current tab is entered, so left/right select its entries.
+     * Otherwise, left/right select the tab. Only used without up/down buttons.
+     */
+    bool in_tab;
+    /**
      * Selected item on tabs.
      */
     uint8_t selection[PBSYS_HMI_LCD_UI_TAB_NUM];
@@ -158,8 +163,6 @@ const char *pbsys_hmi_lcd_ui_get_credits_name(size_t position);
 
 void pbsys_hmi_lcd_ui_draw_centered_text(const pbio_font_t *font, const char *text, int x_offset, int y);
 
-void pbsys_hmi_lcd_ui_draw_truncated_text(const pbio_font_t *font, const char *text, int x, int y, int max_width);
-
 void pbsys_hmi_lcd_ui_draw_device_name(const pbio_font_t *font, const char *name, int y1, int y2, int max_width, bool selected);
 
 void pbsys_hmi_lcd_ui_draw_pybricks_logo(uint32_t x, uint32_t y, uint32_t width, bool blink);
@@ -176,7 +179,7 @@ void pbsys_hmi_lcd_ui_run_animation_stop(void);
 
 pbio_error_t pbsys_hmi_lcd_ui_closing_credits(pbio_os_state_t *state, void *context);
 
-#else // PBSYS_CONFIG_HMI_LCD_UI_EV3
+#else // PBSYS_CONFIG_HMI_LCD_UI_EV3 || PBSYS_CONFIG_HMI_LCD_UI_NXT
 
 static inline void pbsys_hmi_lcd_ui_initialize(void) {
 }
@@ -201,6 +204,6 @@ static inline pbio_error_t pbsys_hmi_lcd_ui_closing_credits(pbio_os_state_t *sta
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-#endif // PBSYS_CONFIG_HMI_LCD_UI_EV3
+#endif // PBSYS_CONFIG_HMI_LCD_UI_EV3 || PBSYS_CONFIG_HMI_LCD_UI_NXT
 
 #endif // _PBSYS_SYS_HMI_LCD_UI_H_
