@@ -185,7 +185,11 @@ static inline bool pbdrv_bluetooth_peripheral_is_connected(pbio_bluetooth_periph
 /**
  * Maximum number of inquiry scan results stored by the driver.
  */
+#ifdef PBDRV_CONFIG_BLUETOOTH_INQUIRY_NUM_RESULTS
+#define PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS (PBDRV_CONFIG_BLUETOOTH_INQUIRY_NUM_RESULTS)
+#else
 #define PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS (20)
+#endif
 
 /**
  * Size of the buffer holding the most recent Bluetooth Classic HID input

@@ -17,6 +17,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <at91sam7s256.h>
@@ -235,16 +236,26 @@ static void bt_spi_write(uint16_t addr, const uint16_t *data, uint32_t size) {
 #define BCCMD_VARID_PS (0x7003)
 #define BCCMD_PS_STORE_RAM (0x0008)
 #define BCCMD_PDU_WORDS (9)
+#define BCCMD_PDU_WORDS_MAX (10)
+
+/** Most the BC4 may put in one SDP packet. Fits BCSP_PAYLOAD_MAX. */
+#define BC4_SDP_PACKET_MAX (540)
 
 /**
  * RAM PS store keys for the on-chip stack on BCSP: key, value size, value.
  * The first two are LEGO's own bootmode 1 settings. ONCHIP_HCI_CLIENT keeps
  * its flash value (1), so the BC4 runs its upper stack.
  */
-static const uint16_t bc4_mode_keys[][3] = {
+static const uint16_t bc4_mode_keys[][4] = {
     { 0x04F8, 1, 1 }, // Bootmode 1 VM_DISABLE.
     { 0x04F9, 1, 1 }, // Bootmode 1 HOST_INTERFACE: BCSP.
     { 0x01BE, 1, (uint32_t)BT_UART_BAUD * 4096 / 1000000 }, // UART_BAUDRATE: baud * 0.004096.
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    // HOSTIO_PROTOCOL_INFO10, for BCSP channel 10 (SDP). The first word is the
+    // most the BC4 puts in one packet, longer messages come in pieces. It is
+    // 256 by default, too little for an SDP answer with a HID descriptor.
+    { 0x019E, 2, BC4_SDP_PACKET_MAX, 0xb800 },
+    #endif
 };
 
 /** Sets the mailbox state, raises its interrupt, and waits for the next one. */
@@ -781,21 +792,42 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define DM_HCI_WRITE_CLASS_OF_DEVICE (0x0c24)
 #define DM_HCI_READ_BD_ADDR (0x1009)
 #define DM_HCI_READ_BD_ADDR_COMPLETE (0x100e)
+#define DM_HCI_INQUIRY (0x0401)
+#define DM_HCI_INQUIRY_CANCEL (0x0402)
 #define DM_HCI_REMOTE_NAME_REQUEST (0x0419)
+#define DM_HCI_INQUIRY_CANCEL_COMPLETE (0x0421)
+#define DM_HCI_INQUIRY_RESULT (0x0424)
+#define DM_HCI_INQUIRY_COMPLETE (0x0425)
 #define DM_HCI_REMOTE_NAME_COMPLETE (0x0429)
+
+// Link policy. Requests that name a link have a handle word, which the DM
+// fills in, before the address. Switch role names it by address only.
+#define DM_HCI_SNIFF_MODE (0x0803)
+#define DM_HCI_ROLE_DISCOVERY (0x0809)
+#define DM_HCI_SWITCH_ROLE (0x080b)
+#define DM_HCI_MODE_CHANGE_EVENT (0x080f)
+#define DM_HCI_ROLE_DISCOVERY_COMPLETE (0x0812)
+#define DM_HCI_SWITCH_ROLE_COMPLETE (0x0813)
 
 // Security manager.
 #define DM_SM_LINK_KEY_REQUEST_RES (0x2c0a)
 #define DM_SM_PIN_REQUEST_RES (0x2c0b)
 #define DM_SM_AUTHORISE_RES (0x2c0c)
+#define DM_SM_AUTHENTICATE_REQ (0x2c0d)
 #define DM_SM_LINK_KEY_REQUEST_IND (0x2c16)
 #define DM_SM_PIN_REQUEST_IND (0x2c17)
 #define DM_SM_LINK_KEY_IND (0x2c18)
 #define DM_SM_AUTHORISE_IND (0x2c19)
+#define DM_SM_AUTHENTICATE_CFM (0x2c1a)
 
 // Private DM messages.
+#define DM_SET_DEFAULT_LINK_POLICY (0x2804)
+#define DM_ACL_CLOSE_REQ (0x2806)
 #define DM_ACL_OPENED_IND (0x280d)
 #define DM_ACL_CLOSED_IND (0x280e)
+
+/** Link policy settings: role switch and sniff allowed. */
+#define BT_LINK_POLICY (0x0005)
 
 /** PIN for legacy pairing, which is all the BC4 has. Same as LEGO's firmware. */
 #define BT_PIN_CODE "1234"
@@ -834,6 +866,10 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define SDS_REGISTER_REQ (0x000e)
 #define SDS_REGISTER_CFM (0x000f)
 
+// SDP client, also on channel 10.
+#define SDC_SERVICE_SEARCH_ATTRIBUTE_REQ (0x0005)
+#define SDC_SERVICE_SEARCH_ATTRIBUTE_CFM (0x0006)
+
 // L2CAP, BCSP channel 8.
 #define L2CA_REGISTER_REQ (0x0001)
 #define L2CA_REGISTER_CFM (0x0002)
@@ -857,7 +893,9 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define L2CA_CONNECT_PENDING (0x0001)
 #define L2CA_CONNECT_REFUSED (0x0004)
 
-/** L2CAP PSM of the hub network. */
+/** L2CAP PSMs of HID and of the hub network. */
+#define BT_PSM_HID_CONTROL (0x0011)
+#define BT_PSM_HID_INTERRUPT (0x0013)
 #define BT_PSM_PEER (0x1001)
 
 /** MTU we take on every L2CAP channel. */
@@ -1168,7 +1206,231 @@ static void bt_remote_name_request(const uint8_t *addr) {
     bt.name_busy = true;
 }
 
+#if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+
+//
+// Inquiry, to find gamepads to pair with.
+//
+// The BC4 predates extended inquiry results, so names do not come with the
+// inquiry, and each device has to be asked. Names are asked between
+// inquiries, so an inquiry is cut short when a device is found, and started
+// again once its name is in. While the BC4 inquires, other bricks could not
+// connect to it, so there is a pause between inquiries to let bonded devices
+// connect.
+//
+// Only devices of the gamepad class are listed, since asking every device
+// takes too long. Pybricks hubs use this class too, so they are listed as
+// well.
+//
+
+/** How long a scan lasts, as on EV3. Callers start another to keep looking. */
+#define INQUIRY_SCAN_MS (60000)
+
+/** Length of one inquiry, in units of 1.28 s. */
+#define INQUIRY_LENGTH (8)
+
+/** Pause between inquiries. */
+#define INQUIRY_PAUSE_MS (1000)
+
+/** Class of device of a gamepad, major and minor class only. */
+#define INQUIRY_CLASS_GAMEPAD (0x0508)
+#define INQUIRY_CLASS_MASK (0x1ffc)
+
+static struct {
+    /** Whether a scan is on, until stopped or its time is up. */
+    bool busy;
+    /** Whether an inquiry runs, and whether it is being cancelled. */
+    bool running;
+    bool cancelling;
+    /** Ends the scan. */
+    pbio_os_timer_t scan_timer;
+    /** Pause before the next inquiry. */
+    pbio_os_timer_t pause_timer;
+    /** Devices found and named. */
+    uint32_t count;
+    /** Devices found whose names are still to be asked, after the others. */
+    uint32_t unnamed;
+    pbio_bluetooth_inquiry_result_t results[PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS];
+} inquiry;
+
+/** Whether a scan is on, ending it once its time is up. */
+static bool inquiry_is_busy(void) {
+    if (inquiry.busy && (bt.shutdown_requested || pbio_os_timer_is_expired(&inquiry.scan_timer))) {
+        pbdrv_bluetooth_inquiry_stop();
+    }
+    return inquiry.busy;
+}
+
+static bool inquiry_is_known(const uint8_t *addr) {
+    for (uint32_t i = 0; i < inquiry.count + inquiry.unnamed; i++) {
+        if (memcmp(inquiry.results[i].bdaddr, addr, 6) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static void inquiry_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
+    switch (type) {
+        case DM_HCI_INQUIRY_RESULT: {
+            // Words: type, phandle, count, pointers, then the results at the
+            // end, 10 words each: address (4), page scan repetition mode,
+            // period mode and mode, class of device (2), clock offset.
+            uint16_t count = bt_get_word(payload, 2);
+            uint16_t first = size / 2 - count * 10;
+            if (!inquiry.busy || !inquiry.running || count == 0 || size / 2 < 3 + count * 10) {
+                break;
+            }
+            for (uint16_t r = 0; r < count; r++) {
+                uint16_t w = first + r * 10;
+                uint32_t cod = bt_get_word(payload, w + 7) << 16 | bt_get_word(payload, w + 8);
+                uint16_t words[4];
+                uint8_t addr[6];
+                for (uint16_t i = 0; i < 4; i++) {
+                    words[i] = bt_get_word(payload, w + i);
+                }
+                bt_addr_from_words(words, addr);
+                DEBUG_PRINT("bt: found %02x:%02x:%02x:%02x:%02x:%02x class %06x\n",
+                    addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], cod);
+                if ((cod & INQUIRY_CLASS_MASK) != INQUIRY_CLASS_GAMEPAD ||
+                    inquiry.count + inquiry.unnamed == PBDRV_BLUETOOTH_INQUIRY_NUM_RESULTS || inquiry_is_known(addr)) {
+                    continue;
+                }
+                pbio_bluetooth_inquiry_result_t *result = &inquiry.results[inquiry.count + inquiry.unnamed++];
+                memset(result, 0, sizeof(*result));
+                memcpy(result->bdaddr, addr, sizeof(addr));
+                result->class_of_device = cod;
+                pbio_os_request_poll();
+            }
+            break;
+        }
+        case DM_HCI_INQUIRY_COMPLETE:
+        case DM_HCI_INQUIRY_CANCEL_COMPLETE:
+            if (!inquiry.running) {
+                break;
+            }
+            inquiry.running = false;
+            inquiry.cancelling = false;
+            // Ask the names right away, or pause before the next inquiry.
+            pbio_os_timer_set(&inquiry.pause_timer, inquiry.unnamed ? 0 : INQUIRY_PAUSE_MS);
+            pbio_os_request_poll();
+            break;
+        default:
+            break;
+    }
+}
+
+/** Takes a name answer, which may be for the next device to be named. */
+static void inquiry_handle_name(const uint8_t *addr, const char *name) {
+    pbio_bluetooth_inquiry_result_t *result = &inquiry.results[inquiry.count];
+    if (!inquiry.unnamed || memcmp(result->bdaddr, addr, 6) != 0) {
+        return;
+    }
+    // Listed even without a name, so that it is not asked forever.
+    snprintf(result->name, sizeof(result->name), "%s", name);
+    inquiry.count++;
+    inquiry.unnamed--;
+}
+
+/** Sends what the scan needs next, if anything. */
+static bool inquiry_send_next(void) {
+    bool busy = inquiry_is_busy();
+
+    // Stop the inquiry once the scan is over, or when a name is to be asked.
+    if (inquiry.running && !inquiry.cancelling && (!busy || inquiry.unnamed || bt.host_name_due)) {
+        static const uint16_t msg[] = { DM_HCI_INQUIRY_CANCEL, 2 };
+        inquiry.cancelling = true;
+        bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
+        return true;
+    }
+    if (!busy || inquiry.running || bt.name_busy || bt.host_name_due) {
+        return false;
+    }
+    if (inquiry.unnamed) {
+        bt_remote_name_request(inquiry.results[inquiry.count].bdaddr);
+        return true;
+    }
+    if (!pbio_os_timer_is_expired(&inquiry.pause_timer)) {
+        return false;
+    }
+    // Words: type, length, LAP (general inquiry, 2), length, responses (0:
+    // any number).
+    static const uint16_t msg[] = { DM_HCI_INQUIRY, 6, 0x009e, 0x8b33, INQUIRY_LENGTH, 0 };
+    inquiry.running = true;
+    bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
+    DEBUG_PRINT("bt: inquiry\n");
+    return true;
+}
+
+/** Forgets the scan, as after a BC4 restart. */
+static void inquiry_reset(void) {
+    inquiry.busy = false;
+    inquiry.running = false;
+    inquiry.cancelling = false;
+    inquiry.unnamed = 0;
+}
+
+pbio_error_t pbdrv_bluetooth_inquiry_start(void) {
+    if (!bt.ready || bt.shutdown_requested) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    if (inquiry_is_busy()) {
+        return PBIO_ERROR_BUSY;
+    }
+    // An inquiry left over from the last scan is fine to keep.
+    inquiry.busy = true;
+    inquiry.count = 0;
+    inquiry.unnamed = 0;
+    pbio_os_timer_set(&inquiry.scan_timer, INQUIRY_SCAN_MS);
+    pbio_os_timer_set(&inquiry.pause_timer, 0);
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+void pbdrv_bluetooth_inquiry_stop(void) {
+    if (!inquiry.busy) {
+        return;
+    }
+    // Any inquiry is cancelled by the process. Names still to come are
+    // ignored.
+    inquiry.busy = false;
+    inquiry.unnamed = 0;
+    pbio_os_request_poll();
+}
+
+pbio_error_t pbdrv_bluetooth_inquiry_get_results(uint32_t *num, pbio_bluetooth_inquiry_result_t **results) {
+    if (!inquiry_is_busy()) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    *num = inquiry.count;
+    *results = inquiry.results;
+    return PBIO_SUCCESS;
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_INQUIRY
+
+/** Whether an inquiry runs, during which names cannot be asked. */
+static bool bt_inquiry_is_running(void) {
+    #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+    return inquiry.running;
+    #else
+    return false;
+    #endif
+}
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+static const char *hid_pin_code(const uint8_t *bdaddr);
+static void hid_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size);
+#endif
+
 static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    hid_handle_dm(type, payload, size);
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+    inquiry_handle_dm(type, payload, size);
+    #endif
+
     // Address words, as they come after type and phandle in indications.
     uint16_t addr[4];
     for (uint16_t i = 0; i < 4; i++) {
@@ -1202,6 +1464,9 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
                 memcpy(bt_provisional_addr, bdaddr, sizeof(bt_provisional_addr));
             }
             const char *pin = BT_PIN_CODE;
+            #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+            pin = hid_pin_code(bdaddr);
+            #endif
             // Words of the reply: type, address (4), PIN length, PIN (16, a
             // byte each).
             uint16_t reply[22] = { DM_SM_PIN_REQUEST_RES, addr[0], addr[1], addr[2], addr[3], strlen(pin) };
@@ -1262,6 +1527,9 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
             if (name[0]) {
                 pbio_bluetooth_classic_link_key_set_name(bdaddr, name);
             }
+            #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+            inquiry_handle_name(bdaddr, name);
+            #endif
             pbio_os_request_poll();
             break;
         }
@@ -1294,10 +1562,10 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
     }
 }
 
-#if PBDRV_CONFIG_BLUETOOTH_PEER
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
 
 //
-// L2CAP channels, for the hub network.
+// L2CAP channels, for the gamepad (HID) and the hub network (peers).
 //
 // Channels are configured both ways with our MTU. Answers to the BC4's
 // indications go through the reply queue, so they always come first.
@@ -1343,18 +1611,49 @@ typedef struct {
     pbio_error_t peer_err;
 } bt_channel_t;
 
-#define BT_NUM_CHANNELS (PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS)
+// Slots: the two HID channels, then one per peer.
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+#define BT_CHANNEL_HID_CONTROL (0)
+#define BT_CHANNEL_HID_INTERRUPT (1)
+#define BT_CHANNEL_PEER_FIRST (2)
+#else
+#define BT_CHANNEL_PEER_FIRST (0)
+#endif
+#if PBDRV_CONFIG_BLUETOOTH_PEER
+#define BT_NUM_CHANNELS (BT_CHANNEL_PEER_FIRST + PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS)
+#else
+#define BT_NUM_CHANNELS (BT_CHANNEL_PEER_FIRST)
+#endif
 
 static bt_channel_t bt_channels[BT_NUM_CHANNELS];
 
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+static bt_channel_t *hid_channel_accept(uint16_t psm, const uint8_t *addr);
+static void hid_channel_event(bt_channel_t *ch, bt_channel_event_t event);
+static void hid_handle_data(bt_channel_t *ch, const uint8_t *data, uint16_t size);
+#endif
+#if PBDRV_CONFIG_BLUETOOTH_PEER
 static bt_channel_t *peer_channel_accept(const uint8_t *addr);
 static void peer_channel_event(bt_channel_t *ch, bt_channel_event_t event);
 static void peer_handle_data(bt_channel_t *ch, const uint8_t *data, uint16_t size);
+#endif
+
+static bool bt_channel_is_hid(const bt_channel_t *ch) {
+    return ch - bt_channels < BT_CHANNEL_PEER_FIRST;
+}
 
 static void bt_channel_event(bt_channel_t *ch, bt_channel_event_t event) {
     DEBUG_PRINT("bt: l2cap psm %04x cid %04x %s\n", ch->psm, ch->cid,
         event == BT_CHANNEL_EVENT_OPENED ? "open" : event == BT_CHANNEL_EVENT_FAILED ? "failed" : "closed");
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    if (bt_channel_is_hid(ch)) {
+        hid_channel_event(ch, event);
+        return;
+    }
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
     peer_channel_event(ch, event);
+    #endif
 }
 
 /** Asks for a channel to @p addr on @p psm. The slot must be free. */
@@ -1441,7 +1740,17 @@ static void bt_channel_check_open(bt_channel_t *ch) {
 
 /** Finds the slot for an incoming connection, or NULL to refuse it. */
 static bt_channel_t *bt_channel_accept(uint16_t psm, const uint8_t *addr) {
-    return psm == BT_PSM_PEER ? peer_channel_accept(addr) : NULL;
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    if (psm == BT_PSM_HID_CONTROL || psm == BT_PSM_HID_INTERRUPT) {
+        return hid_channel_accept(psm, addr);
+    }
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    if (psm == BT_PSM_PEER) {
+        return peer_channel_accept(addr);
+    }
+    #endif
+    return NULL;
 }
 
 /** Whether an L2CAP data packet can be handed to the BC4 now. */
@@ -1607,7 +1916,15 @@ static void bt_handle_l2cap(uint16_t type, const uint8_t *payload, uint16_t size
             if (!ch || ch->state != BT_CHANNEL_OPEN || size - 14 < length) {
                 break;
             }
+            #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+            if (bt_channel_is_hid(ch)) {
+                hid_handle_data(ch, &payload[14], length);
+                break;
+            }
+            #endif
+            #if PBDRV_CONFIG_BLUETOOTH_PEER
             peer_handle_data(ch, &payload[14], length);
+            #endif
             break;
         }
         case L2CA_DATAWRITE_CFM:
@@ -1638,7 +1955,524 @@ static void bt_handle_l2cap(uint16_t type, const uint8_t *payload, uint16_t size
     }
 }
 
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
 
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
+//
+// HID host, for gamepads.
+//
+// Pairing: an SDP query for the HID descriptor (which also opens the link),
+// authentication with the gamepad PIN, then the control and interrupt
+// channels. A bonded gamepad then connects by itself, and we query its
+// descriptor once it has.
+//
+// Gamepads send far more reports than the BC4 can pass on (~240 per second)
+// and queue the rest, which shows as lag. So once connected, the link goes
+// into sniff mode with this brick as master: the gamepad then sends one
+// report per sniff interval and drops the ones it cannot send. Gamepads
+// refuse sniff from a slave, so the role is switched first if the gamepad
+// paged us.
+//
+
+/** PIN for legacy pairing with a gamepad, as on EV3. */
+#define HID_PIN_CODE "0000"
+
+/** How long pairing may take, including paging the gamepad. */
+#define HID_PAIR_TIMEOUT_MS (30000)
+
+/** Most attribute bytes the SDP query may return. */
+#define HID_SDP_MAX_BYTES (BCSP_PAYLOAD_MAX - 64)
+
+/**
+ * Sniff interval in slots of 0.625 ms: one report per interval, so 10 gives
+ * 160 reports per second, leaving the BC4 some room.
+ */
+#define HID_SNIFF_INTERVAL (10)
+
+/**
+ * Sniff attempt and timeout, in slots. A timeout of 1 keeps the gamepad to
+ * one report per interval.
+ */
+#define HID_SNIFF_ATTEMPT (2)
+#define HID_SNIFF_TIMEOUT (1)
+
+typedef enum {
+    HID_IDLE,
+    HID_PAIRING,
+    HID_CONNECTING,
+    HID_CONNECTED,
+} hid_state_t;
+
+/** Steps that put the link into sniff mode, as master. */
+typedef enum {
+    HID_LINK_ACTIVE,
+    HID_LINK_ROLE_DUE,
+    HID_LINK_ROLE_WAIT,
+    HID_LINK_SWITCH_DUE,
+    HID_LINK_SWITCH_WAIT,
+    HID_LINK_SNIFF_DUE,
+    HID_LINK_SNIFF_WAIT,
+    /** Sniff mode, or given up on it. */
+    HID_LINK_DONE,
+} hid_link_step_t;
+
+static struct {
+    hid_state_t state;
+    hid_link_step_t link_step;
+    /** Address of the gamepad, most significant byte first. */
+    uint8_t addr[6];
+    /** Result of the last pairing session. */
+    pbio_error_t pair_err;
+    /** Ends the pairing session if it takes too long. */
+    pbio_os_timer_t pair_timer;
+    /** Whether the SDP query is due, and whether it is running. */
+    bool query_due;
+    bool query_busy;
+    /** Whether authentication is due while pairing. */
+    bool authenticate_due;
+    /** Whether the link is to be dropped. */
+    bool close_link_due;
+    uint8_t close_link_addr[6];
+    /** Whether the descriptor has been looked at. Reports wait for it. */
+    bool descriptor_known;
+    /** Whether the gamepad declares report IDs. Only valid once known. */
+    bool report_id_declared;
+    /** Most recent input report of each ID, as on EV3. */
+    struct {
+        uint8_t data[PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE];
+        uint8_t size;
+        uint8_t id;
+    } reports[PBDRV_BLUETOOTH_HID_NUM_REPORTS];
+} hid;
+
+#define hid_control (&bt_channels[BT_CHANNEL_HID_CONTROL])
+#define hid_interrupt (&bt_channels[BT_CHANNEL_HID_INTERRUPT])
+
+static const char *hid_pin_code(const uint8_t *bdaddr) {
+    if (hid.state == HID_PAIRING && memcmp(bdaddr, hid.addr, sizeof(hid.addr)) == 0) {
+        return HID_PIN_CODE;
+    }
+    return BT_PIN_CODE;
+}
+
+static void hid_report_store(const uint8_t *data, uint8_t size) {
+    if (!hid.descriptor_known) {
+        return;
+    }
+    if (size > PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE) {
+        size = PBDRV_BLUETOOTH_HID_MAX_REPORT_SIZE;
+    }
+    uint8_t id = hid.report_id_declared ? data[0] : 0;
+    uint32_t slot = PBDRV_BLUETOOTH_HID_NUM_REPORTS;
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        if (hid.reports[i].size == 0) {
+            if (slot == PBDRV_BLUETOOTH_HID_NUM_REPORTS) {
+                slot = i;
+            }
+            continue;
+        }
+        if (hid.reports[i].id == id) {
+            slot = i;
+            break;
+        }
+    }
+    if (slot == PBDRV_BLUETOOTH_HID_NUM_REPORTS) {
+        return;
+    }
+    memcpy(hid.reports[slot].data, data, size);
+    hid.reports[slot].size = size;
+    hid.reports[slot].id = id;
+}
+
+static void hid_handle_data(bt_channel_t *ch, const uint8_t *data, uint16_t size) {
+    // Input reports come on the interrupt channel as DATA | INPUT (0xa1),
+    // then the report.
+    if (ch == hid_interrupt && hid.state == HID_CONNECTED && size > 1 && data[0] == 0xa1) {
+        hid_report_store(&data[1], size - 1);
+    }
+}
+
+/** Closes both channels and the link. */
+static void hid_close(void) {
+    if (hid.state == HID_CONNECTED) {
+        pbsys_host_connection_changed();
+    }
+    bt_channel_close(hid_control);
+    bt_channel_close(hid_interrupt);
+    // Closing the channels leaves the link up for a while, and the gamepad
+    // awake. Drop it, so that it sees the disconnect at once.
+    memcpy(hid.close_link_addr, hid.addr, sizeof(hid.addr));
+    hid.close_link_due = true;
+    hid.state = HID_IDLE;
+    hid.link_step = HID_LINK_ACTIVE;
+    hid.query_due = false;
+    hid.authenticate_due = false;
+    pbio_os_request_poll();
+}
+
+static void hid_pair_end(pbio_error_t err) {
+    DEBUG_PRINT("bt: hid pairing ended, %d\n", err);
+    hid.pair_err = err;
+    if (err != PBIO_SUCCESS) {
+        hid_close();
+        pbio_bluetooth_classic_link_key_unregister(hid.addr);
+    }
+}
+
+static bt_channel_t *hid_channel_accept(uint16_t psm, const uint8_t *addr) {
+    bt_channel_t *ch = psm == BT_PSM_HID_CONTROL ? hid_control : hid_interrupt;
+    if (ch->state != BT_CHANNEL_FREE || hid.state == HID_CONNECTED || bt.shutdown_requested) {
+        return NULL;
+    }
+    if (hid.state == HID_IDLE) {
+        // A bonded gamepad reconnecting. Unknown devices are not let in.
+        if (psm != BT_PSM_HID_CONTROL || !pbio_bluetooth_classic_link_key_get_name(addr)) {
+            return NULL;
+        }
+        memcpy(hid.addr, addr, sizeof(hid.addr));
+        hid.state = HID_CONNECTING;
+        hid.descriptor_known = false;
+        return ch;
+    }
+    // While pairing, the gamepad may open the channels itself.
+    return memcmp(addr, hid.addr, sizeof(hid.addr)) == 0 ? ch : NULL;
+}
+
+static void hid_channel_event(bt_channel_t *ch, bt_channel_event_t event) {
+    if (hid.state == HID_IDLE) {
+        return;
+    }
+    if (event != BT_CHANNEL_EVENT_OPENED) {
+        // While pairing, the gamepad may still connect by itself, so the
+        // session ends on success or time out.
+        if (hid.state != HID_PAIRING) {
+            hid_close();
+        }
+        return;
+    }
+    if (hid_control->state == BT_CHANNEL_OPEN && hid_interrupt->state == BT_CHANNEL_OPEN) {
+        for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+            hid.reports[i].size = 0;
+        }
+        if (hid.state == HID_PAIRING) {
+            hid_pair_end(PBIO_SUCCESS);
+        }
+        hid.state = HID_CONNECTED;
+        hid.link_step = HID_LINK_ROLE_DUE;
+        pbsys_host_connection_changed();
+        if (!hid.descriptor_known && !hid.query_busy) {
+            hid.query_due = true;
+        }
+        return;
+    }
+    // After the control channel comes the interrupt channel.
+    if (ch == hid_control && hid.state == HID_PAIRING && hid_interrupt->state == BT_CHANNEL_FREE) {
+        bt_channel_connect(hid_interrupt, hid.addr, BT_PSM_HID_INTERRUPT);
+    }
+}
+
+/**
+ * Whether the HID descriptor in an SDP answer declares report IDs. The
+ * answer is searched for attribute 0x0206 (HIDDescriptorList), a list of
+ * (type, descriptor) pairs. Anything unexpected counts as yes, as on EV3.
+ */
+static bool hid_sdp_report_id_declared(const uint8_t *data, uint16_t size) {
+    static const uint8_t attribute[] = { 0x09, 0x02, 0x06 };
+    uint16_t i = 0;
+    while (i + sizeof(attribute) <= size && memcmp(&data[i], attribute, sizeof(attribute)) != 0) {
+        i++;
+    }
+    i += sizeof(attribute);
+    // Sequence headers, then the type (0x22: report descriptor).
+    while (i + 1 < size && (data[i] == 0x35 || data[i] == 0x36)) {
+        i += data[i] == 0x35 ? 2 : 3;
+    }
+    if (i + 4 > size || data[i] != 0x08) {
+        return true;
+    }
+    i += 2;
+    uint16_t length;
+    if (data[i] == 0x25) {
+        length = data[i + 1];
+        i += 2;
+    } else if (data[i] == 0x26) {
+        length = data[i + 1] << 8 | data[i + 2];
+        i += 3;
+    } else {
+        return true;
+    }
+    uint16_t end = i + length < size ? i + length : size;
+    DEBUG_PRINT("bt: hid descriptor %u bytes, %u here\n", length, end - i);
+    // Short items: a prefix with the size in its low two bits. Report ID is 0x85.
+    while (i < end) {
+        uint8_t prefix = data[i];
+        if (prefix == 0xfe) {
+            // Long item: size in the next byte.
+            i += i + 1 < end ? 3 + data[i + 1] : 1;
+            continue;
+        }
+        if ((prefix & 0xfc) == 0x84) {
+            return true;
+        }
+        i += 1 + ((prefix & 3) == 3 ? 4 : (prefix & 3));
+    }
+    return false;
+}
+
+static void hid_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
+    uint16_t words[4];
+    uint8_t addr[6];
+
+    // Link policy results. Words: type, phandle, then for mode change:
+    // status, address (4), mode, interval; for role discovery and switch:
+    // address (4), status, role.
+    if (type == DM_HCI_MODE_CHANGE_EVENT || type == DM_HCI_ROLE_DISCOVERY_COMPLETE || type == DM_HCI_SWITCH_ROLE_COMPLETE) {
+        bool mode = type == DM_HCI_MODE_CHANGE_EVENT;
+        if (size < (mode ? 9 : 8) * 2 || hid.state != HID_CONNECTED) {
+            return;
+        }
+        for (uint16_t i = 0; i < 4; i++) {
+            words[i] = bt_get_word(payload, (mode ? 3 : 2) + i);
+        }
+        bt_addr_from_words(words, addr);
+        if (memcmp(addr, hid.addr, sizeof(addr)) != 0) {
+            return;
+        }
+        // Mode or role.
+        uint16_t status = bt_get_word(payload, mode ? 2 : 6);
+        uint16_t value = bt_get_word(payload, 7);
+        DEBUG_PRINT("bt: hid link %04x status %02x, %u\n", type, status, value);
+        if (mode) {
+            if (hid.link_step == HID_LINK_SNIFF_WAIT) {
+                hid.link_step = HID_LINK_DONE;
+            }
+            return;
+        }
+        // Role 0 is master. Sniff only works as master, so stay active
+        // if that fails.
+        bool master = status == 0 && value == 0;
+        if (type == DM_HCI_ROLE_DISCOVERY_COMPLETE && hid.link_step == HID_LINK_ROLE_WAIT) {
+            hid.link_step = master ? HID_LINK_SNIFF_DUE : status == 0 ? HID_LINK_SWITCH_DUE : HID_LINK_DONE;
+        } else if (type == DM_HCI_SWITCH_ROLE_COMPLETE && hid.link_step == HID_LINK_SWITCH_WAIT) {
+            hid.link_step = master ? HID_LINK_SNIFF_DUE : HID_LINK_DONE;
+        }
+        pbio_os_request_poll();
+        return;
+    }
+
+    // Words: type, phandle, address (4), success.
+    if (type != DM_SM_AUTHENTICATE_CFM || size < 7 * 2 || hid.state != HID_PAIRING) {
+        return;
+    }
+    for (uint16_t i = 0; i < 4; i++) {
+        words[i] = bt_get_word(payload, 2 + i);
+    }
+    bt_addr_from_words(words, addr);
+    if (memcmp(addr, hid.addr, sizeof(addr)) != 0) {
+        return;
+    }
+    DEBUG_PRINT("bt: hid authentication %s\n", bt_get_word(payload, 6) ? "done" : "failed");
+    if (!bt_get_word(payload, 6)) {
+        hid_pair_end(PBIO_ERROR_FAILED);
+    } else if (hid_control->state == BT_CHANNEL_FREE) {
+        bt_channel_connect(hid_control, hid.addr, BT_PSM_HID_CONTROL);
+    }
+}
+
+static void hid_handle_sdp(uint16_t type, const uint8_t *payload, uint16_t size) {
+    if (type != SDC_SERVICE_SEARCH_ATTRIBUTE_CFM || !hid.query_busy) {
+        return;
+    }
+    hid.query_busy = false;
+    hid.descriptor_known = true;
+    hid.report_id_declared = hid_sdp_report_id_declared(payload, size);
+    DEBUG_PRINT("bt: hid report IDs %s\n", hid.report_id_declared ? "declared" : "not declared");
+    if (hid.state == HID_PAIRING) {
+        hid.authenticate_due = true;
+    }
+}
+
+/** Sends what the link to the gamepad needs next to go into sniff mode, if anything. */
+static bool hid_link_send_next(void) {
+    // Wait for the descriptor, which comes quicker on an active link.
+    if (hid.state != HID_CONNECTED || hid.query_due || hid.query_busy) {
+        return false;
+    }
+    // Words: type, length in words, then the handle (filled in by the DM)
+    // and the address, except for switch role.
+    uint16_t msg[11] = { 0, 0, 0 };
+    switch (hid.link_step) {
+        case HID_LINK_ROLE_DUE:
+            msg[0] = DM_HCI_ROLE_DISCOVERY;
+            msg[1] = 7;
+            bt_addr_to_words(hid.addr, &msg[3]);
+            hid.link_step = HID_LINK_ROLE_WAIT;
+            break;
+        case HID_LINK_SWITCH_DUE:
+            // Words: type, length, address (4), role (0: master).
+            msg[0] = DM_HCI_SWITCH_ROLE;
+            msg[1] = 7;
+            bt_addr_to_words(hid.addr, &msg[2]);
+            msg[6] = 0;
+            hid.link_step = HID_LINK_SWITCH_WAIT;
+            break;
+        case HID_LINK_SNIFF_DUE:
+            // Then: max interval, min interval, attempt, timeout.
+            msg[0] = DM_HCI_SNIFF_MODE;
+            msg[1] = 11;
+            bt_addr_to_words(hid.addr, &msg[3]);
+            msg[7] = HID_SNIFF_INTERVAL;
+            msg[8] = HID_SNIFF_INTERVAL;
+            msg[9] = HID_SNIFF_ATTEMPT;
+            msg[10] = HID_SNIFF_TIMEOUT;
+            hid.link_step = HID_LINK_SNIFF_WAIT;
+            break;
+        default:
+            return false;
+    }
+    bt_send_message(BCSP_CHANNEL_DM, msg, msg[1]);
+    return true;
+}
+
+/** Sends what the gamepad connection needs next, if anything. */
+static bool hid_send_next(void) {
+    uint16_t msg[11];
+
+    if (hid.close_link_due) {
+        hid.close_link_due = false;
+        msg[0] = DM_ACL_CLOSE_REQ;
+        bt_addr_to_words(hid.close_link_addr, &msg[1]);
+        bt_send_message(BCSP_CHANNEL_DM, msg, 5);
+        return true;
+    }
+
+    if (hid.state == HID_PAIRING && pbio_os_timer_is_expired(&hid.pair_timer)) {
+        hid_pair_end(PBIO_ERROR_TIMEDOUT);
+    }
+
+    if (hid.query_due) {
+        // Words: type, phandle, address (4), search pattern size, pointer,
+        // attribute list size, pointer, most attribute bytes. The search
+        // pattern and the attribute list follow, in that order.
+        static const uint8_t query[] = {
+            // Search pattern: the HID service class.
+            0x35, 0x03, 0x19, 0x11, 0x24,
+            // Attributes: the HID descriptor list.
+            0x35, 0x03, 0x09, 0x02, 0x06,
+        };
+        hid.query_due = false;
+        hid.query_busy = true;
+        msg[0] = SDC_SERVICE_SEARCH_ATTRIBUTE_REQ;
+        msg[1] = BT_PHANDLE;
+        bt_addr_to_words(hid.addr, &msg[2]);
+        msg[6] = 5;
+        msg[7] = 0;
+        msg[8] = 5;
+        msg[9] = 0;
+        msg[10] = HID_SDP_MAX_BYTES;
+        bt_send_message_with_data(BCSP_CHANNEL_SDP, msg, 11, query, sizeof(query));
+        return true;
+    }
+
+    if (hid.authenticate_due) {
+        hid.authenticate_due = false;
+        msg[0] = DM_SM_AUTHENTICATE_REQ;
+        bt_addr_to_words(hid.addr, &msg[1]);
+        bt_send_message(BCSP_CHANNEL_DM, msg, 5);
+        return true;
+    }
+
+    return hid_link_send_next();
+}
+
+/** Forgets the gamepad connection, as after a BC4 restart. */
+static void hid_reset(void) {
+    if (hid.state == HID_PAIRING) {
+        hid_pair_end(PBIO_ERROR_FAILED);
+    }
+    hid.state = HID_IDLE;
+    hid.link_step = HID_LINK_ACTIVE;
+    hid.query_due = false;
+    hid.query_busy = false;
+    hid.authenticate_due = false;
+    hid.close_link_due = false;
+}
+
+pbio_error_t pbdrv_bluetooth_classic_hid_pair(const uint8_t *bdaddr, const char *name) {
+    if (!bt.ready || bt.shutdown_requested) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    if (hid.state != HID_IDLE) {
+        return PBIO_ERROR_BUSY;
+    }
+    DEBUG_PRINT("bt: pairing %s\n", name);
+    // Provisional bonding record, which gets the key once it comes.
+    pbio_bluetooth_classic_link_key_register(bdaddr, name);
+    memcpy(hid.addr, bdaddr, sizeof(hid.addr));
+    hid.state = HID_PAIRING;
+    hid.pair_err = PBIO_ERROR_AGAIN;
+    hid.descriptor_known = false;
+    hid.query_due = true;
+    pbio_os_timer_set(&hid.pair_timer, HID_PAIR_TIMEOUT_MS);
+    pbio_os_request_poll();
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_bluetooth_classic_hid_pair_status(void) {
+    return hid.state == HID_PAIRING ? PBIO_ERROR_AGAIN : hid.pair_err;
+}
+
+void pbdrv_bluetooth_classic_hid_pair_cancel(void) {
+    if (hid.state == HID_PAIRING) {
+        hid_pair_end(PBIO_ERROR_CANCELED);
+    }
+}
+
+bool pbdrv_bluetooth_classic_hid_is_connected(void) {
+    return hid.state == HID_CONNECTED;
+}
+
+uint32_t pbdrv_bluetooth_classic_hid_get_report(uint8_t report_id, uint8_t *data, uint32_t size) {
+    if (hid.state != HID_CONNECTED) {
+        return 0;
+    }
+    for (uint32_t i = 0; i < PBDRV_BLUETOOTH_HID_NUM_REPORTS; i++) {
+        if (hid.reports[i].size == 0 || hid.reports[i].id != report_id) {
+            continue;
+        }
+        if (size > hid.reports[i].size) {
+            size = hid.reports[i].size;
+        }
+        memcpy(data, hid.reports[i].data, size);
+        return size;
+    }
+    return 0;
+}
+
+bool pbdrv_bluetooth_classic_hid_get_report_id(uint32_t index, uint8_t *report_id) {
+    if (hid.state != HID_CONNECTED || index >= PBDRV_BLUETOOTH_HID_NUM_REPORTS || hid.reports[index].size == 0) {
+        return false;
+    }
+    *report_id = hid.reports[index].id;
+    return true;
+}
+
+const char *pbdrv_bluetooth_classic_hid_get_connected_name(void) {
+    return hid.state == HID_CONNECTED ? pbio_bluetooth_classic_link_key_get_name(hid.addr) : NULL;
+}
+
+void pbdrv_bluetooth_classic_hid_disconnect(void) {
+    if (hid.state == HID_PAIRING) {
+        hid_pair_end(PBIO_ERROR_CANCELED);
+    } else if (hid.state != HID_IDLE) {
+        hid_close();
+    }
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+
+#if PBDRV_CONFIG_BLUETOOTH_PEER
 
 //
 // Hub network: brick-to-brick messages over one L2CAP channel per peer, as on
@@ -1654,7 +2488,7 @@ const uint8_t pbdrv_bluetooth_peer_address_all[PBDRV_BLUETOOTH_PEER_ADDRESS_SIZE
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
-#define peer_channels (bt_channels)
+#define peer_channels (&bt_channels[BT_CHANNEL_PEER_FIRST])
 #define PEER_NUM_CHANNELS (PBDRV_CONFIG_BLUETOOTH_PEER_MAX_PEERS)
 
 static pbdrv_bluetooth_peer_receive_callback_t peer_receive_callback;
@@ -2113,9 +2947,14 @@ static void bt_handle_message(uint8_t channel, const uint8_t *payload, uint16_t 
     } else if (channel == BCSP_CHANNEL_DM) {
         bt_handle_dm(type, payload, size);
     }
-    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
     else if (channel == BCSP_CHANNEL_L2CAP) {
         bt_handle_l2cap(type, payload, size);
+    }
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    else if (channel == BCSP_CHANNEL_SDP) {
+        hid_handle_sdp(type, payload, size);
     }
     #endif
 }
@@ -2152,7 +2991,7 @@ static bool bt_send_next(void) {
         bt_connection_reset();
         return true;
     }
-    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
     if (bt_channel_send_request()) {
         return true;
     }
@@ -2166,11 +3005,22 @@ static bool bt_send_next(void) {
         DEBUG_PRINT("bt: discoverable %u\n", bt.discoverable);
         return true;
     }
-    if (bt.host_name_due && !bt.name_busy) {
+    #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+    if (inquiry_send_next()) {
+        return true;
+    }
+    #endif
+    // The inquiry is stopped for this by inquiry_send_next().
+    if (bt.host_name_due && !bt.name_busy && !bt_inquiry_is_running()) {
         bt_remote_name_request(bt.host_name_addr);
         bt.host_name_due = false;
         return true;
     }
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    if (hid_send_next()) {
+        return true;
+    }
+    #endif
     #if PBDRV_CONFIG_BLUETOOTH_PEER
     if (peer_tx_pump()) {
         return true;
@@ -2210,6 +3060,19 @@ static uint8_t bt_sdp_record[] = {
 
 #define BT_SDP_UUID_INDEX (6)
 #define BT_SDP_CHANNEL_INDEX (38)
+
+#if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
+/** L2CAP PSMs that we take connections on. */
+static const uint16_t bt_l2cap_psms[] = {
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    BT_PSM_HID_CONTROL,
+    BT_PSM_HID_INTERRUPT,
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    BT_PSM_PEER,
+    #endif
+};
+#endif
 
 /** Time to wait for the BC4 to answer a message. */
 #define BT_REPLY_TIMEOUT_MS (1000)
@@ -2269,8 +3132,16 @@ restart:
     bt.name_busy = false;
     bt.host_name_due = false;
     bt_connection_reset();
-    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
     bt_channels_reset();
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_INQUIRY
+    inquiry_reset();
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    hid_reset();
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
     peer_reset();
     #endif
 
@@ -2297,9 +3168,9 @@ restart:
     for (i = 0; i < PBIO_ARRAY_SIZE(bc4_mode_keys); i++) {
         // Words: type, length, seq, varid, status, key, value size, store,
         // value.
-        uint16_t pdu[BCCMD_PDU_WORDS] = {
+        uint16_t pdu[BCCMD_PDU_WORDS_MAX] = {
             BCCMD_SETREQ, BCCMD_PDU_WORDS - 1 + bc4_mode_keys[i][1], i, BCCMD_VARID_PS, 0,
-            bc4_mode_keys[i][0], bc4_mode_keys[i][1], BCCMD_PS_STORE_RAM, bc4_mode_keys[i][2],
+            bc4_mode_keys[i][0], bc4_mode_keys[i][1], BCCMD_PS_STORE_RAM, bc4_mode_keys[i][2], bc4_mode_keys[i][3],
         };
         err = bc4_bccmd(pdu, true);
         if (err != PBIO_SUCCESS) {
@@ -2369,6 +3240,14 @@ restart:
         bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
     }
 
+    // Link policy for new links, incoming and outgoing. Without it, the
+    // gamepad link cannot go into sniff mode.
+    PBIO_OS_AWAIT_UNTIL(state, bcsp_can_send());
+    {
+        static const uint16_t msg[] = { DM_SET_DEFAULT_LINK_POLICY, BT_LINK_POLICY, BT_LINK_POLICY };
+        bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
+    }
+
     // The name goes in up to eight blocks the message points to. One will do.
     PBIO_OS_AWAIT_UNTIL(state, bcsp_can_send());
     {
@@ -2426,20 +3305,22 @@ restart:
     DEBUG_PRINT("bt: SDP record %s, result %u, channel %u\n",
         bt.received ? "registered" : "not confirmed", bt.message[4], bt.server_chan);
 
-    // Listen on the PSM of the hub network.
-    #if PBDRV_CONFIG_BLUETOOTH_PEER
-    PBIO_OS_AWAIT_UNTIL(state, bcsp_can_send());
-    {
-        // Words: type, PSM, phandle.
-        static const uint16_t msg[] = { L2CA_REGISTER_REQ, BT_PSM_PEER, BT_PHANDLE };
-        bt_await(BCSP_CHANNEL_L2CAP, L2CA_REGISTER_CFM);
-        bt_send_message(BCSP_CHANNEL_L2CAP, msg, PBIO_ARRAY_SIZE(msg));
-    }
-    pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
-    PBIO_OS_AWAIT_UNTIL(state, bt.received || pbio_os_timer_is_expired(&timer));
-    if (!bt.received) {
-        DEBUG_PRINT("bt: L2CAP PSM not registered\n");
-        goto restart;
+    // Listen on the PSMs of HID and the hub network.
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_PEER
+    for (i = 0; i < PBIO_ARRAY_SIZE(bt_l2cap_psms); i++) {
+        PBIO_OS_AWAIT_UNTIL(state, bcsp_can_send());
+        {
+            // Words: type, PSM, phandle.
+            const uint16_t msg[] = { L2CA_REGISTER_REQ, bt_l2cap_psms[i], BT_PHANDLE };
+            bt_await(BCSP_CHANNEL_L2CAP, L2CA_REGISTER_CFM);
+            bt_send_message(BCSP_CHANNEL_L2CAP, msg, PBIO_ARRAY_SIZE(msg));
+        }
+        pbio_os_timer_set(&timer, BT_REPLY_TIMEOUT_MS);
+        PBIO_OS_AWAIT_UNTIL(state, bt.received || pbio_os_timer_is_expired(&timer));
+        if (!bt.received) {
+            DEBUG_PRINT("bt: L2CAP PSM %04x not registered\n", bt_l2cap_psms[i]);
+            goto restart;
+        }
     }
     #endif
 
@@ -2465,6 +3346,11 @@ restart:
     DEBUG_PRINT("bt: shutting down, %u links\n", bt.acl_count);
     #if PBDRV_CONFIG_BLUETOOTH_PEER
     pbdrv_bluetooth_peer_disconnect_all();
+    #endif
+    #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID
+    // Also drops the link, so the gamepad turns off instead of waiting for
+    // the link to time out.
+    pbdrv_bluetooth_classic_hid_disconnect();
     #endif
     pbio_os_timer_set(&timer, BT_SHUTDOWN_TIMEOUT_MS);
     for (;;) {
