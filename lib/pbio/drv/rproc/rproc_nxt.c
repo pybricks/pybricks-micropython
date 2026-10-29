@@ -19,6 +19,7 @@
 #include <pbdrv/compiler.h>
 #include <pbdrv/reset.h>
 
+#include <pbio/busy_count.h>
 #include <pbio/button.h>
 #include <pbio/os.h>
 #include <pbio/int_math.h>
@@ -38,8 +39,9 @@
  */
 #define DEBUG_FAULT 1
 
-#if DEBUG || DEBUG_FAULT
 #include <pbdrv/clock.h>
+
+#if DEBUG || DEBUG_FAULT
 #include <pbio/debug.h>
 #endif
 
@@ -70,6 +72,18 @@
 
 /** Corrupt responses tolerated before the link is rebuilt from scratch. */
 #define AVR_MAX_FAILED_CHECKSUMS 3
+
+/**
+ * Milliseconds after boot before the AVR reports real sensor and button data.
+ *
+ * The AVR answers reads as soon as it starts, but until its state machine
+ * reaches ON_RUNNING, it sends the zero-initialized buffer with a valid
+ * checksum. It powers the ARM and then takes 37 ticks of about 3 ms (100 ms
+ * amplifier delay plus state transitions) to get there, which is 110 ms after
+ * our boot at the latest. This adds margin for the tolerance of the AVR's RC
+ * oscillator.
+ */
+#define AVR_DATA_VALID_MS 150
 
 /**
  * Commands that are periodically sent to the AVR.
@@ -110,6 +124,13 @@ static struct PBDRV_PACKED {
     // if we poll this before the first real reading is available.
     .battery_and_version_info = 42512,
 };
+
+/**
+ * Whether the first real reading from the AVR has been received. Until then,
+ * the driver keeps the system busy so that higher level code such as the UI
+ * never sees placeholder values.
+ */
+static bool pbdrv_rproc_nxt_ready;
 
 /**
  * Gets the checksum used for sent and received data buffers.
@@ -239,6 +260,10 @@ static pbio_error_t pbdrv_rproc_nxt_link_process_thread(pbio_os_state_t *state, 
             if (pbdrv_rproc_nxt_get_checksum(recv_buf, sizeof(recv_buf)) == 0) {
                 failed_checksums = 0;
                 memcpy(&pbdrv_rproc_nxt_received_data, recv_buf, sizeof(recv_buf));
+                if (!pbdrv_rproc_nxt_ready && pbdrv_clock_get_ms() >= AVR_DATA_VALID_MS) {
+                    pbdrv_rproc_nxt_ready = true;
+                    pbio_busy_count_down();
+                }
                 #if DEBUG
                 // One line per second or so, to show the link is alive and
                 // that the numbers coming back are plausible.
@@ -396,6 +421,7 @@ bool pbdrv_rproc_nxt_link_is_idle(void) {
 }
 
 void pbdrv_rproc_init(void) {
+    pbio_busy_count_up();
     pbio_os_process_start(&pbdrv_rproc_nxt_link_process, pbdrv_rproc_nxt_link_process_thread, NULL);
 }
 
