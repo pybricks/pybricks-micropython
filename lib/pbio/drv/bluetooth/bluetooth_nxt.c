@@ -781,6 +781,8 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define DM_HCI_WRITE_CLASS_OF_DEVICE (0x0c24)
 #define DM_HCI_READ_BD_ADDR (0x1009)
 #define DM_HCI_READ_BD_ADDR_COMPLETE (0x100e)
+#define DM_HCI_REMOTE_NAME_REQUEST (0x0419)
+#define DM_HCI_REMOTE_NAME_COMPLETE (0x0429)
 
 // Security manager.
 #define DM_SM_LINK_KEY_REQUEST_RES (0x2c0a)
@@ -861,7 +863,8 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 /** MTU we take on every L2CAP channel. */
 #define BT_L2CAP_MTU (PBDRV_BLUETOOTH_PEER_MTU)
 
-/** HCI scan enable: inquiry and page scan. */
+/** HCI scan enable: page scan only, or inquiry and page scan. */
+#define BT_SCAN_PAGE (2)
 #define BT_SCAN_INQUIRY_AND_PAGE (3)
 
 // Gamepad, as on EV3. Toy robot (LEGO's choice) is hidden by Windows 11, and
@@ -914,7 +917,21 @@ static struct {
     uint16_t awaited;
     bool received;
     uint16_t message[BT_AWAITED_WORDS_MAX];
+    /** Whether the BC4 is up and takes connections. */
+    bool ready;
+    /** Whether we answer inquiries, and whether the BC4 is still to be told. */
     bool discoverable;
+    bool scan_enable_due;
+    /** Whether a remote name request is running. */
+    bool name_busy;
+    /** Host whose name is to be asked, since it paired with a placeholder. */
+    bool host_name_due;
+    uint8_t host_name_addr[6];
+    /** Devices that completed pairing since boot, and the most recent one. */
+    uint32_t pair_count;
+    uint8_t paired_addr[6];
+    /** Address of the host, most significant byte first. */
+    uint8_t host_addr[6];
     /** Replies from the receive handler, sent by the process. */
     bt_reply_t replies[BT_REPLY_QUEUE_SIZE];
     uint8_t reply_first;
@@ -947,6 +964,24 @@ static struct {
 
 static uint16_t bt_get_word(const uint8_t *payload, uint16_t index) {
     return pbio_get_uint16_le(&payload[index * 2]);
+}
+
+/** Converts the BD_ADDR_T words of a message (lap high, lap low, uap, nap) to an address, most significant byte first. */
+static void bt_addr_from_words(const uint16_t *words, uint8_t *addr) {
+    addr[0] = words[3] >> 8;
+    addr[1] = words[3];
+    addr[2] = words[2];
+    addr[3] = words[0];
+    addr[4] = words[1] >> 8;
+    addr[5] = words[1];
+}
+
+/** Converts an address, most significant byte first, to BD_ADDR_T words. */
+static void bt_addr_to_words(const uint8_t *addr, uint16_t *words) {
+    words[0] = addr[3];
+    words[1] = addr[4] << 8 | addr[5];
+    words[2] = addr[2];
+    words[3] = addr[0] << 8 | addr[1];
 }
 
 /** Puts words at @p buf, returning the number of bytes. */
@@ -1032,6 +1067,11 @@ static void bt_handle_rfcomm(uint16_t type, const uint8_t *payload, uint16_t siz
         case RFC_START_IND: {
             // Words: type, phandle, address (4), mux, port speed, frame size.
             // The host opens the multiplexer. Accept with its parameters.
+            uint16_t words[4];
+            for (uint16_t i = 0; i < 4; i++) {
+                words[i] = bt_get_word(payload, 2 + i);
+            }
+            bt_addr_from_words(words, bt.host_addr);
             bt.mux_id = bt_get_word(payload, 6);
             bt.mux_open = true;
             const uint16_t reply[] = {
@@ -1112,21 +1152,21 @@ static void bt_handle_rfcomm(uint16_t type, const uint8_t *payload, uint16_t siz
     }
 }
 
-/** Converts the BD_ADDR_T words of a message (lap high, lap low, uap, nap) to an address, most significant byte first. */
-static void bt_addr_from_words(const uint16_t *words, uint8_t *addr) {
-    addr[0] = words[3] >> 8;
-    addr[1] = words[3];
-    addr[2] = words[2];
-    addr[3] = words[0];
-    addr[4] = words[1] >> 8;
-    addr[5] = words[1];
-}
-
 /**
  * Device that is pairing for the first time. Its bonding record is dropped
  * if its link closes before a key comes.
  */
 static uint8_t bt_provisional_addr[6];
+
+/** Asks a device its name. Only call when bcsp_can_send() is true. */
+static void bt_remote_name_request(const uint8_t *addr) {
+    // Words: type, length, address (4), page scan repetition mode, page scan
+    // mode, clock offset. The DM fills in the last three.
+    uint16_t msg[9] = { DM_HCI_REMOTE_NAME_REQUEST, 9 };
+    bt_addr_to_words(addr, &msg[2]);
+    bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
+    bt.name_busy = true;
+}
 
 static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
     // Address words, as they come after type and phandle in indications.
@@ -1186,6 +1226,43 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
                 memset(bt_provisional_addr, 0, sizeof(bt_provisional_addr));
             }
             DEBUG_PRINT("bt: paired, key type %u\n", bt_get_word(payload, 6));
+            // Gamepads pair through here too, but only from their own
+            // overlay, so this can count everything, as on EV3.
+            bt.pair_count++;
+            memcpy(bt.paired_addr, bdaddr, sizeof(bt.paired_addr));
+            // A host never sends its name, so ask for it while the link is
+            // up, to replace the placeholder.
+            const char *name = pbio_bluetooth_classic_link_key_get_name(bdaddr);
+            if (name && strcmp(name, BT_HOST_DEFAULT_NAME) == 0) {
+                memcpy(bt.host_name_addr, bdaddr, sizeof(bt.host_name_addr));
+                bt.host_name_due = true;
+                pbio_os_request_poll();
+            }
+            break;
+        }
+        case DM_HCI_REMOTE_NAME_COMPLETE: {
+            // Words: type, phandle, status, address (4), 8 pointers, then
+            // the name, terminated unless it is as long as names get.
+            if (size < 7 * 2) {
+                break;
+            }
+            bt.name_busy = false;
+            for (uint16_t i = 0; i < 4; i++) {
+                addr[i] = bt_get_word(payload, 3 + i);
+            }
+            bt_addr_from_words(addr, bdaddr);
+            char name[PBIO_BLUETOOTH_CLASSIC_NAME_SIZE] = { 0 };
+            if (bt_get_word(payload, 2) == 0 && size > 15 * 2) {
+                uint16_t length = size - 15 * 2;
+                memcpy(name, &payload[15 * 2], length < sizeof(name) - 1 ? length : sizeof(name) - 1);
+            }
+            DEBUG_PRINT("bt: name status %u, %s\n", bt_get_word(payload, 2), name);
+            // Naming a bonding record after its device is right whoever
+            // asked, and devices not in the store are ignored.
+            if (name[0]) {
+                pbio_bluetooth_classic_link_key_set_name(bdaddr, name);
+            }
+            pbio_os_request_poll();
             break;
         }
         case DM_ACL_OPENED_IND:
@@ -1225,14 +1302,6 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
 // Channels are configured both ways with our MTU. Answers to the BC4's
 // indications go through the reply queue, so they always come first.
 //
-
-/** Converts an address, most significant byte first, to BD_ADDR_T words. */
-static void bt_addr_to_words(const uint8_t *addr, uint16_t *words) {
-    words[0] = addr[3];
-    words[1] = addr[4] << 8 | addr[5];
-    words[2] = addr[2];
-    words[3] = addr[0] << 8 | addr[1];
-}
 
 typedef enum {
     BT_CHANNEL_FREE,
@@ -1876,7 +1945,7 @@ static void peer_reset(void) {
 }
 
 bool pbdrv_bluetooth_peer_is_ready(void) {
-    return bt.discoverable;
+    return bt.ready;
 }
 
 void pbdrv_bluetooth_peer_set_receive_callback(pbdrv_bluetooth_peer_receive_callback_t callback) {
@@ -2084,7 +2153,26 @@ static bool bt_send_next(void) {
         return true;
     }
     #if PBDRV_CONFIG_BLUETOOTH_PEER
-    if (bt_channel_send_request() || peer_tx_pump()) {
+    if (bt_channel_send_request()) {
+        return true;
+    }
+    #endif
+    if (bt.scan_enable_due) {
+        const uint16_t msg[] = {
+            DM_HCI_WRITE_SCAN_ENABLE, 3, bt.discoverable ? BT_SCAN_INQUIRY_AND_PAGE : BT_SCAN_PAGE,
+        };
+        bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
+        bt.scan_enable_due = false;
+        DEBUG_PRINT("bt: discoverable %u\n", bt.discoverable);
+        return true;
+    }
+    if (bt.host_name_due && !bt.name_busy) {
+        bt_remote_name_request(bt.host_name_addr);
+        bt.host_name_due = false;
+        return true;
+    }
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    if (peer_tx_pump()) {
         return true;
     }
     #endif
@@ -2145,7 +2233,7 @@ static pbio_os_process_t bt_process;
  */
 static void bt_power_off(void) {
     *AT91C_PIOA_CODR = BT_RST_PIN;
-    bt.discoverable = false;
+    bt.ready = false;
     pbio_busy_count_down();
 }
 
@@ -2156,7 +2244,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
     pbio_error_t err;
 
     // Until the BC4 is up, there is nothing to close.
-    if (bt.shutdown_requested && !bt.discoverable) {
+    if (bt.shutdown_requested && !bt.ready) {
         bt_power_off();
         return PBIO_SUCCESS;
     }
@@ -2174,10 +2262,12 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
 restart:
     bcsp.link = BCSP_LINK_OFF;
-    bt.discoverable = false;
+    bt.ready = false;
     bt.reply_count = 0;
     bt.mux_open = false;
     bt.acl_count = 0;
+    bt.name_busy = false;
+    bt.host_name_due = false;
     bt_connection_reset();
     #if PBDRV_CONFIG_BLUETOOTH_PEER
     bt_channels_reset();
@@ -2353,14 +2443,11 @@ restart:
     }
     #endif
 
-    // No UI to ask for it yet, so be found as soon as the BC4 is up.
-    PBIO_OS_AWAIT_UNTIL(state, bcsp_can_send());
-    {
-        static const uint16_t msg[] = { DM_HCI_WRITE_SCAN_ENABLE, 3, BT_SCAN_INQUIRY_AND_PAGE };
-        bt_send_message(BCSP_CHANNEL_DM, msg, PBIO_ARRAY_SIZE(msg));
-    }
-    bt.discoverable = true;
-    DEBUG_PRINT("bt: discoverable\n");
+    // Always page scan, so bonded devices can connect. Inquiry scan only
+    // while discoverable, which is kept across a BC4 restart.
+    bt.scan_enable_due = true;
+    bt.ready = true;
+    DEBUG_PRINT("bt: ready\n");
 
     // From here on, received messages are handled as they come in, and
     // whatever is due is sent as the link takes it.
@@ -2418,7 +2505,7 @@ bool pbdrv_bluetooth_classic_host_is_connected(void) {
 }
 
 const char *pbdrv_bluetooth_classic_host_get_connected_name(void) {
-    return NULL;
+    return bt.connected ? pbio_bluetooth_classic_link_key_get_name(bt.host_addr) : NULL;
 }
 
 void pbdrv_bluetooth_classic_host_disconnect(void) {
@@ -2480,6 +2567,13 @@ pbio_error_t pbdrv_bluetooth_classic_host_tx_message(pbio_os_state_t *state, con
 }
 
 void pbdrv_bluetooth_classic_host_set_discoverable(bool discoverable) {
+    // Sent once the BC4 takes it, so this is fine to call at any time.
+    if (discoverable == bt.discoverable) {
+        return;
+    }
+    bt.discoverable = discoverable;
+    bt.scan_enable_due = true;
+    pbio_os_request_poll();
 }
 
 bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
@@ -2487,11 +2581,11 @@ bool pbdrv_bluetooth_classic_host_is_discoverable(void) {
 }
 
 uint32_t pbdrv_bluetooth_classic_host_get_pair_count(void) {
-    return 0;
+    return bt.pair_count;
 }
 
 const char *pbdrv_bluetooth_classic_host_get_paired_name(void) {
-    return NULL;
+    return bt.pair_count ? pbio_bluetooth_classic_link_key_get_name(bt.paired_addr) : NULL;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_NXT
