@@ -26,6 +26,7 @@
 #include <pbdrv/hardware.h>
 
 #include <pbio/bluetooth.h>
+#include <pbio/busy_count.h>
 #include <pbio/error.h>
 #include <pbio/os.h>
 #include <pbio/protocol.h>
@@ -791,6 +792,7 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define DM_SM_AUTHORISE_IND (0x2c19)
 
 // Private DM messages.
+#define DM_ACL_OPENED_IND (0x280d)
 #define DM_ACL_CLOSED_IND (0x280e)
 
 /** PIN for legacy pairing, which is all the BC4 has. Same as LEGO's firmware. */
@@ -806,6 +808,7 @@ static void bcsp_send(uint8_t channel, uint16_t size) {
 #define RFC_REGISTER_CFM (0x0004)
 #define RFC_START_RES (0x0006)
 #define RFC_START_IND (0x0007)
+#define RFC_CLOSE_REQ (0x000a)
 #define RFC_CLOSE_IND (0x000b)
 #define RFC_ESTABLISH_RES (0x000d)
 #define RFC_ESTABLISH_IND (0x000e)
@@ -921,6 +924,8 @@ static struct {
     /** The host connection. */
     bool connected;
     bool disconnect_requested;
+    /** Whether the host's multiplexer is open, which outlives its channel. */
+    bool mux_open;
     uint16_t mux_id;
     uint16_t frame_size;
     bool credit_flow;
@@ -934,6 +939,10 @@ static struct {
     uint16_t l2cap_unconfirmed;
     /** Our own address, most significant byte first. */
     uint8_t local_addr[6];
+    /** Links to other devices that are up. */
+    uint8_t acl_count;
+    /** Whether to close everything and turn the BC4 off. */
+    bool shutdown_requested;
 } bt;
 
 static uint16_t bt_get_word(const uint8_t *payload, uint16_t index) {
@@ -1023,6 +1032,8 @@ static void bt_handle_rfcomm(uint16_t type, const uint8_t *payload, uint16_t siz
         case RFC_START_IND: {
             // Words: type, phandle, address (4), mux, port speed, frame size.
             // The host opens the multiplexer. Accept with its parameters.
+            bt.mux_id = bt_get_word(payload, 6);
+            bt.mux_open = true;
             const uint16_t reply[] = {
                 RFC_START_RES, bt_get_word(payload, 6), true,
                 bt_get_word(payload, 7), bt_get_word(payload, 8), BT_PHANDLE,
@@ -1089,8 +1100,11 @@ static void bt_handle_rfcomm(uint16_t type, const uint8_t *payload, uint16_t siz
                 bt.tx_unconfirmed--;
             }
             break;
-        case RFC_RELEASE_IND:
         case RFC_CLOSE_IND:
+            bt.mux_open = false;
+            bt_connection_reset();
+            break;
+        case RFC_RELEASE_IND:
             bt_connection_reset();
             break;
         default:
@@ -1174,7 +1188,13 @@ static void bt_handle_dm(uint16_t type, const uint8_t *payload, uint16_t size) {
             DEBUG_PRINT("bt: paired, key type %u\n", bt_get_word(payload, 6));
             break;
         }
+        case DM_ACL_OPENED_IND:
+            bt.acl_count++;
+            break;
         case DM_ACL_CLOSED_IND:
+            if (bt.acl_count) {
+                bt.acl_count--;
+            }
             if (memcmp(bdaddr, bt_provisional_addr, sizeof(bdaddr)) == 0) {
                 pbio_bluetooth_classic_link_key_unregister(bdaddr);
                 memset(bt_provisional_addr, 0, sizeof(bt_provisional_addr));
@@ -2048,6 +2068,15 @@ static bool bt_send_next(void) {
         bt.reply_count--;
         return true;
     }
+    if (bt.shutdown_requested && bt.mux_open) {
+        // Releasing only the channel leaves the multiplexer, and with it the
+        // link, until the host closes it a few seconds later.
+        const uint16_t msg[] = { RFC_CLOSE_REQ, bt.mux_id };
+        bt_send_message(BCSP_CHANNEL_RFCOMM, msg, PBIO_ARRAY_SIZE(msg));
+        bt.mux_open = false;
+        bt_connection_reset();
+        return true;
+    }
     if (bt.connected && bt.disconnect_requested) {
         const uint16_t msg[] = { RFC_RELEASE_REQ, bt.mux_id, bt.server_chan };
         bt_send_message(BCSP_CHANNEL_RFCOMM, msg, PBIO_ARRAY_SIZE(msg));
@@ -2100,17 +2129,37 @@ static uint8_t bt_sdp_record[] = {
 /** Time to wait for the BCSP link to come up after the warm reset. */
 #define BT_LINK_TIMEOUT_MS (3000)
 
+/** Time to wait for the links to close on shutdown. */
+#define BT_SHUTDOWN_TIMEOUT_MS (2000)
+
 //
 // Driver process.
 //
 
 static pbio_os_process_t bt_process;
 
+/**
+ * Holds the BC4 in reset. It is not powered off with the rest of the brick,
+ * so it would otherwise keep its links and take new ones while the brick is
+ * off.
+ */
+static void bt_power_off(void) {
+    *AT91C_PIOA_CODR = BT_RST_PIN;
+    bt.discoverable = false;
+    pbio_busy_count_down();
+}
+
 static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
     static pbio_os_timer_t timer;
     static uint32_t i;
     pbio_error_t err;
+
+    // Until the BC4 is up, there is nothing to close.
+    if (bt.shutdown_requested && !bt.discoverable) {
+        bt_power_off();
+        return PBIO_SUCCESS;
+    }
 
     bcsp_poll();
 
@@ -2127,6 +2176,8 @@ restart:
     bcsp.link = BCSP_LINK_OFF;
     bt.discoverable = false;
     bt.reply_count = 0;
+    bt.mux_open = false;
+    bt.acl_count = 0;
     bt_connection_reset();
     #if PBDRV_CONFIG_BLUETOOTH_PEER
     bt_channels_reset();
@@ -2313,13 +2364,31 @@ restart:
 
     // From here on, received messages are handled as they come in, and
     // whatever is due is sent as the link takes it.
-    for (;;) {
-        PBIO_OS_AWAIT_UNTIL(state, bcsp.link != BCSP_LINK_ACTIVE || bt_send_next());
+    while (!bt.shutdown_requested) {
+        PBIO_OS_AWAIT_UNTIL(state, bcsp.link != BCSP_LINK_ACTIVE || bt.shutdown_requested || bt_send_next());
         if (bcsp.link != BCSP_LINK_ACTIVE) {
             DEBUG_PRINT("bt: link lost\n");
             goto restart;
         }
     }
+
+    // Close everything first, so the other ends know right away instead of
+    // when their links time out. Their links go once no channel uses them.
+    // The host's multiplexer is closed by bt_send_next().
+    DEBUG_PRINT("bt: shutting down, %u links\n", bt.acl_count);
+    #if PBDRV_CONFIG_BLUETOOTH_PEER
+    pbdrv_bluetooth_peer_disconnect_all();
+    #endif
+    pbio_os_timer_set(&timer, BT_SHUTDOWN_TIMEOUT_MS);
+    for (;;) {
+        PBIO_OS_AWAIT_UNTIL(state, !bt.acl_count || bcsp.link != BCSP_LINK_ACTIVE ||
+            pbio_os_timer_is_expired(&timer) || bt_send_next());
+        if (!bt.acl_count || bcsp.link != BCSP_LINK_ACTIVE || pbio_os_timer_is_expired(&timer)) {
+            break;
+        }
+    }
+    DEBUG_PRINT("bt: off, %u links left\n", bt.acl_count);
+    bt_power_off();
 
     PBIO_OS_ASYNC_END(PBIO_SUCCESS);
 }
@@ -2327,6 +2396,17 @@ restart:
 void pbdrv_bluetooth_init(void) {
     lwrb_init(&bt_rx_ring, bt_rx_ring_buf, sizeof(bt_rx_ring_buf));
     pbio_os_process_start(&bt_process, bt_process_thread, NULL);
+}
+
+void pbdrv_bluetooth_deinit(void) {
+    bt.shutdown_requested = true;
+    if (bt_process.err != PBIO_ERROR_AGAIN) {
+        // The driver gave up at boot, so it will not run to do this.
+        *AT91C_PIOA_CODR = BT_RST_PIN;
+        return;
+    }
+    pbio_busy_count_up();
+    pbio_os_request_poll();
 }
 
 //

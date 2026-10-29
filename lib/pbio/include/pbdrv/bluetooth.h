@@ -45,6 +45,23 @@ static inline void pbdrv_bluetooth_init(void) {
 
 #endif
 
+#if PBDRV_CONFIG_BLUETOOTH && !PBDRV_CONFIG_BLUETOOTH_LE
+
+/**
+ * Closes all connections and turns Bluetooth off before power off. Drivers
+ * with LE do this through pbio_bluetooth_deinit() instead.
+ *
+ * // REVISIT: Generalize Bluetooth process shutdown.
+ */
+void pbdrv_bluetooth_deinit(void);
+
+#else
+
+static inline void pbdrv_bluetooth_deinit(void) {
+}
+
+#endif
+
 #if PBDRV_CONFIG_BLUETOOTH_LE
 
 /**
