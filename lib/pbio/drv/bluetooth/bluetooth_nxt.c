@@ -2295,8 +2295,7 @@ static void hid_handle_sdp(uint16_t type, const uint8_t *payload, uint16_t size)
 
 /** Sends what the link to the gamepad needs next to go into sniff mode, if anything. */
 static bool hid_link_send_next(void) {
-    // Wait for the descriptor, which comes quicker on an active link.
-    if (hid.state != HID_CONNECTED || hid.query_due || hid.query_busy) {
+    if (hid.state != HID_CONNECTED) {
         return false;
     }
     // Words: type, length in words, then the handle (filled in by the DM)
@@ -2351,7 +2350,10 @@ static bool hid_send_next(void) {
         hid_pair_end(PBIO_ERROR_TIMEDOUT);
     }
 
-    if (hid.query_due) {
+    // A reconnecting gamepad floods the active link with more reports than
+    // the BC4 can pass on, and the SDP answer queues behind them for many
+    // seconds. So query once the link is in sniff mode, or given up on it.
+    if (hid.query_due && (hid.state != HID_CONNECTED || hid.link_step == HID_LINK_DONE)) {
         // Words: type, phandle, address (4), search pattern size, pointer,
         // attribute list size, pointer, most attribute bytes. The search
         // pattern and the attribute list follow, in that order.
