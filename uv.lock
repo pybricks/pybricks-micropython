@@ -904,11 +904,11 @@ wheels = [
 
 [[package]]
 name = "pybricks"
-version = "4.1.0"
+version = "4.1.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/9b/4ae26928df5b37bdecf48cf110b0fbb7a9a8d420d7a9002c0e9082c861b7/pybricks-4.1.0.tar.gz", hash = "sha256:5b8e49f45da369e4a7744118a93cdf9b9c078d42d4eabfd950b6db9e3901f08f", size = 52459, upload-time = "2026-10-12T08:57:27.356Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/a9/a35534bd71c01ee2e8e2221aaca79438b3102e88209ac8e8cec4afd4708d/pybricks-4.1.1.tar.gz", hash = "sha256:ea0de50128cbd26eeebbc8932c101ea1d2c4fa7fe29e0147edd0a7d93a73ef29", size = 52755, upload-time = "2026-10-22T14:27:29.509Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/e8/78d7516d77a871e5a217a0c7c53ef5b17821062b578498a3afc965e9840a/pybricks-4.1.0-py3-none-any.whl", hash = "sha256:b3de14407b0fa241d422b9978594db88bbdcd62a31ab19b75ccf795763ce1a42", size = 63924, upload-time = "2026-10-12T08:57:28.26Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/7d/49708ccc13a603e8e4d665b36d3e602b2e75be6fc658ccfdc0af1f89219c/pybricks-4.1.1-py3-none-any.whl", hash = "sha256:a06de4c6f60ba88b601736415e93a26fde8c8e03fa3cf8b55c2f3872c945dbc5", size = 64218, upload-time = "2026-10-22T14:27:30.517Z" },
 ]
 
 [[package]]
