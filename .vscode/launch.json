@@ -34,18 +34,6 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Run via USB REPL",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "pybricksdev",
-            "console": "integratedTerminal",
-            "args": [
-                "run",
-                "usb",
-                "${file}"
-            ]
-        },
-        {
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
