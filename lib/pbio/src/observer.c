@@ -39,6 +39,7 @@ void pbio_observer_reset(pbio_observer_t *obs, const pbio_angle_t *angle) {
     obs->angle = *angle;
     obs->speed = 0;
     obs->current = 0;
+    obs->speed_numeric = 0;
 
     // Reset stall state.
     obs->stalled = false;
