@@ -192,6 +192,12 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
     // Specify pointer type.
     pbio_servo_t *srv = servo;
 
+    // If the dcmotor is being released, this servo can no longer use it, so
+    // stop the update loop. It is enabled again by pbio_servo_setup.
+    if (clear_parent) {
+        pbio_servo_update_loop_set_state(srv, false);
+    }
+
     // This external stop is triggered by a lower level peripheral,
     // i.e. the dc motor. So it has already has been stopped or changed state
     // electrically. All we have to do here is stop the control loop,
