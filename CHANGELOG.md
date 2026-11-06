@@ -4,13 +4,16 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...HEAD
+
+## [4.1.3] - 2026-11-06
 
 ### Fixed
 - Fixed motors and drivebases starting at an incorrect initial speed if a program
   was stopped while it was moving ([support#2887]).
 
 [support#2887]: https://github.com/pybricks/support/issues/2887
+[4.1.3]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.2...v4.1.3
 
 ## [4.1.2] - 2026-10-25
 
