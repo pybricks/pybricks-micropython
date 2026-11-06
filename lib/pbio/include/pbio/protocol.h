@@ -135,11 +135,15 @@ typedef enum {
      *
      * Parameters:
      * - size: The size of the user program in bytes (32-bit little-endian unsigned integer).
+     * - slot: Optional. The user program slot to select and write to (8-bit
+     *   unsigned integer). If omitted, the currently selected slot is used. (Profile v1.8.0)
      *
      * Errors:
      * - ::PBIO_PYBRICKS_ERROR_BUSY if the user program is running.
+     * - ::PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED if the slot is invalid.
      *
      * @since Pybricks Profile v1.2.0
+     * @since Pybricks Profile v1.2.0 (slot parameter added in v1.8)
      */
     PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META = 3,
 
