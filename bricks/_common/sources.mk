@@ -160,6 +160,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/hardware/hardware_nxt.c \
 	drv/hardware/hardware_stm32.c \
 	drv/i2c/i2c_ev3.c \
+	drv/i2c/i2c_nxt.c \
 	drv/imu/imu_lsm6ds3tr_c_stm32.c \
 	drv/ioport/ioport.c \
 	drv/led/led_array_pwm.c \

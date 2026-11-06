@@ -59,15 +59,20 @@ void nx__sensors_i2c_enable(uint32_t sensor) {
 
   sensors_mode[sensor] = DIGITAL;
 
-  /* In digital mode, the DIGI outputs (SDA and SCL) are left up, and
-   * enabled in multi-drive mode.
+  /* In digital mode, the DIGI outputs (SDA and SCL) are left up.
+   *
+   * SDA is open drain (the slave drives it to acknowledge and return data).
+   * SCL is push-pull, as in the LEGO firmware (these sensors don't stretch
+   * the clock). With the internal pull-ups off, the sensor alone can't pull
+   * an open drain SCL to a valid high on port 4 (shared with RS485).
    */
   pinmask = sensors_pinmap[sensor].sda |
     sensors_pinmap[sensor].scl;
 
   *AT91C_PIOA_OER = pinmask;
   *AT91C_PIOA_SODR = pinmask;
-  *AT91C_PIOA_MDER = pinmask;
+  *AT91C_PIOA_MDER = sensors_pinmap[sensor].sda;
+  *AT91C_PIOA_MDDR = sensors_pinmap[sensor].scl;
 }
 
 const nx__sensors_pins *nx__sensors_get_pins(uint32_t sensor) {
