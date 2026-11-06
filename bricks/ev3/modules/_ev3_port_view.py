@@ -4,10 +4,15 @@ from pybricks.ev3devices import (
     ColorSensor as EV3ColorSensor,
     TouchSensor as EV3TouchSensor,
     GyroSensor,
-    UltrasonicSensor,
+    UltrasonicSensor as EV3UltrasonicSensor,
     InfraredSensor,
 )
-from pybricks.nxtdevices import ColorSensor as NXTColorSensor, LightSensor, SoundSensor
+from pybricks.nxtdevices import (
+    ColorSensor as NXTColorSensor,
+    LightSensor,
+    SoundSensor,
+    UltrasonicSensor as NXTUltrasonicSensor,
+)
 from pybricks.parameters import Button, Port, ImageFile
 from pybricks.tools import wait
 
@@ -30,6 +35,7 @@ IMG_NXT_COLOR_REFLECTION = ImageFile._PORT_VIEW_NXT_COLOR_REFLECTION
 IMG_NXT_LIGHT_AMBIENT = ImageFile._PORT_VIEW_NXT_LIGHT_AMBIENT
 IMG_NXT_LIGHT_REFLECTION = ImageFile._PORT_VIEW_NXT_LIGHT_REFLECTION
 IMG_NXT_SOUND = ImageFile._PORT_VIEW_NXT_SOUND
+IMG_NXT_ULTRASONIC = ImageFile._PORT_VIEW_NXT_ULTRASONIC
 PORT_NONE_TOP = ImageFile._PORT_VIEW_P0_TOP
 PORT_NONE_BOTTOM = ImageFile._PORT_VIEW_P0_BOTTOM
 PORT_IMG = [
@@ -94,7 +100,7 @@ def port_process(index):
 
         # EV3 Ultrasonic Sensor
         try:
-            sensor = UltrasonicSensor(PORTS[index])
+            sensor = EV3UltrasonicSensor(PORTS[index])
             while True:
                 try:
                     distance = sensor.distance()
@@ -222,6 +228,19 @@ def port_process(index):
                     value = sensor.intensity()
                     detail = f"{value:>5.1f} %"
                     yield IMG_NXT_SOUND, round(value), detail
+                except OSError:
+                    break
+        except OSError:
+            pass
+
+        # NXT Ultrasonic Sensor
+        try:
+            sensor = NXTUltrasonicSensor(PORTS[index])
+            while True:
+                try:
+                    distance = sensor.distance()
+                    detail = f"{distance:>4} mm"
+                    yield IMG_NXT_ULTRASONIC, distance, detail
                 except OSError:
                     break
         except OSError:
