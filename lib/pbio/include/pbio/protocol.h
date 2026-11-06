@@ -25,6 +25,7 @@
 
 /** The minor version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_MINOR 7
+#define PBIO_PROTOCOL_VERSION_MINOR 8
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -144,6 +145,7 @@ typedef enum {
      *
      * @since Pybricks Profile v1.2.0
      * @since Pybricks Profile v1.2.0 (slot parameter added in v1.8)
+     * @since Pybricks Profile v1.2.0. Slot parameter added in Pybricks Profile v1.8.0.
      */
     PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META = 3,
 
