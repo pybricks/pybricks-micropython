@@ -3292,13 +3292,8 @@ void pbdrv_bluetooth_init(void) {
     // the hub to reconnect, it is the L2CAP initiator and performs its own
     // SDP query against the hub. Without an SDP server the hub rejects that
     // incoming SDP connection with "PSM not supported" and the device drops
-    // the link. Registering a Device ID record gives it a valid response so
-    // it proceeds to open the HID channels.
+    // the link.
     sdp_init();
-    static uint8_t device_id_sdp_record[100];
-    device_id_create_sdp_record(device_id_sdp_record, 0x10001,
-        DEVICE_ID_VENDOR_ID_SOURCE_BLUETOOTH, LWP3_LEGO_COMPANY_ID, PBDRV_CONFIG_HUB_KIND, 0x00);
-    sdp_register_service(device_id_sdp_record);
     #endif // PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID || PBDRV_CONFIG_BLUETOOTH_CLASSIC_HOST
 
     #if PBDRV_CONFIG_BLUETOOTH_CLASSIC_HID

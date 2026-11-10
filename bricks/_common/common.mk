@@ -467,7 +467,6 @@ ifneq ($(filter 1,$(PB_LIB_BTSTACK_CLASSIC_HID) $(PB_LIB_BTSTACK_CLASSIC_HOST)),
 # SDP, needed by both profiles below: to be found by an outside device, and,
 # for HID, to fetch the report descriptor from it.
 BTSTACK_SRC_C += $(addprefix lib/btstack/src/classic/,\
-	device_id_server.c \
 	sdp_client.c \
 	sdp_server.c \
 	sdp_util.c \
