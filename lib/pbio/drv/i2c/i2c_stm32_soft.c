@@ -36,9 +36,6 @@
 #define debug_pr(...)
 #endif
 
-// Max 255 bytes write followed by max 255 bytes read, like the EV3 driver.
-#define I2C_MAX_BYTES_PER_TXN       (512)
-
 // Number of times we try the operation before NAK is raised as an IO error.
 #define I2C_MAX_NUM_TRIES_ON_NAK    (2)
 
@@ -66,7 +63,15 @@ enum {
 };
 
 struct _pbdrv_i2c_dev_t {
-    uint8_t *buffer;
+    /**
+     * Transaction buffer, attached by the user. May be set to NULL from
+     * thread context while the ISR is busy, which then ends the transaction
+     * at the next byte boundary. Since the ISR can't be preempted by thread
+     * code, it sees a consistent value for the duration of one tick.
+     */
+    uint8_t *volatile buffer;
+    size_t buffer_size;
+    void *buffer_container;
     /** Pin roles, selectable at runtime. */
     const pbdrv_gpio_t *sda;
     const pbdrv_gpio_t *scl;
@@ -93,8 +98,6 @@ struct _pbdrv_i2c_dev_t {
 };
 
 static pbdrv_i2c_dev_t i2c_devs[PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV];
-
-static uint8_t pbdrv_i2c_buffers[PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV][I2C_MAX_BYTES_PER_TXN];
 
 pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
     if (id >= PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV) {
@@ -150,6 +153,16 @@ void pbdrv_i2c_release_port(pbdrv_i2c_dev_t *i2c_dev) {
     ((GPIO_TypeDef *)i2c_dev->sda->bank)->OTYPER &= ~(1 << i2c_dev->sda->pin);
 }
 
+void pbdrv_i2c_set_buffer(pbdrv_i2c_dev_t *i2c_dev, void *container, uint8_t *buffer, size_t size) {
+    i2c_dev->buffer_size = size;
+    i2c_dev->buffer_container = container;
+    i2c_dev->buffer = buffer;
+}
+
+void *pbdrv_i2c_get_buffer_container(pbdrv_i2c_dev_t *i2c_dev) {
+    return i2c_dev->buffer_container;
+}
+
 /**
  * Finishes a transaction and wakes up the awaiting protothread.
  */
@@ -197,9 +210,19 @@ static void i2c_next_after_write(pbdrv_i2c_dev_t *dev) {
         return;
     }
 
+    uint8_t *buffer = dev->buffer;
+    if (!buffer) {
+        // Buffer was detached. A stop after an acknowledged byte is always
+        // valid, so end the transaction here to leave the bus idle.
+        dev->pending_status = I2C_STAT_OK;
+        dev->stage = I2C_STAGE_STOP;
+        dev->phase = 0;
+        return;
+    }
+
     if (dev->byte_idx < dev->wlen) {
         // Write the next data byte.
-        dev->cur_byte = dev->buffer[dev->byte_idx];
+        dev->cur_byte = buffer[dev->byte_idx];
         dev->stage = I2C_STAGE_WRITE_BYTE;
         dev->bit = 0;
         dev->phase = 0;
@@ -319,6 +342,11 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                         // Release SDA so the device can drive it.
                         i2c_pin_high(sda);
                     } else if (dev->bit == 8) {
+                        // If the buffer was detached, make this the last byte.
+                        // The device must see a NACK before we send a stop.
+                        if (!dev->buffer) {
+                            dev->rlen = dev->byte_idx + 1;
+                        }
                         // ACK, or NACK after the last byte.
                         if (dev->byte_idx == dev->rlen - 1) {
                             i2c_pin_high(sda);
@@ -345,8 +373,9 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                 case 3:
                     i2c_pin_low(scl);
                     if (dev->bit < 8) {
-                        if (dev->bit == 7) {
-                            dev->buffer[dev->wlen + dev->byte_idx] = dev->cur_byte;
+                        uint8_t *buffer = dev->buffer;
+                        if (dev->bit == 7 && buffer) {
+                            buffer[dev->wlen + dev->byte_idx] = dev->cur_byte;
                         }
                         dev->bit++;
                         dev->phase = 0;
@@ -453,6 +482,13 @@ pbio_error_t pbdrv_i2c_write_then_read(
         return PBIO_ERROR_BUSY;
     }
 
+    if (!i2c_dev->buffer) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+    if (wlen + rlen > i2c_dev->buffer_size) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     // Prepare TX data
     if (wlen) {
         memcpy(i2c_dev->buffer, wdata, wlen);
@@ -481,6 +517,11 @@ pbio_error_t pbdrv_i2c_write_then_read(
         // Wait for transfer to finish
         PBIO_OS_AWAIT_WHILE(state, i2c_dev->is_busy);
 
+        // Buffer was detached while busy, so the result is lost.
+        if (!i2c_dev->buffer) {
+            return PBIO_ERROR_CANCELED;
+        }
+
         if (i2c_dev->status == I2C_STAT_OK) {
             if (rlen) {
                 *rdata = &i2c_dev->buffer[wlen];
@@ -498,11 +539,6 @@ pbio_error_t pbdrv_i2c_write_then_read(
 
 void pbdrv_i2c_init(void) {
     const pbdrv_i2c_stm32_soft_platform_data_t *pdata = &pbdrv_i2c_stm32_soft_platform_data;
-
-    for (int i = 0; i < PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV; i++) {
-        pbdrv_i2c_dev_t *dev = &i2c_devs[i];
-        dev->buffer = pbdrv_i2c_buffers[i];
-    }
 
     // One tick is a quarter bit. Timer counts but interrupt only fires while
     // a transaction is ongoing; it is enabled on demand.

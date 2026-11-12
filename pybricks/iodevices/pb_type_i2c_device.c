@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2025 The Pybricks Authors
+// Copyright (c) 2018-2026 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -20,6 +20,76 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
+
+#if PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
+
+/**
+ * Default buffer size: max 255 bytes write followed by max 255 bytes read.
+ */
+#define I2C_DEVICE_BUFFER_SIZE_DEFAULT (512)
+
+/**
+ * Transaction buffer for one I2C bus, allocated on first use in a program.
+ *
+ * All I2C device objects on the same bus reference the same buffer object, so
+ * it stays alive while any of them are in use. It is also attached to the
+ * driver as its opaque container, so that new device objects can find it.
+ */
+typedef struct {
+    mp_obj_base_t base;
+    /**
+     * The bus this buffer is attached to, so the finalizer can detach it.
+     */
+    pbdrv_i2c_dev_t *i2c_dev;
+    size_t size;
+    uint8_t data[];
+} buffer_obj_t;
+
+static mp_obj_t buffer_close(mp_obj_t self_in) {
+    buffer_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Ends any ongoing transaction at the next byte boundary, so the driver
+    // stops accessing this memory before it is freed.
+    pbdrv_i2c_set_buffer(self->i2c_dev, NULL, NULL, 0);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(buffer_close_obj, buffer_close);
+
+static const mp_rom_map_elem_t buffer_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&buffer_close_obj) },
+};
+static MP_DEFINE_CONST_DICT(buffer_locals_dict, buffer_locals_dict_table);
+
+// Internal type, never exposed to the user.
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_i2c_device_buffer,
+    MP_QSTRnull, // never exposed to user.
+    MP_TYPE_FLAG_NONE,
+    locals_dict, &buffer_locals_dict);
+
+/**
+ * Gets the buffer attached to the given bus, or allocates and attaches one.
+ *
+ * @param [in]  i2c_dev     The I2C device.
+ * @param [in]  size        Requested buffer size.
+ * @return                  The buffer object.
+ */
+static mp_obj_t get_or_attach_buffer(pbdrv_i2c_dev_t *i2c_dev, size_t size) {
+    buffer_obj_t *buffer = pbdrv_i2c_get_buffer_container(i2c_dev);
+    if (buffer) {
+        // Resizing an attached buffer is not supported.
+        if (buffer->size != size) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        return MP_OBJ_FROM_PTR(buffer);
+    }
+
+    buffer = mp_obj_malloc_var_with_finaliser(buffer_obj_t, data, uint8_t, size, &pb_type_i2c_device_buffer);
+    buffer->i2c_dev = i2c_dev;
+    buffer->size = size;
+    pbdrv_i2c_set_buffer(i2c_dev, buffer, buffer->data, size);
+    return MP_OBJ_FROM_PTR(buffer);
+}
+
+#endif // PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
 
 /**
  * Object representing a pybricks.iodevices.I2CDevice instance.
@@ -57,6 +127,13 @@ typedef struct {
      * Maps bytes read to the user return object.
      */
     pb_type_i2c_device_return_map_t return_map;
+    #if PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
+    /**
+     * Transaction buffer shared by all devices on this bus. Not used directly,
+     * but referenced here to keep it alive while this device exists.
+     */
+    mp_obj_t buffer;
+    #endif
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
@@ -87,7 +164,14 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio
     }
     pb_assert(err);
 
+    #if PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
+    mp_obj_t buffer = get_or_attach_buffer(i2c_dev, I2C_DEVICE_BUFFER_SIZE_DEFAULT);
+    #endif
+
     device_obj_t *device = mp_obj_malloc(device_obj_t, &pb_type_i2c_device);
+    #if PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
+    device->buffer = buffer;
+    #endif
     device->i2c_dev = i2c_dev;
     device->address = address;
     device->nxt_quirk = nxt_quirk;

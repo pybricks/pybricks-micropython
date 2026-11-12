@@ -92,6 +92,31 @@ pbio_error_t pbdrv_i2c_write_then_read(
  */
 bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev);
 
+/**
+ * Attaches a transaction buffer to the I2C device, or detaches it.
+ *
+ * Only for drivers without statically allocated buffers. Operations fail
+ * until a buffer is attached. If the buffer is detached while a transaction
+ * is in progress, it is ended cleanly at the next byte boundary.
+ *
+ * @param [in]  i2c_dev     The I2C device.
+ * @param [in]  container   Opaque object that owns @p buffer, or NULL. It is
+ *                          not used by the driver, but can be retrieved with
+ *                          ::pbdrv_i2c_get_buffer_container so that multiple
+ *                          users can share the same buffer.
+ * @param [in]  buffer      The buffer, or NULL to detach.
+ * @param [in]  size        Size of @p buffer.
+ */
+void pbdrv_i2c_set_buffer(pbdrv_i2c_dev_t *i2c_dev, void *container, uint8_t *buffer, size_t size);
+
+/**
+ * Gets the container of the buffer attached to the I2C device.
+ *
+ * @param [in]  i2c_dev     The I2C device.
+ * @return                  The container, or NULL if no buffer is attached.
+ */
+void *pbdrv_i2c_get_buffer_container(pbdrv_i2c_dev_t *i2c_dev);
+
 #else // PBDRV_CONFIG_I2C
 
 static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
@@ -119,6 +144,13 @@ static inline pbio_error_t pbdrv_i2c_write_then_read(
 
 static inline bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev) {
     return false;
+}
+
+static inline void pbdrv_i2c_set_buffer(pbdrv_i2c_dev_t *i2c_dev, void *container, uint8_t *buffer, size_t size) {
+}
+
+static inline void *pbdrv_i2c_get_buffer_container(pbdrv_i2c_dev_t *i2c_dev) {
+    return NULL;
 }
 
 #endif // PBDRV_CONFIG_I2C
