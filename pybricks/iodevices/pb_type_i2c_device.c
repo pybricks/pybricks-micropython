@@ -188,13 +188,18 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(address),
         PB_ARG_DEFAULT_INT(mode, PBIO_PORT_MODE_LEGO_DCM),
-        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE)
+        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
+        PB_ARG_DEFAULT_NONE(frequency)
         );
 
     pbio_port_mode_t mode = mp_obj_get_int(mode_in);
     if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
+
+    // The frequency applies to all buses, so the most recent setting wins.
+    // None (0) selects the platform default.
+    pb_assert(pbdrv_i2c_set_frequency(frequency_in == mp_const_none ? 0 : pb_obj_get_positive_int(frequency_in)));
 
     return pb_type_i2c_device_make_new(
         MP_OBJ_NULL, // Not associated with any particular sensor instance.

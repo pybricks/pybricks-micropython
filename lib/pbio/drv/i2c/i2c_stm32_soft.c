@@ -41,11 +41,19 @@
 
 // Nominal SCL frequency. Each bit takes 4 timer ticks. Effective rate is
 // limited by the rise time from the internal pull-ups (~40k).
-#define I2C_SCL_HZ                  (100000)
-#define I2C_TICK_HZ                 (I2C_SCL_HZ * 4)
+#define I2C_SCL_HZ_DEFAULT          (100000)
 
-// Give up if SCL is held low (clock stretch or stuck bus) this long.
-#define I2C_STRETCH_TIMEOUT_TICKS   (I2C_TICK_HZ / 20) // 50 ms
+// Allowed SCL frequency range. The upper limit keeps the interrupt load
+// manageable. The lower limit keeps the timer period within 16 bits.
+#define I2C_SCL_HZ_MIN              (1000)
+#define I2C_SCL_HZ_MAX              (100000)
+
+// Current SCL frequency, shared by all buses.
+static uint32_t i2c_scl_hz;
+
+// Give up if SCL is held low (clock stretch or stuck bus) this long. Depends
+// on the tick rate, so it is set along with the frequency.
+static uint32_t i2c_stretch_timeout_ticks;
 
 // Transaction status, set by the timer interrupt on completion.
 enum {
@@ -188,7 +196,7 @@ static bool i2c_await_scl_high(pbdrv_i2c_dev_t *dev) {
     if (i2c_pin_read(dev->scl)) {
         return false;
     }
-    if (++dev->stretch_count > I2C_STRETCH_TIMEOUT_TICKS) {
+    if (++dev->stretch_count > i2c_stretch_timeout_ticks) {
         // Bus stuck; release everything and give up.
         i2c_pin_high(dev->sda);
         i2c_pin_high(dev->scl);
@@ -527,12 +535,52 @@ void pbdrv_i2c_stm32_soft_handle_timer_irq(void) {
     }
 }
 
+static bool i2c_timer_is_running(void) {
+    return pbdrv_i2c_stm32_soft_platform_data.tim->CR1 & TIM_CR1_CEN;
+}
+
+/**
+ * Sets the timer period for the given SCL frequency. Timer must be stopped.
+ */
+static void i2c_timer_set_frequency(uint32_t scl_hz) {
+    const pbdrv_i2c_stm32_soft_platform_data_t *pdata = &pbdrv_i2c_stm32_soft_platform_data;
+    uint32_t tick_hz = scl_hz * 4;
+    // Round up so SCL is never faster than requested. This matters most on
+    // platforms with a low timer clock rate.
+    pdata->tim->ARR = (pdata->tim_clock_rate + tick_hz - 1) / tick_hz - 1;
+    i2c_stretch_timeout_ticks = tick_hz / 20; // 50 ms
+    i2c_scl_hz = scl_hz;
+}
+
+pbio_error_t pbdrv_i2c_set_frequency(uint32_t frequency) {
+    if (frequency == 0) {
+        frequency = I2C_SCL_HZ_DEFAULT;
+    }
+    if (frequency < I2C_SCL_HZ_MIN || frequency > I2C_SCL_HZ_MAX) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Nothing to do, so not an error even if busy.
+    if (frequency == i2c_scl_hz) {
+        return PBIO_SUCCESS;
+    }
+
+    // The timer is shared by all buses, so it can't change mid-transaction
+    // on any of them.
+    if (i2c_timer_is_running()) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    i2c_timer_set_frequency(frequency);
+    return PBIO_SUCCESS;
+}
+
 static void i2c_timer_start(void) {
     TIM_TypeDef *tim = pbdrv_i2c_stm32_soft_platform_data.tim;
 
     // Only start if not already running for another bus, so that resetting
     // the counter doesn't disturb its bit timing.
-    if (!(tim->CR1 & TIM_CR1_CEN)) {
+    if (!i2c_timer_is_running()) {
         tim->CNT = 0;
         tim->SR = 0;
         tim->CR1 |= TIM_CR1_CEN;
@@ -636,7 +684,7 @@ void pbdrv_i2c_init(void) {
     // demand and stopped when all buses are idle.
     TIM_TypeDef *tim = pdata->tim;
     tim->PSC = 0;
-    tim->ARR = pdata->tim_clock_rate / I2C_TICK_HZ - 1;
+    i2c_timer_set_frequency(I2C_SCL_HZ_DEFAULT);
     tim->DIER = TIM_DIER_UIE;
 
     NVIC_SetPriority(pdata->tim_irq, 5);

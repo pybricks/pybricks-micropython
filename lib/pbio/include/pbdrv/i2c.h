@@ -125,6 +125,22 @@ void pbdrv_i2c_set_buffer(pbdrv_i2c_dev_t *i2c_dev, void *container, uint8_t *bu
  */
 void *pbdrv_i2c_get_buffer_container(pbdrv_i2c_dev_t *i2c_dev);
 
+/**
+ * Sets the SCL frequency.
+ *
+ * This applies to all buses, since they may share hardware resources. It can
+ * only be changed while no transaction is in progress on any bus. Setting the
+ * current value again always succeeds.
+ *
+ * @param [in]  frequency   The SCL frequency (Hz), or 0 for the default.
+ * @return                  ::PBIO_SUCCESS on success,
+ *                          ::PBIO_ERROR_INVALID_ARG if out of range,
+ *                          ::PBIO_ERROR_BUSY if any bus is busy,
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if the driver has a fixed
+ *                          frequency and @p frequency is not 0.
+ */
+pbio_error_t pbdrv_i2c_set_frequency(uint32_t frequency);
+
 #else // PBDRV_CONFIG_I2C
 
 static inline pbio_error_t pbdrv_i2c_get_instance(uint8_t id, pbdrv_i2c_dev_t **i2c_dev) {
@@ -159,6 +175,10 @@ static inline void pbdrv_i2c_set_buffer(pbdrv_i2c_dev_t *i2c_dev, void *containe
 
 static inline void *pbdrv_i2c_get_buffer_container(pbdrv_i2c_dev_t *i2c_dev) {
     return NULL;
+}
+
+static inline pbio_error_t pbdrv_i2c_set_frequency(uint32_t frequency) {
+    return frequency ? PBIO_ERROR_NOT_SUPPORTED : PBIO_SUCCESS;
 }
 
 #endif // PBDRV_CONFIG_I2C

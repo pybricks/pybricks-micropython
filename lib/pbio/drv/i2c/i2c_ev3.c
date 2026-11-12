@@ -207,6 +207,11 @@ bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev) {
     return i2c_dev && i2c_dev->is_busy;
 }
 
+pbio_error_t pbdrv_i2c_set_frequency(uint32_t frequency) {
+    // Fixed frequency, so only the default is accepted.
+    return frequency ? PBIO_ERROR_NOT_SUPPORTED : PBIO_SUCCESS;
+}
+
 static pbio_os_process_t ev3_i2c_init_process;
 
 pbio_error_t ev3_i2c_init_process_thread(pbio_os_state_t *state, void *context) {

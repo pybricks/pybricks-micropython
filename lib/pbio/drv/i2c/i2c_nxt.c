@@ -97,6 +97,11 @@ bool pbdrv_i2c_is_busy(pbdrv_i2c_dev_t *i2c_dev) {
     return nx_i2c_busy(i2c_dev->port_index) || !pbio_os_timer_is_expired(&i2c_dev->idle_timer);
 }
 
+pbio_error_t pbdrv_i2c_set_frequency(uint32_t frequency) {
+    // Fixed frequency, so only the default is accepted.
+    return frequency ? PBIO_ERROR_NOT_SUPPORTED : PBIO_SUCCESS;
+}
+
 pbio_error_t pbdrv_i2c_write_then_read(
     pbio_os_state_t *state,
     pbdrv_i2c_dev_t *i2c_dev,
