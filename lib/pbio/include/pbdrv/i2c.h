@@ -51,27 +51,35 @@ void pbdrv_i2c_configure_port(pbdrv_i2c_dev_t *i2c_dev, const pbdrv_gpio_t *scl,
 void pbdrv_i2c_release_port(pbdrv_i2c_dev_t *i2c_dev);
 
 /**
- * Does an I2C operation. To be integrated with higher-level code.
+ * Does an I2C operation.
+ *
+ * Depending on \p wlen and \p rlen, the bus sequence is:
+ *
+ * - write only:     START addr+W wdata... STOP
+ * - read only:      START addr+R rdata... STOP
+ * - write and read: START addr+W wdata... START addr+R rdata... STOP
+ * - ping (both 0):  START addr+W STOP
+ *
+ * For write and read, the second START comes without a STOP before it (a
+ * "repeated start"), so the bus is not released in between. Many devices
+ * rely on this to read from the register just selected by the write.
  *
  * @param [in]  state       Protothread state for async operation.
  * @param [in]  i2c_dev     The I2C device.
  * @param [in]  dev_addr    I2C device address (unshifted).
  * @param [in]  wdata       Data to be sent to the device.
  *                          Can be null if \p wlen is 0.
- * @param [in]  wlen        Length of \p wdata.
- *                          If this is 0 and \p rlen is also 0,
- *                          an empty "ping" will be sent, consisting of
- *                          only a device address (with R/nW = 0).
- *                          If this is 0 but \p rlen is not 0,
- *                          a read transaction will be sent.
- *                          If this is not 0 and \p rlen is not 0,
- *                          a write will be sent followed by a read in
- *                          a single transaction.
+ * @param [in]  wlen        Number of bytes to write.
  * @param [out] rdata       Pointer to data read from the device. Only valid
- *                          immediately on successfull completion.
- *                          Returns null if \p rlen is 0 or the operation failed.
- * @param [in]  rlen        Size of \p rdata.
- * @param [in]  nxt_quirk   Whether to use NXT I2C transaction quirk.
+ *                          immediately on successful completion and if
+ *                          \p rlen is not 0. Left unchanged otherwise.
+ * @param [in]  rlen        Number of bytes to read.
+ * @param [in]  nxt_quirk   Whether to use NXT I2C transaction quirk. This
+ *                          replaces the repeated start with a STOP, an extra
+ *                          SCL pulse, and a START, to work around firmware
+ *                          bugs in NXT sensors such as the ultrasonic sensor.
+ *                          Drivers that don't support it return
+ *                          ::PBIO_ERROR_NOT_SUPPORTED.
  * @return                  ::PBIO_SUCCESS on success.
  */
 pbio_error_t pbdrv_i2c_write_then_read(

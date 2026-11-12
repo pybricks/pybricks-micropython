@@ -89,7 +89,13 @@ struct _pbdrv_i2c_dev_t {
     uint8_t phase;
     uint8_t bit;
     uint8_t cur_byte;
+    /** True while cur_byte is the address byte rather than a data byte. */
     bool is_addr;
+    /**
+     * R/W bit for the next address byte, high for read. Also tells
+     * i2c_next_after_write that the address just sent was the read address,
+     * so data reading starts next.
+     */
     bool addr_read;
     uint16_t byte_idx;
     uint32_t stretch_count;
@@ -195,6 +201,8 @@ static bool i2c_await_scl_high(pbdrv_i2c_dev_t *dev) {
  * Decides what to do after a byte was successfully written (ACK received).
  */
 static void i2c_next_after_write(pbdrv_i2c_dev_t *dev) {
+    // Increment data index if there is anything left to write unless
+    // we only just write the address. Either way, next won't be an address.
     if (!dev->is_addr && dev->byte_idx < dev->wlen) {
         dev->byte_idx++;
     }
@@ -245,6 +253,10 @@ static void i2c_next_after_write(pbdrv_i2c_dev_t *dev) {
 
 /**
  * Advances the bus state machine by one quarter-bit phase.
+ *
+ * Each bit, start and stop takes four phases, one per tick. SCL is released
+ * in phase 1 and awaited in phase 2. If the device stretches the clock,
+ * phase 2 repeats until SCL actually reads high.
  */
 static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
 
@@ -253,26 +265,50 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
 
     switch (dev->stage) {
 
+        // Start: SDA high, SCL high, SDA low, SCL low.
+        //
+        // From an idle bus, both lines are already high, so phases 0 and 1
+        // change nothing:
+        //
+        //     phase  0     1     2     3
+        //            |     |     |     |
+        //     SCL  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\___
+        //     SDA  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯\_________
+        //                        ^ start
+        //
+        // After the device's ACK to the last written byte, SCL is low and
+        // SDA may be either: the device releases its ACK some time after SCL
+        // falls. This is a repeated start:
+        //
+        //     phase  0     1     2     3
+        //            |     |     |     |
+        //     SCL  ________/¯¯¯¯¯¯¯¯¯¯¯\___
+        //     SDA  ==X¯¯¯¯¯¯¯¯¯¯¯¯\_________
+        //                        ^ repeated start
         case I2C_STAGE_START:
-            // (Repeated) start: SDA high, SCL high, SDA low, SCL low.
             switch (dev->phase) {
                 case 0:
+                    // Release SDA. On an idle bus it's already high. For a
+                    // repeated start, SCL is still low, so SDA may rise
+                    // without it being a stop.
                     i2c_pin_high(sda);
                     dev->phase = 1;
-                    break;
+                    return;
                 case 1:
                     i2c_pin_high(scl);
                     dev->stretch_count = 0;
                     dev->phase = 2;
-                    break;
+                    return;
                 case 2:
                     if (i2c_await_scl_high(dev)) {
-                        break;
+                        return;
                     }
+                    // SDA falls while SCL is high: this is the start condition.
                     i2c_pin_low(sda);
                     dev->phase = 3;
-                    break;
+                    return;
                 case 3:
+                    // Pull SCL low, ready for the first bit.
                     i2c_pin_low(scl);
                     // Send the address byte next.
                     dev->cur_byte = (dev->addr << 1) | (dev->addr_read ? 1 : 0);
@@ -280,15 +316,27 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                     dev->stage = I2C_STAGE_WRITE_BYTE;
                     dev->bit = 0;
                     dev->phase = 0;
-                    break;
+                    return;
             }
             break;
 
+        // Write byte: 8 data bits MSB first, then release SDA and sample ACK.
+        // Each bit, starting just after the previous falling edge of SCL:
+        //
+        //     phase  0     1     2     3     0
+        //            |     |     |     |     |
+        //     SCL  ________/¯¯¯¯¯¯¯¯¯¯¯\__________
+        //     SDA  ==X=======================X===
+        //            ^ we put the bit on SDA
+        //                        ^ device samples
+        //
+        // The "9th bit" (bit == 8) is the ACK, where the roles swap: we release
+        // SDA in phase 0 and sample the device's ACK in phase 2.
         case I2C_STAGE_WRITE_BYTE:
-            // 8 data bits MSB first, then release SDA and sample ACK.
             switch (dev->phase) {
                 case 0:
                     if (dev->bit < 8) {
+                        // Put the data bit on SDA while SCL is low.
                         if ((dev->cur_byte >> (7 - dev->bit)) & 1) {
                             i2c_pin_high(sda);
                         } else {
@@ -299,23 +347,27 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                         i2c_pin_high(sda);
                     }
                     dev->phase = 1;
-                    break;
+                    return;
                 case 1:
                     i2c_pin_high(scl);
                     dev->stretch_count = 0;
                     dev->phase = 2;
-                    break;
+                    return;
                 case 2:
                     if (i2c_await_scl_high(dev)) {
-                        break;
+                        return;
                     }
+                    // The device samples SDA while SCL is high, except on the
+                    // ACK bit, where we sample it.
                     if (dev->bit == 8) {
                         // Byte is fully sent, so reuse cur_byte to latch ACK.
                         dev->cur_byte = i2c_pin_read(sda);
                     }
                     dev->phase = 3;
-                    break;
+                    return;
                 case 3:
+                    // Pull SCL low, so SDA may change for the next bit. After
+                    // the ACK bit, the device releases SDA.
                     i2c_pin_low(scl);
                     if (dev->bit < 8) {
                         dev->bit++;
@@ -330,16 +382,33 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                     } else {
                         i2c_next_after_write(dev);
                     }
-                    break;
+                    return;
             }
             break;
 
+        // Read byte: 8 data bits MSB first, then send ACK, or NACK on the last
+        // byte. Each bit, starting just after the previous falling edge of SCL:
+        //
+        //     phase  0     1     2     3     0
+        //            |     |     |     |     |
+        //     SCL  ________/¯¯¯¯¯¯¯¯¯¯¯\__________
+        //     SDA  ==X=======================X===
+        //            ^ device puts the bit on SDA
+        //                        ^ we sample
+        //
+        // The device may change SDA anywhere while SCL is low, not just in
+        // phase 0. The 9th bit (bit == 8) is the ACK, where the roles swap:
+        // we put our ACK (or NACK) on SDA in phase 0 and the device samples
+        // it in phase 2.
         case I2C_STAGE_READ_BYTE:
-            // 8 data bits MSB first, then send ACK, or NACK on the last byte.
             switch (dev->phase) {
                 case 0:
                     if (dev->bit == 0) {
-                        // Release SDA so the device can drive it.
+                        // Release our ACK of the previous byte, a full tick
+                        // after the SCL falling edge (see phase 3). The device
+                        // may already be driving its first bit, but a 1 only
+                        // shows on SDA once we let go. For the first byte,
+                        // SDA is already released, so this changes nothing.
                         i2c_pin_high(sda);
                     } else if (dev->bit == 8) {
                         // If the buffer was detached, make this the last byte.
@@ -355,22 +424,25 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                         }
                     }
                     dev->phase = 1;
-                    break;
+                    return;
                 case 1:
                     i2c_pin_high(scl);
                     dev->stretch_count = 0;
                     dev->phase = 2;
-                    break;
+                    return;
                 case 2:
                     if (i2c_await_scl_high(dev)) {
-                        break;
+                        return;
                     }
+                    // Sample SDA while SCL is high, except on the ACK bit,
+                    // where the device samples it.
                     if (dev->bit < 8) {
                         dev->cur_byte = (dev->cur_byte << 1) | i2c_pin_read(sda);
                     }
                     dev->phase = 3;
-                    break;
+                    return;
                 case 3:
+                    // Pull SCL low, so the device may put the next bit on SDA.
                     i2c_pin_low(scl);
                     if (dev->bit < 8) {
                         uint8_t *buffer = dev->buffer;
@@ -395,32 +467,41 @@ static void i2c_soft_tick(pbdrv_i2c_dev_t *dev) {
                             dev->phase = 0;
                         }
                     }
-                    break;
+                    return;
             }
             break;
 
+        // Stop: SDA low, SCL high, SDA high.
+        //
+        //     phase  0     1     2     3
+        //            |     |     |     |
+        //     SCL  ________/¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+        //     SDA  ==X_________________/¯¯¯
+        //                              ^ stop
         case I2C_STAGE_STOP:
-            // Stop: SDA low, SCL high, SDA high.
             switch (dev->phase) {
                 case 0:
+                    // Pull SDA low while SCL is low, so it can rise later.
                     i2c_pin_low(sda);
                     dev->phase = 1;
-                    break;
+                    return;
                 case 1:
                     i2c_pin_high(scl);
                     dev->stretch_count = 0;
                     dev->phase = 2;
-                    break;
+                    return;
                 case 2:
                     if (i2c_await_scl_high(dev)) {
-                        break;
+                        return;
                     }
                     dev->phase = 3;
-                    break;
+                    return;
                 case 3:
+                    // SDA rises while SCL is high: this is the stop condition.
+                    // Both lines are now high, so the bus is idle.
                     i2c_pin_high(sda);
                     i2c_finish(dev, dev->pending_status);
-                    break;
+                    return;
             }
             break;
     }
@@ -439,6 +520,8 @@ void pbdrv_i2c_stm32_soft_handle_timer_irq(void) {
         }
     }
 
+    // The timer is shared by all buses, so only stop it once all are idle.
+    // The next transaction restarts it with i2c_timer_start.
     if (!any_busy) {
         tim->CR1 &= ~TIM_CR1_CEN;
     }
@@ -446,6 +529,9 @@ void pbdrv_i2c_stm32_soft_handle_timer_irq(void) {
 
 static void i2c_timer_start(void) {
     TIM_TypeDef *tim = pbdrv_i2c_stm32_soft_platform_data.tim;
+
+    // Only start if not already running for another bus, so that resetting
+    // the counter doesn't disturb its bit timing.
     if (!(tim->CR1 & TIM_CR1_CEN)) {
         tim->CNT = 0;
         tim->SR = 0;
@@ -485,6 +571,9 @@ pbio_error_t pbdrv_i2c_write_then_read(
     if (!i2c_dev->buffer) {
         return PBIO_ERROR_INVALID_OP;
     }
+
+    // Storing read data after write data rather than overriding so
+    // we can retry writing if needed.
     if (wlen + rlen > i2c_dev->buffer_size) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -509,7 +598,9 @@ pbio_error_t pbdrv_i2c_write_then_read(
             dev_addr, (unsigned)wlen, (unsigned)rlen,
             i2c_pin_read(i2c_dev->sda), i2c_pin_read(i2c_dev->scl));
 
-        // Ensure engine state is committed before the ISR can see is_busy.
+        // Compiler barrier: the engine state above is not volatile, so without
+        // this the compiler could reorder it past the is_busy store, and the
+        // ISR could run with stale state.
         __asm volatile ("" ::: "memory");
         i2c_dev->is_busy = true;
         i2c_timer_start();
@@ -540,8 +631,9 @@ pbio_error_t pbdrv_i2c_write_then_read(
 void pbdrv_i2c_init(void) {
     const pbdrv_i2c_stm32_soft_platform_data_t *pdata = &pbdrv_i2c_stm32_soft_platform_data;
 
-    // One tick is a quarter bit. Timer counts but interrupt only fires while
-    // a transaction is ongoing; it is enabled on demand.
+    // One tick is a quarter bit. The update interrupt stays enabled, but the
+    // counter only runs while a (any) transaction is ongoing; it is started on
+    // demand and stopped when all buses are idle.
     TIM_TypeDef *tim = pdata->tim;
     tim->PSC = 0;
     tim->ARR = pdata->tim_clock_rate / I2C_TICK_HZ - 1;
