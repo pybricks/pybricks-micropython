@@ -1,0 +1,27 @@
+<class 'maybe_async'>
+142
+1
+11
+22
+6
+9
+('lever', 142)
+True
+False
+<class 'ValueError'> ('raised',)
+False
+<class 'TypeError'>
+<class 'TypeError'>
+<class 'TypeError'>
+<class 'generator'>
+1
+142
+11
+9
+9
+('lever', 142)
+True
+(2, 4, 2)
+<class 'ValueError'> ('raised',)
+done
+False

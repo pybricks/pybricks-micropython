@@ -158,14 +158,13 @@ static mp_obj_t pb_module_tools_read_input_byte(size_t n_args, const mp_obj_t *p
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_read_input_byte_obj, 0, pb_module_tools_read_input_byte);
 
-static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_NONE(task));
-
-    // Without args, this function is used to test if the run loop is active.
-    if (task_in == mp_const_none) {
-        return mp_obj_new_bool(run_loop_is_active);
-    }
+/**
+ * Runs a task until completion in a run loop that blocks until done.
+ *
+ * @param [in]  task    The awaitable to run.
+ * @returns             The result of the task.
+ */
+static mp_obj_t pb_module_tools_run_loop(mp_obj_t task) {
 
     // Can only run one loop at a time.
     if (run_loop_is_active) {
@@ -177,7 +176,7 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
 
     if (nlr_push(&nlr) == 0) {
         run_loop_is_active = true;
-        mp_obj_t iterable = mp_getiter(task_in, &iter_buf);
+        mp_obj_t iterable = mp_getiter(task, &iter_buf);
         while (mp_iternext(iterable) != MP_OBJ_STOP_ITERATION) {
             // Keep running system processes.
             MICROPY_VM_HOOK_LOOP
@@ -193,7 +192,54 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
         nlr_jump(nlr.ret_val);
     }
 }
+
+static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_NONE(task));
+
+    // Without args, this function is used to test if the run loop is active.
+    if (task_in == mp_const_none) {
+        return mp_obj_new_bool(run_loop_is_active);
+    }
+
+    return pb_module_tools_run_loop(task_in);
+}
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 0, pb_module_tools_run_task);
+
+/**
+ * Wraps an async function so it can be used in both synchronous and
+ * asynchronous code, like built-in methods. Typically used as a decorator.
+ *
+ * Calling the wrapper calls the wrapped function to get its awaitable. If the
+ * run loop is active, the awaitable is returned so it can be awaited.
+ * Otherwise it is run to completion and its result is returned.
+ */
+typedef struct {
+    mp_obj_base_t base;
+    mp_obj_t func;
+} pb_type_maybe_async_obj_t;
+
+static mp_obj_t pb_type_maybe_async_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    pb_type_maybe_async_obj_t *self = mp_obj_malloc(pb_type_maybe_async_obj_t, type);
+    self->func = args[0];
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static mp_obj_t pb_type_maybe_async_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    pb_type_maybe_async_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Arguments are passed on as-is, so this does not allocate.
+    mp_obj_t task = mp_call_function_n_kw(self->func, n_args, n_kw, args);
+    return run_loop_is_active ? task : pb_module_tools_run_loop(task);
+}
+
+// Binds self so it can also be used to decorate methods.
+static MP_DEFINE_CONST_OBJ_TYPE(pb_type_maybe_async,
+    MP_QSTR_maybe_async,
+    MP_TYPE_FLAG_BINDS_SELF,
+    make_new, pb_type_maybe_async_make_new,
+    call, pb_type_maybe_async_call);
 
 // Reset global awaitable state when user program starts.
 void pb_module_tools_init(void) {
@@ -430,6 +476,7 @@ static const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_hub_menu),    MP_ROM_PTR(&pb_module_tools_hub_menu_obj)     },
     #endif // PYBRICKS_PY_TOOLS_HUB_MENU
     { MP_ROM_QSTR(MP_QSTR_run_task),    MP_ROM_PTR(&pb_module_tools_run_task_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_maybe_async), MP_ROM_PTR(&pb_type_maybe_async)          },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&pb_type_StopWatch)                },
     { MP_ROM_QSTR(MP_QSTR_multitask),   MP_ROM_PTR(&pb_type_Task)                     },
     #if MICROPY_PY_BUILTINS_FLOAT

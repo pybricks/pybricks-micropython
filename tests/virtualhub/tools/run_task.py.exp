@@ -1,0 +1,21 @@
+False
+True
+False
+42
+text
+None
+3
+(1, 2)
+142
+1
+None
+<class 'ValueError'> ('raised',)
+False
+3
+<class 'RuntimeError'> ('Run loop already active.',)
+False
+142
+11
+142
+22
+done

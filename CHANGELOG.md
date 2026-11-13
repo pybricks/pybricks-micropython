@@ -8,6 +8,9 @@
 
 ### Added
 - `pybricks.tools.run_task` now returns the result of the coroutine that was run.
+- Added `pybricks.tools.maybe_async` decorator so user-defined async
+  functions can be used in both synchronous and asynchronous code, like
+  built-in methods.
 
 ## [4.1.3] - 2026-11-06
 
