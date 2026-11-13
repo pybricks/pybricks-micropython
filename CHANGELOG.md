@@ -6,6 +6,9 @@
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...HEAD
 
+### Added
+- `pybricks.tools.run_task` now returns the result of the coroutine that was run.
+
 ## [4.1.3] - 2026-11-06
 
 ### Fixed

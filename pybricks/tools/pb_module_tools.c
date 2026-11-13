@@ -184,13 +184,14 @@ static mp_obj_t pb_module_tools_run_task(size_t n_args, const mp_obj_t *pos_args
             // Stop on exception such as SystemExit.
             mp_handle_pending(MP_HANDLE_PENDING_CALLBACKS_AND_EXCEPTIONS);
         }
+        mp_obj_t result = MP_STATE_THREAD(stop_iteration_arg);
         nlr_pop();
         run_loop_is_active = false;
+        return result == MP_OBJ_NULL ? mp_const_none : result;
     } else {
         run_loop_is_active = false;
         nlr_jump(nlr.ret_val);
     }
-    return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(pb_module_tools_run_task_obj, 0, pb_module_tools_run_task);
 
