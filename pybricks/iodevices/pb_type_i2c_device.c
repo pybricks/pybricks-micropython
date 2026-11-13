@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2026 The Pybricks Authors
+// Copyright (c) 2026 SparkFun Electronics
 
 #include "py/mpconfig.h"
 
@@ -93,19 +94,9 @@ static mp_obj_t get_or_attach_buffer(pbdrv_i2c_dev_t *i2c_dev, size_t size) {
 
 /**
  * Object representing a pybricks.iodevices.I2CDevice instance.
- *
- * Also used by sensor classes for I2C Devices.
  */
 typedef struct {
     mp_obj_base_t base;
-    /**
-     * Object that owns this I2C device, such as an Ultrasonic Sensor instance.
-     * Gets passed to all return mappings.
-     *
-     * In case of the standalone I2CDevice class instance, this value is instead
-     * used to store an optional user callable to map bytes to a return object.
-     */
-    mp_obj_t sensor_obj;
     /**
      * Generic reusable awaitable operation.
      */
@@ -119,14 +110,15 @@ typedef struct {
      */
     pbdrv_i2c_dev_t *i2c_dev;
     uint8_t address;
-    bool nxt_quirk;
     size_t write_len;
     size_t read_len;
     uint8_t *read_buf;
     /**
-     * Maps bytes read to the user return object.
+     * Determines the result of the ongoing operation: MP_OBJ_NULL for no
+     * result (write), mp_const_none to return the bytes read, or a user
+     * callable that maps the bytes read to a return object.
      */
-    pb_type_i2c_device_return_map_t return_map;
+    mp_obj_t map;
     #if PYBRICKS_PY_IODEVICES_I2C_DEVICE_ALLOC_BUFFER
     /**
      * Transaction buffer shared by all devices on this bus. Not used directly,
@@ -137,9 +129,25 @@ typedef struct {
 } device_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio_port_mode_t mode, uint8_t address, pbio_port_power_requirements_t power_pin, bool nxt_quirk) {
+static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port),
+        PB_ARG_REQUIRED(address),
+        PB_ARG_DEFAULT_INT(mode, PBIO_PORT_MODE_LEGO_DCM),
+        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
+        PB_ARG_DEFAULT_NONE(frequency)
+        );
 
     pb_module_tools_assert_blocking();
+
+    pbio_port_mode_t mode = mp_obj_get_int(mode_in);
+    if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // The frequency applies to all buses, so the most recent setting wins.
+    // None (0) selects the platform default.
+    pb_assert(pbdrv_i2c_set_frequency(frequency_in == mp_const_none ? 0 : pb_obj_get_positive_int(frequency_in)));
 
     // Get the port instance.
     pbio_port_id_t port_id = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
@@ -173,42 +181,11 @@ mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio
     device->buffer = buffer;
     #endif
     device->i2c_dev = i2c_dev;
-    device->address = address;
-    device->nxt_quirk = nxt_quirk;
-    device->sensor_obj = sensor_obj;
+    device->address = mp_obj_get_int(address_in);
     device->iter = NULL;
-    pbio_port_p1p2_set_power(port, power_pin);
+    pbio_port_p1p2_set_power(port, pb_module_iodevices_get_requested_power_pin(power_pin_in));
 
     return MP_OBJ_FROM_PTR(device);
-}
-
-// wrapper to parse args for __init__
-static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port),
-        PB_ARG_REQUIRED(address),
-        PB_ARG_DEFAULT_INT(mode, PBIO_PORT_MODE_LEGO_DCM),
-        PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
-        PB_ARG_DEFAULT_NONE(frequency)
-        );
-
-    pbio_port_mode_t mode = mp_obj_get_int(mode_in);
-    if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
-    // The frequency applies to all buses, so the most recent setting wins.
-    // None (0) selects the platform default.
-    pb_assert(pbdrv_i2c_set_frequency(frequency_in == mp_const_none ? 0 : pb_obj_get_positive_int(frequency_in)));
-
-    return pb_type_i2c_device_make_new(
-        MP_OBJ_NULL, // Not associated with any particular sensor instance.
-        port_in,
-        mode,
-        mp_obj_get_int(address_in),
-        pb_module_iodevices_get_requested_power_pin(power_pin_in),
-        false
-        );
 }
 
 /**
@@ -225,31 +202,35 @@ static pbio_error_t pb_type_i2c_device_iterate_once(pbio_os_state_t *state, mp_o
         device->write_len,
         &device->read_buf,
         device->read_len,
-        device->nxt_quirk
+        false
         );
 }
 
 /**
- * This is the callable form required by the shared awaitable code.
- *
- * For classes that have an I2C class instance such as the Ultrasonic Sensor,
- * the I2C object is not of interest, but rather the sensor object. So this
- * wrapper essentially passes the containing object to the return map.
+ * Maps the bytes read to the result of a read operation: either the bytes
+ * themselves or the result of the user provided callable.
  */
-static mp_obj_t pb_type_i2c_device_return_generic(mp_obj_t i2c_device_obj) {
+static mp_obj_t pb_type_i2c_device_return_map(mp_obj_t i2c_device_obj) {
     device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
 
-    if (!device->return_map) {
-        return mp_const_none;
-    }
+    mp_obj_t data = mp_obj_new_bytes(device->read_buf, device->read_len);
 
-    return device->return_map(device->sensor_obj, device->read_buf, device->read_len);
+    // If user provides bound method, MicroPython takes care of providing
+    // self as the first argument. We just need to pass in data arg.
+    return device->map == mp_const_none ? data : mp_call_function_1(device->map, data);
 }
 
-mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map) {
-
-    pb_assert_type(i2c_device_obj, &pb_type_i2c_device);
-    device_obj_t *device = MP_OBJ_TO_PTR(i2c_device_obj);
+/**
+ * Starts an I2C operation.
+ *
+ * @param [in]  device      The I2C device.
+ * @param [in]  write_data  Data to write.
+ * @param [in]  write_len   Number of bytes to write.
+ * @param [in]  read_len    Number of bytes to read.
+ * @param [in]  map         MP_OBJ_NULL for no result, mp_const_none to return the bytes read, or a callable to map them.
+ * @return                  An awaitable if the runloop is active, otherwise the result.
+ */
+static mp_obj_t pb_type_i2c_device_start_operation(device_obj_t *device, const uint8_t *write_data, size_t write_len, size_t read_len, mp_obj_t map) {
 
     // Kick off the operation. This will immediately raise if a transaction is
     // in progress.
@@ -258,7 +239,7 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
     pbio_error_t err = pbdrv_i2c_write_then_read(
         &state, device->i2c_dev, device->address,
         (uint8_t *)write_data, write_len,
-        &read_buf, read_len, device->nxt_quirk);
+        &read_buf, read_len, false);
 
     // Expect yield after the initial call.
     if (err == PBIO_SUCCESS) {
@@ -274,32 +255,16 @@ mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8
     device->read_len = read_len;
     device->write_len = write_len;
     device->read_buf = NULL;
-    device->return_map = return_map;
+    device->map = map;
 
     pb_type_async_t config = {
-        .parent_obj = i2c_device_obj,
+        .parent_obj = MP_OBJ_FROM_PTR(device),
         .iter_once = pb_type_i2c_device_iterate_once,
         .state = state,
-        .return_map = return_map ? pb_type_i2c_device_return_generic : NULL,
+        .return_map = map != MP_OBJ_NULL ? pb_type_i2c_device_return_map : NULL,
     };
     // New operation always wins; ongoing sound awaitable is cancelled.
     return pb_type_async_wait_or_await(&config, &device->iter, true);
-}
-
-/**
- * I2C result mapping that just returns a bytes object.
- */
-static mp_obj_t pb_type_i2c_device_return_bytes(mp_obj_t self_in, const uint8_t *data, size_t len) {
-    return mp_obj_new_bytes(data, len);
-}
-
-/**
- * I2C result mapping that calls user provided callback with self and bytes as argument.
- */
-static mp_obj_t pb_type_i2c_device_return_user_map(mp_obj_t callable_obj, const uint8_t *data, size_t len) {
-    // If user provides bound method, MicroPython takes care of providing
-    // self as the first argument. We just need to pass in data arg.
-    return mp_call_function_1(callable_obj, mp_obj_new_bytes(data, len));
 }
 
 // pybricks.iodevices.I2CDevice.read
@@ -319,17 +284,13 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
     size_t write_len = reg_in == mp_const_none ? 0 : 1;
 
     // Optional user provided callback method of the form def my_method(self, data)
-    // We can use sensor_obj for this since it isn't used by I2CDevice instances,
-    // and we are already passing this to the mapping anyway, so we can conviently
-    // use it to pass the callable object in this case.
-    device->sensor_obj = mp_obj_is_callable(map_in) ? map_in : MP_OBJ_NULL;
-
+    // or None to return the bytes as is.
     return pb_type_i2c_device_start_operation(
-        MP_OBJ_FROM_PTR(device),
+        device,
         write_data,
         write_len,
         pb_obj_get_positive_int(length_in),
-        mp_obj_is_callable(map_in) ? pb_type_i2c_device_return_user_map : pb_type_i2c_device_return_bytes
+        mp_obj_is_callable(map_in) ? map_in : mp_const_none
         );
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(read_obj, 0, read);
@@ -353,7 +314,7 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
 
     // No register given, write data as is.
     if (reg_in == mp_const_none) {
-        return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), (const uint8_t *)user_data, user_len, 0, NULL);
+        return pb_type_i2c_device_start_operation(device, (const uint8_t *)user_data, user_len, 0, MP_OBJ_NULL);
     }
 
     // Otherwise need to prefix write data with given register. We're limiting
@@ -366,7 +327,7 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     write_data[0] = pb_obj_get_positive_int(reg_in);
     memcpy(&write_data[1], user_data, user_len);
 
-    return pb_type_i2c_device_start_operation(MP_OBJ_FROM_PTR(device), write_data, user_len + 1, 0, NULL);
+    return pb_type_i2c_device_start_operation(device, write_data, user_len + 1, 0, MP_OBJ_NULL);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 

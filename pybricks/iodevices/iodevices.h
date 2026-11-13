@@ -41,22 +41,7 @@ extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
 #endif
 
 #if PYBRICKS_PY_IODEVICES_I2C_DEVICE
-
 extern const mp_obj_type_t pb_type_i2c_device;
-/**
- * Given a completed I2C operation, maps the resulting read buffer to an object
- * of a desired form. For example, it could map two bytes to a single floating
- * point value representing temperature.
- *
- * @param [in]  sensor_obj Instance of sensor that owns this device or MP_OBJ_NULL for the standalone I2CDevice class.
- * @param [in]  data   The data read.
- * @param [in]  len    The data length.
- * @return             Resulting object to return to user.
- */
-typedef mp_obj_t (*pb_type_i2c_device_return_map_t)(mp_obj_t sensor_obj, const uint8_t *data, size_t len);
-
-mp_obj_t pb_type_i2c_device_make_new(mp_obj_t sensor_obj, mp_obj_t port_in, pbio_port_mode_t mode, uint8_t address, pbio_port_power_requirements_t power_pin, bool nxt_quirk);
-mp_obj_t pb_type_i2c_device_start_operation(mp_obj_t i2c_device_obj, const uint8_t *write_data, size_t write_len, size_t read_len, pb_type_i2c_device_return_map_t return_map);
 #endif
 
 pbio_port_power_requirements_t pb_module_iodevices_get_requested_power_pin(mp_obj_t power_pin_in);
