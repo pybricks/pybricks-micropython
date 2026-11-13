@@ -14,6 +14,10 @@
 - Added `reg_len` option to `pybricks.iodevices.I2CDevice` for devices that
   use 16-bit register addresses.
 
+### Changed
+- `pybricks.iodevices.I2CDevice.write` is no longer limited to 32 bytes of
+  data when `reg` is given.
+
 ## [4.1.3] - 2026-11-06
 
 ### Fixed

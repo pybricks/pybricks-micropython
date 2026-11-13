@@ -351,12 +351,12 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
         return pb_type_i2c_device_start_operation(device, (const uint8_t *)user_data, user_len, 0, MP_OBJ_NULL);
     }
 
-    // Otherwise need to prefix write data with given register. We're limiting
-    // write data to 32 bytes in this case. To send more data, the user can
-    // use reg=None and prefix the address to the data themselves.
-    uint8_t write_data[2 + 32];
+    // Otherwise need to prefix write data with given register. The buffer is
+    // sized for the maximum write length supported by the drivers. Drivers
+    // with a lower limit will raise when the operation starts.
+    uint8_t write_data[UINT8_MAX];
     size_t reg_len = pb_type_i2c_device_pack_reg(device, reg_in, write_data);
-    if (user_len > 32) {
+    if (user_len > MP_ARRAY_SIZE(write_data) - reg_len) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     memcpy(&write_data[reg_len], user_data, user_len);
