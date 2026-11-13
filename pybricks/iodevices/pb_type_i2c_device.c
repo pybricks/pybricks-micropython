@@ -110,6 +110,10 @@ typedef struct {
      */
     pbdrv_i2c_dev_t *i2c_dev;
     uint8_t address;
+    /**
+     * Number of bytes used to send the register address (1 or 2).
+     */
+    uint8_t reg_len;
     size_t write_len;
     size_t read_len;
     uint8_t *read_buf;
@@ -135,13 +139,20 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
         PB_ARG_REQUIRED(address),
         PB_ARG_DEFAULT_INT(mode, PBIO_PORT_MODE_LEGO_DCM),
         PB_ARG_DEFAULT_INT(power_pin, PBIO_PORT_POWER_REQUIREMENTS_NONE),
-        PB_ARG_DEFAULT_NONE(frequency)
+        PB_ARG_DEFAULT_NONE(frequency),
+        PB_ARG_DEFAULT_INT(reg_len, 1)
         );
 
     pb_module_tools_assert_blocking();
 
     pbio_port_mode_t mode = mp_obj_get_int(mode_in);
     if (mode != PBIO_PORT_MODE_LEGO_DCM && mode != PBIO_PORT_MODE_I2C_NXT && mode != PBIO_PORT_MODE_I2C_QWIIC) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Register addresses are sent as 1 or 2 bytes.
+    mp_int_t reg_len = mp_obj_get_int(reg_len_in);
+    if (reg_len != 1 && reg_len != 2) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -182,6 +193,7 @@ static mp_obj_t make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, 
     #endif
     device->i2c_dev = i2c_dev;
     device->address = mp_obj_get_int(address_in);
+    device->reg_len = reg_len;
     device->iter = NULL;
     pbio_port_p1p2_set_power(port, pb_module_iodevices_get_requested_power_pin(power_pin_in));
 
@@ -267,6 +279,31 @@ static mp_obj_t pb_type_i2c_device_start_operation(device_obj_t *device, const u
     return pb_type_async_wait_or_await(&config, &device->iter, true);
 }
 
+/**
+ * Packs the register address into a buffer, most significant byte first.
+ *
+ * @param [in]  device      The I2C device.
+ * @param [in]  reg_in      The register address, or None for no register.
+ * @param [out] buf         Buffer of at least 2 bytes.
+ * @return                  Number of bytes packed: 0 for None, else reg_len.
+ */
+static size_t pb_type_i2c_device_pack_reg(device_obj_t *device, mp_obj_t reg_in, uint8_t *buf) {
+    if (reg_in == mp_const_none) {
+        return 0;
+    }
+    mp_int_t reg = pb_obj_get_positive_int(reg_in);
+    if (reg >> (8 * device->reg_len)) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    if (device->reg_len == 2) {
+        buf[0] = reg >> 8;
+        buf[1] = reg;
+        return 2;
+    }
+    buf[0] = reg;
+    return 1;
+}
+
 // pybricks.iodevices.I2CDevice.read
 static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -276,12 +313,9 @@ static mp_obj_t read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
         PB_ARG_DEFAULT_NONE(map)
         );
 
-    // Write payload is one byte representing the register we want to read,
-    // or no write for reg=None.
-    uint8_t *write_data = reg_in == mp_const_none ?
-        NULL :
-        &(uint8_t) { mp_obj_get_int(reg_in) };
-    size_t write_len = reg_in == mp_const_none ? 0 : 1;
+    // Write payload is the register we want to read, or no write for reg=None.
+    uint8_t write_data[2];
+    size_t write_len = pb_type_i2c_device_pack_reg(device, reg_in, write_data);
 
     // Optional user provided callback method of the form def my_method(self, data)
     // or None to return the bytes as is.
@@ -320,14 +354,14 @@ static mp_obj_t write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args
     // Otherwise need to prefix write data with given register. We're limiting
     // write data to 32 bytes in this case. To send more data, the user can
     // use reg=None and prefix the address to the data themselves.
-    uint8_t write_data[33];
-    if (user_len > MP_ARRAY_SIZE(write_data) - 1) {
+    uint8_t write_data[2 + 32];
+    size_t reg_len = pb_type_i2c_device_pack_reg(device, reg_in, write_data);
+    if (user_len > 32) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    write_data[0] = pb_obj_get_positive_int(reg_in);
-    memcpy(&write_data[1], user_data, user_len);
+    memcpy(&write_data[reg_len], user_data, user_len);
 
-    return pb_type_i2c_device_start_operation(device, write_data, user_len + 1, 0, MP_OBJ_NULL);
+    return pb_type_i2c_device_start_operation(device, write_data, reg_len + user_len, 0, MP_OBJ_NULL);
 }
 static MP_DEFINE_CONST_FUN_OBJ_KW(write_obj, 0, write);
 

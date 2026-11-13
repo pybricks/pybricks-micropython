@@ -11,6 +11,8 @@
 - Added `pybricks.tools.maybe_async` decorator so user-defined async
   functions can be used in both synchronous and asynchronous code, like
   built-in methods.
+- Added `reg_len` option to `pybricks.iodevices.I2CDevice` for devices that
+  use 16-bit register addresses.
 
 ## [4.1.3] - 2026-11-06
 
