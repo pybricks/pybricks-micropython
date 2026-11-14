@@ -49,6 +49,10 @@
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32                     (1)
 
+#define PBDRV_CONFIG_I2C                            (0)
+#define PBDRV_CONFIG_I2C_STM32_SOFT                 (0)
+#define PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV         (4)
+
 #define PBDRV_CONFIG_IMU                            (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32           (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32_SIGN_X    (-1)

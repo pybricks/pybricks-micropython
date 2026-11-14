@@ -18,6 +18,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/charger/charger_mp2639a.h"
+#include "../../drv/i2c/i2c_stm32_soft.h"
 #include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/motor_driver/motor_driver_hbridge_pwm.h"
@@ -211,6 +212,18 @@ void EXTI15_10_IRQHandler(void) {
 
 // I/O ports
 
+const pbdrv_i2c_stm32_soft_platform_data_t pbdrv_i2c_stm32_soft_platform_data = {
+    .tim = TIM7,
+    // APB1 timer clock: PCLK1 is 48MHz, but since the APB1 prescaler is not 1,
+    // the timer clock is 2 x PCLK1 = 96MHz.
+    .tim_clock_rate = 96000000,
+    .tim_irq = TIM7_IRQn,
+};
+
+void TIM7_IRQHandler(void) {
+    pbdrv_i2c_stm32_soft_handle_timer_irq();
+}
+
 const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOC,
     .pin = 7,
@@ -220,7 +233,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 0,
         .uart_driver_index = UART_PORT_A,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -236,12 +249,12 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
         #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
         .supported_modes = PBIO_PORT_MODE_UART,
         #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
         #endif
     },
     {
         .port_id = PBIO_PORT_ID_B,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 1,
         .uart_driver_index = UART_PORT_B,
         .motor_driver_index = 1,
         .external_port_index = 1,
@@ -255,7 +268,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF7_USART3,
             .uart_rx_alt_uart = GPIO_AF7_USART3,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
 };
 
@@ -732,7 +745,7 @@ void SystemInit(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN | RCC_APB1ENR_UART5EN |
-        RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN |
+        RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM7EN |
         RCC_APB1ENR_I2C3EN | RCC_APB1ENR_FMPI2C1EN | RCC_APB1ENR_SPI2EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM8EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;

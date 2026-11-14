@@ -16,6 +16,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/charger/charger_mp2639a.h"
+#include "../../drv/i2c/i2c_stm32_soft.h"
 #include "../../drv/imu/imu_lsm6ds3tr_c_stm32.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -224,6 +225,18 @@ void EXTI4_IRQHandler(void) {
 
 // I/O ports
 
+const pbdrv_i2c_stm32_soft_platform_data_t pbdrv_i2c_stm32_soft_platform_data = {
+    .tim = TIM7,
+    // APB1 timer clock: PCLK1 is 48MHz, but since the APB1 prescaler is not 1,
+    // the timer clock is 2 x PCLK1 = 96MHz.
+    .tim_clock_rate = 96000000,
+    .tim_irq = TIM7_IRQn,
+};
+
+void TIM7_IRQHandler(void) {
+    pbdrv_i2c_stm32_soft_handle_timer_irq();
+}
+
 const pbdrv_gpio_t pbio_port_platform_data_vcc_pin = {
     .bank = GPIOA,
     .pin = 14
@@ -233,7 +246,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
     {
         .port_id = PBIO_PORT_ID_A,
         .motor_driver_index = 0,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 0,
         .uart_driver_index = UART_PORT_A,
         .external_port_index = 0,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -249,13 +262,13 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
         #if PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
         .supported_modes = PBIO_PORT_MODE_UART,
         #else // PBDRV_CONFIG_UART_DEBUG_FIRST_PORT
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
         #endif
     },
     {
         .port_id = PBIO_PORT_ID_B,
         .motor_driver_index = 1,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 1,
         .uart_driver_index = UART_PORT_B,
         .external_port_index = 1,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -268,12 +281,12 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF11_UART4,
             .uart_rx_alt_uart = GPIO_AF11_UART4,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
     {
         .port_id = PBIO_PORT_ID_C,
         .motor_driver_index = 2,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 2,
         .uart_driver_index = UART_PORT_C,
         .external_port_index = 2,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -286,12 +299,12 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF8_UART8,
             .uart_rx_alt_uart = GPIO_AF8_UART8,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
     {
         .port_id = PBIO_PORT_ID_D,
         .motor_driver_index = 3,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 3,
         .uart_driver_index = UART_PORT_D,
         .external_port_index = 3,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -304,12 +317,12 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF8_UART5,
             .uart_rx_alt_uart = GPIO_AF8_UART5,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
     {
         .port_id = PBIO_PORT_ID_E,
         .motor_driver_index = 4,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 4,
         .uart_driver_index = UART_PORT_E,
         .external_port_index = 4,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -322,12 +335,12 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF11_UART10,
             .uart_rx_alt_uart = GPIO_AF11_UART10,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
     {
         .port_id = PBIO_PORT_ID_F,
         .motor_driver_index = 5,
-        .i2c_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
+        .i2c_driver_index = 5,
         .uart_driver_index = UART_PORT_F,
         .external_port_index = 5,
         .counter_driver_index = PBDRV_IOPORT_INDEX_NOT_AVAILABLE,
@@ -340,7 +353,7 @@ const pbio_port_platform_data_t pbio_port_platform_data[PBIO_CONFIG_PORT_NUM_DEV
             .uart_tx_alt_uart = GPIO_AF11_UART9,
             .uart_rx_alt_uart = GPIO_AF11_UART9,
         },
-        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART,
+        .supported_modes = PBIO_PORT_MODE_LEGO_DCM | PBIO_PORT_MODE_UART | PBIO_PORT_MODE_I2C_NXT | PBIO_PORT_MODE_I2C_QWIIC,
     },
 };
 
@@ -1076,8 +1089,8 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN |
         RCC_APB1ENR_UART7EN | RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM5EN | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM12EN |
-        RCC_APB1ENR_I2C2EN | RCC_APB1ENR_DACEN | RCC_APB1ENR_SPI2EN;
+        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM5EN | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM7EN |
+        RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN | RCC_APB1ENR_DACEN | RCC_APB1ENR_SPI2EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_TIM8EN | RCC_APB2ENR_UART9EN |
         RCC_APB2ENR_UART10EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;

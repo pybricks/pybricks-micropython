@@ -79,6 +79,9 @@
 
 #define PBDRV_CONFIG_HARDWARE                       (1)
 #define PBDRV_CONFIG_HARDWARE_STM32                 (1)
+#define PBDRV_CONFIG_I2C                            (1)
+#define PBDRV_CONFIG_I2C_STM32_SOFT                 (1)
+#define PBDRV_CONFIG_I2C_STM32_SOFT_NUM_DEV         (6)
 
 #define PBDRV_CONFIG_IMU                            (1)
 #define PBDRV_CONFIG_IMU_LSM6S3TR_C_STM32           (1)
