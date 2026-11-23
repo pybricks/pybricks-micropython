@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed a buffer overflow on Move Hub when its name is 13 or more characters.
+
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...HEAD
 
 ## [4.1.3] - 2026-11-06
