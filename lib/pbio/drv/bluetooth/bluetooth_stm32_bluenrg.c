@@ -329,13 +329,13 @@ pbio_error_t pbdrv_bluetooth_start_advertising_func(pbio_os_state_t *state, void
 
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
-    uint8_t response_data[25];
+    uint8_t response_data[31];
     memcpy(response_data, response_data_template, sizeof(response_data_template));
     const char *pbdrv_bluetooth_hub_name = pbsys_host_get_hub_name();
     uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
     response_data[11] = hub_name_len + 1;
     memcpy(&response_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
-    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
+    _Static_assert(13 + PBSYS_HOST_HUB_NAME_SIZE - 1 <= sizeof(response_data), "scan response is 31 octet max");
 
     hci_le_set_scan_response_data_begin(13 + hub_name_len, response_data);
     PBIO_OS_AWAIT_UNTIL(state, hci_command_complete);
