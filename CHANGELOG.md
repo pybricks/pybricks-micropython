@@ -6,6 +6,7 @@
 
 ### Fixed
 - Fixed a buffer overflow on Move Hub when its name is 13 or more characters.
+- Fixed City Hub sometimes not turning on properly after being switched off.
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...HEAD
 

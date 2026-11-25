@@ -75,6 +75,10 @@ static void bt_spi_init(void) {
     // set PB13 as SPI2->CLK
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER13_Msk) | (2 << GPIO_MODER_MODER13_Pos);
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL13_Msk) | (0 << GPIO_AFRH_AFSEL13_Pos);
+    // SPI2 releases SCK while disabled between transfers, and NPI has no chip
+    // select, so pull it down to its idle level. Otherwise a stray edge while
+    // it floats can corrupt a frame, which the Bluetooth chip drops silently.
+    GPIOB->PUPDR = (GPIOB->PUPDR & ~GPIO_PUPDR_PUPDR13_Msk) | (2 << GPIO_PUPDR_PUPDR13_Pos);
 
     // DMA
 
