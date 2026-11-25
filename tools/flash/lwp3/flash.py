@@ -6,7 +6,6 @@ import io
 import logging
 import platform
 import struct
-import sys
 from collections import namedtuple
 
 from bleak import BleakScanner
@@ -36,6 +35,10 @@ HUB_INFO: dict[HubKind, tuple[str, int]] = {
     HubKind.CITY: ("City Hub", 32),
     HubKind.TECHNIC: ("Technic Hub", 32),
 }
+
+
+class HubNotFoundError(Exception):
+    """No hub in update mode was found."""
 
 
 class BootloaderRequest:
@@ -319,6 +322,7 @@ async def flash_ble(firmwares: bytes | dict[str, bytes], hub_kind: HubKind):
         hub_kind: The hub type ID. Only hubs matching this ID will be discovered.
 
     Raises:
+        HubNotFoundError: If no hub in update mode was found.
         ValueError: If there is no firmware for the given hub kind.
     """
 
@@ -346,8 +350,7 @@ async def flash_ble(firmwares: bytes | dict[str, bytes], hub_kind: HubKind):
     )
 
     if device is None:
-        print("timed out", file=sys.stderr)
-        return
+        raise HubNotFoundError(f"Timed out searching for {hub_kind.name} hub.")
 
     print("Found:", device)
 
