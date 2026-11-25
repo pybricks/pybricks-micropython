@@ -18,7 +18,7 @@ from firmware import create_firmware_blob
 from lwp3.bytecodes import HubKind
 from ev3 import flash_ev3
 from nxt.flash import flash_nxt
-from lwp3.flash import flash_ble
+from lwp3.flash import HubNotFoundError, flash_ble
 from serdev.connect import get_serial_device
 from serdev.pybricks import reboot_to_update_mode_pybricks
 from serdev.spike import reboot_for_update_spike_prime
@@ -93,7 +93,10 @@ def main():
             time.sleep(1.5)
         flash_dfu(firmwares, hub_kind)
     elif hub_kind in [HubKind.BOOST, HubKind.CITY, HubKind.TECHNIC]:
-        asyncio.run(flash_ble(firmwares, hub_kind))
+        try:
+            asyncio.run(flash_ble(firmwares, hub_kind))
+        except HubNotFoundError as ex:
+            sys.exit(str(ex))
     elif hub_kind == HubKind.NXT:
         if serial:
             # It takes a long time for samba to come up.
