@@ -4,11 +4,13 @@
 
 ## [Unreleased]
 
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.2.0b1...HEAD
+
+## [4.2.0b1] - 2026-11-26
+
 ### Fixed
 - Fixed a buffer overflow on Move Hub when its name is 13 or more characters.
 - Fixed City Hub sometimes not turning on properly after being switched off.
-
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...HEAD
 
 ### Added
 - `pybricks.tools.run_task` now returns the result of the coroutine that was run.
@@ -21,6 +23,8 @@
 ### Changed
 - `pybricks.iodevices.I2CDevice.write` is no longer limited to 32 bytes of
   data when `reg` is given.
+
+[4.2.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v4.1.3...v4.2.0b1
 
 ## [4.1.3] - 2026-11-06
 
