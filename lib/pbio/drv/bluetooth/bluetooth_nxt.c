@@ -272,14 +272,46 @@ static uint16_t bc4_mailbox_step(uint16_t state) {
 }
 
 /**
+ * Gets the mailbox back to idle. Right after reset, some BC4s take longer
+ * than a step's timeout, and finish the step after we gave up on it. Without
+ * this, the mailbox would then wait for us forever.
+ *
+ * @return Success when idle, busy while the BC4 is still on an earlier step.
+ */
+static pbio_error_t bc4_mailbox_idle(void) {
+    uint16_t state = bt_spi_read_word(BC4_MAILBOX_STATE);
+    if (state == 2) {
+        // A buffer was given out for a PDU that never came. Fill it with a
+        // harmless request of the size it was given out for.
+        uint16_t size = bt_spi_read_word(BC4_MAILBOX_ARG);
+        if (size < BCCMD_PDU_WORDS || size > BCCMD_PDU_WORDS_MAX) {
+            return PBIO_ERROR_FAILED;
+        }
+        uint16_t pdu[BCCMD_PDU_WORDS_MAX] = { BCCMD_GETREQ, size, 0, BCCMD_VARID_BUILDID };
+        bt_spi_write(bt_spi_read_word(BC4_MAILBOX_BUF), pdu, size);
+        state = bc4_mailbox_step(4);
+    }
+    if (state == 6) {
+        // An answer nobody read. Free its buffer.
+        state = bc4_mailbox_step(7);
+    }
+    if (state == 0) {
+        return PBIO_SUCCESS;
+    }
+    return state == 1 || state == 4 || state == 5 || state == 7 ? PBIO_ERROR_BUSY : PBIO_ERROR_FAILED;
+}
+
+/**
  * Runs one BCCMD PDU through the mailbox. The PDU's length is in its word 1.
  * The response replaces the request, unless @p reply is false (resets do not
- * answer).
+ * answer). On failure, try again later: the next call picks up whatever this
+ * one left behind.
  */
 static pbio_error_t bc4_bccmd(uint16_t *pdu, bool reply) {
     const uint16_t size = pdu[1];
-    if (bt_spi_read_word(BC4_MAILBOX_STATE) != 0) {
-        return PBIO_ERROR_BUSY;
+    pbio_error_t err = bc4_mailbox_idle();
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
     bt_spi_write(BC4_MAILBOX_ARG, &size, 1);
     if (bc4_mailbox_step(1) != 2) {
@@ -3106,6 +3138,7 @@ static pbio_error_t bt_process_thread(pbio_os_state_t *state, void *context) {
 
     static pbio_os_timer_t timer;
     static uint32_t i;
+    static uint32_t key_tries;
     pbio_error_t err;
 
     // Until the BC4 is up, there is nothing to close.
@@ -3167,6 +3200,7 @@ restart:
         PBIO_OS_AWAIT_MS(state, &timer, 100);
     }
 
+    key_tries = 0;
     for (i = 0; i < PBIO_ARRAY_SIZE(bc4_mode_keys); i++) {
         // Words: type, length, seq, varid, status, key, value size, store,
         // value.
@@ -3176,9 +3210,16 @@ restart:
         };
         err = bc4_bccmd(pdu, true);
         if (err != PBIO_SUCCESS) {
-            DEBUG_PRINT("bt: setting &%04x failed\n", bc4_mode_keys[i][0]);
-            return err;
+            DEBUG_PRINT("bt: setting &%04x failed: %d\n", bc4_mode_keys[i][0], err);
+            // Try the same key again, or start over if it keeps failing.
+            if (++key_tries == 10) {
+                goto restart;
+            }
+            i--;
+            PBIO_OS_AWAIT_MS(state, &timer, 100);
+            continue;
         }
+        key_tries = 0;
     }
 
     // The BC4 starts sending SYNC right after the warm reset, so be ready.
