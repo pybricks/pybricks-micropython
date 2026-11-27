@@ -11,6 +11,7 @@
 #include <pbio/image.h>
 #include <pbio/imu.h>
 #include <pbio/light_animation.h>
+#include <pbio/main.h>
 #include <pbio/motor_process.h>
 #include <pbio/port.h>
 #include <pbio/serial.h>
