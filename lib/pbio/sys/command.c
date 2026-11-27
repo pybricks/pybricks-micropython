@@ -62,6 +62,16 @@ pbio_pybricks_error_t pbsys_handle_command(const uint8_t *data, uint32_t size) {
         #endif // PBSYS_CONFIG_FEATURE_BUILTIN_USER_PROGRAM_REPL
 
         case PBIO_PYBRICKS_COMMAND_WRITE_USER_PROGRAM_META:
+            if (size != 5 && size != 6) {
+                return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+            }
+            if (size == 6) {
+                if (data[5] > PBIO_PYBRICKS_USER_PROGRAM_ID_LAST_SLOT) {
+                    return PBIO_PYBRICKS_ERROR_VALUE_NOT_ALLOWED;
+                }
+                // Select the slot so this and subsequent writes target it.
+                pbsys_status_set_selected_slot(data[5]);
+            }
             return pbio_pybricks_error_from_pbio_error(pbsys_storage_set_program_size(
                 pbio_get_uint32_le(&data[1])));
 
