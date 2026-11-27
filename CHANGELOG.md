@@ -4,7 +4,14 @@
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.2.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v4.2.0b2...HEAD
+
+## [4.2.0b2] - 2026-11-27
+
+### Fixed
+- Fixed Bluetooth not coming up on some NXT bricks.
+
+[4.2.0b2]: https://github.com/pybricks/pybricks-micropython/compare/v4.2.0b1...v4.2.0b2
 
 ## [4.2.0b1] - 2026-11-26
 
